@@ -1,24 +1,25 @@
-# Project Timeline 2024-2025
+# Project Timeline FY2026
 
-## Phase 1: Research & Planning (Jan-Mar 2024)
-- Status: Complete
-- Milestones: Requirements gathered, architecture decided, team assembled
+## Phase 1 (Jan–Mar): Research and Planning
+Status: COMPLETE
+- Market research: Done
+- Requirements: Done
+- Architecture: Done
 
-## Phase 2: Development & Testing (Apr-Jun 2024)
-- Status: Complete
-- Milestones: Core features built, QA passed, beta launched
+## Phase 2 (Apr–Jun): Development and Testing
+Status: COMPLETE
+- Core platform: Done
+- Beta release: Done (Jun 15)
+- Load testing: Done
 
-## Phase 3: Marketing & Launch (Jul-Sep 2024)
-- Status: Complete
-- Milestones: Public launch, marketing campaign, 1000 initial users
+## Phase 3 (Jul–Sep): Marketing and Launch
+Status: IN PROGRESS (75%)
+- Marketing campaign: Active
+- Partner integrations: 3/5 complete
+- Customer onboarding: 142 new customers
 
-## Phase 4: Review & Optimization (Oct-Dec 2024)
-- Status: In Progress
-- Milestones: Performance optimization, feature updates, user feedback integration
-
-## Key Milestones
-- Jan 15: Q1 planning review
-- Mar 31: Phase 1 delivery
-- Jun 30: Phase 2 delivery
-- Sep 30: Phase 3 delivery
-- Dec 31: Phase 4 delivery
+## Phase 4 (Oct–Dec): Review and Optimisation
+Status: NOT STARTED
+- Q4 review: Planned
+- Optimization sprint: Planned
+- FY2027 planning: Planned
