@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "agentgraphs"
+version = "1.0.0"
+description = "Local Execution Perturbation Detection in Multi-Agent Traces using GNNs"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "AgentGraphs Team"},
+]
+keywords = ["graph-neural-networks", "anomaly-detection", "agent-tracing", "GNN"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+pyg = [
+    "torch-geometric>=2.3.0",
+]
+dyglib = [
+    "torch-geometric-temporal>=0.54.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "jupyter>=1.0.0",
+    "matplotlib>=3.7.0",
+    "tensorboard>=2.13.0",
+]
+notebook = [
+    "jupyter>=1.0.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "plotly>=5.15.0",
+    "pandas>=2.0.0",
+]
+all = [
+    "agentgraphs[pyg,dyglib,dev,notebook]",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/agentgraphs"
+Documentation = "https://github.com/your-org/agentgraphs#readme"
+Repository = "https://github.com/your-org/agentgraphs"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"agentgraphs" = ["py.typed"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["agentgraph"]
+omit = ["tests/*"]

@@ -1,0 +1,20 @@
+[run]
+python = "python -m pytest {args} {posargs}"
+coverage = "python -m pytest --cov=src --cov-report=term-missing {args} {posargs}"
+
+[run.args]
+posargs = ["tests/"]
+passenv = ["HOME", "PATH", "CI", "GITHUB_ACTIONS"]
+
+[lint]
+python = "python -m ruff check src/ tests/ {args}"
+fix = "python -m ruff check --fix src/ tests/"
+
+[lint.args]
+fix_args = ["--select", "I,F,E"]
+
+[typecheck]
+python = "python -m mypy src/ {args}"
+
+[fmt]
+python = "python -m ruff format src/ tests/ {args}"

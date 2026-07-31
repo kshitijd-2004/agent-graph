@@ -1,0 +1,14 @@
+"""Type stub for torch_geometric Data class."""
+from torch import Tensor
+from typing import Optional, Tuple
+
+class Data:
+    def __init__(self, x: Optional[Tensor] = None, edge_index: Optional[Tensor] = None,
+                 edge_attr: Optional[Tensor] = None, y: Optional[Tensor] = None,
+                 **kwargs: any) -> None: ...
+    @property
+    def num_nodes(self) -> int: ...
+    @property
+    def num_edges(self) -> int: ...
+    @property
+    def num_features(self) -> int: ...
