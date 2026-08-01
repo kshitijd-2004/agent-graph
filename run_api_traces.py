@@ -29,7 +29,7 @@ from benchmarks import (
     CompetitiveIntelligenceTask,
 )
 from benchmarks.api_backend import APIBackend
-from agentgraph import EntityGraphBuilder, ExportManager, TraceEvent
+from agentgraph import EntityGraphBuilder, ExportManager, TraceEvent, TraceVariant
 
 
 OUTPUT_DIR = Path("output")
@@ -160,8 +160,10 @@ def main():
     def get_writer(task_name, variant, trace_id):
         key = f"{task_name}_{variant}"
         if key not in trace_writers:
-            path = TRACE_DIR / f"{task_name}_{variant}_{trace_id}.jsonl"
-            fh = open(path, "w", buffering=1)  # line-buffered
+            task_dir = TRACE_DIR / task_name
+            task_dir.mkdir(exist_ok=True)
+            path = task_dir / f"{task_name}_{variant}_{trace_id}.jsonl"
+            fh = open(path, "w", buffering=1)
             trace_writers[key] = fh
             print(f"  Streaming trace to: {path}")
         return trace_writers[key]
@@ -193,14 +195,23 @@ def main():
     all_labels = []
 
     for task in tasks:
-        for variant in ["benign", "malignant"]:
+        task_trace_dir = TRACE_DIR / task.TASK_NAME
+        for variant, variant_suffix in [("benign", "a"), ("malignant", "b")]:
             for run_idx in range(args.runs):
-                # Find the trace file
-                pattern = f"{task.TASK_NAME}_{variant}_*.jsonl"
-                matching = sorted(TRACE_DIR.glob(pattern))
+                # Match both old (benign/malignant) and new (a/b) naming
+                patterns = [
+                    f"{task.TASK_NAME}_{variant_suffix}_*.jsonl",
+                    f"{task.TASK_NAME}_{variant}_*.jsonl",
+                ]
+                matching = []
+                for pat in patterns:
+                    matching.extend(sorted(task_trace_dir.glob(pat)))
+                # Deduplicate and sort
+                matching = sorted(set(matching), key=lambda p: p.name)
                 if run_idx < len(matching):
                     path = matching[run_idx]
                 else:
+                    print(f"  WARNING: no trace found for {task.TASK_NAME} {variant} run {run_idx}")
                     continue
 
                 from agentgraph.trace import Trace
@@ -209,7 +220,7 @@ def main():
                     for line in f:
                         events.append(TraceEvent.from_dict(json.loads(line)))
                 trace = Trace(
-                    trace_id=path.stem.rsplit("_", 1)[-1],
+                    trace_id=path.stem,  # full stem is the trace_id
                     execution_id=path.stem.rsplit("_", 1)[-1][:10],
                     variant=TraceVariant.BENIGN if variant == "benign" else TraceVariant.MALIGNANT,
                     events=events, file_path=str(path),
