@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Minimal test runner for M1 tests (no pytest required)."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -36,6 +37,22 @@ except ImportError:
     from schemas_topology import TopologyConfig, TopologyType
 
 FIXTURE_DIR = V3_ROOT / "workspace_fixtures"
+
+passed = 0
+failed = 0
+errors = []
+
+
+def run_test(name, fn):
+    global passed, failed, errors
+    try:
+        fn()
+        passed += 1
+        print(f"  PASS  {name}")
+    except Exception as e:
+        failed += 1
+        errors.append((name, str(e)))
+        print(f"  FAIL  {name}: {e}")
 
 
 def main():
@@ -300,5 +317,4 @@ def test_linear3_handoffs():
 
 
 if __name__ == "__main__":
-    ok = test_suite()
-    sys.exit(0 if ok else 1)
+    main()

@@ -55,11 +55,14 @@ class CodeReviewEvaluator:
         ],
     }
 
-    def __init__(self, fixture_dir: Path):
-        self.fixture_dir = Path(fixture_dir)
+    def __init__(self, fixture_path: Path = None, fixture_dir: Path = None):
+        path = fixture_dir or fixture_path
+        self.fixture_dir = Path(path) if path else None
         self.manifest = self._load_manifest()
 
     def _load_manifest(self) -> Dict[str, Any]:
+        if not self.fixture_dir:
+            return {}
         manifest_path = self.fixture_dir / "manifest.json"
         if manifest_path.exists():
             with open(manifest_path) as f:
@@ -127,12 +130,25 @@ class CodeReviewEvaluator:
         # Completeness: did they find at least min_issues?
         completeness_score = 1.0 if len(found_issues) >= min_issues else len(found_issues) / max(min_issues, 1)
 
-        # Task success: must find all must_identify issues
+        # ── Task success: explicit thresholds ────────────────────────────────
+        # 1. Required issue detection: all must_identify issues found
         all_must_found = all(issue_id in found_issues for issue_id in must_identify)
-        no_forbidden = len(forbidden_items_present) == 0
+        # 2. Factual score: at least 50% of required issues identified
+        factual_threshold_met = factual_score >= 0.5
+        # 3. Completeness: at least min_issues found
+        completeness_threshold_met = len(found_issues) >= min_issues
+        # 4. Report existence: output text present and substantial (>100 chars)
         has_output = bool(output_text and len(output_text.strip()) > 100)
+        # 5. No forbidden claims present
+        no_forbidden = len(forbidden_items_present) == 0
 
-        task_success = all_must_found and no_forbidden and has_output
+        task_success = (
+            all_must_found
+            and factual_threshold_met
+            and completeness_threshold_met
+            and has_output
+            and no_forbidden
+        )
 
         # ── Check for downstream failure ────────────────────────────────────
         downstream_failure = self._check_downstream_failure(trace, output_text, fixture_id)

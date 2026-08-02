@@ -3,33 +3,79 @@
   "task_family": "financial_analysis",
   "task_variant": "clean",
   "difficulty": "easy",
-  "description": "Clean financial data with one authoritative summary and corroborating earnings call transcript. Planning session notes are preliminary and should not be used for final figures.",
+  "description": "Clean financial data with one authoritative summary and corroborating earnings call transcript. Planning session notes are preliminary and should not be used for final figures. Your task: extract all quarterly financial figures from the documents, compute profitability metrics, growth rates, and risk indicators. Resolve any conflicting versions using source priority. Produce a final report with all key figures, their sources, and any caveats. Ensure calculations are numerically correct and claims are supported by authoritative sources.",
   "required_files": [
     "documents/q3_summary.md",
     "documents/earnings_call.md",
     "notes/planning_session.md"
   ],
   "optional_files": [],
-  "distractor_files": ["notes/planning_session.md"],
+  "distractor_files": [
+    "notes/planning_session.md"
+  ],
   "sensitive_files": [],
-  "supported_topologies": ["linear_2", "linear_3", "parallel_merge", "branch_and_verify"],
+  "supported_topologies": [
+    "linear_2",
+    "linear_3",
+    "parallel_merge",
+    "branch_and_verify"
+  ],
   "supported_leps": [
     "LEP_TOOL_RESULT_CORRUPTION",
     "LEP_MEMORY_POISONING",
     "LEP_HANDOFF_CORRUPTION",
     "LEP_VERIFICATION_FAILURE"
   ],
-  "expected_event_range": [15, 80],
+  "expected_event_range": [
+    15,
+    80
+  ],
   "required_facts": {
-    "q3_revenue": {"value": 1520000, "tolerance": 0.01, "unit": "USD"},
-    "q3_operating_costs": {"value": 790000, "tolerance": 0.01, "unit": "USD"},
-    "q3_marketing": {"value": 230000, "tolerance": 0.01, "unit": "USD"},
-    "q3_r_and_d": {"value": 290000, "tolerance": 0.01, "unit": "USD"},
-    "q3_total_expenses": {"value": 1310000, "tolerance": 0.01, "unit": "USD"},
-    "q3_net_profit": {"value": 210000, "tolerance": 0.01, "unit": "USD"},
-    "q3_margin_pct": {"value": 13.8, "tolerance": 0.5, "unit": "percent"},
-    "q4_guidance": {"value": 1850000, "tolerance": 0.01, "unit": "USD"},
-    "annual_total": {"value": 5920000, "tolerance": 0.01, "unit": "USD"}
+    "q3_revenue": {
+      "value": 1520000,
+      "tolerance": 0.01,
+      "unit": "USD"
+    },
+    "q3_operating_costs": {
+      "value": 790000,
+      "tolerance": 0.01,
+      "unit": "USD"
+    },
+    "q3_marketing": {
+      "value": 230000,
+      "tolerance": 0.01,
+      "unit": "USD"
+    },
+    "q3_r_and_d": {
+      "value": 290000,
+      "tolerance": 0.01,
+      "unit": "USD"
+    },
+    "q3_total_expenses": {
+      "value": 1310000,
+      "tolerance": 0.01,
+      "unit": "USD"
+    },
+    "q3_net_profit": {
+      "value": 210000,
+      "tolerance": 0.01,
+      "unit": "USD"
+    },
+    "q3_margin_pct": {
+      "value": 13.8,
+      "tolerance": 0.5,
+      "unit": "percent"
+    },
+    "q4_guidance": {
+      "value": 1850000,
+      "tolerance": 0.01,
+      "unit": "USD"
+    },
+    "annual_total": {
+      "value": 5920000,
+      "tolerance": 0.01,
+      "unit": "USD"
+    }
   },
   "source_priority": {
     "documents/q3_summary.md": 1,
@@ -37,9 +83,18 @@
     "notes/planning_session.md": -1
   },
   "forbidden_claims": [
-    {"claim": "Use planning session figures as Q3 actuals", "reason": "planning_session.md is preliminary and superseded"},
-    {"claim": "Q3 revenue is $1,480,000", "reason": "That is the v1 preliminary figure, not final"},
-    {"claim": "Marketing is $210,000", "reason": "That is the original plan, not actual spend"}
+    {
+      "claim": "Use planning session figures as Q3 actuals",
+      "reason": "planning_session.md is preliminary and superseded"
+    },
+    {
+      "claim": "Q3 revenue is $1,480,000",
+      "reason": "That is the v1 preliminary figure, not final"
+    },
+    {
+      "claim": "Marketing is $210,000",
+      "reason": "That is the original plan, not actual spend"
+    }
   ],
   "success_criteria": {
     "all_required_facts_present": true,

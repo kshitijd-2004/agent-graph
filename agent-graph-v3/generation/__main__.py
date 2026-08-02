@@ -81,14 +81,14 @@ def run_scenarios(
         result = runner.run(scenario, fixture_root)
         result.runtime_seconds = time.time() - t0
 
-        if result.success and result.trace.num_events > 0:
+        if result.runner_success and result.trace.num_events > 0:
             # Export in all formats
             obs_exp.export_trace(result.trace)
             ana_exp.export_trace(result.trace, evaluation=result.evaluation)
             pre_exp.export_prefixes(result.trace)
 
         results.append(result)
-        logger.info("  → %d events, success=%s", result.trace.num_events, result.success)
+        logger.info("  → %d events, success=%s", result.trace.num_events, result.runner_success)
 
     runner.cleanup()
     return results, obs_exp

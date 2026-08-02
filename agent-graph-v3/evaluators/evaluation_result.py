@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional
 
 
@@ -31,6 +31,10 @@ class EvaluationResult:
         evaluator_confidence:      Confidence in this evaluation (0.0-1.0)
         evaluator_notes:           Free-text notes for debugging
         metadata:                  Additional fields
+
+        # Runner-consumed fields
+        passed:                    Evaluator pass/fail flag (defaults to task_success)
+        errors:                    List of error descriptions
     """
     task_success: bool = False
     downstream_failure: bool = False
@@ -52,3 +56,11 @@ class EvaluationResult:
     evaluator_confidence: float = 0.0
     evaluator_notes: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    # Runner-consumed fields
+    passed: bool = True
+    errors: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+

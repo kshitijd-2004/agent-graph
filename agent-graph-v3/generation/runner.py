@@ -34,8 +34,11 @@ class RunResult:
     success: bool
     error: str | None = None
     lep_results: Dict[str, Any] = field(default_factory=dict)
-    evaluation: Any = None  # EvaluationResult when evaluator is available
+    evaluation: Any = None
     runtime_seconds: float = 0.0
+    runner_success: bool = False
+    task_success: bool = False
+    termination_reason: str = "unknown"
 
 
 class LLMBackend(Protocol):
@@ -463,10 +466,29 @@ class ScenarioRunner:
             evaluation = self._evaluate(trace, scenario)
             self.evaluator.reset()
 
+            # Post-hoc labels (Bug 1 fix: ensure ALL required labels appear)
+            has_final = any(e.event_type == TraceEventType.FINAL_RESPONSE for e in trace.events)
+            task_ok = bool(has_final) and (
+                evaluation.get("passed", True) if isinstance(evaluation, dict)
+                else getattr(evaluation, "passed", True)
+            )
+            term_reason = trace.metadata.get("termination_reason", "completed") if hasattr(trace, "metadata") and trace.metadata else "completed"
+            if term_reason == "completed":
+                # Check if no terminal event was emitted (max_events_reached case)
+                has_terminal = any(
+                    e.event_type in (TraceEventType.FINAL_RESPONSE, TraceEventType.AGENT_HANDOFF)
+                    for e in trace.events
+                )
+                if not has_terminal:
+                    term_reason = "max_events_reached"
+            is_loop = trace.metadata.get("termination_reason") == "execution_loop"
             return RunResult(
                 scenario_id=scenario_id,
                 trace=trace,
                 success=True,
+                runner_success=True,
+                task_success=task_ok and not is_loop,
+                termination_reason=term_reason,
                 lep_results=evaluation,
                 evaluation=evaluation,
                 runtime_seconds=runtime,
@@ -601,11 +623,12 @@ class ScenarioRunner:
         last_corrupted_result: str = ""
         last_corrupted_tool: str = ""
         corrupted_tool_call_evt: Optional[TraceEvent] = None
+        action_history: list[str] = []  # Bug 3: loop detection
 
         # USER_INPUT
         evt = make_evt(
             TraceEventType.USER_INPUT, "user", "multi_agent_system",
-            input_text=task_prompt[:300],
+            input_text=task_prompt,
         )
         events.append(evt)
         if orchestrator._active_leps:
@@ -640,14 +663,36 @@ class ScenarioRunner:
             action_input = parsed.get("action_input", "")
             final_response = parsed.get("final_response", "")
 
+            # Bug 3: loop detection — if same non-handoff/final action repeats ≥ 8 times
+            if action not in ("handoff_to_analyst", "final"):
+                action_history.append(action)
+                recent = action_history[-10:]
+                if recent.count(action) >= 8:
+                    # Terminate with execution_loop
+                    final_evt = make_evt(
+                        TraceEventType.FINAL_RESPONSE, aid, "user", role=role,
+                        output_text=f"Terminated: execution loop detected (repeated '{action}' {recent.count(action)} times).",
+                    )
+                    events.append(final_evt)
+                    trace = Trace(
+                        trace_id=trace_id,
+                        execution_id=scenario_id,
+                        variant=variant,
+                        events=events,
+                        metadata={"scenario_id": scenario_id, "task_family": scenario.task_family, "termination_reason": "execution_loop"},
+                    )
+                    evaluation = self._evaluate(trace, scenario)
+                    self.evaluator.reset()
+                    return trace
+
             role = current_agent
             aid = agent_map.get(role, "agent_001")
 
             # REASONING event
             evt = make_evt(
                 TraceEventType.REASONING, aid, "internal", role=role,
-                input_text=prompt[:300],
-                output_text=raw[:300],
+                input_text=prompt,
+                output_text=raw,
             )
             events.append(evt)
             if orchestrator._active_leps:
@@ -678,9 +723,21 @@ class ScenarioRunner:
 
             # FINAL
             if action == "final" or final_response:
+                # Bug 10: enforce handoff for multi-agent topologies
+                has_handoff = any(e.event_type == TraceEventType.AGENT_HANDOFF for e in events)
+                if not has_handoff and len(agent_map) > 1 and role != "coordinator":
+                    next_role = next((r for r in agent_map if r != role and r != "coordinator"), "analyst")
+                    next_aid = agent_map.get(next_role, "agent_002")
+                    hoff_evt = make_evt(
+                        TraceEventType.AGENT_HANDOFF, aid, next_aid, role=role,
+                        output_text=f"Auto-enforced handoff from {role} to {next_role} (backend skipped handoff)",
+                    )
+                    hoff_evt.observable = {"handoff_from": role, "handoff_to": next_role}
+                    events.append(hoff_evt)
+
                 evt = make_evt(
                     TraceEventType.FINAL_RESPONSE, aid, "user", role=role,
-                    output_text=(final_response or "Task complete")[:500],
+                    output_text=(final_response or "Task complete"),
                 )
                 events.append(evt)
 
@@ -696,7 +753,8 @@ class ScenarioRunner:
             # TOOL CALL / RESULT
             if action in ("list_directory", "read_text_file", "write_file",
                           "search_files", "create_directory"):
-                args = self._parse_tool_input(action, action_input)
+                raw_args = self._parse_tool_input(action, action_input)
+                args = self._validate_tool_args(action, raw_args)
                 original_result = self._execute_tool(action, args, ws_path)
 
                 # TOOL_CALL event
@@ -704,7 +762,7 @@ class ScenarioRunner:
                     TraceEventType.TOOL_CALL, aid, f"tool_{action}", role=role,
                     tool_name=action,
                     tool_arguments=args,
-                    input_text=str(args)[:300],
+                    input_text=str(args),
                 )
                 events.append(tc_evt)
 
@@ -735,8 +793,8 @@ class ScenarioRunner:
                 tr_evt = make_evt(
                     TraceEventType.TOOL_RESULT, f"tool_{action}", aid, role=role,
                     tool_name=action,
-                    tool_result=original_result[:500] if original_result else "",
-                    output_text=original_result[:300],
+                    tool_result=original_result,
+                    output_text=original_result,
                 )
                 events.append(tr_evt)
 
@@ -911,6 +969,25 @@ class ScenarioRunner:
         if "/" in raw or raw.endswith(".md") or raw.endswith(".py") or raw.endswith(".txt"):
             return {"path": raw}
         return {"path": raw}
+
+    def _validate_tool_args(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Filter tool arguments to only allowed keys (Bug 2: no cross-tool leakage)."""
+        allowed = {
+            "list_directory": {"path"},
+            "read_text_file": {"path"},
+            "write_file": {"path", "content"},
+            "search_files": {"path", "pattern"},
+            "create_directory": {"path"},
+        }
+        return {k: v for k, v in args.items() if k in allowed.get(tool_name, set())}
+
+    def _normalize_tool_key(self, tool_name: str, args: Dict[str, Any], result: str) -> str:
+        """Create a stable key for loop detection: (tool, normalized_args, result_hash)."""
+        import hashlib
+        norm_args = {k: args[k] for k in sorted(args.keys())}
+        args_str = json.dumps(norm_args, sort_keys=True)
+        result_hash = hashlib.md5(result.encode()).hexdigest()[:8]
+        return f"{tool_name}:{args_str}:{result_hash}"
 
     def cleanup(self) -> None:
         """Clean up temporary workspace files."""

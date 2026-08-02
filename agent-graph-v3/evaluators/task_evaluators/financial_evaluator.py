@@ -40,11 +40,14 @@ class FinancialEvaluator:
         "annual_total": r"annual[:\s]+total[:\s]+[\$]?([0-9,]+(?:\.\d+)?)",
     }
 
-    def __init__(self, fixture_dir: Path):
-        self.fixture_dir = Path(fixture_dir)
+    def __init__(self, fixture_path: Path = None, fixture_dir: Path = None):
+        path = fixture_dir or fixture_path
+        self.fixture_dir = Path(path) if path else None
         self.manifest = self._load_manifest()
 
     def _load_manifest(self) -> Dict[str, Any]:
+        if not self.fixture_dir:
+            return {}
         manifest_path = self.fixture_dir / "manifest.json"
         if manifest_path.exists():
             with open(manifest_path) as f:

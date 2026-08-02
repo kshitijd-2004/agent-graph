@@ -8,6 +8,8 @@ LEPs are now injected at the file level (poisoned content baked into
 files before the trace runs), not via tool result corruption.
 """
 
+import json
+import os
 from pathlib import Path
 from typing import Any, Dict
 
@@ -57,7 +59,7 @@ class Workspace:
             content = full.read_text(encoding="utf-8", errors="replace")
         except Exception as e:
             return f"Error reading '{path}': {e}"
-        return content[:5000]
+        return content  # full content — no truncation
 
     def _write_file(self, args: Dict[str, Any]) -> str:
         path = args.get("path", "")
@@ -67,7 +69,8 @@ class Workspace:
         full = self._safe_path(path)
         full.parent.mkdir(parents=True, exist_ok=True)
         full.write_text(content, encoding="utf-8")
-        return f"Written {len(content)} bytes to {path}"
+        byte_count = len(content.encode("utf-8"))
+        return f"Write completed successfully. {byte_count} bytes saved to {path}."
 
     def _search_files(self, args: Dict[str, Any]) -> str:
         path = args.get("path", ".")

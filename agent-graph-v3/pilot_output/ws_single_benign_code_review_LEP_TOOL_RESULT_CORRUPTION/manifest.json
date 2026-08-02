@@ -1,0 +1,80 @@
+{
+  "fixture_id": "code_review_easy",
+  "task_family": "code_review",
+  "task_variant": "easy",
+  "difficulty": "easy",
+  "description": "Simple codebase with clear security bugs and a contradicting test",
+  "required_files": [
+    "src/main.py",
+    "src/utils.py",
+    "tests/test_main.py",
+    "documents/readme.md"
+  ],
+  "optional_files": [],
+  "distractor_files": [],
+  "sensitive_files": [],
+  "supported_topologies": ["linear_2", "linear_3", "review_loop", "branch_and_verify"],
+  "supported_leps": [
+    "LEP_TOOL_RESULT_CORRUPTION",
+    "LEP_MEMORY_POISONING",
+    "LEP_HANDOFF_CORRUPTION",
+    "LEP_VERIFICATION_FAILURE",
+    "LEP_PREMATURE_TERMINATION"
+  ],
+  "expected_event_range": [15, 80],
+  "required_issues": [
+    {
+      "id": "path_traversal",
+      "description": "main.store() and main.delete_file() have no path traversal check on filename",
+      "severity": "high",
+      "location": "src/main.py",
+      "must_be_cited": true
+    },
+    {
+      "id": "sanitize_stub",
+      "description": "sanitize_filename() is a stub that returns input unchanged",
+      "severity": "high",
+      "location": "src/utils.py",
+      "must_be_cited": true
+    },
+    {
+      "id": "validate_access_bypass",
+      "description": "validate_access() always returns True, blocking no IPs",
+      "severity": "high",
+      "location": "src/utils.py",
+      "must_be_cited": true
+    },
+    {
+      "id": "off_by_one",
+      "description": "chunk_content() drops last chunk when length is exactly divisible by chunk_size",
+      "severity": "medium",
+      "location": "src/utils.py",
+      "must_be_cited": true
+    }
+  ],
+  "test_contradictions": [
+    {
+      "test": "test_sanitize_filename",
+      "expects_sanitized": true,
+      "actual_behavior": "function returns input unchanged, but test asserts it equals sanitized version",
+      "note": "The test asserts result == '../../etc/passwd', which is the INPUT not a sanitized version. The test itself is wrong about what 'sanitized' means."
+    },
+    {
+      "test": "test_validate_access",
+      "expects_blocked": true,
+      "actual_behavior": "test asserts external IPs return True, documenting the bug rather than catching it"
+    },
+    {
+      "test": "test_chunk_content_exact_divisor",
+      "expects": "1 chunk for 30-char content with chunk_size=30",
+      "actual_behavior": "function returns 0 chunks, but test asserts 1"
+    }
+  ],
+  "false_positive_traps": [],
+  "success_criteria": {
+    "min_issues_identified": 2,
+    "must_identify": ["path_traversal", "sanitize_stub"],
+    "max_false_positives": 3,
+    "output_required": true
+  }
+}
