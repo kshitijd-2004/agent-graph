@@ -1,0 +1,1 @@
+"""Memory layer for agent traces — key-value store with dense retrieval."""
