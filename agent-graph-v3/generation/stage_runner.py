@@ -272,24 +272,19 @@ class StageRunner:
                     )
 
             if parsed is None:
-                # Final fallback: cannot recover — terminate with protocol_violation
-                logger.warning(
-                    "StageRunner protocol_violation: stage=%s turn=%d "
-                    "raw=%s", stage.stage_id, turn, raw[:200],
-                )
-                final_evt = make_evt(
-                    TraceEventType.FINAL_RESPONSE, agent_id, "user",
-                    role=current_role,
-                    output_text=f"Terminated: protocol_violation — model did not emit valid action JSON.",
-                )
-                events.append(final_evt)
-                return StageResult(
-                    stage_id=stage.stage_id,
-                    events=events,
-                    termination_reason="protocol_violation",
-                    final_agent_role=current_role,
-                    step_count=turn,
-                )
+                # On the final turn, don't crash with protocol_violation —
+                # let the stage end naturally with max_turns.
+                if turn == max_turns:
+                    logger.warning(
+                        "StageRunner unparseable on final turn: stage=%s turn=%d/%d "
+                        "raw=%s", stage.stage_id, turn, max_turns, raw[:200],
+                    )
+                    break
+
+                # Earlier turns: try repair, then terminate if still broken
+                repaired = self._repair_action(raw)
+                if repaired is not None:
+                    parsed = repaired
 
             action = parsed.get("action", "")
             action_input = parsed.get("action_input", "")
@@ -785,7 +780,22 @@ class StageRunner:
                 f"You are continuing work from {handoff_from_payload.from_agent}. "
                 f"Review their findings and build upon them."
             )
-        parts.append("Use the available tools to complete your task.")
+
+        # JSON protocol — in the system message, not the user message.
+        # System messages have higher compliance weight; this is the
+        # single place the contract is established, not repeated per turn.
+        parts.append(
+            "You must respond with ONLY a JSON object. "
+            "No prose, no explanations, no thinking-out-loud.\n"
+            "Schema: {\"reasoning\": \"...\", \"action\": \"tool_name\", "
+            "\"action_input\": {\"key\": \"value\"}, \"final_response\": \"...\"}\n"
+            "Allowed actions: list_directory, read_text_file, write_file, "
+            "search_files, create_directory, handoff_to_analyst, final\n"
+            "Example: {\"reasoning\": \"Writing report\", "
+            "\"action\": \"write_file\", "
+            "\"action_input\": {\"path\": \"output/report.md\", "
+            "\"content\": \"report text here\"}}"
+        )
         return " ".join(parts)
 
     def _build_turn_prompt_from_history(
@@ -829,15 +839,7 @@ class StageRunner:
             f"Task: {task_prompt}\n"
             f"You are {stage.agent_role}. Step {turn}/{max_turns}\n\n"
             f"Conversation so far:\n" + "\n".join(lines) +
-            f"\n\n"
-            f"IMPORTANT: Respond with ONLY a single JSON object. No extra text.\n"
-            f'Format: {{"reasoning": "...", "action": "tool_name", "action_input": {{"key": "value"}}, "final_response": "..."}}\n'
-            f'Allowed actions: list_directory, read_text_file, write_file, search_files, create_directory, handoff_to_analyst, final\n'
-            f'Example: {{"reasoning": "Writing report", "action": "write_file", "action_input": {{"path": "output/report.md", "content": "report text here"}}}}\n'
-            f'To finish: {{"reasoning": "done", "action": "final", "action_input": {{}}, "final_response": "your findings"}}\n'
-            f'CRITICAL: When action is "write_file", you MUST include "content" with the actual file text. '
-            f'Never call write_file with only a path — include the full report content inline.'
-            f"{deadline}"
+            f"\n\nRespond with JSON only.{deadline}"
         )
 
     def _build_handoff_payload(

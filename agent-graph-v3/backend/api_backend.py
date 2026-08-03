@@ -17,6 +17,69 @@ import urllib.request
 from typing import Any, Dict, List, Optional
 
 
+# Canonical tool definitions matching the MCP tool schema.
+# These are sent to the model via the Anthropic tool_use mechanism.
+TOOL_DEFINITIONS = [
+    {
+        "name": "list_directory",
+        "description": "List files and directories at a given path.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "Directory path to list"}
+            },
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "read_text_file",
+        "description": "Read the full contents of a text file.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "File path to read"}
+            },
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "write_file",
+        "description": "Write content to a file. Creates the file if it does not exist.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "Output file path"},
+                "content": {"type": "string", "description": "Full text content to write"},
+            },
+            "required": ["path", "content"],
+        },
+    },
+    {
+        "name": "search_files",
+        "description": "Search for files matching a glob pattern.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pattern": {"type": "string", "description": "Glob pattern, e.g. '*.md'"},
+                "path": {"type": "string", "description": "Directory to search in"},
+            },
+            "required": ["pattern"],
+        },
+    },
+    {
+        "name": "create_directory",
+        "description": "Create a directory (and any parent directories).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "Directory path to create"},
+            },
+            "required": ["path"],
+        },
+    },
+]
+
+
 class APIBackend:
     """LLM backend using Anthropic-compatible API via stdlib.
 
@@ -29,7 +92,7 @@ class APIBackend:
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        max_tokens: int = 1024,
+        max_tokens: int = 4096,
         temperature: float = 0.1,
     ):
         self.api_key = api_key or os.environ.get("LLM_API_KEY", "")
@@ -80,18 +143,43 @@ class APIBackend:
         messages.append({"role": "user", "content": prompt})
         return messages
 
-    def _call_api(self, messages: List[Dict[str, Any]], max_tokens: Optional[int] = None) -> str:
+    def _build_tools(self, available_tools: List[str]) -> List[Dict[str, Any]]:
+        """Build the Anthropic tool_use definitions for the available MCP tools."""
+        tool_names = set(available_tools)
+        result = []
+        for tool_def in TOOL_DEFINITIONS:
+            if tool_def["name"] in tool_names:
+                result.append({
+                    "name": tool_def["name"],
+                    "description": tool_def["description"],
+                    "input_schema": tool_def["input_schema"],
+                })
+        return result
+
+    def _call_api(
+        self,
+        messages: List[Dict[str, Any]],
+        max_tokens: Optional[int] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> str:
         """Make an API call."""
-        payload = json.dumps({
+        payload: Dict[str, Any] = {
             "model": self.model,
             "max_tokens": max_tokens or self.max_tokens,
             "temperature": self.temperature,
             "messages": messages,
-        }).encode("utf-8")
+        }
+
+        # Attach tool definitions when provided — this is what makes the model
+        # emit structured tool_use blocks instead of free-text JSON.
+        if tools:
+            payload["tools"] = tools
+
+        data_bytes = json.dumps(payload).encode("utf-8")
 
         req = urllib.request.Request(
             f"{self.base_url}/v1/messages",
-            data=payload,
+            data=data_bytes,
             headers={
                 "Content-Type": "application/json",
                 "x-api-key": self.api_key,
@@ -112,15 +200,28 @@ class APIBackend:
         except json.JSONDecodeError:
             raise ValueError(f"Non-JSON response: {raw_resp[:500]}")
 
-        # Extract text from content blocks — skip thinking blocks
+        # ── Primary: extract tool_use blocks ──────────────────────────────
         content = data.get("content", [])
-        if not isinstance(content, list) or len(content) == 0:
-            raise ValueError(f"No content blocks. Keys: {list(data.keys())}")
+        if isinstance(content, list):
+            tool_use_blocks = [b for b in content if isinstance(b, dict) and b.get("type") == "tool_use"]
+            if tool_use_blocks:
+                # Use the first tool_use block (model should emit one per turn)
+                block = tool_use_blocks[0]
+                tool_name = block.get("name", "")
+                tool_input = block.get("input", {})
+                return json.dumps({
+                    "reasoning": "[tool_use]",
+                    "action": tool_name,
+                    "action_input": tool_input,
+                    "final_response": "",
+                })
 
+        # ── Fallback: extract text blocks ────────────────────────────────
         text_parts = []
-        for block in content:
-            if isinstance(block, dict) and block.get("type") == "text":
-                text_parts.append(block.get("text", ""))
+        if isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    text_parts.append(block.get("text", ""))
 
         if text_parts:
             return "".join(text_parts).strip()
@@ -132,10 +233,11 @@ class APIBackend:
     def _generate(self, prompt: str) -> str:
         """Generate a response from the API."""
         messages = self._build_messages(prompt)
+        tools = self._build_tools(self._mcp_tools)
 
         with self._lock:
             try:
-                raw = self._call_api(messages)
+                raw = self._call_api(messages, tools=tools)
             except Exception as e:
                 print(f"  [ERROR] API call failed: {e}")
                 return ""
