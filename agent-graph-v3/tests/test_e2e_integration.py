@@ -1157,6 +1157,62 @@ def test_backend_reset_once_per_stage():
     ok("backend_reset_once_per_stage")
 
 
+def test_repair_parser_emits_write_file():
+    """Regression: model response saying 'I will write output/report.md'
+    must produce a write_file tool call, not be silently dropped.
+
+    This test uses an actual response pattern from a real trace where the
+    model emits prose mentioning the file path but no valid JSON action.
+    """
+    from generation.stage_runner import StageRunner
+
+    # Actual response from the failing trace — model says it's writing
+    # but emits prose instead of JSON
+    raw_response = (
+        "I'll write the code review report now.\n"
+        "Writing to output/report.md with my findings.\n"
+        "The report covers the path traversal vulnerability I found."
+    )
+
+    repaired = StageRunner._repair_action(raw_response)
+
+    assert repaired is not None, (
+        f"Repair should extract action from prose response, got None. "
+        f"Raw: {raw_response[:200]}"
+    )
+    assert repaired["action"] == "write_file", (
+        f"Expected action='write_file', got '{repaired['action']}'"
+    )
+    assert "output/report.md" in repaired["action_input"], (
+        f"Expected path 'output/report.md' in action_input, got: {repaired['action_input']}"
+    )
+
+    ok("repair_parser_emits_write_file")
+
+
+def test_repair_parser_no_false_positive():
+    """Repair should not invent actions from random prose."""
+    from generation.stage_runner import StageRunner
+
+    raw = "I need to think about this more carefully before proceeding."
+    repaired = StageRunner._repair_action(raw)
+    assert repaired is None, f"Should not repair random prose, got: {repaired}"
+
+    ok("repair_parser_no_false_positive")
+
+
+def test_repair_parser_handoff_and_final():
+    """Completion prose without an action field can be repaired to 'final'."""
+    from generation.stage_runner import StageRunner
+
+    raw = "Task complete. Here are my findings."
+    repaired = StageRunner._repair_action(raw)
+    assert repaired is not None
+    assert repaired["action"] == "final"
+
+    ok("repair_parser_handoff_and_final")
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
@@ -1194,6 +1250,9 @@ def main():
     test_handoff_enforced_for_multi_agent_topo()
     test_stage_local_history_persistence()
     test_backend_reset_once_per_stage()
+    test_repair_parser_emits_write_file()
+    test_repair_parser_no_false_positive()
+    test_repair_parser_handoff_and_final()
 
     section("Exporters")
     test_exporter_observable()

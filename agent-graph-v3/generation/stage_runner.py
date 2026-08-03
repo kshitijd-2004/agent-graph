@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -250,17 +251,45 @@ class StageRunner:
             raw = self.llm.generate(prompt)
             parsed = self.llm.parse_action(raw)
 
+            # ── Parse logging ────────────────────────────────────────────────
+            logger.info(
+                "StageRunner parse: stage=%s role=%s turn=%d raw_len=%d "
+                "parsed=%s repair_count=0",
+                stage.stage_id, current_role, turn, len(raw),
+                "ok" if parsed else "None",
+            )
+
+            # ── Repair: if parse failed but raw contains an action field ──────
+            repair_count = 0
             if parsed is None:
-                # Emit raw response as a REASONING event for traceability
-                raw_evt = make_evt(
-                    TraceEventType.REASONING, agent_id, "internal",
-                    role=current_role,
-                    input_text=prompt,
-                    output_text=raw,
+                repaired = self._repair_action(raw)
+                if repaired is not None:
+                    repair_count = 1
+                    parsed = repaired
+                    logger.info(
+                        "StageRunner repair: stage=%s turn=%d repaired_action=%s",
+                        stage.stage_id, turn, parsed.get("action", "?"),
+                    )
+
+            if parsed is None:
+                # Final fallback: cannot recover — terminate with protocol_violation
+                logger.warning(
+                    "StageRunner protocol_violation: stage=%s turn=%d "
+                    "raw=%s", stage.stage_id, turn, raw[:200],
                 )
-                events.append(raw_evt)
-                stage_history.append({"role": "assistant", "content": raw})
-                continue
+                final_evt = make_evt(
+                    TraceEventType.FINAL_RESPONSE, agent_id, "user",
+                    role=current_role,
+                    output_text=f"Terminated: protocol_violation — model did not emit valid action JSON.",
+                )
+                events.append(final_evt)
+                return StageResult(
+                    stage_id=stage.stage_id,
+                    events=events,
+                    termination_reason="protocol_violation",
+                    final_agent_role=current_role,
+                    step_count=turn,
+                )
 
             action = parsed.get("action", "")
             action_input = parsed.get("action_input", "")
@@ -268,9 +297,9 @@ class StageRunner:
 
             logger.info(
                 "StageRunner turn: stage=%s role=%s turn=%d/%d "
-                "history_msgs=%d backend_resets=%d action=%s",
+                "history_msgs=%d backend_resets=%d action=%s repair_count=%d",
                 stage.stage_id, current_role, turn, max_turns,
-                len(stage_history), backend_reset_count, action,
+                len(stage_history), backend_reset_count, action, repair_count,
             )
 
             # ── Loop detection ───────────────────────────────────────────────
@@ -593,6 +622,150 @@ class StageRunner:
             perturbed_result=original_result,
             altered_fields=[],
         )
+
+    @staticmethod
+    def _repair_action(raw: str) -> Optional[Dict[str, Any]]:
+        """Attempt one repair pass when parse_action() returns None.
+
+        Tries prose-pattern detection first, then JSON field extraction.
+        Returns None if no action is detectable.
+        """
+        if not raw:
+            return None
+
+        # Strip code fences if present
+        text = raw.strip()
+        if text.startswith("```"):
+            lines = text.split("\n")
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            text = "\n".join(lines)
+
+        # ── Pass 1: prose-pattern detection ─────────────────────────────────
+        prose_result = StageRunner._repair_from_prose(text)
+        if prose_result:
+            return prose_result
+
+        # ── Pass 2: JSON field extraction ───────────────────────────────────
+        m = re.search(r'"action"\s*:\s*"([^"]+)"', text)
+        if not m:
+            return None
+
+        action = m.group(1)
+
+        # Validate it's a known action
+        known_actions = {
+            "list_directory", "read_text_file", "write_file",
+            "search_files", "create_directory",
+            "handoff_to_analyst", "final",
+        }
+        if action not in known_actions:
+            return None
+
+        # Extract action_input if present
+        action_input = {}
+        m_path = re.search(r'"path"\s*:\s*"([^"]*)"', text)
+        if m_path:
+            action_input["path"] = m_path.group(1)
+        m_content = re.search(r'"content"\s*:\s*"(.*?)"\s*[,\}]', text, re.DOTALL)
+        if m_content:
+            action_input["content"] = m_content.group(1)
+        m_pattern = re.search(r'"pattern"\s*:\s*"([^"]*)"', text)
+        if m_pattern:
+            action_input["pattern"] = m_pattern.group(1)
+
+        return {
+            "reasoning": f"[repaired] Extracted action '{action}' from non-JSON response",
+            "action": action,
+            "action_input": json.dumps(action_input),
+            "final_response": "",
+        }
+
+    @staticmethod
+    def _repair_from_prose(text: str) -> Optional[Dict[str, Any]]:
+        """Detect intended action from natural-language prose.
+
+        Priority order: write_file > read_text_file > list_directory >
+        search_files > handoff_to_analyst > final
+        """
+        lower = text.lower()
+
+        # write_file — strongest signal: explicit "writing to <path>" or
+        # "write <path>" or "save to <path>"
+        write_patterns = [
+            r'writing to\s+(\S+)',
+            r'write\s+(?:to\s+)?(\S+\.(?:md|txt|json|py|log|csv))',
+            r'saving to\s+(\S+)',
+            r'saved to\s+(\S+)',
+            r'output.*?(\S+\.(?:md|txt|json))',
+        ]
+        for pat in write_patterns:
+            m = re.search(pat, lower)
+            if m:
+                path = m.group(1).strip('"').strip("'")
+                return {
+                    "reasoning": f"[repaired] Detected write_file intent from prose: '{text[:100]}'",
+                    "action": "write_file",
+                    "action_input": json.dumps({"path": path}),
+                    "final_response": "",
+                }
+
+        # read_text_file — "reading <path>" or "opening <path>"
+        read_patterns = [
+            r'reading\s+(\S+\.(?:md|txt|py|json|log|csv))',
+            r'opening\s+(\S+\.(?:md|txt|py|json|log|csv))',
+            r'checking\s+(\S+\.(?:md|txt|py|json|log|csv))',
+        ]
+        for pat in read_patterns:
+            m = re.search(pat, lower)
+            if m:
+                path = m.group(1).strip('"').strip("'")
+                return {
+                    "reasoning": f"[repaired] Detected read_text_file intent from prose",
+                    "action": "read_text_file",
+                    "action_input": json.dumps({"path": path}),
+                    "final_response": "",
+                }
+
+        # list_directory — "listing" or "browse" or "explore the workspace"
+        if re.search(r'\b(listing|browse|explore|looking at)\b.*?\b(directory|workspace|files|folder)\b', lower):
+            return {
+                "reasoning": "[repaired] Detected list_directory intent from prose",
+                "action": "list_directory",
+                "action_input": json.dumps({"path": "."}),
+                "final_response": "",
+            }
+
+        # search_files — "searching" or "looking for"
+        if re.search(r'\b(searching|looking for|find)\b', lower):
+            return {
+                "reasoning": "[repaired] Detected search_files intent from prose",
+                "action": "search_files",
+                "action_input": json.dumps({"pattern": "*.md", "path": "."}),
+                "final_response": "",
+            }
+
+        # handoff_to_analyst — "handing off" or "passing to analyst"
+        if re.search(r'\b(handing off|hand.?off|passing to|transferring to)\b', lower):
+            return {
+                "reasoning": "[repaired] Detected handoff intent from prose",
+                "action": "handoff_to_analyst",
+                "action_input": json.dumps({}),
+                "final_response": "",
+            }
+
+        # final — explicit completion signals
+        if re.search(r'\b(task complete|done|finished|all done|complete)\b', lower):
+            return {
+                "reasoning": "[repaired] Detected final intent from prose",
+                "action": "final",
+                "action_input": json.dumps({}),
+                "final_response": text[:200],
+            }
+
+        return None
 
     def _find_next_agent_role(self, current_role: str,
                               topology: TopologyConfig) -> str:
