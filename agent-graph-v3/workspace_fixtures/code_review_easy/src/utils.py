@@ -33,11 +33,7 @@ def validate_access(ip_address: str) -> bool:
 
 
 def chunk_content(content: str, chunk_size: int = 4096) -> list:
-    """Split content into chunks of chunk_size bytes.
-
-    NOTE: There is an off-by-one error here. When content length is
-    exactly divisible by chunk_size, the last chunk is dropped.
-    """
+    """Split content into chunks of chunk_size bytes."""
     chunks = []
     offset = 0
     while offset < len(content):

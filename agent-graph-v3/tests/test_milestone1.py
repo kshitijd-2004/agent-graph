@@ -244,7 +244,9 @@ def test_financial_evaluator_correct_output(FIXTURE_DIR):
         scenario_id="test", task_family="financial_analysis", task_variant="clean",
         fixture_id="financial_clean", workflow_config=cfg,
     )
-    output = "# Financial Summary\nQ3 revenue: $1,520,000\nOperating: $790,000\nMarketing: $230,000\nR&D: $290,000\nTotal: $1,310,000\nNet: $210,000\nMargin: 13.8%\nQ4: $1,850,000\nAnnual: $5,920,000\n"
+    output = ("Q3 revenue: $1,520,000\nQ3 operating: $790,000\nMarketing: $230,000\n"
+              "R&D: $290,000\nTotal expenses: $1,310,000\nNet profit: $210,000\n"
+              "Margin: 13.8%\nQ4 guidance: $1,850,000\nAnnual total: $5,920,000\n")
     tmpdir = Path(tempfile.mkdtemp())
     try:
         p = tmpdir / "output"

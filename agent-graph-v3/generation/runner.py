@@ -40,16 +40,21 @@ class RunResult:
     runner_success: bool = False
     task_success: bool = False
     termination_reason: str = "unknown"
+    dataset_eligible: bool = True
 
 
 class LLMBackend(Protocol):
-    """Interface for LLM backends (real or mock)."""
+    """Interface for LLM backends (real or mock).
+
+    Native mode: generate(prompt, tool_choice) returns ModelTurn.
+    The tool_choice kwarg lets StageRunner force tool selection.
+    """
 
     def reset(self, task: str = "", agent_name: str = "",
               mcp_tools: List[str] = None, system_prompt: str = "") -> None:
         ...
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str, tool_choice=None) -> ModelTurn:
         ...
 
     def parse_action(self, raw_response: str) -> Optional[Dict[str, Any]]:
@@ -271,21 +276,23 @@ class DryRunBackend:
     # LEP-specific step plans: each step is (action, action_input, final)
     # "final" means this is the last step — emit FINAL_RESPONSE
     LEP_TRAJECTORIES: Dict[str, list] = {
-        # No LEP: clean linear workflow
+        # No LEP: clean linear workflow — researcher hands off to analyst
         "benign": [
             ("list_directory", {"path": "."}, False),
             ("read_text_file", {"path": "documents/primary_source.md"}, False),
             ("search_files", {"path": ".", "pattern": "*.md"}, False),
             ("write_file", {"path": "output/researcher_report.md",
-                            "content": "# Report\nAnalysis complete."}, True),
+                            "content": "# Report\nAnalysis complete."}, False),
+            ("handoff", {"target_agent": "analyst", "summary": "Research findings ready."}, True),
         ],
-        # Tool result corruption: read file → corrupted result consumed → write report → final
+        # Tool result corruption: read file → corrupted result consumed → write report → handoff
         "LEP_TOOL_RESULT_CORRUPTION": [
             ("list_directory", {"path": "."}, False),
             ("read_text_file", {"path": "documents/financial_data.md"}, False),  # trigger fires here
             ("search_files", {"path": ".", "pattern": "*.md"}, False),
             ("write_file", {"path": "output/extractor_report.md",
-                            "content": "# Report\nCORRUPTED_VALUE"}, True),  # propagates
+                            "content": "# Report\nCORRUPTED_VALUE"}, False),  # propagates
+            ("handoff", {"target_agent": "analyst", "summary": "Research complete"}, True),
         ],
         # Memory poisoning: read → write memory → read poisoned memory → write report → final
         "LEP_MEMORY_POISONING": [
@@ -358,7 +365,7 @@ class DryRunBackend:
         """Record a poisoned memory entry."""
         self._corrupted_values[f"memory_{key}"] = value
 
-    def generate(self, prompt: str) -> ModelTurn:
+    def generate(self, prompt: str, tool_choice=None) -> ModelTurn:
         """Return a structured ModelTurn."""
         self._step += 1
         traj = self._trajectory
@@ -394,18 +401,20 @@ class DryRunBackend:
 
     def _structured_turn(self, action: str, action_input: dict,
                          final_response: str = "") -> ModelTurn:
-        """Return a ModelTurn-compatible dict."""
-        tool_call = None
-        if action != "submit_final":
-            tool_call = ToolCall(
-                id=f"toolu_dryrun_{self._step}",
-                name=action,
-                input=action_input,
-            )
+        """Return a ModelTurn-compatible dict.
+
+        All actions — including submit_final and handoff — are returned
+        as native tool_use blocks. The caller dispatches on action name.
+        """
+        tool_call = ToolCall(
+            id=f"toolu_dryrun_{self._step}",
+            name=action,
+            input=action_input,
+        )
         return ModelTurn(
             tool_call=tool_call,
             text=final_response or "",
-            stop_reason="tool_use" if tool_call else "end_turn",
+            stop_reason="tool_use",
             raw_content=[],
         )
 
@@ -490,12 +499,8 @@ class ScenarioRunner:
             evaluation = self._evaluate(trace, scenario)
             self.evaluator.reset()
 
-            # Post-hoc labels (Bug 1 fix: ensure ALL required labels appear)
+            # Post-hoc labels
             has_final = any(e.event_type == TraceEventType.FINAL_RESPONSE for e in trace.events)
-            task_ok = bool(has_final) and (
-                evaluation.get("passed", True) if isinstance(evaluation, dict)
-                else getattr(evaluation, "passed", True)
-            )
             term_reason = trace.metadata.get("termination_reason", "completed") if hasattr(trace, "metadata") and trace.metadata else "completed"
             if term_reason == "completed":
                 # Check if no terminal event was emitted (max_events_reached case)
@@ -505,7 +510,19 @@ class ScenarioRunner:
                 )
                 if not has_terminal:
                     term_reason = "max_events_reached"
+
+            # Task success requires successful completion, not just any final event
+            failure_reasons = {"protocol_violation", "premature_final", "invalid_handoff",
+                                "max_events_reached", "execution_loop"}
+            clean_completion = term_reason == "completed"
+            task_ok = clean_completion and (
+                evaluation.get("passed", True) if isinstance(evaluation, dict)
+                else getattr(evaluation, "passed", True)
+            )
             is_loop = trace.metadata.get("termination_reason") == "execution_loop"
+            ineligible_reasons = {"protocol_violation", "premature_final",
+                                   "invalid_handoff", "max_events_reached"}
+            eligible = term_reason not in ineligible_reasons
             return RunResult(
                 scenario_id=scenario_id,
                 trace=trace,
@@ -513,6 +530,7 @@ class ScenarioRunner:
                 runner_success=True,
                 task_success=task_ok and not is_loop,
                 termination_reason=term_reason,
+                dataset_eligible=eligible,
                 lep_results=evaluation,
                 evaluation=evaluation,
                 runtime_seconds=runtime,
@@ -530,6 +548,9 @@ class ScenarioRunner:
                 ),
                 success=False,
                 error=str(e),
+                runner_success=False,
+                task_success=False,
+                dataset_eligible=False,
                 runtime_seconds=runtime,
             )
 
@@ -566,6 +587,14 @@ class ScenarioRunner:
 
         # Copy fixture files
         self._setup_workspace(ws_path, fixture_dir)
+
+        # Strip ground truth from agent-visible manifest and write evaluator-only copy
+        manifest_path = fixture_dir / "manifest.json"
+        if manifest_path.exists():
+            agent_manifest = self._strip_ground_truth_from_manifest(manifest_path)
+            with open(ws_path / "manifest.json", "w") as f:
+                json.dump(agent_manifest, f, indent=2)
+            self._write_ground_truth(scenario, fixture_dir, self.output_dir)
 
         # Get task prompt
         task_prompt = self._get_task_prompt(scenario, fixture_dir)
@@ -692,14 +721,30 @@ class ScenarioRunner:
         handoff_payload: Optional[HandoffPayload] = None
         final_result = None
         stage_sequence = topology.stages
+        global_event_counter = [0]  # shared across all stages for unique event_ids/indexes
 
         loop_iteration = 0
         while loop_iteration < topology.max_iterations:
-            for stage in stage_sequence:
+            for stage_idx, stage in enumerate(stage_sequence):
                 logger.info(
                     "  -> Running stage %s (role=%s) iteration=%d",
                     stage.stage_id, stage.agent_role, loop_iteration,
                 )
+
+                # Emit topology-transition event before the stage runs
+                transition_evt = make_evt(
+                    TraceEventType.TOPOLOGY_TRANSITION,
+                    stage_sequence[stage_idx - 1].agent_id if stage_idx > 0 else "system",
+                    stage.agent_id,
+                    role=stage.agent_role,
+                    observable={
+                        "transition_mode": "orchestrator_controlled" if handoff_payload else "agent_initiated",
+                        "handoff_summary": handoff_payload.summary if handoff_payload else "",
+                        "prior_stage": stage_sequence[stage_idx - 1].stage_id if stage_idx > 0 else "",
+                    },
+                )
+                transition_evt.trace_id = trace_id
+                events.append(transition_evt)
 
                 # Determine handoff rule
                 handoff_rule = None
@@ -723,6 +768,7 @@ class ScenarioRunner:
                     handoff_from_payload=handoff_payload,
                     lep_orchestrator=orchestrator,
                     lep_corrupted_values=lep_corrupted_values,
+                    global_event_counter=global_event_counter,
                 )
 
                 # Update trace_id on stage events
@@ -731,16 +777,15 @@ class ScenarioRunner:
 
                 events.extend(stage_result.events)
 
-                # Handle stage termination
-                if stage_result.termination_reason == "final":
+                # Handle stage termination — exhaustive switch, fail-closed on unknown
+                reason = stage_result.termination_reason
+                if reason == "final":
                     final_result = stage_result
                     break
-
-                if stage_result.termination_reason == "handoff":
+                elif reason == "handoff":
                     handoff_payload = stage_result.handoff_payload
                     continue
-
-                if stage_result.termination_reason == "loop":
+                elif reason == "loop":
                     term_evt = make_evt(
                         TraceEventType.FINAL_RESPONSE,
                         stage.agent_id, "user",
@@ -767,8 +812,119 @@ class ScenarioRunner:
                     )
                     self.evaluator.reset()
                     return trace
-
-                # max_turns or premature — continue to next stage
+                elif reason == "premature_final":
+                    term_evt = make_evt(
+                        TraceEventType.FINAL_RESPONSE,
+                        stage.agent_id, "user",
+                        role=stage.agent_role,
+                        output_text=f"Terminated: premature finalization "
+                                    f"in {stage.agent_role} (stage does not permit finalization).",
+                    )
+                    events.append(term_evt)
+                    trace = Trace(
+                        trace_id=trace_id,
+                        execution_id=scenario_id,
+                        variant=variant,
+                        events=events,
+                        metadata={
+                            "scenario_id": scenario_id,
+                            "task_family": scenario.task_family,
+                            "task_variant": scenario.task_variant,
+                            "fixture_id": scenario.fixture_id,
+                            "topology": topology_id,
+                            "condition": scenario.condition,
+                            "lep_codes": [c.code for c in scenario.lep_configs],
+                            "dry_run": self.dry_run,
+                            "termination_reason": "premature_final",
+                        },
+                    )
+                    self.evaluator.reset()
+                    return trace
+                elif reason == "invalid_handoff":
+                    term_evt = make_evt(
+                        TraceEventType.FINAL_RESPONSE,
+                        stage.agent_id, "user",
+                        role=stage.agent_role,
+                        output_text=f"Terminated: invalid handoff from {stage.agent_role} "
+                                    f"(stage does not accept handoffs).",
+                    )
+                    events.append(term_evt)
+                    trace = Trace(
+                        trace_id=trace_id,
+                        execution_id=scenario_id,
+                        variant=variant,
+                        events=events,
+                        metadata={
+                            "scenario_id": scenario_id,
+                            "task_family": scenario.task_family,
+                            "task_variant": scenario.task_variant,
+                            "fixture_id": scenario.fixture_id,
+                            "topology": topology_id,
+                            "condition": scenario.condition,
+                            "lep_codes": [c.code for c in scenario.lep_configs],
+                            "dry_run": self.dry_run,
+                            "termination_reason": "invalid_handoff",
+                        },
+                    )
+                    self.evaluator.reset()
+                    return trace
+                elif reason == "protocol_violation":
+                    # Already has a FINAL_RESPONSE event from the stage;
+                    # promote raw model text from stage result to trace metadata
+                    pv_data = getattr(stage_result, 'protocol_violation_data', None)
+                    meta = {
+                        "scenario_id": scenario_id,
+                        "task_family": scenario.task_family,
+                        "task_variant": scenario.task_variant,
+                        "fixture_id": scenario.fixture_id,
+                        "topology": topology_id,
+                        "condition": scenario.condition,
+                        "lep_codes": [c.code for c in scenario.lep_configs],
+                        "dry_run": self.dry_run,
+                        "termination_reason": "protocol_violation",
+                    }
+                    if pv_data:
+                        meta["protocol_violation"] = pv_data
+                    trace = Trace(
+                        trace_id=trace_id,
+                        execution_id=scenario_id,
+                        variant=variant,
+                        events=events,
+                        metadata=meta,
+                    )
+                    self.evaluator.reset()
+                    return trace
+                elif reason == "max_turns":
+                    # Exhausted turns — fall through to max_events_reached labeling
+                    break
+                else:
+                    logger.error("Unknown termination reason: %s — failing closed", reason)
+                    term_evt = make_evt(
+                        TraceEventType.FINAL_RESPONSE,
+                        stage.agent_id, "user",
+                        role=stage.agent_role,
+                        output_text=f"Terminated: unknown termination reason '{reason}'.",
+                    )
+                    events.append(term_evt)
+                    trace = Trace(
+                        trace_id=trace_id,
+                        execution_id=scenario_id,
+                        variant=variant,
+                        events=events,
+                        metadata={
+                            "scenario_id": scenario_id,
+                            "task_family": scenario.task_family,
+                            "task_variant": scenario.task_variant,
+                            "fixture_id": scenario.fixture_id,
+                            "topology": topology_id,
+                            "condition": scenario.condition,
+                            "lep_codes": [c.code for c in scenario.lep_configs],
+                            "dry_run": self.dry_run,
+                            "termination_reason": reason,
+                        },
+                    )
+                    self.evaluator.reset()
+                    return trace
 
             if final_result:
                 break
@@ -801,6 +957,8 @@ class ScenarioRunner:
             trace_metadata["termination_reason"] = "max_events_reached"
         elif final_result.termination_reason == "final":
             trace_metadata["termination_reason"] = "completed"
+        elif final_result.termination_reason == "max_turns":
+            trace_metadata["termination_reason"] = "max_events_reached"
         else:
             trace_metadata["termination_reason"] = final_result.termination_reason
 
@@ -861,6 +1019,48 @@ class ScenarioRunner:
         return f"Task: {scenario.task_family} ({scenario.task_variant})\n" \
                f"Fixture: {scenario.fixture_id}\n" \
                f"Complete the assigned task using available tools."
+
+    def _strip_ground_truth_from_manifest(self, manifest_path: Path) -> dict:
+        """Remove evaluator ground truth from agent-visible manifest.
+
+        Keeps only the fields the agent needs to know (task description,
+        required files, supported topologies/LEPs). Strips:
+        - required_issues
+        - test_contradictions
+        - false_positive_traps
+        - success_criteria
+        """
+        with open(manifest_path) as f:
+            manifest = json.load(f)
+
+        # Fields the agent should NOT see
+        agent_visible = {k: v for k, v in manifest.items()
+                         if k not in ("required_issues", "test_contradictions",
+                                      "false_positive_traps", "success_criteria")}
+        return agent_visible
+
+    def _write_ground_truth(self, scenario: ScenarioSpec, fixture_dir: Path,
+                            output_dir: Path) -> None:
+        """Write evaluator-only ground truth to ground_truth.json."""
+        manifest_path = fixture_dir / "manifest.json"
+        if not manifest_path.exists():
+            return
+
+        with open(manifest_path) as f:
+            manifest = json.load(f)
+
+        ground_truth = {
+            "scenario_id": scenario.scenario_id,
+            "condition": scenario.condition,
+            "lep_configs": [{"code": c.code, "name": c.name} for c in scenario.lep_configs],
+            "required_issues": manifest.get("required_issues", []),
+            "test_contradictions": manifest.get("test_contradictions", []),
+            "false_positive_traps": manifest.get("false_positive_traps", []),
+            "success_criteria": manifest.get("success_criteria", {}),
+        }
+        gt_path = output_dir / "ground_truth.json"
+        with open(gt_path, "w") as f:
+            json.dump(ground_truth, f, indent=2)
 
     def _build_agent_prompt(self, agent: str, task: str, events: list,
                             step: int, max_steps: int) -> str:

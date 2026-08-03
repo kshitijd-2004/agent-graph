@@ -46,6 +46,8 @@ class StageResult:
     final_agent_role: str = ""
     raw_output: str = ""
     step_count: int = 0
+    raw_prompts: List[str] = field(default_factory=list)  # debug-only, not in canonical trace
+    protocol_violation_data: Optional[Dict[str, Any]] = None  # raw model text + context
 
 
 class StageRunner:
@@ -73,6 +75,21 @@ class StageRunner:
         "list_directory", "create_directory",
     })
 
+    # Native tool actions — acceptable for tool_choice="any"
+    # handoff and submit_final are also valid native tools but are
+    # phase-terminating and handled separately.
+    NATIVE_TOOL_ACTIONS = frozenset({
+        "list_directory", "read_text_file", "write_file",
+        "search_files", "create_directory",
+        "handoff", "submit_final",
+    })
+
+    # Retry nudge sent when the model returns text instead of a tool call
+    TOOL_CALL_NUDGE = (
+        "Call exactly one provided tool. "
+        "Do not describe or print the call."
+    )
+
     def __init__(self, llm_backend, evaluator=None):
         self.llm = llm_backend
         self.evaluator = evaluator
@@ -89,6 +106,7 @@ class StageRunner:
         handoff_from_payload: Optional[HandoffPayload] = None,
         lep_orchestrator=None,
         lep_corrupted_values: Optional[Dict[str, Any]] = None,
+        global_event_counter: Optional[List[int]] = None,
     ) -> StageResult:
         """Execute one agent stage.
 
@@ -103,15 +121,19 @@ class StageRunner:
             handoff_from_payload: Structured payload from the prior agent (if receiving)
             lep_orchestrator: Active LEP orchestrator (or None for benign)
             lep_corrupted_values: Accumulated corrupted values
+            global_event_counter: Shared counter [n] for globally unique event IDs/indexes
 
         Returns:
             StageResult with events and termination info
         """
         events: List[TraceEvent] = []
-        event_counter = [0]
+        stage_event_counter = [0]
         max_turns = stage.max_turns
         current_role = stage.agent_role
         agent_id = stage.agent_id
+
+        # Use shared global counter for globally unique event IDs/indexes
+        global_counter = global_event_counter if global_event_counter is not None else [0]
 
         # Build the agent map for make_evt
         agent_map = {s.agent_role: s.agent_id for s in topology.stages}
@@ -125,12 +147,14 @@ class StageRunner:
                      tool_arguments: Optional[Dict[str, Any]] = None,
                      tool_result: Optional[str] = None,
                      **kw) -> TraceEvent:
-            event_counter[0] += 1
+            global_counter[0] += 1
+            stage_event_counter[0] += 1
             now = datetime.now(timezone.utc).isoformat()
             return TraceEvent(
                 trace_id="",  # set by caller
-                event_id=str(event_counter[0]),
-                event_index=event_counter[0] - 1,
+                event_id=f"evt_{global_counter[0]}",
+                event_index=global_counter[0] - 1,
+                stage_event_index=stage_event_counter[0] - 1,
                 timestamp=now,
                 event_type=event_type,
                 source_entity_id=source,
@@ -166,18 +190,32 @@ class StageRunner:
 
         # ── Stage initialization ─────────────────────────────────────────────
 
+        # Build role-specific system prompt BEFORE resetting the backend
+        # so the backend's native _messages uses the correct prompt.
+        system_prompt = self._build_system_prompt(stage, handoff_from_payload)
+
+        # Build tool list: include handoff/submit_final only if the stage
+        # is allowed to use them (prevents premature use).
+        available_tools = [
+            "list_directory", "read_text_file", "write_file",
+            "search_files", "create_directory",
+        ]
+        if stage.accepts_handoff:
+            available_tools.append("handoff")
+        if stage.can_finalize:
+            available_tools.append("submit_final")
+
         # Reset backend ONCE per stage (not per turn)
         self.llm.reset(
             task=task_prompt,
             agent_name=current_role,
-            mcp_tools=["list_directory", "read_text_file", "write_file",
-                       "search_files", "create_directory"],
-            system_prompt=f"You are {current_role}. Complete the assigned task.",
+            mcp_tools=available_tools,
+            system_prompt=system_prompt,
         )
 
         # Determine LEP code
         lep_code = "benign"
-        if scenario.lep_configs:
+        if scenario is not None and getattr(scenario, 'lep_configs', None):
             lep_code = scenario.lep_configs[0].code
 
         # If dry-run backend, set LEP context
@@ -232,6 +270,10 @@ class StageRunner:
         )
 
         # ── Stage execution loop ─────────────────────────────────────────────
+        # Native tool mode: the model receives tool definitions via the
+        # Anthropic tool_use mechanism and responds with tool_use blocks.
+        # We force tool selection with tool_choice="any" and retry once
+        # if the model returns text-only output.
 
         action_history: List[str] = []
         last_corrupted_result = ""
@@ -240,39 +282,85 @@ class StageRunner:
         backend_reset_count = 1  # already reset above
 
         for turn in range(1, max_turns + 1):
-            # Build prompt from stage-local history
-            prompt = self._build_turn_prompt_from_history(
-                stage=stage,
-                task_prompt=task_prompt,
-                stage_history=stage_history,
-                turn=turn,
-                max_turns=max_turns,
-            )
-
-            # Call backend — returns structured ModelTurn
-            model_turn = self.llm.generate(prompt)
-
-            # ── Extract action from structured turn ─────────────────────────
-            action = ""
-            action_input = {}
-            final_response = ""
-            raw_output = model_turn.text or ""
-
-            if model_turn.tool_call:
-                tc = model_turn.tool_call
-                action = tc.name
-                action_input = tc.input
-                raw_output = f"[tool_use:{tc.name}]"
+            # Detect backend mode:
+            # - Native (APIBackend): has native _messages property.
+            #   The backend owns its own conversation history — no serialized
+            #   prompt needed, no history serialization.
+            # - Legacy (DryRunBackend etc.): no _messages.
+            #   Must build a text prompt from stage_history.
+            is_native = hasattr(self.llm, '_messages')
+            if is_native:
+                prompt = ""
             else:
-                # No tool_call means submit_final (or text response on finalizable stage)
-                action = "submit_final"
-                final_response = model_turn.text or ""
+                prompt = self._build_turn_prompt_from_history(
+                    stage=stage,
+                    task_prompt=task_prompt,
+                    stage_history=stage_history,
+                    turn=turn,
+                    max_turns=max_turns,
+                )
+
+            # Force tool selection — works for both native and text-mode backends.
+            tool_choice = "any"
+
+            # ── First API call ───────────────────────────────────────────────
+            model_turn = self.llm.generate(prompt, tool_choice=tool_choice)
+
+            # ── Retry on text-only or max_tokens ─────────────────────────────
+            if not model_turn.tool_call or model_turn.stop_reason == "max_tokens":
+                retry_reason = "text_only" if not model_turn.tool_call else "max_tokens"
+                logger.info(
+                    "StageRunner retry: stage=%s turn=%d reason=%s",
+                    stage.stage_id, turn, retry_reason,
+                )
+                # Retry once with explicit nudge
+                model_turn = self.llm.generate(
+                    self.TOOL_CALL_NUDGE,
+                    tool_choice=tool_choice,
+                )
+
+                if not model_turn.tool_call:
+                    # Retry also failed — protocol violation
+                    protocol_evt = make_evt(
+                        TraceEventType.FINAL_RESPONSE, agent_id, "user",
+                        role=current_role,
+                        output_text="Terminated: protocol violation — "
+                                    "model returned non-tool text after retry.",
+                        observable={
+                            "protocol_violation": True,
+                            "raw_model_text": model_turn.text,
+                            "raw_model_stop_reason": model_turn.stop_reason,
+                            "retry_attempted": True,
+                            "retry_result": None,
+                            "retry_reason": retry_reason,
+                        },
+                    )
+                    events.append(protocol_evt)
+                    return StageResult(
+                        stage_id=stage.stage_id,
+                        events=events,
+                        termination_reason="protocol_violation",
+                        final_agent_role=current_role,
+                        step_count=turn,
+                        protocol_violation_data={
+                            "raw_text": model_turn.text,
+                            "stop_reason": model_turn.stop_reason,
+                            "turn": turn,
+                            "retry_reason": retry_reason,
+                        },
+                    )
+
+            # ── Extract action from tool_use block ───────────────────────────
+            tc = model_turn.tool_call
+            action = tc.name
+            action_input = tc.input if isinstance(tc.input, dict) else {}
+            raw_output = f"[tool_use:{tc.name}]"
 
             logger.info(
                 "StageRunner turn: stage=%s role=%s turn=%d/%d "
                 "tool=%s action_input_keys=%s stop_reason=%s",
                 stage.stage_id, current_role, turn, max_turns,
-                action, list(action_input.keys()) if isinstance(action_input, dict) else "?",
+                action, list(action_input.keys()),
                 model_turn.stop_reason,
             )
 
@@ -297,10 +385,22 @@ class StageRunner:
                     )
 
             # ── REASONING event ──────────────────────────────────────────────
+            # Native mode: serialize native messages for the event record.
+            # Dry-run mode: use the text prompt.
+            if is_native:
+                raw_msgs = getattr(self.llm, '_messages', None)
+                # Handle both property (returns list) and method (needs call)
+                if callable(raw_msgs):
+                    native_msgs = raw_msgs()
+                else:
+                    native_msgs = raw_msgs
+                reasoning_input = json.dumps(native_msgs) if native_msgs else prompt
+            else:
+                reasoning_input = prompt
             reasoning_evt = make_evt(
                 TraceEventType.REASONING, agent_id, "internal",
                 role=current_role,
-                input_text=prompt,
+                input_text=reasoning_input,
                 output_text=raw_output,
             )
             events.append(reasoning_evt)
@@ -308,7 +408,7 @@ class StageRunner:
                 lep_orchestrator.evaluate_triggers(reasoning_evt)
 
             # ── TOOL EXECUTION ───────────────────────────────────────────────
-            if model_turn.tool_call and action not in ("handoff", "submit_final"):
+            if action not in ("handoff", "submit_final"):
                 tc = model_turn.tool_call
                 tc_evt = make_evt(
                     TraceEventType.TOOL_CALL, agent_id,
@@ -319,15 +419,6 @@ class StageRunner:
                     tool_arguments=action_input,
                 )
                 events.append(tc_evt)
-                stage_history.append({
-                    "role": "assistant",
-                    "content": [{
-                        "type": "tool_use",
-                        "id": tc.id,
-                        "name": tc.name,
-                        "input": tc.input,
-                    }],
-                })
 
                 # Execute the tool
                 result = self._execute_tool(
@@ -436,7 +527,7 @@ class StageRunner:
                     termination_reason = "premature_final"
                     break
 
-                summary = action_input.get("summary", final_response or "Task complete")
+                summary = action_input.get("summary", "") or "Task complete"
                 final_evt = make_evt(
                     TraceEventType.FINAL_RESPONSE, agent_id, "user",
                     role=current_role,
@@ -459,63 +550,6 @@ class StageRunner:
                     final_agent_role=current_role,
                     step_count=turn,
                     raw_output=summary,
-                )
-
-            # ── PREMATURE FINAL (text response on non-finalizable stage) ─────
-            if action == "final" and not stage.can_finalize:
-                if stage.accepts_handoff:
-                    next_role = self._find_next_agent_role(current_role, topology)
-                    next_stage = topology.get_stage(next_role)
-                    next_aid = next_stage.agent_id if next_stage else agent_id
-                    hoff_evt = make_evt(
-                        TraceEventType.AGENT_HANDOFF, agent_id, next_aid,
-                        role=current_role,
-                        output_text=f"Auto-enforced handoff from {current_role} to {next_role} "
-                                    f"(agent called final on non-finalizable stage)",
-                    )
-                    hoff_evt.observable = {"handoff_from": current_role, "handoff_to": next_role}
-                    events.append(hoff_evt)
-                    payload = HandoffPayload(
-                        from_agent=current_role,
-                        to_agent=next_role,
-                        findings=[final_response or "Auto-enforced handoff"],
-                        source_paths=[],
-                        report_path="",
-                        verification_requests=[],
-                    )
-                    return StageResult(
-                        stage_id=stage.stage_id,
-                        events=events,
-                        termination_reason="handoff",
-                        handoff_payload=payload,
-                        final_agent_role=current_role,
-                        step_count=turn,
-                    )
-                break
-
-                # This stage may finalize — emit FINAL_RESPONSE
-                final_evt = make_evt(
-                    TraceEventType.FINAL_RESPONSE, agent_id, "user",
-                    role=current_role,
-                    output_text=final_response or "Task complete",
-                )
-
-                # Mark as downstream failure if this stage consumed corrupted data
-                if handoff_from_payload and handoff_from_payload.contains_corrupted_data:
-                    label_failure(final_evt, "factual_error")
-
-                events.append(final_evt)
-
-                if lep_orchestrator and lep_orchestrator._active_leps:
-                    lep_orchestrator.evaluate_triggers(final_evt)
-
-                return StageResult(
-                    stage_id=stage.stage_id,
-                    events=events,
-                    termination_reason="final",
-                    final_agent_role=current_role,
-                    raw_output=final_response,
-                    step_count=turn,
                 )
 
         # Exhausted max turns
@@ -551,6 +585,8 @@ class StageRunner:
             "write_file": {"path", "content"},
             "search_files": {"path", "pattern"},
             "create_directory": {"path"},
+            "handoff": {"target_agent", "summary", "report_path", "source_paths", "verification_requests"},
+            "submit_final": {"summary", "report_path"},
         }
         return {k: v for k, v in args.items() if k in allowed.get(tool_name, set())}
 
@@ -677,7 +713,7 @@ class StageRunner:
         return {
             "reasoning": f"[repaired] Extracted action '{action}' from non-JSON response",
             "action": action,
-            "action_input": json.dumps(action_input),
+            "action_input": action_input,
             "final_response": "",
         }
 
@@ -706,7 +742,7 @@ class StageRunner:
                 return {
                     "reasoning": f"[repaired] Detected write_file intent from prose: '{text[:100]}'",
                     "action": "write_file",
-                    "action_input": json.dumps({"path": path}),
+                    "action_input": {"path": path},
                     "final_response": "",
                 }
 
@@ -723,7 +759,7 @@ class StageRunner:
                 return {
                     "reasoning": f"[repaired] Detected read_text_file intent from prose",
                     "action": "read_text_file",
-                    "action_input": json.dumps({"path": path}),
+                    "action_input": {"path": path},
                     "final_response": "",
                 }
 
@@ -732,7 +768,7 @@ class StageRunner:
             return {
                 "reasoning": "[repaired] Detected list_directory intent from prose",
                 "action": "list_directory",
-                "action_input": json.dumps({"path": "."}),
+                "action_input": {"path": "."},
                 "final_response": "",
             }
 
@@ -741,7 +777,7 @@ class StageRunner:
             return {
                 "reasoning": "[repaired] Detected search_files intent from prose",
                 "action": "search_files",
-                "action_input": json.dumps({"pattern": "*.md", "path": "."}),
+                "action_input": {"pattern": "*.md", "path": "."},
                 "final_response": "",
             }
 
@@ -750,7 +786,7 @@ class StageRunner:
             return {
                 "reasoning": "[repaired] Detected handoff intent from prose",
                 "action": "handoff_to_analyst",
-                "action_input": json.dumps({}),
+                "action_input": {},
                 "final_response": "",
             }
 
@@ -759,7 +795,7 @@ class StageRunner:
             return {
                 "reasoning": "[repaired] Detected final intent from prose",
                 "action": "final",
-                "action_input": json.dumps({}),
+                "action_input": {},
                 "final_response": text[:200],
             }
 
@@ -776,7 +812,11 @@ class StageRunner:
 
     def _build_system_prompt(self, stage: Stage,
                              handoff_from_payload: Optional[HandoffPayload]) -> str:
-        """Build the system prompt for this stage."""
+        """Build the system prompt for this stage.
+
+        Role-specific completion instructions: each agent is told exactly
+        one legal completion action based on its stage configuration.
+        """
         parts = [f"You are {stage.agent_role}."]
         if handoff_from_payload:
             parts.append(
@@ -784,21 +824,26 @@ class StageRunner:
                 f"Review their findings and build upon them."
             )
 
-        # JSON protocol — in the system message, not the user message.
-        # System messages have higher compliance weight; this is the
-        # single place the contract is established, not repeated per turn.
-        parts.append(
-            "You must respond with ONLY a JSON object. "
-            "No prose, no explanations, no thinking-out-loud.\n"
-            "Schema: {\"reasoning\": \"...\", \"action\": \"tool_name\", "
-            "\"action_input\": {\"key\": \"value\"}, \"final_response\": \"...\"}\n"
-            "Allowed actions: list_directory, read_text_file, write_file, "
-            "search_files, create_directory, handoff_to_analyst, final\n"
-            "Example: {\"reasoning\": \"Writing report\", "
-            "\"action\": \"write_file\", "
-            "\"action_input\": {\"path\": \"output/report.md\", "
-            "\"content\": \"report text here\"}}"
-        )
+        if stage.can_finalize:
+            # Final agent: must call submit_final, must NOT call handoff
+            parts.append(
+                "You are the final agent in this workflow. "
+                "When your work is complete, call submit_final with a summary. "
+                "Do NOT call handoff."
+            )
+        elif stage.accepts_handoff:
+            # Intermediate agent: must call handoff, must NOT call submit_final or prose
+            parts.append(
+                "You are an intermediate agent. After completing your analysis "
+                "and writing your output artifact, call handoff to transfer work "
+                "to the next agent. "
+                "Do NOT call submit_final. Do NOT finish with plain prose."
+            )
+        else:
+            parts.append(
+                "Complete the assigned task using the available tools."
+            )
+
         return " ".join(parts)
 
     def _build_turn_prompt_from_history(

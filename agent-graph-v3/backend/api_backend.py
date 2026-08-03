@@ -5,6 +5,10 @@ Configure via environment variables:
     LLM_API_KEY       - API key (required)
     LLM_BASE_URL      - Base URL (default: https://api.opusmax.pro/v1)
     LLM_MODEL         - Model name (default: claude-sonnet-5)
+
+Native tool_use mode: the model receives tool definitions and responds
+with tool_use blocks. No JSON parsing, no text schemas. Retry logic
+lives in StageRunner, not here.
 """
 
 from __future__ import annotations
@@ -17,6 +21,45 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+
+def _api_debug(
+    messages: List[Dict[str, Any]],
+    tools: List[Dict[str, Any]],
+    tool_choice: Any,
+    response: Dict[str, Any],
+) -> None:
+    """Emit a single-line debug summary of the API request/response."""
+    roles = [m.get("role", "?") for m in messages]
+    content_types = []
+    for m in messages:
+        for b in (m.get("content") or []):
+            if isinstance(b, dict):
+                content_types.append(b.get("type", "?"))
+            else:
+                content_types.append(str(type(b).__name__))
+
+    tool_names = [t.get("name", "?") for t in (tools or [])]
+
+    stop_reason = response.get("stop_reason", "?")
+    resp_content = response.get("content", [])
+    resp_types = [b.get("type", "?") for b in resp_content if isinstance(b, dict)]
+    resp_tool = ""
+    for b in resp_content:
+        if isinstance(b, dict) and b.get("type") == "tool_use":
+            resp_tool = f" tool_use={b.get('name','?')}"
+            break
+
+    tc_str = ""
+    if isinstance(tool_choice, dict):
+        tc_str = f" type={tool_choice.get('type','?')}"
+    elif tool_choice:
+        tc_str = f" {tool_choice}"
+
+    print(
+        f"  [API] roles={roles} content_types={content_types} "
+        f"tools={tool_names}{tc_str} "
+        f"stop_reason={stop_reason} resp_types={resp_types}{resp_tool}"
+    )
 
 @dataclass
 class ToolCall:
@@ -36,7 +79,6 @@ class ModelTurn:
 
 
 # Canonical tool definitions matching the MCP tool schema.
-# These are sent to the model via the Anthropic tool_use mechanism.
 TOOL_DEFINITIONS = [
     {
         "name": "list_directory",
@@ -135,8 +177,10 @@ TOOL_DEFINITIONS = [
 class APIBackend:
     """LLM backend using Anthropic-compatible API via stdlib.
 
-    Drop-in replacement for LlamaBackend — same interface expected by
-    BenchmarkTask.generate_trace(): reset(), _generate(), parse_action().
+    Native tool_use mode: the model receives tool definitions and
+    responds with tool_use blocks. No JSON parsing, no text schemas.
+
+    Retry logic is NOT implemented here — StageRunner owns that.
     """
 
     def __init__(
@@ -149,7 +193,6 @@ class APIBackend:
     ):
         self.api_key = api_key or os.environ.get("LLM_API_KEY", "")
         self.base_url = (base_url or os.environ.get("LLM_BASE_URL", "https://api.opusmax.pro")).rstrip("/")
-        # Normalize: strip trailing /v1 so we always append exactly one
         if self.base_url.endswith("/v1"):
             self.base_url = self.base_url[:-3]
         self.model = model or os.environ.get("LLM_MODEL", "claude-sonnet-5")
@@ -194,12 +237,21 @@ class APIBackend:
         self._task_prompt = task
         self._conversation: List[Dict[str, Any]] = []
 
-    def _build_messages(self, prompt: str) -> List[Dict[str, Any]]:
-        messages = []
+    # ── Native message history (sole source of truth) ─────────────────────────
+    # StageRunner seeds the conversation with system + task + handoff context.
+    # Each turn appends tool_use + tool_result blocks. No text serialization.
+
+    @property
+    def _messages(self) -> List[Dict[str, Any]]:
+        """Current conversation message array (native Anthropic format)."""
+        msgs: List[Dict[str, Any]] = []
         if self._system_prompt:
-            messages.append({"role": "system", "content": self._system_prompt})
-        messages.append({"role": "user", "content": prompt})
-        return messages
+            msgs.append({"role": "system", "content": self._system_prompt})
+        msgs.append({"role": "user", "content": self._task_prompt or "Complete the task."})
+        msgs.extend(self._conversation)
+        return msgs
+
+    # ── Tool definitions ──────────────────────────────────────────────────────
 
     def _build_tools(self, available_tools: List[str]) -> List[Dict[str, Any]]:
         """Build the Anthropic tool_use definitions for the available MCP tools."""
@@ -214,13 +266,19 @@ class APIBackend:
                 })
         return result
 
+    # ── API call ─────────────────────────────────────────────────────────────
+
     def _call_api(
         self,
         messages: List[Dict[str, Any]],
         max_tokens: Optional[int] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
+        tool_choice: Optional[Any] = None,
     ) -> Dict[str, Any]:
-        """Make an API call and return the raw response dict."""
+        """Make an API call and return the raw response dict.
+
+        Does NOT retry. The caller (StageRunner) decides whether to retry.
+        """
         payload: Dict[str, Any] = {
             "model": self.model,
             "max_tokens": max_tokens or self.max_tokens,
@@ -230,6 +288,9 @@ class APIBackend:
 
         if tools:
             payload["tools"] = tools
+
+        if tool_choice is not None:
+            payload["tool_choice"] = tool_choice
 
         data_bytes = json.dumps(payload).encode("utf-8")
 
@@ -255,6 +316,8 @@ class APIBackend:
             return json.loads(raw_resp)
         except json.JSONDecodeError:
             raise ValueError(f"Non-JSON response: {raw_resp[:500]}")
+
+    # ── Response extraction ───────────────────────────────────────────────────
 
     def _extract_turn(self, data: Dict[str, Any]) -> ModelTurn:
         """Extract a ModelTurn from an API response dict.
@@ -290,17 +353,50 @@ class APIBackend:
             raw_content=content,
         )
 
-    def _generate(self, prompt: str) -> ModelTurn:
+    # ── Generate (no retry) ───────────────────────────────────────────────────
+
+    def _generate(
+        self,
+        prompt: str,
+        tool_choice: Optional[Any] = None,
+    ) -> ModelTurn:
         """Generate a response from the API.
 
-        Maintains native conversation history with tool_result blocks.
+        Sends native conversation history with tool_result blocks.
         Returns structured ModelTurn — never None.
+
+        Does NOT retry. The caller (StageRunner) decides whether to retry.
         """
         tools = self._build_tools(self._mcp_tools)
 
+        # Build message list: base _messages + optional prompt as user turn
+        messages = list(self._messages)
+        if prompt:
+            messages.append({"role": "user", "content": prompt})
+
+        # Normalize tool_choice: accept string shortcuts for Anthropic format
+        if tool_choice == "any":
+            tool_choice = {"type": "any"}
+        elif tool_choice == "auto":
+            tool_choice = {"type": "auto"}
+
         with self._lock:
             try:
-                data = self._call_api(self._messages, max_tokens=self.max_tokens, tools=tools)
+                data = self._call_api(
+                    messages,
+                    max_tokens=self.max_tokens,
+                    tools=tools,
+                    tool_choice=tool_choice,
+                )
+
+                # ── Debug logging ────────────────────────────────────────────
+                _api_debug(
+                    messages=messages,
+                    tools=tools,
+                    tool_choice=tool_choice,
+                    response=data,
+                )
+
                 return self._extract_turn(data)
             except Exception as e:
                 print(f"  [ERROR] API call failed: {e}")
@@ -308,15 +404,7 @@ class APIBackend:
 
     generate = _generate
 
-    @property
-    def _messages(self) -> List[Dict[str, Any]]:
-        """Current conversation message array (native Anthropic format)."""
-        msgs: List[Dict[str, Any]] = []
-        if self._system_prompt:
-            msgs.append({"role": "system", "content": self._system_prompt})
-        msgs.append({"role": "user", "content": self._task_prompt or "Complete the task."})
-        msgs.extend(self._conversation)
-        return msgs
+    # ── Conversation history management ──────────────────────────────────────
 
     def _append_tool_result(self, tool_call: ToolCall, result: str) -> None:
         """Append a tool_result block to the conversation history."""
@@ -338,36 +426,9 @@ class APIBackend:
             }],
         })
 
-    def reset(
-        self,
-        task: str = "",
-        agent_name: str = "researcher",
-        mcp_tools: List[str] = None,
-        system_prompt: str = "",
-    ) -> None:
-        """Reset backend for a new stage.
-
-        Clears conversation history and reinitializes the system prompt.
-        """
-        self._task = task
-        self._agent_name = agent_name
-        self._mcp_tools = mcp_tools or []
-        self._system_prompt = system_prompt
-        self._task_prompt = task
-        self._conversation: List[Dict[str, Any]] = []
-
-    def _build_tools(self, available_tools: List[str]) -> List[Dict[str, Any]]:
-        """Build the Anthropic tool_use definitions for the available MCP tools."""
-        tool_names = set(available_tools)
-        result = []
-        for tool_def in TOOL_DEFINITIONS:
-            if tool_def["name"] in tool_names:
-                result.append({
-                    "name": tool_def["name"],
-                    "description": tool_def["description"],
-                    "input_schema": tool_def["input_schema"],
-                })
-        return result
+    # ── Legacy JSON-mode parsing (kept for non-native backends) ───────────────
+    # These methods are retained for non-native backends but are NOT called
+    # when APIBackend is used in native tool_use mode.
 
     def parse_action(self, raw_response: str) -> Optional[Dict[str, Any]]:
         """Try to extract a JSON action from the LLM response."""
@@ -408,37 +469,29 @@ class APIBackend:
         import re as _re
         result = {}
         try:
-            # Try standard parse first
             return json.loads(text)
         except json.JSONDecodeError:
             pass
 
-        # Strategy: extract top-level string values with regex
-        # Handle action (simple string, no embedded quotes expected)
         m = _re.search(r'"action"\s*:\s*"([^"]*)"', text)
         if m:
             result["action"] = m.group(1)
         else:
             return None
 
-        # Handle reasoning — may span multiple lines, stop at closing quote
         m = _re.search(r'"reasoning"\s*:\s*"(.*?)"\s*,\s*"(?:action|action_input|final_response)"', text, _re.DOTALL)
         if m:
             result["reasoning"] = m.group(1).strip()
 
-        # Handle action_input — extract path and content separately
         action_input = {}
         m = _re.search(r'"path"\s*:\s*"([^"]*)"', text)
         if m:
             action_input["path"] = m.group(1)
 
-        # Content field — non-greedy match: stop at first " followed by , or }
-        # Also try "text" as fallback (some models use this instead of "content")
         m = _re.search(r'"content"\s*:\s*"(.*?)"\s*[,\}]', text, _re.DOTALL)
         if not m:
             m = _re.search(r'"text"\s*:\s*"(.*?)"\s*[,\}]', text, _re.DOTALL)
         if m:
-            # Keep raw content as-is; json.dumps in _format_action handles escaping
             action_input["content"] = m.group(1)
 
         if action_input:
@@ -457,5 +510,3 @@ class APIBackend:
             "action_input": str(action_input),
             "final_response": str(data.get("final_response", "")),
         }
-
-        return None

@@ -18,6 +18,7 @@ class TraceEventType(str, Enum):
     TOOL_CALL = "tool_call"
     TOOL_RESULT = "tool_result"
     AGENT_HANDOFF = "agent_handoff"
+    TOPOLOGY_TRANSITION = "topology_transition"
     LLM_OUTPUT = "llm_output"
     MEMORY_RETRIEVAL = "memory_retrieval"
     MEMORY_WRITE = "memory_write"
@@ -32,6 +33,7 @@ class TraceEventType(str, Enum):
             "tool_call": cls.TOOL_CALL,
             "tool_result": cls.TOOL_RESULT,
             "agent_handoff": cls.AGENT_HANDOFF,
+            "topology_transition": cls.TOPOLOGY_TRANSITION,
             "llm_output": cls.LLM_OUTPUT,
             "memory_retrieval": cls.MEMORY_RETRIEVAL,
             "memory_write": cls.MEMORY_WRITE,
@@ -56,9 +58,10 @@ class TraceEvent:
     # ── Identity ────────────────────────────────────────────────────────────
     trace_id: str
     event_id: str
-    event_index: int
+    event_index: int           # global monotonic index within the trace
     timestamp: str
     event_type: Union[TraceEventType, str]
+    stage_event_index: Optional[int] = None  # local index within the stage, None if not applicable
 
     # ── Entity references ───────────────────────────────────────────────────
     source_entity_id: str = ""
