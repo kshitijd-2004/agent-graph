@@ -963,6 +963,200 @@ def test_handoff_enforced_for_multi_agent_topo():
     ok("handoff_enforced_for_multi_agent_topo")
 
 
+def test_stage_local_history_persistence():
+    """Regression: turn 2 must contain turn 1's tool result in the API prompt.
+
+    The bug was that the stage runner rebuilt the prompt from global events
+    each turn, so the backend never saw prior tool results and repeated
+    list_directory('.') on every turn.
+    """
+    from generation.runner import ScenarioRunner
+    from schemas import ScenarioSpec, WorkflowConfig
+    from generation.scenario_builder import ScenarioBuilder, ScenarioBuildConfig
+    from generation.topology import get_topology
+    from generation.stage_runner import StageRunner
+
+    prompts_seen = []
+
+    class HistoryTrackingBackend:
+        def __init__(self):
+            self._step = 0
+            self.reset_count = 0
+
+        def reset(self, *a, **kw):
+            self.reset_count += 1
+
+        def generate(self, prompt: str) -> str:
+            self._step += 1
+            prompts_seen.append(prompt)
+            if self._step == 1:
+                return json.dumps({
+                    "reasoning": "Starting the code review task",
+                    "action": "list_directory",
+                    "action_input": {"path": "."},
+                    "final_response": "",
+                })
+            elif self._step == 2:
+                # Verify turn 2 prompt contains turn 1's tool result.
+                # The history section should contain the tool result from turn 1.
+                assert "[Tool: list_directory]" in prompt or "(empty directory)" in prompt, (
+                    f"Turn 2 prompt does not contain turn 1's tool result. "
+                    f"Prompt (first 400 chars): {prompt[:400]}"
+                )
+                return json.dumps({
+                    "reasoning": "Now reading the main source file",
+                    "action": "read_text_file",
+                    "action_input": {"path": "src/main.py"},
+                    "final_response": "",
+                })
+            else:
+                return json.dumps({
+                    "reasoning": "Done",
+                    "action": "final",
+                    "action_input": {},
+                    "final_response": "Code review complete.",
+                })
+
+        def parse_action(self, raw_response: str):
+            data = json.loads(raw_response)
+            return {
+                "reasoning": str(data.get("reasoning", "")),
+                "action": str(data["action"]),
+                "action_input": json.dumps(data.get("action_input", {})),
+                "final_response": str(data.get("final_response", "")),
+            }
+
+    builder = ScenarioBuilder(seed=42)
+    cfg = ScenarioBuildConfig(
+        task_family="code_review",
+        fixture_id="code_review_easy",
+        task_variant="easy",
+        topology="linear_2",
+        repetition_index=0,
+        seed=42,
+    )
+    spec = builder.build_benign(cfg)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        runner = ScenarioRunner(
+            llm_backend=HistoryTrackingBackend(),
+            dry_run=False,
+            max_events=40,
+            output_dir=Path(tmpdir),
+        )
+        result = runner.run(spec, Path(__file__).resolve().parent.parent / "workspace_fixtures")
+
+    # Check for execution errors first
+    if not result.success and result.error:
+        raise AssertionError(f"Scenario execution failed: {result.error}")
+
+    # Basic sanity: trace has events
+    assert len(result.trace.events) >= 3, (
+        f"Expected at least 3 events (user_input, system_init, at least 1 turn), "
+        f"got {len(result.trace.events)}: {[e.event_type.value for e in result.trace.events]}"
+    )
+
+    # At least 2 prompts should have been seen (turn 1 + turn 2)
+    assert len(prompts_seen) >= 2, (
+        f"Expected at least 2 API calls, got {len(prompts_seen)}"
+    )
+
+    # Turn 1 and turn 2 must NOT be identical (proves history accumulation)
+    assert prompts_seen[0] != prompts_seen[1], (
+        "Turn 1 and turn 2 prompts are identical — stage history is not accumulating"
+    )
+
+    # Turn 2 prompt must contain the result from turn 1's tool call
+    # (This is the core fix: the agent must see prior tool results)
+    turn2_prompt = prompts_seen[1]
+    assert "[Tool: list_directory]" in turn2_prompt, (
+        f"Turn 2 prompt does not contain turn 1's tool result. "
+        f"Prompt snippet: {turn2_prompt[:500]}"
+    )
+
+    # Need at least 2 turns to test history persistence
+    assert len(prompts_seen) >= 2, "Need at least 2 turns to test history persistence"
+
+    ok("stage_local_history_persistence")
+
+
+def test_backend_reset_once_per_stage():
+    """Backend.reset() must be called exactly once per stage, not per turn."""
+    from generation.runner import ScenarioRunner
+    from generation.scenario_builder import ScenarioBuilder, ScenarioBuildConfig
+
+    reset_log = []
+
+    class CountingBackend:
+        def __init__(self):
+            self._step = 0
+
+        def reset(self, task="", agent_name="", mcp_tools=None, system_prompt=""):
+            reset_log.append((agent_name, len(reset_log) + 1))
+
+        def generate(self, prompt):
+            self._step += 1
+            if self._step <= 3:
+                return json.dumps({
+                    "reasoning": f"step {self._step}",
+                    "action": "list_directory",
+                    "action_input": {"path": "."},
+                    "final_response": "",
+                })
+            return json.dumps({
+                "reasoning": "done",
+                "action": "final",
+                "action_input": {},
+                "final_response": "done",
+            })
+
+        def parse_action(self, raw):
+            data = json.loads(raw)
+            return {
+                "reasoning": str(data.get("reasoning", "")),
+                "action": str(data["action"]),
+                "action_input": json.dumps(data.get("action_input", {})),
+                "final_response": str(data.get("final_response", "")),
+            }
+
+    builder = ScenarioBuilder(seed=42)
+    cfg = ScenarioBuildConfig(
+        task_family="code_review",
+        fixture_id="code_review_easy",
+        task_variant="easy",
+        topology="linear_2",
+        repetition_index=0,
+        seed=42,
+    )
+    spec = builder.build_benign(cfg)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        runner = ScenarioRunner(
+            llm_backend=CountingBackend(),
+            dry_run=False,
+            max_events=40,
+            output_dir=Path(tmpdir),
+        )
+        result = runner.run(spec, Path(__file__).resolve().parent.parent / "workspace_fixtures")
+
+    # linear_2 has 2 stages: researcher, analyst
+    assert len(reset_log) == 2, (
+        f"Expected exactly 2 backend resets (one per stage), got {len(reset_log)}: {reset_log}"
+    )
+
+    # First reset must be for researcher
+    assert reset_log[0][0] == "researcher", (
+        f"First reset should be for 'researcher', got '{reset_log[0][0]}'"
+    )
+
+    # Second reset must be for analyst
+    assert reset_log[1][0] == "analyst", (
+        f"Second reset should be for 'analyst', got '{reset_log[1][0]}'"
+    )
+
+    ok("backend_reset_once_per_stage")
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
@@ -998,6 +1192,8 @@ def main():
     test_write_file_success_message()
     test_termination_reason_max_events()
     test_handoff_enforced_for_multi_agent_topo()
+    test_stage_local_history_persistence()
+    test_backend_reset_once_per_stage()
 
     section("Exporters")
     test_exporter_observable()

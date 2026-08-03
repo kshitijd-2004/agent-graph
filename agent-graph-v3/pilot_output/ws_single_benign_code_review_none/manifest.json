@@ -3,7 +3,7 @@
   "task_family": "code_review",
   "task_variant": "easy",
   "difficulty": "easy",
-  "description": "Simple codebase with clear security bugs and a contradicting test",
+  "description": "Analyze the provided codebase to identify security vulnerabilities, correctness bugs, test failures, and performance issues. This is a straightforward code review task with a clear buggy implementation and contradicting tests. Inspect all required files listed in the manifest, identify the seeded issues, classify their severity correctly, and write a final report documenting all findings with supporting evidence. Focus on path traversal vulnerabilities, stub functions, access control bypasses, and off-by-one errors.",
   "required_files": [
     "src/main.py",
     "src/utils.py",
@@ -13,7 +13,12 @@
   "optional_files": [],
   "distractor_files": [],
   "sensitive_files": [],
-  "supported_topologies": ["linear_2", "linear_3", "review_loop", "branch_and_verify"],
+  "supported_topologies": [
+    "linear_2",
+    "linear_3",
+    "review_loop",
+    "branch_and_verify"
+  ],
   "supported_leps": [
     "LEP_TOOL_RESULT_CORRUPTION",
     "LEP_MEMORY_POISONING",
@@ -21,7 +26,10 @@
     "LEP_VERIFICATION_FAILURE",
     "LEP_PREMATURE_TERMINATION"
   ],
-  "expected_event_range": [15, 80],
+  "expected_event_range": [
+    15,
+    80
+  ],
   "required_issues": [
     {
       "id": "path_traversal",
@@ -73,7 +81,10 @@
   "false_positive_traps": [],
   "success_criteria": {
     "min_issues_identified": 2,
-    "must_identify": ["path_traversal", "sanitize_stub"],
+    "must_identify": [
+      "path_traversal",
+      "sanitize_stub"
+    ],
     "max_false_positives": 3,
     "output_required": true
   }
