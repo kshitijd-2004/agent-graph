@@ -22,6 +22,7 @@ from schemas import (
     WorkflowConfig,
 )
 from schemas.scenario import CONDITIONS
+from backend.api_backend import ToolCall, ModelTurn
 
 logger = logging.getLogger(__name__)
 
@@ -357,15 +358,23 @@ class DryRunBackend:
         """Record a poisoned memory entry."""
         self._corrupted_values[f"memory_{key}"] = value
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str) -> ModelTurn:
+        """Return a structured ModelTurn."""
         self._step += 1
         traj = self._trajectory
 
         if self._step > len(traj):
-            # Already completed — return a stable terminal response
-            return self._structured_action("final", "Task already completed.")
+            return self._structured_turn("submit_final", {}, "Task complete.")
 
         action, action_input, is_final = traj[self._step - 1]
+
+        # Map legacy action names to new tool names
+        action_map = {
+            "handoff_to_analyst": "handoff",
+            "handoff_to_researcher": "handoff",
+            "final": "submit_final",
+        }
+        action = action_map.get(action, action)
 
         # Track injection firing
         if not self._injection_fired and self._step >= 2 and self._lep_code != "benign":
@@ -380,34 +389,45 @@ class DryRunBackend:
                     lines.append(f"LEP_CONSUMED: {k}={v}")
                 action_input["content"] = "\n".join(lines)
 
-        final_response = "Task complete." if is_final else ""
-        if is_final:
-            final_response = f"Task complete. {action} executed."
+        final_response = f"Task complete. {action} executed." if is_final else ""
+        return self._structured_turn(action, action_input, final_response)
 
-        return self._structured_action(action, action_input, final_response)
+    def _structured_turn(self, action: str, action_input: dict,
+                         final_response: str = "") -> ModelTurn:
+        """Return a ModelTurn-compatible dict."""
+        tool_call = None
+        if action != "submit_final":
+            tool_call = ToolCall(
+                id=f"toolu_dryrun_{self._step}",
+                name=action,
+                input=action_input,
+            )
+        return ModelTurn(
+            tool_call=tool_call,
+            text=final_response or "",
+            stop_reason="tool_use" if tool_call else "end_turn",
+            raw_content=[],
+        )
 
-    def _structured_action(self, action: str, action_input: dict,
-                           final_response: str = "") -> str:
-        """Return a structured JSON action with explicit action_type."""
-        return json.dumps({
-            "reasoning": f"Step {self._step}: {action}",
-            "action": action,
-            "action_type": "final" if final_response else action,
-            "action_input": action_input,
-            "final_response": final_response,
-        })
-
-    def parse_action(self, raw_response: str) -> Optional[Dict[str, Any]]:
-        try:
-            data = json.loads(raw_response)
-            return {
-                "reasoning": str(data.get("reasoning", "")),
-                "action": str(data["action"]),
-                "action_input": json.dumps(data.get("action_input", {})),
-                "final_response": str(data.get("final_response", "")),
-            }
-        except (json.JSONDecodeError, KeyError):
+    def parse_action(self, raw_response: ModelTurn) -> Optional[Dict[str, Any]]:
+        """Parse a structured turn into action dict (now receives ModelTurn, not string)."""
+        if not isinstance(raw_response, ModelTurn):
             return None
+        tc = raw_response.tool_call
+        if tc:
+            return {
+                "reasoning": f"Step {self._step}: {tc.name}",
+                "action": tc.name,
+                "action_input": tc.input,
+                "final_response": raw_response.text,
+            }
+        # Text-only response
+        return {
+            "reasoning": "text response",
+            "action": "text",
+            "action_input": {},
+            "final_response": raw_response.text,
+        }
 
     def get_trajectory_progress(self) -> Dict[str, Any]:
         """Return info about the current trajectory for the evaluator."""
@@ -418,6 +438,10 @@ class DryRunBackend:
             "injection_fired": self._injection_fired,
             "corrupted_values_consumed": bool(self._corrupted_values),
         }
+
+    def _append_tool_result(self, tool_call, result: str) -> None:
+        """No-op for dry-run backend (no native conversation history)."""
+        pass
 
 
 class ScenarioRunner:

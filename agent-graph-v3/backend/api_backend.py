@@ -14,7 +14,25 @@ import os
 import threading
 import urllib.error
 import urllib.request
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+
+
+@dataclass
+class ToolCall:
+    """Structured representation of a tool_use block from the API."""
+    id: str
+    name: str
+    input: Dict[str, Any]
+
+
+@dataclass
+class ModelTurn:
+    """Result of one model turn."""
+    tool_call: Optional[ToolCall] = None
+    stop_reason: str = ""
+    raw_content: List[Dict[str, Any]] = field(default_factory=list)
+    text: str = ""
 
 
 # Canonical tool definitions matching the MCP tool schema.
@@ -29,6 +47,7 @@ TOOL_DEFINITIONS = [
                 "path": {"type": "string", "description": "Directory path to list"}
             },
             "required": ["path"],
+            "additionalProperties": False,
         },
     },
     {
@@ -40,6 +59,7 @@ TOOL_DEFINITIONS = [
                 "path": {"type": "string", "description": "File path to read"}
             },
             "required": ["path"],
+            "additionalProperties": False,
         },
     },
     {
@@ -52,6 +72,7 @@ TOOL_DEFINITIONS = [
                 "content": {"type": "string", "description": "Full text content to write"},
             },
             "required": ["path", "content"],
+            "additionalProperties": False,
         },
     },
     {
@@ -64,6 +85,7 @@ TOOL_DEFINITIONS = [
                 "path": {"type": "string", "description": "Directory to search in"},
             },
             "required": ["pattern"],
+            "additionalProperties": False,
         },
     },
     {
@@ -75,6 +97,36 @@ TOOL_DEFINITIONS = [
                 "path": {"type": "string", "description": "Directory path to create"},
             },
             "required": ["path"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "handoff",
+        "description": "Transfer the current stage to the next workflow agent.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "target_agent": {"type": "string", "description": "Next agent role"},
+                "summary": {"type": "string", "description": "Summary of findings"},
+                "report_path": {"type": "string", "description": "Path to report file"},
+                "source_paths": {"type": "array", "items": {"type": "string"}},
+                "verification_requests": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["target_agent", "summary"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "submit_final",
+        "description": "Complete the current workflow stage or task.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "summary": {"type": "string", "description": "Final summary"},
+                "report_path": {"type": "string", "description": "Path to final report"},
+            },
+            "required": ["summary"],
+            "additionalProperties": False,
         },
     },
 ]
@@ -131,10 +183,16 @@ class APIBackend:
         mcp_tools: List[str] = None,
         system_prompt: str = "",
     ) -> None:
+        """Reset backend for a new stage.
+
+        Clears conversation history and reinitializes the system prompt.
+        """
         self._task = task
         self._agent_name = agent_name
         self._mcp_tools = mcp_tools or []
         self._system_prompt = system_prompt
+        self._task_prompt = task
+        self._conversation: List[Dict[str, Any]] = []
 
     def _build_messages(self, prompt: str) -> List[Dict[str, Any]]:
         messages = []
@@ -161,8 +219,8 @@ class APIBackend:
         messages: List[Dict[str, Any]],
         max_tokens: Optional[int] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
-    ) -> str:
-        """Make an API call."""
+    ) -> Dict[str, Any]:
+        """Make an API call and return the raw response dict."""
         payload: Dict[str, Any] = {
             "model": self.model,
             "max_tokens": max_tokens or self.max_tokens,
@@ -170,8 +228,6 @@ class APIBackend:
             "messages": messages,
         }
 
-        # Attach tool definitions when provided — this is what makes the model
-        # emit structured tool_use blocks instead of free-text JSON.
         if tools:
             payload["tools"] = tools
 
@@ -196,57 +252,122 @@ class APIBackend:
             raise ValueError(f"HTTP {e.code}: {body[:500]}")
 
         try:
-            data = json.loads(raw_resp)
+            return json.loads(raw_resp)
         except json.JSONDecodeError:
             raise ValueError(f"Non-JSON response: {raw_resp[:500]}")
 
-        # ── Primary: extract tool_use blocks ──────────────────────────────
+    def _extract_turn(self, data: Dict[str, Any]) -> ModelTurn:
+        """Extract a ModelTurn from an API response dict.
+
+        Returns structured tool_use when available; otherwise returns text.
+        Never returns None — the caller always gets a valid ModelTurn.
+        """
         content = data.get("content", [])
-        if isinstance(content, list):
-            tool_use_blocks = [b for b in content if isinstance(b, dict) and b.get("type") == "tool_use"]
-            if tool_use_blocks:
-                # Use the first tool_use block (model should emit one per turn)
-                block = tool_use_blocks[0]
-                tool_name = block.get("name", "")
-                tool_input = block.get("input", {})
-                return json.dumps({
-                    "reasoning": "[tool_use]",
-                    "action": tool_name,
-                    "action_input": tool_input,
-                    "final_response": "",
-                })
+        stop_reason = data.get("stop_reason", "")
 
-        # ── Fallback: extract text blocks ────────────────────────────────
-        text_parts = []
-        if isinstance(content, list):
-            for block in content:
-                if isinstance(block, dict) and block.get("type") == "text":
-                    text_parts.append(block.get("text", ""))
+        if not isinstance(content, list):
+            content = []
 
-        if text_parts:
-            return "".join(text_parts).strip()
+        # Primary: tool_use blocks
+        tool_use_blocks = [b for b in content if isinstance(b, dict) and b.get("type") == "tool_use"]
+        if tool_use_blocks:
+            block = tool_use_blocks[0]
+            return ModelTurn(
+                tool_call=ToolCall(
+                    id=block.get("id", ""),
+                    name=block.get("name", ""),
+                    input=block.get("input", {}),
+                ),
+                stop_reason=stop_reason,
+                raw_content=content,
+            )
 
-        # No text block found — show what we got
-        block_types = [b.get("type", "?") if isinstance(b, dict) else type(b).__name__ for b in content]
-        raise ValueError(f"No text block in content. Block types: {block_types}")
+        # Fallback: text block (model chose not to use tools)
+        text_parts = [b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text"]
+        return ModelTurn(
+            text="".join(text_parts).strip(),
+            stop_reason=stop_reason,
+            raw_content=content,
+        )
 
-    def _generate(self, prompt: str) -> str:
-        """Generate a response from the API."""
-        messages = self._build_messages(prompt)
+    def _generate(self, prompt: str) -> ModelTurn:
+        """Generate a response from the API.
+
+        Maintains native conversation history with tool_result blocks.
+        Returns structured ModelTurn — never None.
+        """
         tools = self._build_tools(self._mcp_tools)
 
         with self._lock:
             try:
-                raw = self._call_api(messages, tools=tools)
+                data = self._call_api(self._messages, max_tokens=self.max_tokens, tools=tools)
+                return self._extract_turn(data)
             except Exception as e:
                 print(f"  [ERROR] API call failed: {e}")
-                return ""
-            if not raw:
-                print(f"  [ERROR] Empty response from API")
-                return ""
-            return raw
+                return ModelTurn(text=f"[ERROR] {e}")
 
     generate = _generate
+
+    @property
+    def _messages(self) -> List[Dict[str, Any]]:
+        """Current conversation message array (native Anthropic format)."""
+        msgs: List[Dict[str, Any]] = []
+        if self._system_prompt:
+            msgs.append({"role": "system", "content": self._system_prompt})
+        msgs.append({"role": "user", "content": self._task_prompt or "Complete the task."})
+        msgs.extend(self._conversation)
+        return msgs
+
+    def _append_tool_result(self, tool_call: ToolCall, result: str) -> None:
+        """Append a tool_result block to the conversation history."""
+        self._conversation.append({
+            "role": "assistant",
+            "content": [{
+                "type": "tool_use",
+                "id": tool_call.id,
+                "name": tool_call.name,
+                "input": tool_call.input,
+            }],
+        })
+        self._conversation.append({
+            "role": "user",
+            "content": [{
+                "type": "tool_result",
+                "tool_use_id": tool_call.id,
+                "content": result,
+            }],
+        })
+
+    def reset(
+        self,
+        task: str = "",
+        agent_name: str = "researcher",
+        mcp_tools: List[str] = None,
+        system_prompt: str = "",
+    ) -> None:
+        """Reset backend for a new stage.
+
+        Clears conversation history and reinitializes the system prompt.
+        """
+        self._task = task
+        self._agent_name = agent_name
+        self._mcp_tools = mcp_tools or []
+        self._system_prompt = system_prompt
+        self._task_prompt = task
+        self._conversation: List[Dict[str, Any]] = []
+
+    def _build_tools(self, available_tools: List[str]) -> List[Dict[str, Any]]:
+        """Build the Anthropic tool_use definitions for the available MCP tools."""
+        tool_names = set(available_tools)
+        result = []
+        for tool_def in TOOL_DEFINITIONS:
+            if tool_def["name"] in tool_names:
+                result.append({
+                    "name": tool_def["name"],
+                    "description": tool_def["description"],
+                    "input_schema": tool_def["input_schema"],
+                })
+        return result
 
     def parse_action(self, raw_response: str) -> Optional[Dict[str, Any]]:
         """Try to extract a JSON action from the LLM response."""
