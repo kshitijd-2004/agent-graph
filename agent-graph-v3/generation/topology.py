@@ -12,14 +12,27 @@ from typing import Any, Dict, List, Optional
 
 @dataclass
 class Stage:
-    """One agent's turn in a topology."""
+    """One agent's turn in a topology.
+
+    `can_handoff` controls whether the stage is allowed to *emit* an outgoing
+    handoff (i.e. whether the `handoff` native tool is exposed). Whether this
+    stage *receives* a handoff is determined by incoming HandoffRule entries,
+    not by this flag.
+
+    `can_finalize` controls whether the stage is allowed to terminate the
+    workflow (i.e. whether the `submit_final` native tool is exposed).
+
+    Both flags must be set explicitly per stage — there is no default — so
+    every topology declares its stage completion and forwarding permissions
+    structurally rather than inheriting them.
+    """
     stage_id: str
     agent_role: str
     agent_id: str
     stage_type: str = "execute"       # "execute" | "coordinate" | "branch" | "merge"
     max_turns: int = 10
-    accepts_handoff: bool = True
-    can_finalize: bool = False
+    can_handoff: bool = False         # explicit; set per topology
+    can_finalize: bool = False        # explicit; set per topology
 
 
 @dataclass
@@ -66,8 +79,10 @@ def _build_registry() -> Dict[str, callable]:
             topology_id="linear_2",
             display_name="Linear (2 agents)",
             stages=[
-                Stage("researcher", "researcher", agent_map["researcher"], max_turns=10, can_finalize=False),
-                Stage("analyst", "analyst", agent_map["analyst"], max_turns=10, can_finalize=True),
+                Stage("researcher", "researcher", agent_map["researcher"],
+                      max_turns=10, can_handoff=True, can_finalize=False),
+                Stage("analyst", "analyst", agent_map["analyst"],
+                      max_turns=10, can_handoff=False, can_finalize=True),
             ],
             handoff_rules=[
                 HandoffRule("researcher", "analyst"),
@@ -81,9 +96,12 @@ def _build_registry() -> Dict[str, callable]:
             topology_id="linear_3",
             display_name="Linear (3 agents)",
             stages=[
-                Stage("researcher", "researcher", agent_map["researcher"], max_turns=8, can_finalize=False),
-                Stage("analyst", "analyst", agent_map["analyst"], max_turns=8, can_finalize=False),
-                Stage("verifier", "verifier", agent_map["verifier"], max_turns=8, can_finalize=True),
+                Stage("researcher", "researcher", agent_map["researcher"],
+                      max_turns=8, can_handoff=True, can_finalize=False),
+                Stage("analyst", "analyst", agent_map["analyst"],
+                      max_turns=8, can_handoff=True, can_finalize=False),
+                Stage("verifier", "verifier", agent_map["verifier"],
+                      max_turns=8, can_handoff=False, can_finalize=True),
             ],
             handoff_rules=[
                 HandoffRule("researcher", "analyst"),
@@ -98,9 +116,12 @@ def _build_registry() -> Dict[str, callable]:
             topology_id="coordinator_star",
             display_name="Coordinator Star",
             stages=[
-                Stage("coordinator", "coordinator", agent_map["coordinator"], max_turns=5, can_finalize=True),
-                Stage("specialist_a", "specialist_a", agent_map["specialist_a"], max_turns=6, can_finalize=False),
-                Stage("specialist_b", "specialist_b", agent_map["specialist_b"], max_turns=6, can_finalize=False),
+                Stage("coordinator", "coordinator", agent_map["coordinator"],
+                      max_turns=5, can_handoff=False, can_finalize=True),
+                Stage("specialist_a", "specialist_a", agent_map["specialist_a"],
+                      max_turns=6, can_handoff=True, can_finalize=False),
+                Stage("specialist_b", "specialist_b", agent_map["specialist_b"],
+                      max_turns=6, can_handoff=True, can_finalize=False),
             ],
             handoff_rules=[
                 HandoffRule("specialist_a", "coordinator"),
@@ -115,9 +136,12 @@ def _build_registry() -> Dict[str, callable]:
             topology_id="parallel_merge",
             display_name="Parallel Merge",
             stages=[
-                Stage("researcher", "researcher", agent_map["researcher"], max_turns=6, can_finalize=False),
-                Stage("analyst", "analyst", agent_map["analyst"], max_turns=6, can_finalize=False),
-                Stage("verifier", "verifier", agent_map["verifier"], max_turns=8, can_finalize=True),
+                Stage("researcher", "researcher", agent_map["researcher"],
+                      max_turns=6, can_handoff=True, can_finalize=False),
+                Stage("analyst", "analyst", agent_map["analyst"],
+                      max_turns=6, can_handoff=True, can_finalize=False),
+                Stage("verifier", "verifier", agent_map["verifier"],
+                      max_turns=8, can_handoff=False, can_finalize=True),
             ],
             handoff_rules=[
                 HandoffRule("researcher", "verifier"),
@@ -132,8 +156,11 @@ def _build_registry() -> Dict[str, callable]:
             topology_id="review_loop",
             display_name="Review Loop",
             stages=[
-                Stage("researcher", "researcher", agent_map["researcher"], max_turns=6, can_finalize=False),
-                Stage("analyst", "analyst", agent_map["analyst"], max_turns=6, can_finalize=True),
+                Stage("researcher", "researcher", agent_map["researcher"],
+                      max_turns=6, can_handoff=True, can_finalize=False),
+                # Analyst can both hand back for revision AND finalize.
+                Stage("analyst", "analyst", agent_map["analyst"],
+                      max_turns=6, can_handoff=True, can_finalize=True),
             ],
             handoff_rules=[
                 HandoffRule("researcher", "analyst"),
@@ -148,8 +175,10 @@ def _build_registry() -> Dict[str, callable]:
             topology_id="shared_memory_collaboration",
             display_name="Shared Memory Collaboration",
             stages=[
-                Stage("researcher", "researcher", agent_map["researcher"], max_turns=8, can_finalize=False),
-                Stage("analyst", "analyst", agent_map["analyst"], max_turns=8, can_finalize=True),
+                Stage("researcher", "researcher", agent_map["researcher"],
+                      max_turns=8, can_handoff=True, can_finalize=False),
+                Stage("analyst", "analyst", agent_map["analyst"],
+                      max_turns=8, can_handoff=False, can_finalize=True),
             ],
             handoff_rules=[
                 HandoffRule("researcher", "analyst"),
@@ -163,9 +192,12 @@ def _build_registry() -> Dict[str, callable]:
             topology_id="branch_and_verify",
             display_name="Branch and Verify",
             stages=[
-                Stage("researcher", "researcher", agent_map["researcher"], max_turns=6, can_finalize=False),
-                Stage("analyst", "analyst", agent_map["analyst"], max_turns=6, can_finalize=False),
-                Stage("verifier", "verifier", agent_map["verifier"], max_turns=8, can_finalize=True),
+                Stage("researcher", "researcher", agent_map["researcher"],
+                      max_turns=6, can_handoff=True, can_finalize=False),
+                Stage("analyst", "analyst", agent_map["analyst"],
+                      max_turns=6, can_handoff=True, can_finalize=False),
+                Stage("verifier", "verifier", agent_map["verifier"],
+                      max_turns=8, can_handoff=False, can_finalize=True),
             ],
             handoff_rules=[
                 HandoffRule("researcher", "verifier"),

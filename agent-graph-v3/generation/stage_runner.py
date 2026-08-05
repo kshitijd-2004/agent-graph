@@ -200,7 +200,7 @@ class StageRunner:
             "list_directory", "read_text_file", "write_file",
             "search_files", "create_directory",
         ]
-        if stage.accepts_handoff:
+        if stage.can_handoff:
             available_tools.append("handoff")
         if stage.can_finalize:
             available_tools.append("submit_final")
@@ -475,7 +475,12 @@ class StageRunner:
 
             # ── HANDOFF ──────────────────────────────────────────────────────
             if action == "handoff":
-                if not stage.accepts_handoff:
+                if not stage.can_handoff:
+                    # This stage is not permitted to emit handoffs.
+                    # Treat as premature_final: the model is trying to
+                    # terminate the workflow through the wrong channel.
+                    # This also prevents linear topologies from restarting
+                    # after the final stage fails to call submit_final.
                     termination_reason = "premature_final"
                     break
 
@@ -824,22 +829,30 @@ class StageRunner:
                 f"Review their findings and build upon them."
             )
 
-        if stage.can_finalize:
-            # Final agent: must call submit_final, must NOT call handoff
+        if stage.can_finalize and not stage.can_handoff:
+            # Pure final agent: must call submit_final, must NOT call handoff
             parts.append(
                 "You are the final agent in this workflow. "
                 "When your work is complete, call submit_final with a summary. "
                 "Do NOT call handoff."
             )
-        elif stage.accepts_handoff:
-            # Intermediate agent: must call handoff, must NOT call submit_final or prose
+        elif stage.can_handoff and not stage.can_finalize:
+            # Pure intermediate agent: must call handoff, must NOT call submit_final or prose
             parts.append(
                 "You are an intermediate agent. After completing your analysis "
                 "and writing your output artifact, call handoff to transfer work "
                 "to the next agent. "
                 "Do NOT call submit_final. Do NOT finish with plain prose."
             )
+        elif stage.can_handoff and stage.can_finalize:
+            # Review-loop style: may either hand back for revision OR finalize.
+            parts.append(
+                "You may either (a) call submit_final to terminate the workflow "
+                "with a summary, or (b) call handoff to send work back for "
+                "revision. Do NOT finish with plain prose."
+            )
         else:
+            # Neither handoff nor finalize: a self-contained stage.
             parts.append(
                 "Complete the assigned task using the available tools."
             )

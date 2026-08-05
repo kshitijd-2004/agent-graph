@@ -1557,7 +1557,7 @@ def test_all_termination_reasons_handled():
 
 
 def test_researcher_stage_exposes_handoff():
-    """Researcher stage (can_finalize=False, accepts_handoff=True) must include
+    """Researcher stage (can_finalize=False, can_handoff=True) must include
     'handoff' in the tools passed to the backend, not 'submit_final'.
     """
     from generation.topology import TopologyConfig, Stage, HandoffRule
@@ -1566,8 +1566,10 @@ def test_researcher_stage_exposes_handoff():
         topology_id="linear_2",
         display_name="Linear 2",
         stages=[
-            Stage("researcher", "researcher", "r1", max_turns=5, can_finalize=False),
-            Stage("analyst", "analyst", "a1", max_turns=5, can_finalize=True),
+            Stage("researcher", "researcher", "r1", max_turns=5,
+                  can_handoff=True, can_finalize=False),
+            Stage("analyst", "analyst", "a1", max_turns=5,
+                  can_handoff=False, can_finalize=True),
         ],
         handoff_rules=[HandoffRule("researcher", "analyst")],
         exit_stage="analyst",
@@ -1628,8 +1630,10 @@ def test_analyst_stage_exposes_submit_final():
         topology_id="linear_2",
         display_name="Linear 2",
         stages=[
-            Stage("researcher", "researcher", "r1", max_turns=5, can_finalize=False),
-            Stage("analyst", "analyst", "a1", max_turns=5, can_finalize=True),
+            Stage("researcher", "researcher", "r1", max_turns=5,
+                  can_handoff=True, can_finalize=False),
+            Stage("analyst", "analyst", "a1", max_turns=5,
+                  can_handoff=False, can_finalize=True),
         ],
         handoff_rules=[HandoffRule("researcher", "analyst")],
         exit_stage="analyst",
@@ -1672,6 +1676,9 @@ def test_analyst_stage_exposes_submit_final():
     assert "submit_final" in tools_given, (
         f"Analyst tools must include 'submit_final': {tools_given}"
     )
+    assert "handoff" not in tools_given, (
+        f"Analyst tools must NOT include 'handoff': {tools_given}"
+    )
     assert result.termination_reason == "final", (
         f"Expected 'final' termination, got '{result.termination_reason}'"
     )
@@ -1685,8 +1692,8 @@ def test_researcher_prose_gets_one_retry():
     topo = TopologyConfig(
         topology_id="linear_2", display_name="Linear 2",
         stages=[
-            Stage("researcher", "researcher", "r1", max_turns=5, can_finalize=False),
-            Stage("analyst", "analyst", "a1", max_turns=5, can_finalize=True),
+            Stage("researcher", "researcher", "r1", max_turns=5, can_handoff=True, can_finalize=False),
+            Stage("analyst", "analyst", "a1", max_turns=5, can_handoff=False, can_finalize=True),
         ],
         handoff_rules=[HandoffRule("researcher", "analyst")],
         exit_stage="analyst",
@@ -1746,7 +1753,7 @@ def test_retry_nudge_contains_nudge_exactly_once():
     topo = TopologyConfig(
         topology_id="linear_2", display_name="Linear 2",
         stages=[
-            Stage("researcher", "researcher", "r1", max_turns=5, can_finalize=False),
+            Stage("researcher", "researcher", "r1", max_turns=5, can_handoff=True, can_finalize=False),
         ],
         handoff_rules=[],
         exit_stage="researcher",
@@ -1809,7 +1816,7 @@ def test_researcher_handoff_is_native_tool():
     topo = TopologyConfig(
         topology_id="linear_2", display_name="Linear 2",
         stages=[
-            Stage("researcher", "researcher", "r1", max_turns=5, can_finalize=False),
+            Stage("researcher", "researcher", "r1", max_turns=5, can_handoff=True, can_finalize=False),
         ],
         handoff_rules=[],
         exit_stage="researcher",
@@ -1864,7 +1871,7 @@ def test_analyst_submit_final_is_native_tool():
     topo = TopologyConfig(
         topology_id="linear_2", display_name="Linear 2",
         stages=[
-            Stage("analyst", "analyst", "a1", max_turns=5, can_finalize=True),
+            Stage("analyst", "analyst", "a1", max_turns=5, can_handoff=False, can_finalize=True),
         ],
         handoff_rules=[],
         exit_stage="analyst",
