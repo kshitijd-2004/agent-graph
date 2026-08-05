@@ -13,6 +13,7 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import Optional
 
 # Ensure parent directory is in path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -60,7 +61,17 @@ def run_scenarios(
     max_events: int = 80,
 ) -> tuple[list[RunResult], ObservableExporter]:
     """Execute a list of scenarios and return results and exporter for leakage audit."""
+    if dry_run:
+        llm = None  # ScenarioRunner will default to DryRunBackend
+        logger.info("Running in DRY-RUN mode (mock LLM)")
+    else:
+        model_name = scenarios[0].workflow_config.model_name if scenarios else "claude-sonnet-5"
+        logger.info("Running in REAL-LLM mode (model=%s)", model_name)
+        from backend.api_backend import APIBackend
+        llm = APIBackend(model=model_name)
+
     runner = ScenarioRunner(
+        llm_backend=llm,
         dry_run=dry_run,
         max_events=max_events,
         output_dir=output_dir / "workspaces",
@@ -128,6 +139,8 @@ def build_pilot_manifest(
     num_repetitions: int = 5,
     seed: int = 42,
     strict: bool = True,
+    topology_override: Optional[str] = None,
+    model_name: str = "claude-sonnet-5",
 ) -> list[ScenarioSpec]:
     """Build a pilot manifest of scenarios.
 
@@ -140,10 +153,23 @@ def build_pilot_manifest(
     Args:
         strict: If True (default), fail if any LEP is unregistered.
                 If False, skip unregistered LEPs and record in report.
+        topology_override: If set, override the default topology for every task
+                family. Each task family must list the topology in
+                ``supported_topologies`` or a ValueError is raised.
     """
     builder = ScenarioBuilder(seed=seed)
     from validation.lep_validator import get_registered_codes
     registered = get_registered_codes()
+
+    # Validate topology_override against supported_topologies before building
+    if topology_override is not None:
+        for tf in task_families:
+            supported = TASK_CONFIGS.get(tf, {}).get("supported_topologies")
+            if supported and topology_override not in supported:
+                raise ValueError(
+                    f"Topology '{topology_override}' is not supported for task "
+                    f"family '{tf}'. Supported: {supported}"
+                )
 
     all_scenarios = []
     skipped: Dict[str, list[str]] = {}
@@ -152,9 +178,12 @@ def build_pilot_manifest(
         for task_family in task_families:
             fixtures = fixture_ids.get(task_family, [])
             leps = lep_configs.get(task_family, [])
-            topology = TASK_CONFIGS.get(task_family, {}).get(
-                "default_topology", "linear_2"
-            )
+            if topology_override is not None:
+                topology = topology_override
+            else:
+                topology = TASK_CONFIGS.get(task_family, {}).get(
+                    "default_topology", "linear_2"
+                )
 
             # Validate LEPs for this task
             valid_leps = []
@@ -258,6 +287,12 @@ Examples:
 
   # Build and run pilot
   python -m generation.scenario_runner --build-pilot --run --repetitions 3
+
+  # Single task family with custom topology
+  python -m generation --build-pilot --run \\
+      --task-families code_review \\
+      --topology review_loop \\
+      --repetitions 3
 """,
     )
     parser.add_argument("--scenarios", type=Path, help="Path to scenario manifest JSONL")
@@ -277,6 +312,14 @@ Examples:
                         help="Root directory for workspace fixtures")
     parser.add_argument("--manifest-out", type=Path, default=Path("manifests/pilot.jsonl"),
                         help="Output path for scenario manifest")
+    parser.add_argument("--topology", type=str, default=None,
+                        help="Override topology for all task families "
+                             "(must be in each family's supported_topologies)")
+    parser.add_argument("--task-families", type=str, default=None,
+                        help="Comma-separated list of task families to include "
+                             "(default: all four)")
+    parser.add_argument("--model", type=str, default="claude-sonnet-5",
+                        help="Model name to embed in scenarios (default: claude-sonnet-5)")
 
     args = parser.parse_args()
 
@@ -284,8 +327,19 @@ Examples:
 
     if args.build_pilot:
         logger.info("Building pilot manifest...")
-        task_families = ["code_review", "financial_analysis",
-                         "research_synthesis", "competitive_intelligence"]
+
+        ALL_TASK_FAMILIES = ["code_review", "financial_analysis",
+                             "research_synthesis", "competitive_intelligence"]
+
+        if args.task_families:
+            task_families = [f.strip() for f in args.task_families.split(",")]
+            unknown = set(task_families) - set(ALL_TASK_FAMILIES)
+            if unknown:
+                parser.error(f"Unknown task family(ies): {sorted(unknown)}. "
+                             f"Valid: {ALL_TASK_FAMILIES}")
+        else:
+            task_families = ALL_TASK_FAMILIES
+
         fixture_ids = {
             "code_review": ["code_review_easy", "code_review_conflicting"],
             "financial_analysis": ["financial_clean", "financial_version_conflict"],
@@ -309,6 +363,8 @@ Examples:
             lep_configs=lep_configs,
             num_repetitions=args.repetitions,
             seed=args.seed,
+            topology_override=args.topology,
+            model_name=args.model,
         )
 
         args.manifest_out.parent.mkdir(parents=True, exist_ok=True)

@@ -114,10 +114,10 @@ class PrefixExporter:
                 prefix_end_event=end_idx,
                 normalized_progress=round(end_idx / total_events, 3),
                 future_downstream_failure=bool(failure_events),
-                failure_within_5_events=self._failure_within(end_idx, first_failure, 5, total_events),
-                failure_within_10_events=self._failure_within(end_idx, first_failure, 10, total_events),
-                time_to_failure=(first_failure - end_idx) if first_failure and first_failure > end_idx else None,
-                origin_observed=first_injection is not None and first_injection <= end_idx,
+                failure_within_5_events=self._failure_within(end_idx, first_failure_idx, 5, total_events),
+                failure_within_10_events=self._failure_within(end_idx, first_failure_idx, 10, total_events),
+                time_to_failure=(first_failure_idx - end_idx) if first_failure_idx is not None and first_failure_idx > end_idx else None,
+                origin_observed=first_injection_idx is not None and first_injection_idx <= end_idx,
                 propagation_observed=any(
                     getattr(e, "propagates_to", None) for e in events[:end_idx]
                 ),

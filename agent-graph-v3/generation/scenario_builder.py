@@ -260,6 +260,7 @@ class ScenarioBuilder:
         lep_configs_per_task: Dict[str, list[LEPConfig]],
         num_repetitions: int = 5,
         seed: int | None = None,
+        model_name: str = "claude-sonnet-5",
     ) -> list[ScenarioSpec]:
         """Build a pilot batch of scenarios.
 
@@ -286,6 +287,7 @@ class ScenarioBuilder:
                         task_variant="default",
                         topology=topology,
                         repetition_index=rep,
+                        model_name=model_name,
                         seed=rng.randint(0, 100000) if seed else None,
                     )
                     scenarios.append(self.build_benign(base_config))
@@ -307,6 +309,7 @@ class ScenarioBuilder:
                             lep_configs=[lep],
                             condition="single_lep",
                             repetition_index=rep,
+                            model_name=model_name,
                             seed=rng.randint(0, 100000) if seed else None,
                         )
                         scenarios.append(self.build_single(lep_config))

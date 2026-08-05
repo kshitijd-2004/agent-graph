@@ -467,7 +467,7 @@ class ScenarioRunner:
         max_events: int = 80,
         output_dir: Path | None = None,
     ):
-        self.llm = llm_backend if llm_backend is not None else DryRunBackend()
+        self.llm: LLMBackend = llm_backend if llm_backend is not None else DryRunBackend()
         self.dry_run = dry_run
         self.max_events = max_events
         self.output_dir = output_dir or Path(tempfile.mkdtemp(prefix="agv3_runner_"))
