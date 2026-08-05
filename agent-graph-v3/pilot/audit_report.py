@@ -252,16 +252,16 @@ class AuditReport:
                 continue
 
             events = trace.events
-            injection_ids = {e.event_id for e in events
+            injection_ids = {e.event_index for e in events
                             if getattr(e, "event_labels", None) and e.event_labels.is_injection_origin}
-            consumption_ids = {e.event_id for e in events
+            consumption_ids = {e.event_index for e in events
                               if getattr(e, "event_labels", None) and e.event_labels.consumes_perturbed_info}
-            propagation_ids = {e.event_id for e in events
+            propagation_ids = {e.event_index for e in events
                               if getattr(e, "event_labels", None) and e.event_labels.forwards_perturbed_info}
 
             # Rule 1: every consumption must follow an injection
             for cid in consumption_ids:
-                if not any(int(cid) > int(iid) for iid in injection_ids if iid):
+                if not any(cid > iid for iid in injection_ids if iid is not None):
                     issues.append(f"Consumption event {cid} has no prior injection")
 
             # Rule 2: propagation events should not outnumber injection

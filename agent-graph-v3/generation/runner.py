@@ -619,25 +619,30 @@ class ScenarioRunner:
                 lep_corrupted_values=lep_corrupted_values,
             )
 
-        # Emit events
-        events: list[TraceEvent] = []
-        event_counter = [0]
-        max_steps = wcfg.max_agent_turns if wcfg else 40
-        current_agent = "researcher"
+        # ── Single global event counter ─────────────────────────────────────
+        # All events in the trace — USER_INPUT, SYSTEM_INIT, TOPOLOGY_TRANSITION,
+        # stage-internal events, and termination events — share this one counter.
+        # event_index is the canonical identifier (0-based, monotonic, gap-free).
+        # event_id is a compatibility alias (str of event_index).
+        global_event_counter = [0]
+        events: List[TraceEvent] = []
+
         agent_map = {"researcher": "agent_001", "analyst": "agent_002",
                      "verifier": "agent_003", "coordinator": "agent_004",
                      "specialist_a": "agent_005", "specialist_b": "agent_006"}
+        current_agent = "researcher"
 
         def make_evt(event_type: TraceEventType, source: str, target: str,
                      role: str = "", tool_name: str | None = None,
                      input_text: str | None = None, output_text: str | None = None,
                      **kw) -> TraceEvent:
-            event_counter[0] += 1
+            global_event_counter[0] += 1
+            idx = global_event_counter[0] - 1
             now = datetime.now(timezone.utc).isoformat()
             return TraceEvent(
                 trace_id=trace_id,
-                event_id=str(event_counter[0]),
-                event_index=event_counter[0] - 1,
+                event_id=str(idx),                      # compatibility alias
+                event_index=idx,                         # canonical identifier
                 timestamp=now,
                 event_type=event_type,
                 source_entity_id=source,
@@ -700,11 +705,6 @@ class ScenarioRunner:
         from generation.topology import get_topology
         topology_id = wcfg.topology if wcfg else "linear_2"
         max_agent_turns = wcfg.max_agent_turns if wcfg else 40
-        agent_map = {
-            "researcher": "agent_001", "analyst": "agent_002",
-            "verifier": "agent_003", "coordinator": "agent_004",
-            "specialist_a": "agent_005", "specialist_b": "agent_006",
-        }
         topology = get_topology(topology_id, agent_map, max_agent_turns=max_agent_turns)
 
         logger.info(
@@ -721,7 +721,6 @@ class ScenarioRunner:
         handoff_payload: Optional[HandoffPayload] = None
         final_result = None
         stage_sequence = topology.stages
-        global_event_counter = [0]  # shared across all stages for unique event_ids/indexes
 
         loop_iteration = 0
         while loop_iteration < topology.max_iterations:

@@ -81,25 +81,20 @@ class PrefixExporter:
         failure_events = [e for e in events if self._is_failure(e)]
         handoff_events = [e for e in events if e.event_type.value == "agent_handoff"]
 
-        first_injection_id = injection_events[0].event_id if injection_events else None
-        first_failure_id = failure_events[0].event_id if failure_events else None
-        first_handoff_id = handoff_events[0].event_id if handoff_events else None
+        first_injection_idx = injection_events[0].event_index if injection_events else None
+        first_failure_idx = failure_events[0].event_index if failure_events else None
+        first_handoff_idx = handoff_events[0].event_index if handoff_events else None
 
-        # Convert to integers for arithmetic
-        first_injection = int(first_injection_id) if first_injection_id is not None else None
-        first_failure = int(first_failure_id) if first_failure_id is not None else None
-        first_handoff = int(first_handoff_id) if first_handoff_id is not None else None
-
-        # Determine milestone prefix points
+        # Determine milestone prefix points (use event_index for arithmetic)
         milestone_points = set()
-        if first_injection:
-            milestone_points.add(first_injection)
-            milestone_points.add(min(first_injection + 1, total_events))
-        if first_failure:
-            milestone_points.add(max(first_failure - 1, 1))
-            milestone_points.add(first_failure)
-        if first_handoff:
-            milestone_points.add(first_handoff)
+        if first_injection_idx is not None:
+            milestone_points.add(first_injection_idx)
+            milestone_points.add(min(first_injection_idx + 1, total_events))
+        if first_failure_idx is not None:
+            milestone_points.add(max(first_failure_idx - 1, 1))
+            milestone_points.add(first_failure_idx)
+        if first_handoff_idx is not None:
+            milestone_points.add(first_handoff_idx)
         milestone_points.add(total_events)  # Always include final
 
         # Regular sampling

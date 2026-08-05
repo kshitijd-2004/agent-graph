@@ -127,12 +127,16 @@ class StageRunner:
             StageResult with events and termination info
         """
         events: List[TraceEvent] = []
+        # stage_event_counter is per-stage local (resets each stage).
+        # Only used for stage_event_index — the canonical event_index comes
+        # from the shared global counter.
         stage_event_counter = [0]
         max_turns = stage.max_turns
         current_role = stage.agent_role
         agent_id = stage.agent_id
 
         # Use shared global counter for globally unique event IDs/indexes
+        # (passed from runner.py). If absent (standalone test), create a local one.
         global_counter = global_event_counter if global_event_counter is not None else [0]
 
         # Build the agent map for make_evt
@@ -149,11 +153,12 @@ class StageRunner:
                      **kw) -> TraceEvent:
             global_counter[0] += 1
             stage_event_counter[0] += 1
+            idx = global_counter[0] - 1
             now = datetime.now(timezone.utc).isoformat()
             return TraceEvent(
                 trace_id="",  # set by caller
-                event_id=f"evt_{global_counter[0]}",
-                event_index=global_counter[0] - 1,
+                event_id=str(idx),                      # compatibility alias (matches runner.py)
+                event_index=idx,                         # canonical identifier
                 stage_event_index=stage_event_counter[0] - 1,
                 timestamp=now,
                 event_type=event_type,

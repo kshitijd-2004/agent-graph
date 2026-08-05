@@ -157,7 +157,7 @@ class AnalysisExporter:
         failure_events = [e for e in trace.events if getattr(e, "downstream_failure", False)]
         if failure_events:
             labels["downstream_failure"] = True
-            labels["time_to_failure"] = failure_events[0].event_id
+            labels["time_to_failure"] = failure_events[0].event_index
 
         # Propagation metrics
         handoffs = [e for e in trace.events if e.event_type.value == "agent_handoff"]
@@ -193,14 +193,17 @@ class AnalysisExporter:
         failure_events = [e for e in trace.events if getattr(e, "downstream_failure", False)]
 
         if failure_events:
-            path_events = [e.event_id for e in trace.events
-                           if e.event_id >= origin.event_id
-                           and e.event_id <= failure_events[0].event_id]
+            path_events = [e.event_index for e in trace.events
+                           if origin.event_index <= e.event_index
+                           and e.event_index <= failure_events[0].event_index]
             paths.append({
-                "path_id": f"path_{trace.trace_id}_{origin.event_id}",
+                "path_id": f"path_{trace.trace_id}_{origin.event_index}",
                 "origin_event_id": origin.event_id,
                 "terminal_event_id": failure_events[0].event_id,
-                "event_ids": path_events,
+                "event_indices": path_events,
+                "event_ids": [e.event_id for e in trace.events
+                              if origin.event_index <= e.event_index
+                              and e.event_index <= failure_events[0].event_index],
                 "path_length": len(path_events),
                 "recovered": False,
             })
