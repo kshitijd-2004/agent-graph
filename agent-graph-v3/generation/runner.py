@@ -720,132 +720,97 @@ class ScenarioRunner:
 
         handoff_payload: Optional[HandoffPayload] = None
         final_result = None
-        stage_sequence = topology.stages
+
+        # Graph-driven execution: follow HandoffRule edges, not list positions
+        current_stage = topology.stages[0]
+        previous_stage: Optional[Stage] = None
+        handoff_count = 0
+        backedge_count = 0
 
         loop_iteration = 0
         while loop_iteration < topology.max_iterations:
-            for stage_idx, stage in enumerate(stage_sequence):
-                logger.info(
-                    "  -> Running stage %s (role=%s) iteration=%d",
-                    stage.stage_id, stage.agent_role, loop_iteration,
-                )
+            # Emit topology-transition event using actual runtime state
+            source_id = previous_stage.agent_id if previous_stage else "system"
+            prior_stage_id = previous_stage.stage_id if previous_stage else ""
+            transition_evt = make_evt(
+                TraceEventType.TOPOLOGY_TRANSITION,
+                source_id,
+                current_stage.agent_id,
+                role=current_stage.agent_role,
+                observable={
+                    "transition_mode": "orchestrator_controlled" if handoff_payload else "agent_initiated",
+                    "handoff_summary": handoff_payload.summary if handoff_payload else "",
+                    "prior_stage": prior_stage_id,
+                },
+            )
+            transition_evt.trace_id = trace_id
+            events.append(transition_evt)
 
-                # Emit topology-transition event before the stage runs
-                transition_evt = make_evt(
-                    TraceEventType.TOPOLOGY_TRANSITION,
-                    stage_sequence[stage_idx - 1].agent_id if stage_idx > 0 else "system",
-                    stage.agent_id,
-                    role=stage.agent_role,
-                    observable={
-                        "transition_mode": "orchestrator_controlled" if handoff_payload else "agent_initiated",
-                        "handoff_summary": handoff_payload.summary if handoff_payload else "",
-                        "prior_stage": stage_sequence[stage_idx - 1].stage_id if stage_idx > 0 else "",
-                    },
-                )
-                transition_evt.trace_id = trace_id
-                events.append(transition_evt)
+            # Determine handoff rule for incoming handoff
+            handoff_rule = None
+            if handoff_payload:
+                for rule in topology.handoff_rules:
+                    if rule.from_stage == handoff_payload.from_agent and \
+                       rule.to_stage == current_stage.agent_role:
+                        handoff_rule = rule
+                        break
 
-                # Determine handoff rule
-                handoff_rule = None
-                if handoff_payload:
-                    for rule in topology.handoff_rules:
-                        if rule.from_stage == handoff_payload.from_agent and \
-                           (rule.to_stage == stage.agent_role or
-                            rule.to_stage == stage.stage_id):
-                            handoff_rule = rule
-                            break
+            # Run the stage (backend.reset() is called ONCE inside run_stage)
+            # Compute remaining reviews for prompt awareness
+            reviewer_stage = topology.get_reviewer_stage()
+            is_reviewer_turn = (
+                reviewer_stage is not None
+                and current_stage.stage_id == reviewer_stage.stage_id
+            )
+            remaining_reviews = None
+            if is_reviewer_turn:
+                remaining_reviews = max(0, topology.max_review_cycles - backedge_count)
 
-                # Run the stage (backend.reset() is called ONCE inside run_stage)
-                stage_result = stage_runner.run_stage(
-                    stage=stage,
-                    topology=topology,
-                    handoff_rule=handoff_rule,
-                    scenario=scenario,
-                    ws_path=ws_path,
-                    task_prompt=task_prompt,
-                    prior_events=list(events),
-                    handoff_from_payload=handoff_payload,
-                    lep_orchestrator=orchestrator,
-                    lep_corrupted_values=lep_corrupted_values,
-                    global_event_counter=global_event_counter,
-                )
+            stage_result = stage_runner.run_stage(
+                stage=current_stage,
+                topology=topology,
+                handoff_rule=handoff_rule,
+                scenario=scenario,
+                ws_path=ws_path,
+                task_prompt=task_prompt,
+                prior_events=list(events),
+                handoff_from_payload=handoff_payload,
+                lep_orchestrator=orchestrator,
+                lep_corrupted_values=lep_corrupted_values,
+                global_event_counter=global_event_counter,
+                remaining_reviews=remaining_reviews,
+            )
 
-                # Update trace_id on stage events
-                for evt in stage_result.events:
-                    evt.trace_id = trace_id
+            # Update trace_id on stage events
+            for evt in stage_result.events:
+                evt.trace_id = trace_id
 
-                events.extend(stage_result.events)
+            events.extend(stage_result.events)
 
-                # Handle stage termination — exhaustive switch, fail-closed on unknown
-                reason = stage_result.termination_reason
-                if reason == "final":
-                    final_result = stage_result
-                    break
-                elif reason == "handoff":
-                    handoff_payload = stage_result.handoff_payload
-                    continue
-                elif reason == "loop":
+            # ── Handle stage termination ─────────────────────────────────
+            reason = stage_result.termination_reason
+            if reason == "final":
+                final_result = stage_result
+                break
+
+            elif reason == "handoff":
+                # Validate: does the current stage have an outgoing handoff
+                # edge in the topology?
+                outgoing = topology.get_outgoing_handoff(current_stage.agent_role)
+                if outgoing is None:
+                    logger.error(
+                        "Stage %s emitted handoff but has no outgoing "
+                        "handoff rule in topology %s",
+                        current_stage.agent_role, topology.topology_id,
+                    )
                     term_evt = make_evt(
                         TraceEventType.FINAL_RESPONSE,
-                        stage.agent_id, "user",
-                        role=stage.agent_role,
-                        output_text=f"Terminated: execution loop detected in {stage.agent_role}.",
-                    )
-                    events.append(term_evt)
-                    trace = Trace(
-                        trace_id=trace_id,
-                        execution_id=scenario_id,
-                        variant=variant,
-                        events=events,
-                        metadata={
-                            "scenario_id": scenario_id,
-                            "task_family": scenario.task_family,
-                            "task_variant": scenario.task_variant,
-                            "fixture_id": scenario.fixture_id,
-                            "topology": topology_id,
-                            "condition": scenario.condition,
-                            "lep_codes": [c.code for c in scenario.lep_configs],
-                            "dry_run": self.dry_run,
-                            "termination_reason": "execution_loop",
-                        },
-                    )
-                    self.evaluator.reset()
-                    return trace
-                elif reason == "premature_final":
-                    term_evt = make_evt(
-                        TraceEventType.FINAL_RESPONSE,
-                        stage.agent_id, "user",
-                        role=stage.agent_role,
-                        output_text=f"Terminated: premature finalization "
-                                    f"in {stage.agent_role} (stage does not permit finalization).",
-                    )
-                    events.append(term_evt)
-                    trace = Trace(
-                        trace_id=trace_id,
-                        execution_id=scenario_id,
-                        variant=variant,
-                        events=events,
-                        metadata={
-                            "scenario_id": scenario_id,
-                            "task_family": scenario.task_family,
-                            "task_variant": scenario.task_variant,
-                            "fixture_id": scenario.fixture_id,
-                            "topology": topology_id,
-                            "condition": scenario.condition,
-                            "lep_codes": [c.code for c in scenario.lep_configs],
-                            "dry_run": self.dry_run,
-                            "termination_reason": "premature_final",
-                        },
-                    )
-                    self.evaluator.reset()
-                    return trace
-                elif reason == "invalid_handoff":
-                    term_evt = make_evt(
-                        TraceEventType.FINAL_RESPONSE,
-                        stage.agent_id, "user",
-                        role=stage.agent_role,
-                        output_text=f"Terminated: invalid handoff from {stage.agent_role} "
-                                    f"(stage does not accept handoffs).",
+                        current_stage.agent_id, "user",
+                        role=current_stage.agent_role,
+                        output_text=(
+                            f"Terminated: {current_stage.agent_role} attempted "
+                            f"handoff with no valid outgoing edge."
+                        ),
                     )
                     events.append(term_evt)
                     trace = Trace(
@@ -867,42 +832,22 @@ class ScenarioRunner:
                     )
                     self.evaluator.reset()
                     return trace
-                elif reason == "protocol_violation":
-                    # Already has a FINAL_RESPONSE event from the stage;
-                    # promote raw model text from stage result to trace metadata
-                    pv_data = getattr(stage_result, 'protocol_violation_data', None)
-                    meta = {
-                        "scenario_id": scenario_id,
-                        "task_family": scenario.task_family,
-                        "task_variant": scenario.task_variant,
-                        "fixture_id": scenario.fixture_id,
-                        "topology": topology_id,
-                        "condition": scenario.condition,
-                        "lep_codes": [c.code for c in scenario.lep_configs],
-                        "dry_run": self.dry_run,
-                        "termination_reason": "protocol_violation",
-                    }
-                    if pv_data:
-                        meta["protocol_violation"] = pv_data
-                    trace = Trace(
-                        trace_id=trace_id,
-                        execution_id=scenario_id,
-                        variant=variant,
-                        events=events,
-                        metadata=meta,
+
+                # Resolve destination from the configured handoff rule
+                dest_role = outgoing.to_stage
+                dest_stage = topology.get_stage(dest_role)
+                if dest_stage is None:
+                    logger.error(
+                        "Handoff rule points to unknown stage: %s", dest_role
                     )
-                    self.evaluator.reset()
-                    return trace
-                elif reason == "max_turns":
-                    # Exhausted turns — fall through to max_events_reached labeling
-                    break
-                else:
-                    logger.error("Unknown termination reason: %s — failing closed", reason)
                     term_evt = make_evt(
                         TraceEventType.FINAL_RESPONSE,
-                        stage.agent_id, "user",
-                        role=stage.agent_role,
-                        output_text=f"Terminated: unknown termination reason '{reason}'.",
+                        current_stage.agent_id, "user",
+                        role=current_stage.agent_role,
+                        output_text=(
+                            f"Terminated: handoff target '{dest_role}' "
+                            f"not found in topology."
+                        ),
                     )
                     events.append(term_evt)
                     trace = Trace(
@@ -919,16 +864,188 @@ class ScenarioRunner:
                             "condition": scenario.condition,
                             "lep_codes": [c.code for c in scenario.lep_configs],
                             "dry_run": self.dry_run,
-                            "termination_reason": reason,
+                            "termination_reason": "invalid_handoff",
                         },
                     )
                     self.evaluator.reset()
                     return trace
 
-            if final_result:
+                # Track handoffs and count review cycles
+                handoff_count += 1
+                handoff_payload = stage_result.handoff_payload
+                handoff_payload.to_agent = dest_role
+
+                # Count only backedge traversals (edges that go backward
+                # in the stage list). Forward revisits are normal and should
+                # not count toward the review-cycle limit.
+                is_backedge = topology.is_backedge(outgoing)
+                if is_backedge:
+                    backedge_count += 1
+                    logger.info(
+                        "Backedge %s -> %s (traversal %d/%d)",
+                        outgoing.from_stage, outgoing.to_stage,
+                        backedge_count, topology.max_review_cycles,
+                    )
+                    if backedge_count > topology.max_review_cycles:
+                        term_evt = make_evt(
+                            TraceEventType.FINAL_RESPONSE,
+                            current_stage.agent_id, "user",
+                            role=current_stage.agent_role,
+                            output_text=(
+                                f"Terminated: review cycle limit "
+                                f"({topology.max_review_cycles}) reached."
+                            ),
+                        )
+                        events.append(term_evt)
+                        trace = Trace(
+                            trace_id=trace_id,
+                            execution_id=scenario_id,
+                            variant=variant,
+                            events=events,
+                            metadata={
+                                "scenario_id": scenario_id,
+                                "task_family": scenario.task_family,
+                                "task_variant": scenario.task_variant,
+                                "fixture_id": scenario.fixture_id,
+                                "topology": topology_id,
+                                "condition": scenario.condition,
+                                "lep_codes": [c.code for c in scenario.lep_configs],
+                                "dry_run": self.dry_run,
+                                "termination_reason": "max_review_cycles",
+                                "review_cycle_count": backedge_count,
+                                "handoff_count": handoff_count,
+                            },
+                        )
+                        self.evaluator.reset()
+                        return trace
+
+                # Advance along the graph edge
+                previous_stage = current_stage
+                current_stage = dest_stage
+                continue
+
+            elif reason == "loop":
+                term_evt = make_evt(
+                    TraceEventType.FINAL_RESPONSE,
+                    current_stage.agent_id, "user",
+                    role=current_stage.agent_role,
+                    output_text=f"Terminated: execution loop detected in {current_stage.agent_role}.",
+                )
+                events.append(term_evt)
+                trace = Trace(
+                    trace_id=trace_id,
+                    execution_id=scenario_id,
+                    variant=variant,
+                    events=events,
+                    metadata={
+                        "scenario_id": scenario_id,
+                        "task_family": scenario.task_family,
+                        "task_variant": scenario.task_variant,
+                        "fixture_id": scenario.fixture_id,
+                        "topology": topology_id,
+                        "condition": scenario.condition,
+                        "lep_codes": [c.code for c in scenario.lep_configs],
+                        "dry_run": self.dry_run,
+                        "termination_reason": "execution_loop",
+                    },
+                )
+                self.evaluator.reset()
+                return trace
+
+            elif reason == "premature_final":
+                term_evt = make_evt(
+                    TraceEventType.FINAL_RESPONSE,
+                    current_stage.agent_id, "user",
+                    role=current_stage.agent_role,
+                    output_text=f"Terminated: premature finalization "
+                                f"in {current_stage.agent_role} (stage does not permit finalization).",
+                )
+                events.append(term_evt)
+                trace = Trace(
+                    trace_id=trace_id,
+                    execution_id=scenario_id,
+                    variant=variant,
+                    events=events,
+                    metadata={
+                        "scenario_id": scenario_id,
+                        "task_family": scenario.task_family,
+                        "task_variant": scenario.task_variant,
+                        "fixture_id": scenario.fixture_id,
+                        "topology": topology_id,
+                        "condition": scenario.condition,
+                        "lep_codes": [c.code for c in scenario.lep_configs],
+                        "dry_run": self.dry_run,
+                        "termination_reason": "premature_final",
+                    },
+                )
+                self.evaluator.reset()
+                return trace
+
+            elif reason == "protocol_violation":
+                pv_data = getattr(stage_result, 'protocol_violation_data', None)
+                meta = {
+                    "scenario_id": scenario_id,
+                    "task_family": scenario.task_family,
+                    "task_variant": scenario.task_variant,
+                    "fixture_id": scenario.fixture_id,
+                    "topology": topology_id,
+                    "condition": scenario.condition,
+                    "lep_codes": [c.code for c in scenario.lep_configs],
+                    "dry_run": self.dry_run,
+                    "termination_reason": "protocol_violation",
+                }
+                if pv_data:
+                    meta["protocol_violation"] = pv_data
+                trace = Trace(
+                    trace_id=trace_id,
+                    execution_id=scenario_id,
+                    variant=variant,
+                    events=events,
+                    metadata=meta,
+                )
+                self.evaluator.reset()
+                return trace
+
+            elif reason == "max_turns":
+                # Exhausted turns — fall through to max_events_reached labeling
                 break
 
+            else:
+                logger.error("Unknown termination reason: %s — failing closed", reason)
+                term_evt = make_evt(
+                    TraceEventType.FINAL_RESPONSE,
+                    current_stage.agent_id, "user",
+                    role=current_stage.agent_role,
+                    output_text=f"Terminated: unknown termination reason '{reason}'.",
+                )
+                events.append(term_evt)
+                trace = Trace(
+                    trace_id=trace_id,
+                    execution_id=scenario_id,
+                    variant=variant,
+                    events=events,
+                    metadata={
+                        "scenario_id": scenario_id,
+                        "task_family": scenario.task_family,
+                        "task_variant": scenario.task_variant,
+                        "fixture_id": scenario.fixture_id,
+                        "topology": topology_id,
+                        "condition": scenario.condition,
+                        "lep_codes": [c.code for c in scenario.lep_configs],
+                        "dry_run": self.dry_run,
+                        "termination_reason": reason,
+                    },
+                )
+                self.evaluator.reset()
+                return trace
+
+            # Track that this stage was visited (for cycle detection)
+            visited_roles.add(current_stage.agent_role)
+
             loop_iteration += 1
+
+            if final_result:
+                break
 
         # If no stage produced final, don't force one — let the evaluator
         # detect that no terminal event was emitted
@@ -942,7 +1059,7 @@ class ScenarioRunner:
             "lep_codes": [c.code for c in scenario.lep_configs],
             "dry_run": self.dry_run,
             "topology_display_name": topology.display_name,
-            "stage_count": len(stage_sequence),
+            "stage_count": len(topology.stages),
             "final_stage": final_result.stage_id if final_result else "unknown",
             "final_agent_role": final_result.final_agent_role if final_result else "unknown",
             "handoff_count": sum(

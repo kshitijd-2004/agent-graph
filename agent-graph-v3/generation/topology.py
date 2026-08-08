@@ -54,6 +54,7 @@ class TopologyConfig:
     handoff_rules: List[HandoffRule]
     exit_stage: str
     max_iterations: int = 1
+    max_review_cycles: int = 2   # max back-and-forth loops for review topologies
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -70,6 +71,36 @@ class TopologyConfig:
 
     def get_stage(self, role: str) -> Optional[Stage]:
         return self.stage_by_role.get(role)
+
+    def get_outgoing_handoff(self, role: str) -> Optional[HandoffRule]:
+        """Return the outgoing HandoffRule for a role, or None."""
+        for rule in self.handoff_rules:
+            if rule.from_stage == role:
+                return rule
+        return None
+
+    def is_backedge(self, rule: HandoffRule) -> bool:
+        """Return True if rule goes backward in stage order (to an earlier stage)."""
+        positions = {s.agent_role: i for i, s in enumerate(self.stages)}
+        from_idx = positions.get(rule.from_stage, -1)
+        to_idx = positions.get(rule.to_stage, -1)
+        return to_idx >= 0 and from_idx >= 0 and to_idx < from_idx
+
+    def get_backedges(self) -> List[HandoffRule]:
+        """Return all handoff rules that go backward (to an earlier stage)."""
+        return [r for r in self.handoff_rules if self.is_backedge(r)]
+
+    def get_reviewer_stage(self) -> Optional[Stage]:
+        """Return the stage that is the source of all backedges, if any.
+
+        In a review-loop topology this is the stage that can both hand back
+        for revision and finalize (the reviewer).
+        """
+        backedge_sources = {r.from_stage for r in self.get_backedges()}
+        if len(backedge_sources) == 1:
+            role = next(iter(backedge_sources))
+            return self.get_stage(role)
+        return None
 
 
 def _build_registry() -> Dict[str, callable]:
@@ -168,6 +199,7 @@ def _build_registry() -> Dict[str, callable]:
             ],
             exit_stage="analyst",
             max_iterations=2,
+            max_review_cycles=1,
         )
 
     def shared_memory_collaboration(agent_map: Dict[str, str]) -> TopologyConfig:
@@ -219,13 +251,15 @@ def _build_registry() -> Dict[str, callable]:
 
 
 def get_topology(topology_id: str, agent_map: Dict[str, str],
-                 max_agent_turns: Optional[int] = None) -> TopologyConfig:
+                 max_agent_turns: Optional[int] = None,
+                 max_review_cycles: Optional[int] = None) -> TopologyConfig:
     """Return the TopologyConfig for a given topology ID and agent map.
 
     Args:
         topology_id: One of the supported topology identifiers.
         agent_map: Mapping from agent roles to entity IDs.
         max_agent_turns: If provided, override each stage's max_turns with this value.
+        max_review_cycles: If provided, override the topology's max_review_cycles.
     """
     registry = _build_registry()
     builder = registry.get(topology_id)
@@ -236,4 +270,6 @@ def get_topology(topology_id: str, agent_map: Dict[str, str],
     if max_agent_turns is not None:
         for stage in topo.stages:
             stage.max_turns = max_agent_turns
+    if max_review_cycles is not None:
+        topo.max_review_cycles = max_review_cycles
     return topo

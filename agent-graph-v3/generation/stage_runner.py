@@ -107,6 +107,7 @@ class StageRunner:
         lep_orchestrator=None,
         lep_corrupted_values: Optional[Dict[str, Any]] = None,
         global_event_counter: Optional[List[int]] = None,
+        remaining_reviews: Optional[int] = None,
     ) -> StageResult:
         """Execute one agent stage.
 
@@ -197,7 +198,7 @@ class StageRunner:
 
         # Build role-specific system prompt BEFORE resetting the backend
         # so the backend's native _messages uses the correct prompt.
-        system_prompt = self._build_system_prompt(stage, handoff_from_payload)
+        system_prompt = self._build_system_prompt(stage, handoff_from_payload, remaining_reviews)
 
         # Build tool list: include handoff/submit_final only if the stage
         # is allowed to use them (prevents premature use).
@@ -813,7 +814,12 @@ class StageRunner:
 
     def _find_next_agent_role(self, current_role: str,
                               topology: TopologyConfig) -> str:
-        """Find the next agent role in the topology after current_role."""
+        """Find the next agent role via outgoing HandoffRule, fallback to next stage."""
+        # Primary: use the explicit outgoing handoff rule
+        outgoing = topology.get_outgoing_handoff(current_role)
+        if outgoing:
+            return outgoing.to_stage
+        # Fallback: next stage in the sequence, then exit_stage
         stages = topology.stages
         for i, stage in enumerate(stages):
             if stage.agent_role == current_role and i + 1 < len(stages):
@@ -821,47 +827,127 @@ class StageRunner:
         return topology.exit_stage
 
     def _build_system_prompt(self, stage: Stage,
-                             handoff_from_payload: Optional[HandoffPayload]) -> str:
+                             handoff_from_payload: Optional[HandoffPayload],
+                             remaining_reviews: Optional[int] = None) -> str:
         """Build the system prompt for this stage.
 
-        Role-specific completion instructions: each agent is told exactly
-        one legal completion action based on its stage configuration.
+        Uses capability flags (can_handoff, can_finalize) to determine role
+        responsibilities. The prompt differentiates between:
+        - Pure intermediate: must hand off, never finalize
+        - Reviewer/approver: may hand back OR finalize
         """
-        parts = [f"You are {stage.agent_role}."]
-        if handoff_from_payload:
-            parts.append(
-                f"You are continuing work from {handoff_from_payload.from_agent}. "
-                f"Review their findings and build upon them."
-            )
+        receiving_handoff = handoff_from_payload is not None
+        is_reviewer = stage.can_handoff and stage.can_finalize
+        is_final_round = remaining_reviews is not None and remaining_reviews <= 1
 
+        # ── Shared completion instructions ──────────────────────────────
         if stage.can_finalize and not stage.can_handoff:
             # Pure final agent: must call submit_final, must NOT call handoff
-            parts.append(
+            completion = (
                 "You are the final agent in this workflow. "
                 "When your work is complete, call submit_final with a summary. "
-                "Do NOT call handoff."
-            )
-        elif stage.can_handoff and not stage.can_finalize:
-            # Pure intermediate agent: must call handoff, must NOT call submit_final or prose
-            parts.append(
-                "You are an intermediate agent. After completing your analysis "
-                "and writing your output artifact, call handoff to transfer work "
-                "to the next agent. "
-                "Do NOT call submit_final. Do NOT finish with plain prose."
-            )
-        elif stage.can_handoff and stage.can_finalize:
-            # Review-loop style: may either hand back for revision OR finalize.
-            parts.append(
-                "You may either (a) call submit_final to terminate the workflow "
-                "with a summary, or (b) call handoff to send work back for "
-                "revision. Do NOT finish with plain prose."
-            )
-        else:
-            # Neither handoff nor finalize: a self-contained stage.
-            parts.append(
-                "Complete the assigned task using the available tools."
+                "Do NOT call handoff. Do NOT finish with plain prose."
             )
 
+        elif stage.can_handoff and not stage.can_finalize:
+            # Producer/drafter: must hand off, never finalize.
+            if receiving_handoff:
+                # Revision pass: treat incoming handoff as revision feedback
+                completion = (
+                    "You are receiving revision feedback from the previous stage. "
+                    "On a revision pass, do not restart the task from scratch. "
+                    "First read the existing artifact and the incoming reviewer "
+                    "feedback. Only inspect source files necessary to verify or "
+                    "resolve the specific requested changes. Preserve "
+                    "already-correct findings, update the artifact, then hand off. "
+                    "Address the specific issues raised in the feedback — do not "
+                    "reopen already-resolved issues unless new evidence requires it. "
+                    "Call handoff exactly once to return the revised artifact. "
+                    "Do NOT call submit_final. Do NOT hand off merely to continue "
+                    "discussion or request a generic re-review."
+                )
+            else:
+                # Initial pass: produce the first complete artifact
+                completion = (
+                    "You are the first agent in this workflow. "
+                    "Inspect the task, produce the best complete artifact you can "
+                    "using the available tools, then call handoff exactly once to "
+                    "transfer work to the next stage. "
+                    "Do NOT call submit_final. Do NOT finish with plain prose."
+                )
+
+        elif is_reviewer:
+            # Reviewer/approver: may hand back for revision OR finalize.
+            if receiving_handoff:
+                # Subsequent review pass (receiving revised artifact)
+                if is_final_round:
+                    completion = (
+                        "You are reviewing a revised artifact. "
+                        "This is the final permitted review round. "
+                        "If the artifact is materially correct and satisfies the "
+                        "task, call submit_final to accept the work. "
+                        "Do not request another revision for stylistic improvements, "
+                        "optional enhancements, or issues that do not materially "
+                        "affect correctness. Only request another revision if a "
+                        "serious unresolved issue makes the result substantially "
+                        "incomplete or incorrect. "
+                        "Prefer submit_final over another handoff."
+                    )
+                else:
+                    completion = (
+                        "You are reviewing a revised artifact. "
+                        "Focus only on the specific issues raised in the revision "
+                        "request — do not reopen already-resolved issues. "
+                        "If the revision adequately addresses all material issues, "
+                        "call submit_final to accept the work. "
+                        "If specific material errors, omissions, or unsupported "
+                        "conclusions remain, call handoff and name each concrete "
+                        "issue that requires further revision. "
+                        "Do NOT hand off for stylistic improvements, expansions, "
+                        "or further polishing. Do NOT hand off with a generic "
+                        "summary like 'please review again.' Prefer submit_final "
+                        "once all material issues are resolved."
+                    )
+            else:
+                # First review pass
+                if is_final_round:
+                    completion = (
+                        "You are the reviewer in this workflow. "
+                        "This is the final permitted review round. "
+                        "Independently inspect the current artifact against the "
+                        "original task requirements. "
+                        "If the artifact is materially correct and satisfies the "
+                        "task, call submit_final. "
+                        "Do not request another revision for stylistic improvements, "
+                        "optional enhancements, or issues that do not materially "
+                        "affect correctness. Only request another revision if a "
+                        "serious unresolved issue makes the result substantially "
+                        "incomplete or incorrect. "
+                        "Do NOT hand off without naming specific unresolved issues. "
+                        "Do NOT rewrite the artifact yourself and then hand off — "
+                        "either finalize or hand back with specific revision requests."
+                    )
+                else:
+                    completion = (
+                        "You are the reviewer in this workflow. "
+                        "Independently inspect the current artifact against the "
+                        "original task requirements. "
+                        "If there are specific material errors, omissions, "
+                        "contradictions, or unsupported conclusions that require "
+                        "revision, call handoff and clearly name each concrete issue. "
+                        "If the artifact is substantially correct and satisfies the "
+                        "task, call submit_final. "
+                        "Do NOT hand off for stylistic improvements, expansions, "
+                        "polishing, or because the report could be improved. "
+                        "Do NOT hand off without naming specific unresolved issues. "
+                        "Do NOT rewrite the artifact yourself and then hand off — "
+                        "either finalize or hand back with specific revision requests."
+                    )
+
+        else:
+            completion = "Complete the assigned task using the available tools."
+
+        parts = [f"You are {stage.agent_role}.", completion]
         return " ".join(parts)
 
     def _build_turn_prompt_from_history(

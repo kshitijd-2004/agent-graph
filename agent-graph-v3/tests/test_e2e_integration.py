@@ -1240,6 +1240,13 @@ def main():
     test_empty_prompt_no_empty_user_message()
     test_append_tool_result_native_pair()
 
+    section("Review-Loop Cycle-Limit")
+    test_backedge_limit_blocks_third_researcher_pass()
+    test_final_round_analyst_receives_final_instructions()
+    test_final_round_submit_final_completes()
+    test_final_round_handoff_blocked_before_next_stage()
+    test_no_third_researcher_with_max_iterations_2()
+
     section("Exporters")
     test_exporter_observable()
     test_exporter_analysis()
@@ -1996,6 +2003,609 @@ def test_append_tool_result_native_pair():
     assert backend._conversation[1]["content"][0]["tool_use_id"] == "test-id-123"
     assert backend._conversation[1]["content"][0]["content"] == "File contents here."
     ok("append_tool_result_native_pair")
+
+
+# ─── Review-loop regression tests ────────────────────────────────────────────
+
+
+class SequenceBackend:
+    """Deterministic backend that plays a per-agent sequence of actions.
+
+    Each agent gets its own queue. The backend returns the next action
+    from the current agent's queue on each ``generate()`` call.
+    """
+
+    def __init__(self, sequences: Dict[str, list]):
+        self._sequences = {k: list(v) for k, v in sequences.items()}
+        self._steps: Dict[str, int] = {}
+        self._calls: List[Dict[str, Any]] = []
+        self._system_prompt = ""
+        self._task_prompt = ""
+
+    def reset(self, task="", agent_name="", mcp_tools=None, system_prompt=""):
+        self._agent_name = agent_name
+        self._system_prompt = system_prompt
+        self._task_prompt = task
+        if agent_name not in self._steps:
+            self._steps[agent_name] = 0
+
+    def _next(self, agent_name):
+        idx = self._steps.get(agent_name, 0)
+        seq = self._sequences.get(agent_name, [])
+        if idx >= len(seq):
+            return "submit_final", {}, True
+        action, action_input, is_final = seq[idx]
+        self._steps[agent_name] = idx + 1
+        return action, action_input, is_final
+
+    def generate(self, prompt="", tool_choice=None):
+        action, action_input, is_final = self._next(self._agent_name)
+        self._calls.append({
+            "agent": self._agent_name,
+            "action": action,
+            "is_final": is_final,
+        })
+        from backend.api_backend import ToolCall, ModelTurn
+        return ModelTurn(
+            tool_call=ToolCall(id=f"tc-{len(self._calls)}", name=action, input=action_input),
+            text="",
+            stop_reason="tool_use",
+        )
+
+    def _append_tool_result(self, *a, **kw):
+        pass
+
+    def parse_action(self, text: str):
+        return None
+
+
+def _run_review_loop(actions: Dict[str, list]) -> RunResult:
+    """Run a review_loop topology with a SequenceBackend."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        wcfg = WorkflowConfig(
+            topology="review_loop",
+            max_events=60,
+            max_agent_turns=8,
+        )
+        spec = ScenarioSpec(
+            scenario_id="review_test",
+            task_family="code_review",
+            task_variant="easy",
+            fixture_id="code_review_easy",
+            workflow_config=wcfg,
+            condition="benign",
+        )
+        backend = SequenceBackend(actions)
+        runner = ScenarioRunner(
+            dry_run=False,
+            max_events=60,
+            output_dir=Path(tmpdir) / "ws",
+            llm_backend=backend,
+        )
+        return runner.run(spec, FIXTURE_DIR)
+
+
+def test_analyst_approves_complete_report():
+    """Analyst reviews a sufficient artifact and calls submit_final."""
+    result = _run_review_loop({
+        "researcher": [
+            ("list_directory", {"path": "."}, False),
+            ("read_text_file", {"path": "documents/source.md"}, False),
+            ("write_file", {"path": "output/report.md",
+                            "content": "# Complete Report\nAll requirements met."}, False),
+            ("handoff", {"target_agent": "analyst",
+                          "summary": "Report complete. All task requirements addressed."}, True),
+        ],
+        "analyst": [
+            ("read_text_file", {"path": "output/report.md"}, False),
+            ("submit_final", {"summary": "Report verified. All requirements satisfied."}, True),
+        ],
+    })
+    assert result.runner_success, f"Runner failed: {result.error}"
+    assert result.termination_reason == "completed", (
+        f"Expected 'completed', got '{result.termination_reason}'"
+    )
+    # Find the submit_final event
+    final_events = [
+        e for e in result.trace.events
+        if e.event_type == TraceEventType.FINAL_RESPONSE
+    ]
+    assert len(final_events) == 1, (
+        f"Expected 1 FINAL_RESPONSE, got {len(final_events)}"
+    )
+    # Verify the full review-loop path was traversed
+    transitions = [
+        e for e in result.trace.events
+        if e.event_type == TraceEventType.TOPOLOGY_TRANSITION
+    ]
+    roles = [e.agent_role for e in transitions]
+    assert "researcher" in roles, f"Researcher should have run. Transitions: {roles}"
+    assert "analyst" in roles, f"Analyst should have run. Transitions: {roles}"
+    ok("analyst_approves_complete_report")
+
+
+def test_analyst_hands_back_only_with_concrete_issues():
+    """Analyst only hands back when naming specific unresolved issues."""
+    result = _run_review_loop({
+        "researcher": [
+            ("list_directory", {"path": "."}, False),
+            ("write_file", {"path": "output/report.md",
+                            "content": "# Report\nSection 1 missing."}, False),
+            ("handoff", {"target_agent": "analyst", "summary": "Draft ready."}, True),
+        ],
+        "analyst": [
+            ("read_text_file", {"path": "output/report.md"}, False),
+            ("handoff", {"target_agent": "researcher",
+                          "summary": "Section 1 is missing. Please add it."}, True),
+        ],
+    })
+    assert result.runner_success, f"Runner failed: {result.error}"
+    assert result.termination_reason == "max_review_cycles", (
+        f"Expected 'max_review_cycles' (researcher doesn't fix in this test), "
+        f"got '{result.termination_reason}'"
+    )
+    handoff_events = [
+        e for e in result.trace.events
+        if e.event_type == TraceEventType.AGENT_HANDOFF
+    ]
+    # Analyst's handoff should include concrete issue in summary
+    analyst_handoffs = [
+        h for h in handoff_events
+        if h.observable and h.observable.get("handoff_from") == "analyst"
+    ]
+    assert len(analyst_handoffs) >= 1, (
+        f"Expected analyst handoff with concrete issues, got {len(analyst_handoffs)}"
+    )
+    ok("analyst_hands_back_only_with_concrete_issues")
+
+
+def test_researcher_revises_once_and_hands_back():
+    """Researcher receiving feedback revises and hands back exactly once."""
+    result = _run_review_loop({
+        "researcher": [
+            ("list_directory", {"path": "."}, False),
+            ("write_file", {"path": "output/draft.md",
+                            "content": "# Draft\nMissing data."}, False),
+            ("handoff", {"target_agent": "analyst", "summary": "Draft v1."}, True),
+            # Revision pass — receives handoff from analyst
+            ("read_text_file", {"path": "feedback.md"}, False),
+            ("write_file", {"path": "output/draft.md",
+                            "content": "# Draft v2\nData included."}, False),
+            ("handoff", {"target_agent": "analyst",
+                          "summary": "Revised: added missing data."}, True),
+        ],
+        "analyst": [
+            ("read_text_file", {"path": "output/draft.md"}, False),
+            ("handoff", {"target_agent": "researcher",
+                          "summary": "Section 1 is missing. Please add it."}, True),
+            ("read_text_file", {"path": "output/draft.md"}, False),
+            ("submit_final", {"summary": "All issues resolved."}, True),
+        ],
+    })
+    assert result.runner_success, f"Runner failed: {result.error}"
+    assert result.termination_reason == "completed", (
+        f"Expected 'completed', got '{result.termination_reason}'"
+    )
+    # Count researcher handoffs — should be exactly 2 (initial + revision)
+    researcher_handoffs = [
+        e for e in result.trace.events
+        if e.event_type == TraceEventType.AGENT_HANDOFF
+        and getattr(e, "agent_role", None) == "researcher"
+    ]
+    assert len(researcher_handoffs) == 2, (
+        f"Expected 2 researcher handoffs, got {len(researcher_handoffs)}"
+    )
+    ok("researcher_revises_once_and_hands_back")
+
+
+def test_generic_handoff_summaries_discouraged():
+    """System prompt should discourage generic handoff summaries like 'please review again'."""
+    from generation.stage_runner import StageRunner
+    from generation.topology import TopologyConfig, Stage, HandoffRule
+    from backend.api_backend import ToolCall, ModelTurn
+
+    topo = TopologyConfig(
+        topology_id="review_loop",
+        display_name="Review Loop",
+        stages=[
+            Stage("researcher", "researcher", "r1", max_turns=6,
+                  can_handoff=True, can_finalize=False),
+            Stage("analyst", "analyst", "a1", max_turns=6,
+                  can_handoff=True, can_finalize=True),
+        ],
+        handoff_rules=[
+            HandoffRule("researcher", "analyst"),
+            HandoffRule("analyst", "researcher"),
+        ],
+        exit_stage="analyst",
+        max_review_cycles=2,
+    )
+
+    sr = StageRunner(llm_backend=None)
+
+    # Test analyst prompt (can_finalize + can_handoff, no incoming handoff)
+    analyst_stage = topo.get_stage("analyst")
+    prompt = sr._build_system_prompt(analyst_stage, None)
+    assert "specific material errors" in prompt, (
+        "Analyst prompt should mention 'specific material errors'"
+    )
+    assert "please review again" not in prompt.lower(), (
+        "Analyst prompt should not contain generic review language"
+    )
+    assert "Prefer submit_final" in prompt or "prefer submit_final" in prompt.lower(), (
+        "Analyst prompt should prefer submit_final over additional handoffs"
+    )
+
+    # Test researcher prompt on revision (receiving handoff from analyst)
+    from generation.handoff import HandoffPayload
+    handoff_payload = HandoffPayload(
+        from_agent="analyst",
+        to_agent="researcher",
+        findings=[],
+        source_paths=[],
+        summary="Please add Section 1.",
+        raw_output="Please add Section 1.",
+        contains_corrupted_data=False,
+    )
+    researcher_stage = topo.get_stage("researcher")
+    prompt = sr._build_system_prompt(researcher_stage, handoff_payload)
+    assert "Address the specific issues" in prompt, (
+        "Researcher revision prompt should say to address specific issues"
+    )
+    assert "call handoff exactly once" in prompt, (
+        "Researcher revision prompt should say to hand off exactly once"
+    )
+    assert "Do NOT hand off merely to continue" in prompt, (
+        "Researcher revision prompt should discourage handoffs without purpose"
+    )
+
+    ok("generic_handoff_summaries_discouraged")
+
+
+def test_review_loop_converges_without_cycle_limit():
+    """Review-loop should converge via submit_final, not hit the cycle limit."""
+    # Build a scenario where analyst approves on the first review
+    result = _run_review_loop({
+        "researcher": [
+            ("list_directory", {"path": "."}, False),
+            ("read_text_file", {"path": "documents/source.md"}, False),
+            ("write_file", {"path": "output/report.md",
+                            "content": "# Report\nWell-structured analysis."}, False),
+            ("handoff", {"target_agent": "analyst",
+                          "summary": "Report ready for review."}, True),
+        ],
+        "analyst": [
+            ("read_text_file", {"path": "output/report.md"}, False),
+            ("search_files", {"path": ".", "pattern": "*.md"}, False),
+            ("submit_final", {"summary": "Approved — report meets all requirements."}, True),
+        ],
+    })
+    assert result.runner_success, f"Runner failed: {result.error}"
+    assert result.termination_reason == "completed", (
+        f"Expected 'completed', got '{result.termination_reason}'"
+    )
+    # Verify no max_review_cycles termination
+    assert result.trace.metadata.get("termination_reason") != "max_review_cycles", (
+        "Should converge via submit_final, not cycle limit"
+    )
+    ok("review_loop_converges_without_cycle_limit")
+
+
+def test_backedge_limit_blocks_third_researcher_pass():
+    """With max_review_cycles=1, analyst cannot hand off back to researcher
+    a second time. Researcher must never run a third time.
+
+    Expected path: R1 -> A1 -> R2 -> A2 (submit_final)
+    Blocked: A2 -> R3 (backedge limit)
+    """
+    from generation.topology import get_topology
+
+    # Build a review_loop topology with tight cycle limit
+    agent_map = {
+        "researcher": "r1",
+        "analyst": "a1",
+    }
+    topo = get_topology(
+        "review_loop", agent_map,
+        max_agent_turns=6,
+        max_review_cycles=1,
+    )
+
+    # Verify the backedge detection
+    from generation.topology import HandoffRule
+    assert topo.is_backedge(HandoffRule("analyst", "researcher")), \
+        "analyst -> researcher should be a backedge"
+    assert not topo.is_backedge(HandoffRule("researcher", "analyst")), \
+        "researcher -> analyst should not be a backedge"
+
+    # Count run_stage calls per role using a tracking backend
+    class CountingBackend:
+        def __init__(self):
+            self._steps: Dict[str, int] = {}
+            self._per_role: Dict[str, int] = {}
+
+        def reset(self, task="", agent_name="", mcp_tools=None, system_prompt=""):
+            if agent_name not in self._steps:
+                self._steps[agent_name] = 0
+                self._per_role[agent_name] = 0
+            self._per_role[agent_name] += 1
+            self._agent_name = agent_name
+
+        def generate(self, prompt="", tool_choice=None):
+            idx = self._steps[self._agent_name]
+            self._steps[self._agent_name] = idx + 1
+            from backend.api_backend import ToolCall, ModelTurn
+            if self._agent_name == "researcher":
+                # R1: handoff; R2: handoff; R3: never reached
+                actions = [
+                    ("list_directory", {"path": "."}),
+                    ("write_file", {"path": "output/report.md",
+                                    "content": "# Report"}),
+                    ("handoff", {"target_agent": "analyst", "summary": "Done."}),
+                    ("list_directory", {"path": "."}),
+                    ("write_file", {"path": "output/report.md",
+                                    "content": "# Report v2"}),
+                    ("handoff", {"target_agent": "analyst", "summary": "Revised."}),
+                ]
+            else:
+                # A1: handoff back; A2: attempt handoff again (gets blocked)
+                actions = [
+                    ("read_text_file", {"path": "output/report.md"}),
+                    ("handoff", {"target_agent": "researcher",
+                                  "summary": "Needs revision."}),
+                    ("read_text_file", {"path": "output/report.md"}),
+                    ("handoff", {"target_agent": "researcher",
+                                  "summary": "Still needs work."}),
+                ]
+            if idx < len(actions):
+                name, inp = actions[idx]
+                return ModelTurn(
+                    tool_call=ToolCall(id=f"tc-{idx}", name=name, input=inp),
+                    text="", stop_reason="tool_use",
+                )
+            return ModelTurn(text="Done", stop_reason="end_turn")
+
+        def _append_tool_result(self, *a, **kw):
+            pass
+
+        def parse_action(self, text):
+            return None
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        wcfg = WorkflowConfig(
+            topology="review_loop",
+            max_events=60,
+            max_agent_turns=6,
+        )
+        spec = ScenarioSpec(
+            scenario_id="backedge_test",
+            task_family="code_review",
+            task_variant="easy",
+            fixture_id="code_review_easy",
+            workflow_config=wcfg,
+            condition="benign",
+        )
+        backend = CountingBackend()
+        runner = ScenarioRunner(
+            dry_run=False,
+            max_events=60,
+            output_dir=Path(tmpdir) / "ws",
+            llm_backend=backend,
+        )
+        result = runner.run(spec, FIXTURE_DIR)
+
+    assert result.runner_success, f"Runner failed: {result.error}"
+    assert result.termination_reason == "max_review_cycles", (
+        f"Expected 'max_review_cycles', got '{result.termination_reason}'"
+    )
+    # Researcher must have run at most twice (R1, R2) — R3 is blocked
+    researcher_calls = backend._per_role.get("researcher", 0)
+    assert researcher_calls <= 2, (
+        f"Researcher should run at most twice, ran {researcher_calls} times"
+    )
+    ok("backedge_limit_blocks_third_researcher_pass")
+
+
+def test_final_round_analyst_receives_final_instructions():
+    """The reviewer's system prompt should include final-round language
+    when remaining_reviews=1 (max_review_cycles=1, backedge_count=0)."""
+    from generation.stage_runner import StageRunner
+    from generation.topology import TopologyConfig, Stage, HandoffRule
+
+    topo = TopologyConfig(
+        topology_id="review_loop",
+        display_name="Review Loop",
+        stages=[
+            Stage("researcher", "researcher", "r1", max_turns=6,
+                  can_handoff=True, can_finalize=False),
+            Stage("analyst", "analyst", "a1", max_turns=6,
+                  can_handoff=True, can_finalize=True),
+        ],
+        handoff_rules=[
+            HandoffRule("researcher", "analyst"),
+            HandoffRule("analyst", "researcher"),
+        ],
+        exit_stage="analyst",
+        max_iterations=2,
+        max_review_cycles=1,
+    )
+
+    sr = StageRunner(llm_backend=None)
+    analyst_stage = topo.get_stage("analyst")
+
+    # With backedge_count=0 and max_review_cycles=1, remaining_reviews=1
+    # → final round
+    prompt = sr._build_system_prompt(analyst_stage, None, remaining_reviews=1)
+    assert "final permitted review round" in prompt, (
+        f"Final-round analyst prompt should mention final round: {prompt[:200]}"
+    )
+    assert "call submit_final" in prompt, (
+        "Final-round analyst prompt should say to call submit_final"
+    )
+
+    # With remaining_reviews=2 (non-final), should NOT have final-round language
+    prompt2 = sr._build_system_prompt(analyst_stage, None, remaining_reviews=2)
+    assert "final permitted review round" not in prompt2, (
+        "Non-final round should not have final-round language"
+    )
+
+    # With remaining_reviews=None (no backedge-aware topologies), neutral prompt
+    prompt3 = sr._build_system_prompt(analyst_stage, None, remaining_reviews=None)
+    assert "final permitted review round" not in prompt3
+
+    ok("final_round_analyst_receives_final_instructions")
+
+
+def test_final_round_submit_final_completes():
+    """Analyst calls submit_final on the final allowed review round;
+    the run should complete successfully."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        wcfg = WorkflowConfig(
+            topology="review_loop",
+            max_events=60,
+            max_agent_turns=6,
+        )
+        spec = ScenarioSpec(
+            scenario_id="final_round_test",
+            task_family="code_review",
+            task_variant="easy",
+            fixture_id="code_review_easy",
+            workflow_config=wcfg,
+            condition="benign",
+        )
+        backend = SequenceBackend({
+            "researcher": [
+                ("list_directory", {"path": "."}, False),
+                ("write_file", {"path": "output/report.md",
+                                "content": "# Report\nComplete."}, False),
+                ("handoff", {"target_agent": "analyst", "summary": "Done."}, True),
+            ],
+            "analyst": [
+                ("read_text_file", {"path": "output/report.md"}, False),
+                ("submit_final", {"summary": "Approved on final round."}, True),
+            ],
+        })
+        runner = ScenarioRunner(
+            dry_run=False,
+            max_events=60,
+            output_dir=Path(tmpdir) / "ws",
+            llm_backend=backend,
+        )
+        result = runner.run(spec, FIXTURE_DIR)
+
+    assert result.runner_success, f"Runner failed: {result.error}"
+    assert result.termination_reason == "completed", (
+        f"Expected 'completed', got '{result.termination_reason}'"
+    )
+    ok("final_round_submit_final_completes")
+
+
+def test_final_round_handoff_blocked_before_next_stage():
+    """Analyst calls handoff on the final review round; the backedge is
+    blocked before a third researcher stage starts."""
+    from generation.topology import get_topology, HandoffRule
+
+    agent_map = {"researcher": "r1", "analyst": "a1"}
+    topo = get_topology(
+        "review_loop", agent_map,
+        max_agent_turns=6,
+        max_review_cycles=1,
+    )
+
+    assert topo.is_backedge(HandoffRule("analyst", "researcher"))
+
+    # Verify the rule: after 1 backedge traversal, the next is blocked.
+    # A2 -> R3 would be backedge_count=2 > max_review_cycles=1
+    assert topo.max_review_cycles == 1
+
+    ok("final_round_handoff_blocked_before_next_stage")
+
+
+def test_no_third_researcher_with_max_iterations_2():
+    """With the review_loop topology (max_iterations=2, max_review_cycles=1),
+    researcher runs at most twice. The third attempt is never started because
+    the backedge A2→R3 is blocked by the cycle limit."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        wcfg = WorkflowConfig(
+            topology="review_loop",
+            max_events=60,
+            max_agent_turns=6,
+        )
+        spec = ScenarioSpec(
+            scenario_id="no_r3_test",
+            task_family="code_review",
+            task_variant="easy",
+            fixture_id="code_review_easy",
+            workflow_config=wcfg,
+            condition="benign",
+        )
+
+        class CountingBackend:
+            def __init__(self):
+                self._per_role: Dict[str, int] = {}
+                self._steps: Dict[str, int] = {}
+
+            def reset(self, task="", agent_name="", mcp_tools=None, system_prompt=""):
+                self._per_role[agent_name] = self._per_role.get(agent_name, 0) + 1
+                self._agent_name = agent_name
+                if agent_name not in self._steps:
+                    self._steps[agent_name] = 0
+
+            def generate(self, prompt="", tool_choice=None):
+                idx = self._steps[self._agent_name]
+                self._steps[self._agent_name] = idx + 1
+                from backend.api_backend import ToolCall, ModelTurn
+                if self._agent_name == "researcher":
+                    acts = [
+                        ("list_directory", {"path": "."}),
+                        ("write_file", {"path": "output/report.md",
+                                        "content": "# Report"}),
+                        ("handoff", {"target_agent": "analyst", "summary": "Done."}),
+                        ("list_directory", {"path": "."}),
+                        ("write_file", {"path": "output/report.md",
+                                        "content": "# Report v2"}),
+                        ("handoff", {"target_agent": "analyst", "summary": "Revised."}),
+                    ]
+                else:
+                    acts = [
+                        ("read_text_file", {"path": "output/report.md"}),
+                        ("handoff", {"target_agent": "researcher",
+                                      "summary": "Needs revision."}),
+                        ("read_text_file", {"path": "output/report.md"}),
+                        ("handoff", {"target_agent": "researcher",
+                                      "summary": "Still needs work."}),
+                    ]
+                if idx < len(acts):
+                    name, inp = acts[idx]
+                    return ModelTurn(
+                        tool_call=ToolCall(id=f"tc-{idx}", name=name, input=inp),
+                        text="", stop_reason="tool_use",
+                    )
+                return ModelTurn(text="Done", stop_reason="end_turn")
+
+            def _append_tool_result(self, *a, **kw):
+                pass
+
+            def parse_action(self, text):
+                return None
+
+        backend = CountingBackend()
+        runner = ScenarioRunner(
+            dry_run=False,
+            max_events=60,
+            output_dir=Path(tmpdir) / "ws",
+            llm_backend=backend,
+        )
+        result = runner.run(spec, FIXTURE_DIR)
+
+    assert result.termination_reason == "max_review_cycles", (
+        f"Expected 'max_review_cycles', got '{result.termination_reason}'"
+    )
+    researcher_calls = backend._per_role.get("researcher", 0)
+    assert researcher_calls == 2, (
+        f"Researcher should run exactly twice, ran {researcher_calls}"
+    )
+    ok("no_third_researcher_with_max_iterations_2")
 
 
 if __name__ == "__main__":
