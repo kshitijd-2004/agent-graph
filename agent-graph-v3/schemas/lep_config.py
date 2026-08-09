@@ -35,6 +35,9 @@ class LEPConfig:
         requires_handoff:           Whether this LEP needs handoff between agents
         requires_sensitive_action:  Whether this LEP targets a sensitive action
 
+        canonical_operator:         The specific operator variant (e.g. "material_omission")
+        canonical_operator_template: Template string for the operator (for dynamic ones)
+
         observable_to_detector:     Whether a runtime detector could observe this
         supports_controlled_injection:   Can we inject this deterministically?
         supports_behavioral_detection:    Can we detect it from behavior alone?
@@ -60,6 +63,9 @@ class LEPConfig:
     requires_retrieval: bool = False
     requires_handoff: bool = False
     requires_sensitive_action: bool = False
+
+    canonical_operator: str = ""
+    canonical_operator_template: str = ""
 
     observable_to_detector: bool = True
     supports_controlled_injection: bool = True

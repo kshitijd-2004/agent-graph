@@ -87,6 +87,9 @@ class MemoryPoisoningLEP:
         self.matcher = TriggerMatcher()
         self._instances: list[MemoryPoisoningResult] = []
         self._poisoned_memory: Dict[str, Dict[str, Any]] = {}
+        self._canonical_operator: str = lep_config.canonical_operator or "false_fact_insertion"
+        if lep_config.canonical_operator_template and not self._canonical_operator:
+            self._canonical_operator = lep_config.canonical_operator_template
 
     def evaluate(
         self,

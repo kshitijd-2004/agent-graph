@@ -52,6 +52,9 @@ class HandoffCorruptionLEP:
         self.matcher = TriggerMatcher()
         self._instances: list[HandoffCorruptionResult] = []
         self._handoff_content: Dict[str, str] = {}  # event_id -> original content
+        self._canonical_operator: str = lep_config.canonical_operator or "material_finding_omission"
+        if lep_config.canonical_operator_template and not self._canonical_operator:
+            self._canonical_operator = lep_config.canonical_operator_template
 
     def evaluate(
         self,

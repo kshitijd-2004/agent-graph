@@ -176,7 +176,21 @@ class ScenarioBuilder:
     ) -> ScenarioSpec:
         """Build a single-LEP scenario. Validates LEP code is registered."""
         from validation.lep_validator import validate_lep_config
+        from leps.canonical_operators import get_canonical_operator
+
         validate_lep_config(lep_config, config.task_family)
+
+        # Resolve and record the canonical operator for this (task_family, LEP).
+        # This is fixed at scenario-build time — no runtime variant selection.
+        canonical_operator = get_canonical_operator(config.task_family, lep_config.code)
+        if canonical_operator is None:
+            raise ValueError(
+                f"No canonical operator registered for {lep_config.code} "
+                f"in task family '{config.task_family}'. "
+                f"Add the mapping in leps/canonical_operators.py."
+            )
+        lep_config.canonical_operator = canonical_operator
+
         config = ScenarioBuildConfig(
             **{k: v for k, v in vars(config).items()
                if k not in ("lep_configs", "condition")},

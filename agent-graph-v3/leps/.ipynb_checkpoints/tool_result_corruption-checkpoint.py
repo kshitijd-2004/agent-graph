@@ -49,9 +49,6 @@ class ToolResultCorruptionLEP:
         self.matcher = TriggerMatcher()
         self._corrupted_results: Dict[str, str] = {}  # tool_call_id -> corrupted result
         self._instance_results: list[ToolResultCorruptionResult] = []
-        self._canonical_operator: str = lep_config.canonical_operator or "partial_omission"
-        if lep_config.canonical_operator_template and not self._canonical_operator:
-            self._canonical_operator = lep_config.canonical_operator_template
 
     def evaluate(
         self,
@@ -73,17 +70,11 @@ class ToolResultCorruptionLEP:
         self,
         event: TraceEvent,
         original_result: str,
-        variant: str = "",
+        variant: str = "numeric_corruption",
     ) -> ToolResultCorruptionResult:
-        """Produce a corrupted version of the tool result.
-
-        The canonical operator is fixed at scenario-build time and stored
-        on the instance. The ``variant`` argument is accepted for backward
-        compat but ignored.
-        """
-        operator = variant or self._canonical_operator
+        """Produce a corrupted version of the tool result."""
         instance_id = f"{self.config.code}_{event.event_id}"
-        perturbed = self._apply_corruption(original_result, operator)
+        perturbed = self._apply_corruption(original_result, variant)
 
         result = ToolResultCorruptionResult(
             lep_instance_id=instance_id,
@@ -100,7 +91,7 @@ class ToolResultCorruptionLEP:
 
         logger.debug(
             "LEP %s corrupted tool result for event %s (variant: %s)",
-            self.config.code, event.event_id, variant or self._canonical_operator,
+            self.config.code, event.event_id, variant,
         )
         return result
 
