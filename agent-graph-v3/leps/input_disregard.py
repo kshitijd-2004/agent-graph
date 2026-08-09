@@ -94,10 +94,16 @@ class InputDisregardLEP:
         source_handoff_event_id: str,
         disregard_type: str = "start_scratch",
     ) -> InputDisregardResult:
-        """Create an input disregard instance."""
-        import random
-        templates = self.DISREGARD_PROMPTS.get(disregard_type, self.DISREGARD_PROMPTS["start_scratch"])
-        injected_text = random.choice(templates)
+        """Create an input disregard instance.
+
+        Uses the canonical operator fixed at scenario-build time.
+        The first template in the list is the deterministic choice.
+        """
+        templates = self.DISREGARD_PROMPTS.get(
+            disregard_type, self.DISREGARD_PROMPTS["start_scratch"]
+        )
+        # Deterministic: always use the first template. No random.choice().
+        injected_text = templates[0]
 
         instance_id = f"{self.config.code}_{target_agent}_{disregard_type}"
         result = InputDisregardResult(
@@ -106,6 +112,7 @@ class InputDisregardLEP:
             target_agent=target_agent,
             source_handoff_event_id=source_handoff_event_id,
             disregard_type=disregard_type,
+            evidence_ignored=[injected_text],
         )
         self._instances.append(result)
 
@@ -114,6 +121,13 @@ class InputDisregardLEP:
             self.config.code, target_agent, disregard_type,
         )
         return result
+
+    def get_injected_instruction(self, instance: InputDisregardResult) -> str:
+        """Return the injected instruction for a given instance."""
+        templates = self.DISREGARD_PROMPTS.get(
+            instance.disregard_type, self.DISREGARD_PROMPTS["start_scratch"]
+        )
+        return templates[0]
 
     def get_instances(self) -> list[InputDisregardResult]:
         """Return all instances."""

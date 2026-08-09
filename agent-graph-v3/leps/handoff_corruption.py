@@ -20,16 +20,23 @@ logger = logging.getLogger(__name__)
 class HandoffCorruptionResult:
     """Outcome of a handoff corruption attempt."""
     lep_instance_id: str
-    fired: bool
+    trigger_matched: bool
+    intervention_applied: bool
     handoff_event_id: str = ""
     source_agent: str = ""
     target_agent: str = ""
     original_content: str = ""
     corrupted_content: str = ""
-    corruption_type: str = ""  # omission, alteration, substitution, severity_change
+    corruption_type: str = ""
     altered_fields: list[str] = field(default_factory=list)
     receiving_agent_used_corrupted: bool = False
     downstream_failure_caused: bool = False
+    canonical_operator: str = ""
+
+    @property
+    def fired(self) -> bool:
+        """Backward-compat alias: True iff the intervention was actually applied."""
+        return self.intervention_applied
 
 
 class HandoffCorruptionLEP:
@@ -45,6 +52,17 @@ class HandoffCorruptionLEP:
     """
 
     VARIANT = "handoff_corruption"
+
+    # Map canonical operator names (from registry) to corruption variant
+    # method names (used by _apply_corruption).
+    CANONICAL_TO_VARIANT = {
+        "material_finding_omission": "omit_key_finding",
+        "numeric_corruption":         "replace_value",
+        "source_swap":                "swap_attribution",
+        "severity_downgrade":         "alter_severity",
+        "false_confidence":           "remove_uncertainty",
+        "fabricated_recommendation":  "unsupported_recommendation",
+    }
 
     def __init__(self, lep_config: LEPConfig):
         self.config = lep_config
@@ -74,22 +92,33 @@ class HandoffCorruptionLEP:
         original_content: str,
         corruption_type: str = "omit_key_finding",
     ) -> HandoffCorruptionResult:
-        """Produce a corrupted version of handoff content."""
+        """Produce a corrupted version of handoff content.
+
+        The corruption variant is resolved from the canonical operator
+        recorded at scenario-build time. The caller-supplied corruption_type
+        is used only as a fallback if no canonical operator is set.
+        """
         instance_id = f"{self.config.code}_{handoff_event.event_id}"
 
-        corrupted = self._apply_corruption(original_content, corruption_type)
-        altered = self._detect_alterations(original_content, corrupted, corruption_type)
+        # Resolve variant from canonical operator if available
+        canonical = self._canonical_operator
+        variant = self.CANONICAL_TO_VARIANT.get(canonical, corruption_type)
+
+        corrupted = self._apply_corruption(original_content, variant)
+        altered = self._detect_alterations(original_content, corrupted, variant)
 
         result = HandoffCorruptionResult(
             lep_instance_id=instance_id,
-            fired=True,
+            trigger_matched=True,
+            intervention_applied=corrupted != original_content,
             handoff_event_id=handoff_event.event_id,
             source_agent=handoff_event.agent_name_from or handoff_event.source_entity_id or "",
             target_agent=handoff_event.agent_name_to or handoff_event.target_entity_id or "",
             original_content=original_content,
             corrupted_content=corrupted,
-            corruption_type=corruption_type,
+            corruption_type=variant,
             altered_fields=altered,
+            canonical_operator=canonical,
         )
         self._instances.append(result)
 

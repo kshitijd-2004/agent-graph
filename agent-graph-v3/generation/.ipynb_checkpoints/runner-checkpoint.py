@@ -661,29 +661,17 @@ class ScenarioRunner:
             evt.event_labels.controlled_injection = True
             evt.hidden["lep_type"] = lep_code
             evt.hidden["injected"] = True
-            evt.observable["lep_injection"] = {
-                "lep_code": lep_code,
-                "is_injection_origin": True,
-            }
 
         def label_consumption(evt: TraceEvent, lep_code: str):
             """Mark event as consuming perturbed information."""
             evt.event_labels.consumes_perturbed_info = True
             evt.hidden["lep_type"] = lep_code
             evt.hidden["consumed"] = True
-            evt.observable["lep_consumption"] = {
-                "lep_code": lep_code,
-                "consumes_perturbed_info": True,
-            }
 
         def label_propagation(evt: TraceEvent, lep_code: str):
             """Mark event as propagating perturbed information."""
             evt.event_labels.forwards_perturbed_info = True
             evt.hidden["lep_type"] = lep_code
-            evt.observable["lep_propagation"] = {
-                "lep_code": lep_code,
-                "forwards_perturbed_info": True,
-            }
 
         def label_failure(evt: TraceEvent, failure_type: str = "factual_error"):
             evt.event_labels.introduces_downstream_failure = True

@@ -16,6 +16,7 @@ Key design:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
@@ -34,6 +35,22 @@ from generation.topology import TopologyConfig, Stage, HandoffRule
 from backend.api_backend import ToolCall, ModelTurn
 
 logger = logging.getLogger(__name__)
+
+# Provider-specific tool name aliases → canonical orchestration actions.
+# Normalization happens before loop detection, dispatch, or LEP evaluation.
+ACTION_ALIASES: Dict[str, str] = {
+    "call_handoff": "handoff",
+    "call_functions_handoff": "handoff",
+    "call_functions_handoff_1": "handoff",
+    "call_functions_handoff_2": "handoff",
+    "handoff_to_analyst": "handoff",
+    "handoff_to_reviewer": "handoff",
+    "call_final": "submit_final",
+    "call_functions_final": "submit_final",
+    "final": "submit_final",
+}
+
+ORCHESTRATION_ACTIONS = {"handoff", "submit_final"}
 
 
 @dataclass
@@ -136,6 +153,9 @@ class StageRunner:
         current_role = stage.agent_role
         agent_id = stage.agent_id
 
+        # Reset protocol-repair counter for this stage
+        self._handoff_repair_count = 0
+
         # Use shared global counter for globally unique event IDs/indexes
         # (passed from runner.py). If absent (standalone test), create a local one.
         global_counter = global_event_counter if global_event_counter is not None else [0]
@@ -180,15 +200,28 @@ class StageRunner:
             evt.event_labels.controlled_injection = True
             evt.hidden["lep_type"] = lep_code
             evt.hidden["injected"] = True
+            # Also write to observable so it survives trace serialization
+            evt.observable["lep_injection"] = {
+                "lep_code": lep_code,
+                "is_injection_origin": True,
+            }
 
         def label_consumption(evt: TraceEvent, lep_code: str):
             evt.event_labels.consumes_perturbed_info = True
             evt.hidden["lep_type"] = lep_code
             evt.hidden["consumed"] = True
+            evt.observable["lep_consumption"] = {
+                "lep_code": lep_code,
+                "consumes_perturbed_info": True,
+            }
 
         def label_propagation(evt: TraceEvent, lep_code: str):
             evt.event_labels.forwards_perturbed_info = True
             evt.hidden["lep_type"] = lep_code
+            evt.observable["lep_propagation"] = {
+                "lep_code": lep_code,
+                "forwards_perturbed_info": True,
+            }
 
         def label_failure(evt: TraceEvent, failure_type: str = "factual_error"):
             evt.event_labels.introduces_downstream_failure = True
@@ -198,7 +231,7 @@ class StageRunner:
 
         # Build role-specific system prompt BEFORE resetting the backend
         # so the backend's native _messages uses the correct prompt.
-        system_prompt = self._build_system_prompt(stage, handoff_from_payload, remaining_reviews)
+        system_prompt = self._build_system_prompt(stage, handoff_from_payload, remaining_reviews, topology)
 
         # Build tool list: include handoff/submit_final only if the stage
         # is allowed to use them (prevents premature use).
@@ -238,8 +271,8 @@ class StageRunner:
         # On handoff, the receiving agent gets a FRESH history.
         stage_history: List[Dict[str, Any]] = []
 
-        # Seed history with system + task
-        system_prompt = self._build_system_prompt(stage, handoff_from_payload)
+        # Seed history with system + task — reuse the canonical system_prompt
+        # built above (which includes remaining_reviews). Do NOT rebuild here.
         stage_history.append({
             "role": "system",
             "content": system_prompt,
@@ -263,6 +296,29 @@ class StageRunner:
                 handoff_content += f"Source paths: {', '.join(handoff_from_payload.source_paths[:5])}\n"
             if handoff_from_payload.report_path:
                 handoff_content += f"Report path: {handoff_from_payload.report_path}\n"
+
+            # ── LEP_INPUT_DISREGARD: inject disregard instruction ─────────
+            if lep_orchestrator:
+                for code, lep_instance in lep_orchestrator._active_leps.items():
+                    if code != "LEP_INPUT_DISREGARD":
+                        continue
+                    instances = getattr(lep_instance, 'get_instances', lambda: [])()
+                    for inst in instances:
+                        if (inst.fired and inst.target_agent == current_role):
+                            instruction = lep_instance.get_injected_instruction(inst)
+                            handoff_content += (
+                                f"\n[Note from {handoff_from_payload.from_agent}: "
+                                f"{instruction}]"
+                            )
+                            logger.info(
+                                "InputDisregard injected into stage=%s role=%s",
+                                stage.stage_id, current_role,
+                            )
+                            break
+                    else:
+                        continue
+                    break  # Only one InputDisregard per stage
+
             stage_history.append({
                 "role": "user",
                 "content": handoff_content,
@@ -286,6 +342,14 @@ class StageRunner:
         corrupted_tool_call_evt = None
         termination_reason = "max_turns"
         backend_reset_count = 1  # already reset above
+
+        # ── LEP provenance (persistent for the stage) ─────────────────────
+        active_perturbations: List[Dict[str, Any]] = []
+        last_corruption_origin_event_id: str = ""
+        last_corruption_lep_code: str = ""
+
+        # ── Loop recovery ─────────────────────────────────────────────────
+        loop_recovery_attempted = False
 
         for turn in range(1, max_turns + 1):
             # Detect backend mode:
@@ -358,7 +422,8 @@ class StageRunner:
 
             # ── Extract action from tool_use block ───────────────────────────
             tc = model_turn.tool_call
-            action = tc.name
+            raw_action = tc.name
+            action = ACTION_ALIASES.get(raw_action, raw_action)
             action_input = tc.input if isinstance(tc.input, dict) else {}
             raw_output = f"[tool_use:{tc.name}]"
 
@@ -371,24 +436,64 @@ class StageRunner:
             )
 
             # ── Loop detection ───────────────────────────────────────────────
-            if action not in ("handoff", "submit_final"):
+            if action not in ORCHESTRATION_ACTIONS:
                 action_history.append(action)
                 recent = action_history[-10:]
                 if recent.count(action) >= 8:
-                    loop_evt = make_evt(
-                        TraceEventType.FINAL_RESPONSE, agent_id, "user",
-                        role=current_role,
-                        output_text=f"Terminated: execution loop detected "
-                                    f"(repeated '{action}' {recent.count(action)} times).",
-                    )
-                    events.append(loop_evt)
-                    return StageResult(
-                        stage_id=stage.stage_id,
-                        events=events,
-                        termination_reason="loop",
-                        final_agent_role=current_role,
-                        step_count=turn,
-                    )
+                    if not loop_recovery_attempted:
+                        # One-shot recovery: inject a protocol reminder
+                        loop_recovery_attempted = True
+                        recovery_evt = make_evt(
+                            TraceEventType.FINAL_RESPONSE, agent_id, "internal",
+                            role=current_role,
+                            output_text=self._build_loop_recovery_message(stage),
+                        )
+                        recovery_evt.event_labels.is_injection_origin = False
+                        recovery_evt.event_labels.consumes_perturbed_info = False
+                        recovery_evt.event_labels.forwards_perturbed_info = False
+                        recovery_evt.event_labels.failure_type = "protocol_recovery"
+                        recovery_evt.observable = {
+                            "protocol_recovery": True,
+                            "reason": "repeated_tool_loop",
+                            "attempt": 1,
+                        }
+                        events.append(recovery_evt)
+
+                        # Reset action history to allow one more turn
+                        action_history.clear()
+
+                        # Inject the recovery message into the backend so the
+                        # next model turn sees the protocol reminder.
+                        if hasattr(self.llm, '_append_assistant'):
+                            self.llm._append_assistant(recovery_evt.output_text)
+                        elif hasattr(self.llm, '_messages'):
+                            msgs = self.llm._messages
+                            if callable(msgs):
+                                msgs = msgs()
+                            msgs.append({"role": "user",
+                                         "content": recovery_evt.output_text})
+
+                        logger.info(
+                            "Loop recovery: injected protocol reminder for stage=%s "
+                            "role=%s action='%s'", stage.stage_id, current_role, action,
+                        )
+                        continue  # allow one more model turn
+                    else:
+                        loop_evt = make_evt(
+                            TraceEventType.FINAL_RESPONSE, agent_id, "user",
+                            role=current_role,
+                            output_text=f"Terminated: execution loop detected "
+                                        f"(repeated '{action}' {recent.count(action)} times). "
+                                        f"Recovery failed.",
+                        )
+                        events.append(loop_evt)
+                        return StageResult(
+                            stage_id=stage.stage_id,
+                            events=events,
+                            termination_reason="loop",
+                            final_agent_role=current_role,
+                            step_count=turn,
+                        )
 
             # ── REASONING event ──────────────────────────────────────────────
             # Native mode: serialize native messages for the event record.
@@ -414,7 +519,7 @@ class StageRunner:
                 lep_orchestrator.evaluate_triggers(reasoning_evt)
 
             # ── TOOL EXECUTION ───────────────────────────────────────────────
-            if action not in ("handoff", "submit_final"):
+            if action not in ORCHESTRATION_ACTIONS:
                 tc = model_turn.tool_call
                 tc_evt = make_evt(
                     TraceEventType.TOOL_CALL, agent_id,
@@ -431,7 +536,9 @@ class StageRunner:
                     tc.name, action_input, ws_path
                 )
 
-                # Apply LEP corruption if active
+                # Apply LEP corruption if active.
+                # Returns a ToolResultCorruptionResult with perturbed_result.
+                tool_was_corrupted = False
                 if lep_orchestrator:
                     result = self._apply_lep_corruption(
                         orchestrator=lep_orchestrator,
@@ -439,15 +546,14 @@ class StageRunner:
                         lep_code=lep_code,
                         original_result=result,
                     )
-
-                # Track corrupted results
-                if hasattr(result, 'perturbed_result') and result.perturbed_result != result.original_result:
-                    last_corrupted_result = result.perturbed_result
-                    corrupted_tool_call_evt = tc_evt
+                    if (hasattr(result, 'perturbed_result')
+                            and hasattr(result, 'original_result')
+                            and result.perturbed_result != result.original_result):
+                        tool_was_corrupted = True
 
                 result_text = result.perturbed_result if hasattr(result, 'perturbed_result') else result
 
-                # Record tool result
+                # Record tool result — the perturbed content is what the model sees.
                 tr_evt = make_evt(
                     TraceEventType.TOOL_RESULT, f"tool_{tc.name}", agent_id,
                     role=current_role,
@@ -465,43 +571,138 @@ class StageRunner:
                 # ── Native tool_result in backend conversation ──────────────
                 self.llm._append_tool_result(tc, result_text)
 
-                # LEP triggers on tool result consumption
-                if lep_orchestrator:
-                    results = lep_orchestrator.evaluate_triggers(tr_evt)
-                    for lep_code, decision in results.items():
-                        if decision.fired:
-                            label_injection(tr_evt, lep_code)
-                            label_propagation(tr_evt, lep_code)
+                # If the corruption actually changed content, label the
+                # TOOL_RESULT event as the injection origin (X → X' happened
+                # here, and X' is delivered below). This is the source of
+                # truth, not a second unrelated trigger evaluation.
+                if tool_was_corrupted:
+                    label_injection(tr_evt, lep_code)
+                    tr_evt.observable["canonical_operator"] = getattr(result, 'canonical_operator', '')
+                    tr_evt.observable["result_changed"] = True
+                    tr_evt.hidden["original_hash"] = getattr(result, 'original_hash', '')
+                    tr_evt.hidden["perturbed_hash"] = getattr(result, 'perturbed_hash', '')
+                    tr_evt.hidden["altered_fields"] = getattr(result, 'altered_fields', [])
+                    tr_evt.hidden["affected_tool_call_id"] = tc.id
 
-                # Label consumption if this tool result used corrupted data
-                if corrupted_tool_call_evt is tc_evt:
-                    label_consumption(tr_evt, lep_code)
-                    label_propagation(tr_evt, lep_code)
-                    corrupted_tool_call_evt = None
+                    # Persistent provenance
+                    last_corruption_origin_event_id = tr_evt.event_id
+                    last_corruption_lep_code = lep_code
+                    active_perturbations.append({
+                        "lep_code": lep_code,
+                        "event_id": tr_evt.event_id,
+                        "original_hash": tr_evt.hidden.get("original_hash"),
+                        "perturbed_hash": tr_evt.hidden.get("perturbed_hash"),
+                        "altered_fields": tr_evt.hidden.get("altered_fields"),
+                        "affected_tool_call_id": tc.id,
+                    })
+
+                    # Do NOT mark the injection event itself as
+                    # forwards_perturbed_info. That label belongs on the
+                    # downstream consumption/propagation point, not the origin.
+                elif lep_orchestrator:
+                    # Still evaluate other triggers on the tool result event
+                    results = lep_orchestrator.evaluate_triggers(tr_evt)
+                    for code, decision in results.items():
+                        if decision.fired:
+                            label_injection(tr_evt, code)
+                            label_propagation(tr_evt, code)
 
             # ── HANDOFF ──────────────────────────────────────────────────────
             if action == "handoff":
                 if not stage.can_handoff:
-                    # This stage is not permitted to emit handoffs.
-                    # Treat as premature_final: the model is trying to
-                    # terminate the workflow through the wrong channel.
-                    # This also prevents linear topologies from restarting
-                    # after the final stage fails to call submit_final.
                     termination_reason = "premature_final"
                     break
 
-                payload = self._build_handoff_payload(
-                    stage=stage,
-                    events=events,
-                    topology=topology,
-                    current_role=current_role,
-                    contains_corrupted=last_corrupted_result != "",
-                    corrupted_tc_evt=corrupted_tool_call_evt,
-                )
-                if corrupted_tool_call_evt:
-                    payload.contains_corrupted_data = True
-                    payload.corrupted_tool_call_event_id = corrupted_tool_call_evt.event_id
+                # ── Build payload from structured tool arguments ───────────
+                summary = action_input.get("summary", "").strip()
+                target_agent = action_input.get("target_agent", "").strip()
+                report_path = action_input.get("report_path", "")
+                source_paths = action_input.get("source_paths", [])
+                verification_requests = action_input.get("verification_requests", [])
 
+                # target_agent is resolved from topology, not the model.
+                # The model may omit it or get it wrong — we use the
+                # legal outgoing edge as ground truth.
+                resolved_target = self._resolve_handoff_destination(
+                    current_role=current_role,
+                    declared_target=target_agent,
+                    topology=topology,
+                )
+
+                # Protocol repair: only if summary is empty. The model knows
+                # what it found but may be lazy about summarizing — a single
+                # nudge is enough. target_agent is not the model's job.
+                repair_attempts = getattr(self, '_handoff_repair_count', 0)
+                if not summary and repair_attempts < 2:
+                    self._handoff_repair_count = repair_attempts + 1
+                    repair_prompt = (
+                        "Your handoff call was missing a summary. "
+                        "Call `handoff` with a concise non-empty `summary` "
+                        "describing your key findings. "
+                        f"The destination agent is `{resolved_target}`."
+                    )
+                    repair_evt = make_evt(
+                        TraceEventType.REASONING, agent_id, "internal",
+                        role=current_role,
+                        input_text=repair_prompt,
+                        output_text="[protocol_repair]",
+                    )
+                    repair_evt.observable = {
+                        "protocol_repair": True,
+                        "reason": "missing_handoff_fields",
+                        "attempt": repair_attempts + 1,
+                    }
+                    events.append(repair_evt)
+
+                    # Inject repair into BOTH backends:
+                    # - Legacy: stage_history → text prompt
+                    # - Native: backend's internal _messages
+                    stage_history.append({
+                        "role": "user",
+                        "content": repair_prompt,
+                    })
+                    if hasattr(self.llm, '_append_assistant'):
+                        self.llm._append_assistant(repair_prompt)
+                    elif hasattr(self.llm, '_messages'):
+                        msgs = self.llm._messages
+                        if callable(msgs):
+                            msgs = msgs()
+                        msgs.append({"role": "user", "content": repair_prompt})
+
+                    logger.info(
+                        "Protocol repair: handoff missing summary at "
+                        "stage=%s role=%s turn=%d attempt=%d",
+                        stage.stage_id, current_role, turn, repair_attempts + 1,
+                    )
+                    continue
+                elif not summary:
+                    # Second repair failed — auto-generate from events
+                    summary = self._auto_generate_handoff_summary(
+                        events=events, current_role=current_role,
+                    )
+                    logger.info(
+                        "Protocol repair fallback: auto-generated summary "
+                        "for stage=%s role=%s len=%d",
+                        stage.stage_id, current_role, len(summary),
+                    )
+
+                # Build structured payload from model's native tool arguments
+                payload = HandoffPayload(
+                    from_agent=current_role,
+                    to_agent=resolved_target,
+                    findings=source_paths if isinstance(source_paths, list) else [],
+                    source_paths=source_paths if isinstance(source_paths, list) else [],
+                    report_path=report_path,
+                    uncertainty=[],
+                    verification_requests=verification_requests or [],
+                    provenance_event_ids=[e.event_id for e in events[-10:]],
+                    summary=summary,
+                    raw_output=summary,
+                    contains_corrupted_data=False,
+                    corrupted_tool_call_event_id="",
+                )
+
+                # ── Create the boundary event BEFORE LEP mutation ────────
                 hoff_evt = make_evt(
                     TraceEventType.AGENT_HANDOFF, agent_id,
                     topology.get_stage(payload.to_agent).agent_id
@@ -515,13 +716,65 @@ class StageRunner:
                 }
                 events.append(hoff_evt)
 
+                # ── LEP_HANDOFF_CORRUPTION: mutate the payload ───────────
                 if lep_orchestrator:
                     results = lep_orchestrator.evaluate_triggers(hoff_evt)
-                    for lep_code, decision in results.items():
-                        if decision.fired:
-                            label_injection(hoff_evt, lep_code)
-                            hoff_evt.observable["corrupted"] = True
-                            label_propagation(hoff_evt, lep_code)
+                    hc_decision = results.get("LEP_HANDOFF_CORRUPTION")
+                    if hc_decision and hc_decision.fired:
+                        hc_lep = lep_orchestrator.get_lep_instance(
+                            "LEP_HANDOFF_CORRUPTION"
+                        )
+                        if hc_lep and hasattr(hc_lep, "corrupt"):
+                            corruption = hc_lep.corrupt(
+                                hoff_evt,
+                                payload.summary,
+                            )
+                            if (hasattr(corruption, 'corrupted_content')
+                                    and corruption.corrupted_content
+                                    != corruption.original_content):
+                                payload.summary = corruption.corrupted_content
+                                payload.contains_corrupted_data = True
+
+                                # Label the injection on the boundary event
+                                label_injection(hoff_evt, "LEP_HANDOFF_CORRUPTION")
+                                hoff_evt.observable["corrupted"] = True
+                                hoff_evt.observable["canonical_operator"] = getattr(
+                                    corruption, 'canonical_operator', 'material_finding_omission'
+                                )
+                                hoff_evt.observable["result_changed"] = True
+                                hoff_evt.hidden["original_hash"] = hashlib.md5(
+                                    corruption.original_content.encode()
+                                ).hexdigest()[:12]
+                                hoff_evt.hidden["perturbed_hash"] = hashlib.md5(
+                                    corruption.corrupted_content.encode()
+                                ).hexdigest()[:12]
+                                hoff_evt.hidden["altered_fields"] = getattr(
+                                    corruption, 'altered_fields', []
+                                )
+
+                                # Record persistent provenance
+                                last_corruption_origin_event_id = hoff_evt.event_id
+                                last_corruption_lep_code = "LEP_HANDOFF_CORRUPTION"
+                                active_perturbations.append({
+                                    "lep_code": "LEP_HANDOFF_CORRUPTION",
+                                    "event_id": hoff_evt.event_id,
+                                    "original_hash": hoff_evt.hidden.get("original_hash"),
+                                    "perturbed_hash": hoff_evt.hidden.get("perturbed_hash"),
+                                    "altered_fields": hoff_evt.hidden.get("altered_fields"),
+                                })
+
+                                # Mark consumption on receiving stage context
+                                # (the receiving stage's handoff_from_payload
+                                # will carry this payload with corrupted summary)
+                                label_propagation(hoff_evt, "LEP_HANDOFF_CORRUPTION")
+
+                                logger.info(
+                                    "LEP_HANDOFF_CORRUPTION: handoff mutated "
+                                    "event=%s orig_len=%d perturbed_len=%d",
+                                    hoff_evt.event_id,
+                                    len(corruption.original_content),
+                                    len(corruption.corrupted_content),
+                                )
 
                 return StageResult(
                     stage_id=stage.stage_id,
@@ -544,10 +797,6 @@ class StageRunner:
                     role=current_role,
                     output_text=summary,
                 )
-
-                # Mark as downstream failure if this stage consumed corrupted data
-                if last_corrupted_result != "":
-                    label_failure(final_evt, "factual_error")
 
                 events.append(final_evt)
 
@@ -704,7 +953,7 @@ class StageRunner:
         known_actions = {
             "list_directory", "read_text_file", "write_file",
             "search_files", "create_directory",
-            "handoff_to_analyst", "final",
+            "handoff", "submit_final",
         }
         if action not in known_actions:
             return None
@@ -733,7 +982,7 @@ class StageRunner:
         """Detect intended action from natural-language prose.
 
         Priority order: write_file > read_text_file > list_directory >
-        search_files > handoff_to_analyst > final
+        search_files > handoff > submit_final
         """
         lower = text.lower()
 
@@ -792,21 +1041,21 @@ class StageRunner:
                 "final_response": "",
             }
 
-        # handoff_to_analyst — "handing off" or "passing to analyst"
+        # handoff — "handing off" or "passing to"
         if re.search(r'\b(handing off|hand.?off|passing to|transferring to)\b', lower):
             return {
                 "reasoning": "[repaired] Detected handoff intent from prose",
-                "action": "handoff_to_analyst",
-                "action_input": {},
+                "action": "handoff",
+                "action_input": {"target_agent": "", "summary": ""},
                 "final_response": "",
             }
 
-        # final — explicit completion signals
+        # submit_final — explicit completion signals
         if re.search(r'\b(task complete|done|finished|all done|complete)\b', lower):
             return {
-                "reasoning": "[repaired] Detected final intent from prose",
-                "action": "final",
-                "action_input": {},
+                "reasoning": "[repaired] Detected submit_final intent from prose",
+                "action": "submit_final",
+                "action_input": {"summary": text[:200]},
                 "final_response": text[:200],
             }
 
@@ -828,7 +1077,8 @@ class StageRunner:
 
     def _build_system_prompt(self, stage: Stage,
                              handoff_from_payload: Optional[HandoffPayload],
-                             remaining_reviews: Optional[int] = None) -> str:
+                             remaining_reviews: Optional[int] = None,
+                             topology: Optional[TopologyConfig] = None) -> str:
         """Build the system prompt for this stage.
 
         Uses capability flags (can_handoff, can_finalize) to determine role
@@ -851,6 +1101,7 @@ class StageRunner:
 
         elif stage.can_handoff and not stage.can_finalize:
             # Producer/drafter: must hand off, never finalize.
+            next_role = self._find_next_agent_role(stage.agent_role, topology)
             if receiving_handoff:
                 # Revision pass: treat incoming handoff as revision feedback
                 completion = (
@@ -873,7 +1124,13 @@ class StageRunner:
                     "Inspect the task, produce the best complete artifact you can "
                     "using the available tools, then call handoff exactly once to "
                     "transfer work to the next stage. "
-                    "Do NOT call submit_final. Do NOT finish with plain prose."
+                    "When calling the `handoff` tool, provide: "
+                    f"`target_agent` = \"{next_role}\" (the next agent in the workflow), "
+                    "`summary` = a concise (1-3 sentence) description of your key "
+                    "findings and the artifact path. "
+                    "Call the native tool named exactly `handoff` with both "
+                    "fields populated. Do NOT call submit_final. "
+                    "Do NOT finish with plain prose."
                 )
 
         elif is_reviewer:
@@ -983,7 +1240,16 @@ class StageRunner:
         remaining = max_turns - turn
         deadline = ""
         if remaining <= 3:
-            deadline = f"\nCRITICAL: {remaining} steps left. Call 'final' or 'handoff_to_analyst' if done."
+            actions = []
+            if stage.can_finalize:
+                actions.append("submit_final")
+            if stage.can_handoff:
+                actions.append("handoff")
+            action_str = " or ".join(f"`{a}`" for a in actions) if actions else "complete the task"
+            deadline = (
+                f"\nCRITICAL: {remaining} steps left. "
+                f"Call {action_str} if done."
+            )
         elif remaining <= 8:
             deadline = f"\nWarning: {remaining} steps remaining."
 
@@ -1055,3 +1321,103 @@ class StageRunner:
             contains_corrupted_data=contains_corrupted_data,
             corrupted_tool_call_event_id=corrupted_tc_evt.event_id if corrupted_tc_evt else "",
         )
+
+    # ── Private helpers ─────────────────────────────────────────────────
+
+    @staticmethod
+    def _resolve_handoff_destination(
+        current_role: str,
+        declared_target: str,
+        topology: TopologyConfig,
+    ) -> str:
+        """Resolve the handoff destination from topology edges.
+
+        If the model declared a target_agent, verify it matches the legal
+        outgoing edge. Fall back to the topology's outgoing edge.
+        """
+        legal_target = topology.get_outgoing_handoff(current_role)
+        if legal_target:
+            legal_target = legal_target.to_stage
+
+        if not legal_target:
+            return declared_target or current_role
+
+        if declared_target and declared_target != legal_target:
+            logger.warning(
+                "Model declared target_agent='%s' but topology edge "
+                "requires '%s'. Using topology edge.",
+                declared_target, legal_target,
+            )
+        return legal_target
+
+    @staticmethod
+    def _build_loop_recovery_message(stage: Stage) -> str:
+        """Build the protocol-recovery message for loop detection."""
+        if stage.can_handoff and not stage.can_finalize:
+            return (
+                "PROTOCOL REMINDER: Your artifact appears complete. "
+                "Stop using workspace tools and call the native tool named "
+                "exactly `handoff` with `target_agent` and a concise non-empty "
+                "`summary`."
+            )
+        elif stage.can_finalize and not stage.can_handoff:
+            return (
+                "PROTOCOL REMINDER: Stop using workspace tools and call "
+                "`submit_final` with your completed summary."
+            )
+        else:
+            return (
+                "PROTOCOL REMINDER: Stop using workspace tools. "
+                "Call `submit_final` if materially acceptable; otherwise call "
+                "`handoff` only with concrete unresolved material issues."
+            )
+
+    @staticmethod
+    def _auto_generate_handoff_summary(
+        events: List[TraceEvent],
+        current_role: str,
+    ) -> str:
+        """Generate a handoff summary from stage events when the model fails.
+
+        Prefers the content of a write_file tool result (the actual artifact)
+        over status messages like "Write completed successfully."
+        """
+        # Prefer the content from a write_file tool result — that's the
+        # artifact, not a status confirmation.
+        write_results = [
+            e for e in events
+            if e.event_type == TraceEventType.TOOL_RESULT
+            and e.tool_name == "write_file"
+            and e.output_text
+            and len(e.output_text) > 20
+        ]
+        if write_results:
+            text = write_results[-1].output_text.replace("\n", " ").strip()
+            return f"{current_role} wrote artifact: {text[:300]}"
+
+        # Fallback: last meaningful tool result (skip status confirmations)
+        tool_results = [
+            e for e in events
+            if e.event_type == TraceEventType.TOOL_RESULT
+            and e.output_text
+            and len(e.output_text) > 20
+            and "completed successfully" not in e.output_text.lower()
+        ]
+        if tool_results:
+            text = tool_results[-1].output_text.replace("\n", " ").strip()
+            return f"{current_role} findings: {text[:300]}"
+
+        # Final fallback: list what tools were called
+        tool_calls = [
+            e for e in events
+            if e.event_type == TraceEventType.TOOL_CALL
+            and e.tool_name
+        ]
+        if tool_calls:
+            tools = [e.tool_name for e in tool_calls]
+            return (
+                f"{current_role} completed analysis using: "
+                f"{', '.join(tools)}. Work transferred for further processing."
+            )
+
+        return f"Handoff from {current_role}. Analysis complete."
