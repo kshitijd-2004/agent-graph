@@ -609,6 +609,13 @@ class ScenarioRunner:
         orchestrator = LEPOrchestrator()
         lep_corrupted_values: Dict[str, Any] = {}
         if not scenario.is_benign() and scenario.lep_configs:
+            for lep in scenario.lep_configs:
+                print(
+                    "[DEBUG RUNNER]",
+                    lep.code,
+                    "task_family=",
+                    repr(lep.task_family),
+                )
             orchestrator.register_leps(scenario.lep_configs)
 
         # Configure dry-run backend with LEP-specific trajectory
@@ -702,7 +709,7 @@ class ScenarioRunner:
         )
         events.append(evt)
         if orchestrator._active_leps:
-            orchestrator.evaluate_triggers(evt)
+            orchestrator.evaluate_for_boundary(evt)
 
         # SYSTEM_INIT
         evt = make_evt(
@@ -711,7 +718,7 @@ class ScenarioRunner:
         )
         events.append(evt)
         if orchestrator._active_leps:
-            orchestrator.evaluate_triggers(evt)
+            orchestrator.evaluate_for_boundary(evt)
 
         # Execute stages in topology order
         from generation.topology import get_topology

@@ -81,7 +81,16 @@ class IndirectPromptInjectionLEP:
 
     def __init__(self, lep_config: LEPConfig):
         self.config = lep_config
-        self.trigger = lep_config.trigger or InjectionTrigger()
+        # Defensive default: only fire on TOOL_RESULT events from read_text_file.
+        # An empty trigger would match USER_INPUT/SYSTEM_INIT and consume
+        # the one-shot trigger before the actual file-read boundary.
+        if lep_config.trigger:
+            self.trigger = lep_config.trigger
+        else:
+            self.trigger = InjectionTrigger(
+                event_type="TOOL_RESULT",
+                tool_name="read_text_file",
+            )
         self.matcher = TriggerMatcher()
         self._injection_instances: list[IndirectInjectionResult] = []
         self._target_files: Dict[str, str] = {}  # event_id -> poisoned content

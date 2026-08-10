@@ -28,6 +28,8 @@ class HandoffPayload:
     raw_output: str = ""
     contains_corrupted_data: bool = False
     corrupted_tool_call_event_id: str = ""
+    # Arbitrary metadata for LEP interventions (input_disregard, etc.)
+    extra: dict = field(default_factory=dict)
 
     def to_context_string(self) -> str:
         """Render the payload as a context block for the receiving agent."""

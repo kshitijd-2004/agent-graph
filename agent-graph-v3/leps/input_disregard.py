@@ -72,7 +72,13 @@ class InputDisregardLEP:
 
     def __init__(self, lep_config: LEPConfig):
         self.config = lep_config
-        self.trigger = lep_config.trigger or InjectionTrigger()
+        # Defensive default: only fire at AGENT_HANDOFF boundary.
+        # This LEP's intervention is applied to the receiving agent's
+        # context, but evaluation happens at the handoff event.
+        if lep_config.trigger:
+            self.trigger = lep_config.trigger
+        else:
+            self.trigger = InjectionTrigger(event_type="AGENT_HANDOFF")
         self.matcher = TriggerMatcher()
         self._instances: list[InputDisregardResult] = []
 

@@ -609,6 +609,13 @@ class ScenarioRunner:
         orchestrator = LEPOrchestrator()
         lep_corrupted_values: Dict[str, Any] = {}
         if not scenario.is_benign() and scenario.lep_configs:
+            for lep in scenario.lep_configs:
+                print(
+                    "[DEBUG RUNNER]",
+                    lep.code,
+                    "task_family=",
+                    repr(lep.task_family),
+                )
             orchestrator.register_leps(scenario.lep_configs)
 
         # Configure dry-run backend with LEP-specific trajectory
@@ -661,17 +668,29 @@ class ScenarioRunner:
             evt.event_labels.controlled_injection = True
             evt.hidden["lep_type"] = lep_code
             evt.hidden["injected"] = True
+            evt.observable["lep_injection"] = {
+                "lep_code": lep_code,
+                "is_injection_origin": True,
+            }
 
         def label_consumption(evt: TraceEvent, lep_code: str):
             """Mark event as consuming perturbed information."""
             evt.event_labels.consumes_perturbed_info = True
             evt.hidden["lep_type"] = lep_code
             evt.hidden["consumed"] = True
+            evt.observable["lep_consumption"] = {
+                "lep_code": lep_code,
+                "consumes_perturbed_info": True,
+            }
 
         def label_propagation(evt: TraceEvent, lep_code: str):
             """Mark event as propagating perturbed information."""
             evt.event_labels.forwards_perturbed_info = True
             evt.hidden["lep_type"] = lep_code
+            evt.observable["lep_propagation"] = {
+                "lep_code": lep_code,
+                "forwards_perturbed_info": True,
+            }
 
         def label_failure(evt: TraceEvent, failure_type: str = "factual_error"):
             evt.event_labels.introduces_downstream_failure = True
@@ -690,7 +709,7 @@ class ScenarioRunner:
         )
         events.append(evt)
         if orchestrator._active_leps:
-            orchestrator.evaluate_triggers(evt)
+            orchestrator.evaluate_for_boundary(evt)
 
         # SYSTEM_INIT
         evt = make_evt(
@@ -699,7 +718,7 @@ class ScenarioRunner:
         )
         events.append(evt)
         if orchestrator._active_leps:
-            orchestrator.evaluate_triggers(evt)
+            orchestrator.evaluate_for_boundary(evt)
 
         # Execute stages in topology order
         from generation.topology import get_topology

@@ -83,7 +83,15 @@ class MemoryPoisoningLEP:
 
     def __init__(self, lep_config: LEPConfig):
         self.config = lep_config
-        self.trigger = lep_config.trigger or InjectionTrigger()
+        # Defensive default: only fire at memory-read/write boundaries.
+        # NOTE: This LEP is currently INCOMPATIBLE with the runtime because
+        # there is no real memory subsystem. It should not appear in
+        # generated scenarios. Setting a boundary default prevents
+        # wildcard firing if it is ever registered.
+        if lep_config.trigger:
+            self.trigger = lep_config.trigger
+        else:
+            self.trigger = InjectionTrigger(event_type="TOOL_RESULT")
         self.matcher = TriggerMatcher()
         self._instances: list[MemoryPoisoningResult] = []
         self._poisoned_memory: Dict[str, Dict[str, Any]] = {}

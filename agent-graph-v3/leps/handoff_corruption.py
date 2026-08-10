@@ -66,7 +66,13 @@ class HandoffCorruptionLEP:
 
     def __init__(self, lep_config: LEPConfig):
         self.config = lep_config
-        self.trigger = lep_config.trigger or InjectionTrigger()
+        # Defensive default: only fire on AGENT_HANDOFF events.
+        # An empty trigger would match USER_INPUT/SYSTEM_INIT and consume
+        # the one-shot trigger before the actual handoff boundary.
+        if lep_config.trigger:
+            self.trigger = lep_config.trigger
+        else:
+            self.trigger = InjectionTrigger(event_type="AGENT_HANDOFF")
         self.matcher = TriggerMatcher()
         self._instances: list[HandoffCorruptionResult] = []
         self._handoff_content: Dict[str, str] = {}  # event_id -> original content
