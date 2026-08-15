@@ -232,6 +232,22 @@ DEFAULT_LEPS: Dict[str, list[LEPConfig]] = {
 }
 
 
+# LEPs that require subsystems not yet implemented in v3,
+# or that are not yet registered in leps/registry.py.
+# These are filtered out of get_default_leps() so the pilot can build.
+INCOMPATIBLE_LEPS: set[str] = {
+    "LEP_MEMORY_POISONING",     # requires memory subsystem
+    "LEP_RETRIEVAL_MANIPULATION",  # not yet registered in leps/registry.py
+}
+
+
 def get_default_leps(task_family: str) -> list[LEPConfig]:
-    """Get default LEP configs for a task family."""
-    return DEFAULT_LEPS.get(task_family, [])
+    """Get default LEP configs for a task family.
+
+    Filters out LEPs that require subsystems not yet implemented
+    (e.g., memory poisoning requires a memory subsystem).
+    """
+    return [
+        lep for lep in DEFAULT_LEPS.get(task_family, [])
+        if lep.code not in INCOMPATIBLE_LEPS
+    ]

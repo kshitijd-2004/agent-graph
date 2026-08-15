@@ -55,8 +55,6 @@ BOUNDARY_LEPS: Dict[str, Set[str]] = {
     },
     "agent_handoff": {
         "LEP_HANDOFF_CORRUPTION",
-    },
-    "incoming_handoff": {
         "LEP_INPUT_DISREGARD",
     },
 }
@@ -227,15 +225,16 @@ class LEPOrchestrator:
         if hasattr(lep, "corrupt"):
             return lep.corrupt(event, tool_result, **kwargs)
         elif hasattr(lep, "inject_into_content"):
+            # Extract file_path from event tool_arguments if not in kwargs
             file_path = kwargs.get("file_path", "")
+            if not file_path and hasattr(event, "tool_arguments"):
+                file_path = (event.tool_arguments or {}).get("path", "")
             variant = kwargs.get("variant", "ignore_previous")
             return lep.inject_into_content(file_path, tool_result, variant)
         elif hasattr(lep, "poison"):
             memory_key = kwargs.get("memory_key", "")
             task_family = kwargs.get("task_family", "financial_analysis")
             return lep.poison(memory_key, task_family, **kwargs)
-        elif hasattr(lep, "corrupt"):
-            return lep.corrupt(event, tool_result, **kwargs)
         elif hasattr(lep, "create_disregard"):
             target_agent = kwargs.get("target_agent", "")
             handoff_event_id = kwargs.get("handoff_event_id", "")

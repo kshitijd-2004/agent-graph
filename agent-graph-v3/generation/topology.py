@@ -273,3 +273,13 @@ def get_topology(topology_id: str, agent_map: Dict[str, str],
     if max_review_cycles is not None:
         topo.max_review_cycles = max_review_cycles
     return topo
+
+
+def build_agent_map_from_topology(topology: TopologyConfig) -> Dict[str, str]:
+    """Derive an agent_map from a TopologyConfig's stages.
+
+    Returns {agent_role: agent_id} for every stage in the topology.
+    This is the single source of truth — topology builders set agent_id
+    per stage, and this function extracts the map.
+    """
+    return {stage.agent_role: stage.agent_id for stage in topology.stages}

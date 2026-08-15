@@ -118,8 +118,8 @@ class HandoffCorruptionLEP:
             trigger_matched=True,
             intervention_applied=corrupted != original_content,
             handoff_event_id=handoff_event.event_id,
-            source_agent=handoff_event.agent_name_from or handoff_event.source_entity_id or "",
-            target_agent=handoff_event.agent_name_to or handoff_event.target_entity_id or "",
+            source_agent=handoff_event.source_entity_id or handoff_event.agent_role or "",
+            target_agent=handoff_event.target_entity_id or "",
             original_content=original_content,
             corrupted_content=corrupted,
             corruption_type=variant,
@@ -263,9 +263,27 @@ class HandoffCorruptionLEP:
 
     @staticmethod
     def _swap_attribution(text: str) -> str:
-        """Swap source attribution between documents."""
+        """Swap source attribution between documents.
+
+        For research_synthesis: swap Paper A and Paper B attributions.
+        For financial_analysis: downgrade authoritative sources to preliminary.
+        """
         import re
-        # Replace document references
+
+        # ── Research synthesis: swap Paper A ↔ Paper B ─────────────────
+        if "Paper A" in text or "Paper B" in text or "Chen" in text or "Okafor" in text:
+            text = re.sub(r'\bPaper A\b', '__PAPER_B__', text)
+            text = re.sub(r'\bPaper B\b', 'Paper A', text)
+            text = re.sub(r'__PAPER_B__', 'Paper B', text)
+            # Swap author names too
+            text = text.replace('Chen, R., Patel, S., & Kim, J.', 'Okafor, D., & Liu, W.')
+            text = text.replace('Okafor, D., & Liu, W.', '__AUTHOR_A__')
+            text = text.replace('Chen, R., Patel, S., & Kim, J.', '__AUTHOR_B__')
+            text = text.replace('__AUTHOR_A__', 'Chen, R., Patel, S., & Kim, J.')
+            text = text.replace('__AUTHOR_B__', 'Okafor, D., & Liu, W.')
+            return text
+
+        # ── Financial analysis: downgrade authoritative sources ───────
         text = re.sub(
             r'(q3_summary\.md|earnings_call\.md|q3_financial_data\.md)',
             r'planning_session.md',

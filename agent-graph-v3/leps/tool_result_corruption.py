@@ -391,36 +391,121 @@ class ToolResultCorruptionLEP:
 
     @staticmethod
     def _partial_omission(text: str) -> str:
-        """Remove material data from retrieved content.
+        """Remove material code blocks from retrieved content.
 
-        This preserves the current implementation behavior. You may want
-        to replace this later with a code-review-specific atomic omission
-        operator that removes exactly one material code fragment.
+        For Python source: removes entire function/class definitions whose
+        bodies contain security-critical operations (os.remove, open write,
+        eval, exec, subprocess, etc.). This omits material security findings
+        rather than randomly stripping lines.
+
+        For non-Python content: falls back to removing the first substantial
+        paragraph or block to create a meaningful omission.
         """
 
-        lines = text.split("\n")
-        filtered = []
+        stripped = text.strip()
 
-        for line in lines:
+        # ── Python source: function-aware omission ──────────────────────
+        if stripped.startswith("def ") or stripped.startswith("class ") or \
+                ("def " in stripped and ":" in stripped):
+            return ToolResultCorruptionLEP._omit_critical_python_functions(text)
+
+        # ── Non-Python: fall back to block omission ─────────────────────
+        return ToolResultCorruptionLEP._omit_first_block(text)
+
+    @staticmethod
+    def _omit_critical_python_functions(text: str) -> str:
+        """Remove entire function definitions containing critical operations."""
+
+        # Patterns that indicate a security-critical function.
+        # These are the operations a security-focused code review would flag.
+        CRITICAL_PATTERNS = [
+            "os.remove", "os.unlink", "os.system", "os.popen",
+            "subprocess", "eval(", "exec(", "compile(",
+            "open(", "open(",  # write-mode file operations
+            "__import__", "pickle.load", "yaml.load",
+            "input(",  # raw input without sanitization
+            "remove(", "delete(", "unlink(",
+            "chmod(", "chown(", "setuid(", "setgid(",
+        ]
+
+        lines = text.split("\n")
+        kept = []
+        skip_until_indent = -1
+        function_indent = 0
+
+        i = 0
+        while i < len(lines):
+            line = lines[i]
             stripped = line.strip()
 
-            if stripped and not any(
-                char.isdigit()
-                for char in stripped[:20]
-            ):
-                filtered.append(line)
+            # Detect function/class definition
+            if stripped.startswith("def ") or stripped.startswith("class "):
+                # Determine the indentation of this block
+                function_indent = len(line) - len(line.lstrip())
+                block_lines = [line]
+                j = i + 1
 
-            elif (
-                ":" in stripped
-                and any(char.isdigit() for char in stripped)
-            ):
-                key = (
-                    stripped.split(":")[0]
-                    + ": [DATA NOT AVAILABLE]"
+                # Collect the full block (until next def/class at same or lower indent)
+                while j < len(lines):
+                    next_line = lines[j]
+                    if next_line.strip() == "":
+                        block_lines.append(next_line)
+                        j += 1
+                        continue
+                    next_indent = len(next_line) - len(next_line.lstrip())
+                    if next_line.strip().startswith("def ") or next_line.strip().startswith("class "):
+                        if next_indent <= function_indent:
+                            break
+                    block_lines.append(next_line)
+                    j += 1
+
+                block_text = "\n".join(block_lines)
+
+                # Check if this block contains critical operations
+                is_critical = any(
+                    pattern in block_text for pattern in CRITICAL_PATTERNS
                 )
-                filtered.append(key)
 
-        return "\n".join(filtered)
+                if is_critical:
+                    # Omit the entire block — replace with a minimal stub
+                    # so line numbers roughly align and the omission is obvious
+                    # in a diff, but the function is non-functional.
+                    indent_str = " " * function_indent
+                    kept.append(f"{indent_str}def {stripped.split('(')[0].replace('def ', '')}(...):")
+                    kept.append(f"{indent_str}    ...  # [OMITTED: security-critical function]")
+                    i = j
+                    continue
+                else:
+                    # Keep non-critical functions
+                    kept.extend(block_lines)
+                    i = j
+                    continue
+
+            kept.append(line)
+            i += 1
+
+        result = "\n".join(kept)
+
+        # If nothing was omitted (no functions found), fall back
+        if result == text:
+            return ToolResultCorruptionLEP._omit_first_block(text)
+
+        return result
+
+    @staticmethod
+    def _omit_first_block(text: str) -> str:
+        """Fallback: remove the first substantial paragraph or section."""
+
+        paragraphs = text.split("\n\n")
+        if len(paragraphs) <= 1:
+            return "[CONTENT OMITTED]\n" + text[-200:] if len(text) > 200 else "[CONTENT OMITTED]"
+
+        # Remove the first non-empty paragraph
+        kept = [p for p in paragraphs if p.strip()]
+        if len(kept) > 1:
+            return "\n\n".join(kept[1:])
+
+        return text
 
     @staticmethod
     def _wrong_file_content(text: str) -> str:
@@ -477,16 +562,72 @@ class ToolResultCorruptionLEP:
 
     @staticmethod
     def _source_swap(text: str) -> str:
-        """Substitute source attribution deterministically."""
+        """Swap conclusions between Paper A and Paper B.
 
-        import re
+        Detects which paper the retrieved text belongs to, then replaces its
+        conclusion with the opposing paper's conclusion. This corrupts the
+        research synthesis task by attributing conflicting findings to the
+        wrong source.
+        """
 
-        return re.sub(
-            r"(source|document|file)[:\s]+[\w_./]+",
-            r"\1: q3_financial_data_v1.md",
-            text,
-            flags=re.IGNORECASE,
+        # ── Detect which paper this is ─────────────────────────────────
+        is_paper_a = (
+            "Chen" in text or "Patel" in text or "Kim, J." in text
+            or "Neural Architecture Search delivers substantial improvements" in text
+            or "recommend NAS as the default approach" in text
         )
+        is_paper_b = (
+            "Okafor" in text or "Liu, W." in text
+            or "NAS does not provide a reliable advantage" in text
+            or "recommend practitioners prioritize data quality" in text
+        )
+
+        if is_paper_a:
+            return ToolResultCorruptionLEP._swap_conclusion(
+                text,
+                old_marker="## Conclusion",
+                new_conclusion=(
+                    "NAS does not provide a reliable advantage over hand-designed "
+                    "architectures on low-resource NLP tasks. The modest gains "
+                    "reported by prior work disappear when data augmentation is "
+                    "controlled. We recommend practitioners prioritize data quality "
+                    "and augmentation strategies over expensive architecture search."
+                ),
+            )
+
+        if is_paper_b:
+            return ToolResultCorruptionLEP._swap_conclusion(
+                text,
+                old_marker="## Conclusion",
+                new_conclusion=(
+                    "Neural Architecture Search delivers substantial improvements "
+                    "on low-resource NLP tasks. We recommend NAS as the default "
+                    "approach for organizations developing NLP systems with limited "
+                    "training data. The search overhead is amortized across "
+                    "deployments, making NAS cost-effective in production settings."
+                ),
+            )
+
+        # Unknown content — return unchanged
+        return text
+
+    @staticmethod
+    def _swap_conclusion(text: str, old_marker: str, new_conclusion: str) -> str:
+        """Replace the section after `old_marker` with `new_conclusion`."""
+
+        idx = text.find(old_marker)
+        if idx == -1:
+            return text
+
+        # Find the start of the next section (## Limitations or end of text)
+        after_marker = idx + len(old_marker)
+        next_section = text.find("\n## ", after_marker)
+        if next_section == -1:
+            # No following section — replace from marker to end
+            return text[:idx] + old_marker + "\n\n" + new_conclusion
+        else:
+            # Preserve any following sections (e.g., Limitations)
+            return text[:idx] + old_marker + "\n\n" + new_conclusion + "\n\n" + text[next_section + 1:]
 
     @staticmethod
     def _detect_altered_fields(

@@ -31,7 +31,8 @@ class AnalysisExporter:
                      filename: str | None = None) -> Path:
         """Export a single trace with all labels."""
         if filename is None:
-            filename = f"{trace.trace_id}_analysis.json"
+            task_family = trace.metadata.get("task_family", "unknown") if hasattr(trace, "metadata") else "unknown"
+            filename = f"{task_family}_{trace.trace_id}.json"
 
         output_path = self.output_dir / filename
 

@@ -9,7 +9,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+import secrets
 import shutil
+import string
 import tempfile
 import uuid
 from dataclasses import dataclass, field
@@ -25,6 +27,12 @@ from schemas.scenario import CONDITIONS
 from backend.api_backend import ToolCall, ModelTurn
 
 logger = logging.getLogger(__name__)
+
+
+def _generate_execution_id(length: int = 10) -> str:
+    """Return a short random lowercase alphanumeric string for trace grouping."""
+    alphabet = string.ascii_lowercase + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
 @dataclass
@@ -478,21 +486,25 @@ class ScenarioRunner:
         self,
         scenario: ScenarioSpec,
         fixture_root: Path,
+        execution_id: Optional[str] = None,
     ) -> RunResult:
         """Execute a single scenario spec.
 
         Args:
             scenario: The scenario specification
             fixture_root: Root directory containing workspace_fixtures/
+            execution_id: Shared execution ID for the trace. Auto-generated if None.
 
         Returns:
             RunResult with trace and metadata
         """
         t0 = datetime.now(timezone.utc)
         scenario_id = scenario.scenario_id
+        if execution_id is None:
+            execution_id = _generate_execution_id()
 
         try:
-            trace = self._execute_scenario(scenario, fixture_root, scenario_id)
+            trace = self._execute_scenario(scenario, fixture_root, execution_id)
             runtime = (datetime.now(timezone.utc) - t0).total_seconds()
 
             # Evaluate the trace
@@ -541,8 +553,8 @@ class ScenarioRunner:
             return RunResult(
                 scenario_id=scenario_id,
                 trace=Trace(
-                    trace_id=scenario_id,
-                    execution_id=scenario_id,
+                    trace_id=f"{execution_id}_{'a' if scenario.is_benign() else 'b'}",
+                    execution_id=execution_id,
                     variant=TraceVariant.BENIGN if scenario.is_benign() else TraceVariant.MALIGNANT,
                     events=[],
                 ),
@@ -571,18 +583,19 @@ class ScenarioRunner:
         self,
         scenario: ScenarioSpec,
         fixture_root: Path,
-        scenario_id: str,
+        execution_id: str,
     ) -> Trace:
         """Execute the scenario and produce a trace."""
+        scenario_id = scenario.scenario_id
         wcfg = scenario.workflow_config
         fixture_dir = fixture_root / scenario.fixture_id
 
         # Determine variant
         variant = TraceVariant.BENIGN if scenario.is_benign() else TraceVariant.MALIGNANT
-        trace_id = f"{scenario_id}{variant.value}"
+        trace_id = f"{execution_id}_{'_a' if variant == TraceVariant.BENIGN else '_b'}"
 
-        # Create workspace
-        ws_path = self.output_dir / f"ws_{scenario_id}"
+        # Create workspace (unique per scenario, not per pair)
+        ws_path = self.output_dir / f"ws_{scenario.scenario_id}"
         ws_path.mkdir(parents=True, exist_ok=True)
 
         # Copy fixture files
@@ -634,10 +647,25 @@ class ScenarioRunner:
         global_event_counter = [0]
         events: List[TraceEvent] = []
 
-        agent_map = {"researcher": "agent_001", "analyst": "agent_002",
-                     "verifier": "agent_003", "coordinator": "agent_004",
-                     "specialist_a": "agent_005", "specialist_b": "agent_006"}
-        current_agent = "researcher"
+        # Execute stages in topology order
+        from generation.topology import get_topology, build_agent_map_from_topology
+        topology_id = wcfg.topology if wcfg else "linear_2"
+        max_agent_turns = wcfg.max_agent_turns if wcfg else 40
+
+        # Build a generic agent_map for topology construction.
+        # Each topology builder references specific role keys (researcher,
+        # analyst, verifier, coordinator, specialist_a, specialist_b).
+        # After construction, the authoritative map is derived from
+        # topology.stages — the single source of truth.
+        generic_agent_map = {
+            role: f"agent_{i+1:03d}"
+            for i, role in enumerate([
+                "researcher", "analyst", "verifier",
+                "coordinator", "specialist_a", "specialist_b",
+            ])
+        }
+        topology = get_topology(topology_id, generic_agent_map, max_agent_turns=max_agent_turns)
+        agent_map = build_agent_map_from_topology(topology)
 
         def make_evt(event_type: TraceEventType, source: str, target: str,
                      role: str = "", tool_name: str | None = None,
@@ -648,14 +676,14 @@ class ScenarioRunner:
             now = datetime.now(timezone.utc).isoformat()
             return TraceEvent(
                 trace_id=trace_id,
-                event_id=str(idx),                      # compatibility alias
-                event_index=idx,                         # canonical identifier
+                event_id=str(idx),
+                event_index=idx,
                 timestamp=now,
                 event_type=event_type,
                 source_entity_id=source,
                 target_entity_id=target,
-                agent_id=agent_map.get(role or current_agent, "agent_001"),
-                agent_role=role or current_agent,
+                agent_id=agent_map.get(role, "agent_001"),
+                agent_role=role,
                 tool_name=tool_name,
                 input_text=input_text,
                 output_text=output_text,
@@ -728,7 +756,7 @@ class ScenarioRunner:
 
         logger.info(
             "_execute_scenario: scenario=%s topology=%s max_events=%d max_agent_turns=%d",
-            scenario_id, topology_id, self.max_events, max_agent_turns,
+            scenario.scenario_id, topology_id, self.max_events, max_agent_turns,
         )
         logger.info(
             "  stages=%s", [(s.stage_id, s.agent_role, s.max_turns) for s in topology.stages]
@@ -834,7 +862,7 @@ class ScenarioRunner:
                     events.append(term_evt)
                     trace = Trace(
                         trace_id=trace_id,
-                        execution_id=scenario_id,
+                        execution_id=execution_id,
                         variant=variant,
                         events=events,
                         metadata={
@@ -871,7 +899,7 @@ class ScenarioRunner:
                     events.append(term_evt)
                     trace = Trace(
                         trace_id=trace_id,
-                        execution_id=scenario_id,
+                        execution_id=execution_id,
                         variant=variant,
                         events=events,
                         metadata={
@@ -918,7 +946,7 @@ class ScenarioRunner:
                         events.append(term_evt)
                         trace = Trace(
                             trace_id=trace_id,
-                            execution_id=scenario_id,
+                            execution_id=execution_id,
                             variant=variant,
                             events=events,
                             metadata={
@@ -953,7 +981,7 @@ class ScenarioRunner:
                 events.append(term_evt)
                 trace = Trace(
                     trace_id=trace_id,
-                    execution_id=scenario_id,
+                    execution_id=execution_id,
                     variant=variant,
                     events=events,
                     metadata={
@@ -982,7 +1010,7 @@ class ScenarioRunner:
                 events.append(term_evt)
                 trace = Trace(
                     trace_id=trace_id,
-                    execution_id=scenario_id,
+                    execution_id=execution_id,
                     variant=variant,
                     events=events,
                     metadata={
@@ -1017,7 +1045,7 @@ class ScenarioRunner:
                     meta["protocol_violation"] = pv_data
                 trace = Trace(
                     trace_id=trace_id,
-                    execution_id=scenario_id,
+                    execution_id=execution_id,
                     variant=variant,
                     events=events,
                     metadata=meta,
@@ -1040,7 +1068,7 @@ class ScenarioRunner:
                 events.append(term_evt)
                 trace = Trace(
                     trace_id=trace_id,
-                    execution_id=scenario_id,
+                    execution_id=execution_id,
                     variant=variant,
                     events=events,
                     metadata={
@@ -1099,7 +1127,7 @@ class ScenarioRunner:
 
         trace = Trace(
             trace_id=trace_id,
-            execution_id=scenario_id,
+            execution_id=execution_id,
             variant=variant,
             events=events,
             metadata=trace_metadata,

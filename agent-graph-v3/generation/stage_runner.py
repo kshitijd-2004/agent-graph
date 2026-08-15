@@ -336,6 +336,22 @@ class StageRunner:
                 "content": handoff_content,
             })
 
+            # Native backend (APIBackend) owns its own _conversation list
+            # which is the source of truth for messages sent to the model.
+            # Without this, the handoff payload never reaches the receiving
+            # agent — stage_history is only consumed by the legacy text path.
+            if hasattr(self.llm, '_conversation') and hasattr(self.llm, '_messages'):
+                self.llm._conversation.append({
+                    "role": "user",
+                    "content": handoff_content,
+                })
+                logger.info(
+                    "Injected handoff content into native backend _conversation "
+                    "stage=%s role=%s handoff_from=%s",
+                    stage.stage_id, current_role,
+                    handoff_from_payload.from_agent,
+                )
+
         logger.info(
             "StageRunner.run_stage START: stage=%s role=%s agent_id=%s max_turns=%d "
             "history_len=%d backend_reset_count=1 handoff=%s",
