@@ -796,9 +796,37 @@ class StageRunner:
                 if lep_orchestrator:
                     results = lep_orchestrator.evaluate_for_boundary(hoff_evt)
 
-                    # Handoff Corruption: mutate payload content
+                    # ── Handoff Corruption ─────────────────────────────────
                     hc_decision = results.get("LEP_HANDOFF_CORRUPTION")
-                    if hc_decision and hc_decision.fired:
+                    hc_fired = bool(hc_decision and hc_decision.fired)
+                    hc_trigger_matched = bool(hc_decision and hc_decision.matched)
+
+                    # ── Debug logging for handoff corruption ─────────────────
+                    logger.info(
+                        "LEP_HANDOFF_CORRUPTION debug: "
+                        "event_id=%s agent_id=%s agent_role=%s "
+                        "trigger_fired=%s trigger_matched=%s "
+                        "original_summary=%r",
+                        hoff_evt.event_id,
+                        hoff_evt.agent_id,
+                        hoff_evt.agent_role,
+                        hc_fired,
+                        hc_trigger_matched,
+                        payload.summary[:200] if payload.summary else "",
+                    )
+
+                    if hc_decision:
+                        logger.info(
+                            "LEP_HANDOFF_CORRUPTION trigger config: "
+                            "matched=%s reason=%s",
+                            hc_decision.matched,
+                            hc_decision.reason,
+                        )
+
+                    # Detect ineffective intervention: trigger did not fire
+                    # or mutation produced identical text.
+                    hc_ineffective = False
+                    if hc_fired:
                         hc_lep = lep_orchestrator.get_lep_instance(
                             "LEP_HANDOFF_CORRUPTION"
                         )
@@ -807,9 +835,21 @@ class StageRunner:
                                 hoff_evt,
                                 payload.summary,
                             )
-                            if (hasattr(corruption, 'corrupted_content')
-                                    and corruption.corrupted_content
-                                    != corruption.original_content):
+                            actually_changed = (
+                                hasattr(corruption, 'corrupted_content')
+                                and corruption.corrupted_content
+                                != corruption.original_content
+                            )
+                            logger.info(
+                                "LEP_HANDOFF_CORRUPTION mutation: "
+                                "event_id=%s changed=%s "
+                                "original=%r corrupted=%r",
+                                hoff_evt.event_id,
+                                actually_changed,
+                                (corruption.original_content or "")[:200],
+                                (corruption.corrupted_content or "")[:200],
+                            )
+                            if actually_changed:
                                 payload.summary = corruption.corrupted_content
                                 payload.contains_corrupted_data = True
 
@@ -859,6 +899,45 @@ class StageRunner:
                                     len(corruption.original_content),
                                     len(corruption.corrupted_content),
                                 )
+                            else:
+                                # Trigger fired but mutation produced identical
+                                # text — flag the LEP as ineffective.
+                                hc_ineffective = True
+                                hoff_evt.observable["ineffective_intervention"] = True
+                                hoff_evt.observable["ineffective_reason"] = (
+                                    "mutation produced identical text"
+                                )
+                                logger.warning(
+                                    "LEP_HANDOFF_CORRUPTION ineffective: "
+                                    "event_id=%s mutation produced identical "
+                                    "text — flagging trace for review",
+                                    hoff_evt.event_id,
+                                )
+
+                    # If LEP is configured but trigger never fired, also flag
+                    # as ineffective intervention.
+                    if (
+                        not hc_fired
+                        and any(
+                            c.code == "LEP_HANDOFF_CORRUPTION"
+                            for c in (scenario.lep_configs or [])
+                        )
+                    ):
+                        hc_ineffective = True
+                        hoff_evt.observable["ineffective_intervention"] = True
+                        hoff_evt.observable["ineffective_reason"] = (
+                            "trigger did not fire on handoff boundary"
+                        )
+                        logger.warning(
+                            "LEP_HANDOFF_CORRUPTION ineffective: "
+                            "event_id=%s trigger_did_not_fire",
+                            hoff_evt.event_id,
+                        )
+
+                    # Expose ineffective flag on the event for downstream
+                    # evaluation.
+                    if hc_ineffective:
+                        hoff_evt.hidden["ineffective_intervention"] = True
 
                     # Input Disregard: inject instruction into receiving context
                     id_decision = results.get("LEP_INPUT_DISREGARD")

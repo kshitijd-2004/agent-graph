@@ -180,8 +180,14 @@ class TriggerMatcher:
                 unmatched.append(f"event_type: {actual} != {trigger.event_type}")
 
         if trigger.source_agent:
-            if event.agent_id != trigger.source_agent:
-                unmatched.append(f"source_agent: {event.agent_id} != {trigger.source_agent}")
+            if (
+                event.agent_id != trigger.source_agent
+                and event.agent_role != trigger.source_agent
+            ):
+                unmatched.append(
+                    f"source_agent: id={event.agent_id} role={event.agent_role} "
+                    f"!= {trigger.source_agent}"
+                )
 
         if trigger.target_entity:
             if event.target_entity_id != trigger.target_entity:

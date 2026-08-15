@@ -197,18 +197,56 @@ class HandoffCorruptionLEP:
 
     @staticmethod
     def _omit_key_finding(text: str) -> str:
-        """Remove the most important-sounding finding."""
-        lines = text.split("\n")
-        # Find and remove lines with severity keywords or critical numbers
-        skip_patterns = ["critical", "severe", "high", "important", "vulnerability",
-                         "risk", "error:", "CVE-", "$1,520", "$1,200", "29%", "13.8%"]
-        filtered = []
-        for line in lines:
-            lower = line.lower()
-            if any(p.lower() in lower for p in skip_patterns):
-                continue
-            filtered.append(line)
-        return "\n".join(filtered) if filtered else text
+        """Remove or degrade the most critical-sounding clause/sentence.
+
+        Works at the sentence/clause level so it degrades gracefully on
+        single-line handoff summaries.  Guarantees the output differs from
+        the input — falls back to truncation if no clause matches.
+        """
+        import re
+
+        # Split on sentence boundaries (period/question/exclamation + space
+        # or end-of-string) and on clause separators (commas, semicolons).
+        # This keeps multi-clause single-line summaries intact rather than
+        # dropping the entire line.
+        clauses = re.split(r'(?<=[.!?])\s+|;\s*', text.strip())
+        clauses = [c for c in clauses if c]
+
+        skip_patterns = [
+            "critical", "severe", "high", "important", "vulnerability",
+            "risk", "error:", "cve-",
+        ]
+        numeric_patterns = [
+            r'\$[\d,]+(?:\.\d+)?',  # dollar amounts like $1,520
+            r'\d+\.?\d*%',            # percentages like 29%, 13.8%
+        ]
+
+        def _is_critical(clause: str) -> bool:
+            lower = clause.lower()
+            if any(p in lower for p in skip_patterns):
+                return True
+            if any(re.search(np, clause) for np in numeric_patterns):
+                return True
+            return False
+
+        # Try to remove the first critical clause
+        for i, clause in enumerate(clauses):
+            if _is_critical(clause):
+                clauses.pop(i)
+                result = "; ".join(clauses) if clauses else "[content redacted]"
+                if result.strip() != text.strip():
+                    return result
+
+        # No critical clause found — degrade the first numeric value
+        degraded = re.sub(r'(\d+\.?\d*%)', r'[~REDACTED~]', text, count=1)
+        if degraded.strip() != text.strip():
+            return degraded
+
+        # Last resort: truncate after first 60 % of characters so the
+        # summary is clearly degraded and cannot silently no-op.
+        truncate_len = max(1, int(len(text) * 0.6))
+        truncated = text[:truncate_len].rstrip() + " ..."
+        return truncated
 
     @staticmethod
     def _alter_severity(text: str) -> str:
