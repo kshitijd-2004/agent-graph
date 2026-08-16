@@ -767,6 +767,7 @@ class ScenarioRunner:
 
         handoff_payload: Optional[HandoffPayload] = None
         final_result = None
+        handoff_event_id: str = ""
 
         # Graph-driven execution: follow HandoffRule edges, not list positions
         current_stage = topology.stages[0]
@@ -776,7 +777,10 @@ class ScenarioRunner:
 
         loop_iteration = 0
         while loop_iteration < topology.max_iterations:
-            # Emit topology-transition event using actual runtime state
+            # Emit topology-transition event using actual runtime state.
+            # This event sits in the causal chain between the handoff and
+            # the receiving stage's first reasoning step, so the dependency
+            # path is: last_reasoning → handoff → topology_transition → reasoning.
             source_id = previous_stage.agent_id if previous_stage else "system"
             prior_stage_id = previous_stage.stage_id if previous_stage else ""
             transition_evt = make_evt(
@@ -791,6 +795,11 @@ class ScenarioRunner:
                 },
             )
             transition_evt.trace_id = trace_id
+            # The transition follows the handoff boundary event (if any).
+            # On the first iteration there is no prior handoff; the transition
+            # is self-rooted and the receiving stage anchors to it directly.
+            if handoff_event_id:
+                transition_evt.depends_on = [handoff_event_id]
             events.append(transition_evt)
 
             # Determine handoff rule for incoming handoff
@@ -826,6 +835,7 @@ class ScenarioRunner:
                 lep_corrupted_values=lep_corrupted_values,
                 global_event_counter=global_event_counter,
                 remaining_reviews=remaining_reviews,
+                incoming_dep_event_id=transition_evt.event_id,
             )
 
             # Update trace_id on stage events
@@ -921,6 +931,9 @@ class ScenarioRunner:
                 handoff_count += 1
                 handoff_payload = stage_result.handoff_payload
                 handoff_payload.to_agent = dest_role
+                # Capture the AGENT_HANDOFF event ID so the receiving stage can
+                # use it as a dependency anchor for its first reasoning step.
+                handoff_event_id = stage_result.handoff_event_id
 
                 # Count only backedge traversals (edges that go backward
                 # in the stage list). Forward revisits are normal and should

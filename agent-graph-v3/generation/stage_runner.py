@@ -65,6 +65,7 @@ class StageResult:
     step_count: int = 0
     raw_prompts: List[str] = field(default_factory=list)  # debug-only, not in canonical trace
     protocol_violation_data: Optional[Dict[str, Any]] = None  # raw model text + context
+    handoff_event_id: str = ""  # event_id of the AGENT_HANDOFF event (if termination was handoff)
 
 
 class StageRunner:
@@ -125,6 +126,7 @@ class StageRunner:
         lep_corrupted_values: Optional[Dict[str, Any]] = None,
         global_event_counter: Optional[List[int]] = None,
         remaining_reviews: Optional[int] = None,
+        incoming_dep_event_id: str = "",
     ) -> StageResult:
         """Execute one agent stage.
 
@@ -379,6 +381,15 @@ class StageRunner:
         # ── Loop recovery ─────────────────────────────────────────────────
         loop_recovery_attempted = False
 
+        # ── Causal dependency tracking ────────────────────────────────────
+        # Accumulates tool-result event IDs that constitute "new information"
+        # entering the agent's context. Cleared by each reasoning turn.
+        # These IDs are written into the depends_on field of subsequent events.
+        _pending_deps: List[str] = []
+        _last_reasoning_event_id: Optional[str] = None
+        if incoming_dep_event_id:
+            _pending_deps.append(incoming_dep_event_id)
+
         for turn in range(1, max_turns + 1):
             # Detect backend mode:
             # - Native (APIBackend): has native _messages property.
@@ -476,6 +487,7 @@ class StageRunner:
                             role=current_role,
                             output_text=self._build_loop_recovery_message(stage),
                         )
+                        recovery_evt.depends_on = [_last_reasoning_event_id] if _last_reasoning_event_id else []
                         recovery_evt.event_labels.is_injection_origin = False
                         recovery_evt.event_labels.consumes_perturbed_info = False
                         recovery_evt.event_labels.forwards_perturbed_info = False
@@ -542,6 +554,10 @@ class StageRunner:
                 input_text=reasoning_input,
                 output_text=raw_output,
             )
+            # ── Causal dependency: reasoning consumes accumulated tool results ──
+            reasoning_evt.depends_on = _pending_deps.copy()
+            _pending_deps.clear()
+            _last_reasoning_event_id = reasoning_evt.event_id
             events.append(reasoning_evt)
             if lep_orchestrator:
                 lep_orchestrator.evaluate_for_boundary(reasoning_evt)
@@ -557,6 +573,9 @@ class StageRunner:
                     tool_call_id=tc.id,
                     tool_arguments=action_input,
                 )
+                # ── Causal dependency: tool call is produced BY the reasoning step ──
+                if _last_reasoning_event_id:
+                    tc_evt.depends_on = [_last_reasoning_event_id]
                 events.append(tc_evt)
 
                 # Execute the tool
@@ -575,6 +594,9 @@ class StageRunner:
                     output_text=original_result,
                     tool_result=original_result,
                 )
+                # ── Causal dependency: tool result feeds the calling agent ──
+                if tc_evt.event_id:
+                    tr_evt.depends_on = [tc_evt.event_id]
                 events.append(tr_evt)
                 stage_history.append({
                     "role": "tool",
@@ -673,6 +695,11 @@ class StageRunner:
                 # Deliver the (possibly perturbed) result to the model
                 self.llm._append_tool_result(tc, result_text)
 
+                # ── Causal dependency: this tool result is new information
+                # entering the agent's context. It will be consumed by the
+                # next reasoning turn.
+                _pending_deps.append(tr_evt.event_id)
+
                 # Trigger-based corruption was already labeled inline above.
                 # Legacy fallback block removed — trigger evaluation at lines
                 # 555-633 is the canonical path for tool-result LEPs.
@@ -717,6 +744,9 @@ class StageRunner:
                         input_text=repair_prompt,
                         output_text="[protocol_repair]",
                     )
+                    repair_evt.depends_on = _pending_deps.copy()
+                    _pending_deps.clear()
+                    _last_reasoning_event_id = repair_evt.event_id
                     repair_evt.observable = {
                         "protocol_repair": True,
                         "reason": "missing_handoff_fields",
@@ -785,6 +815,15 @@ class StageRunner:
                     role=current_role,
                     output_text=payload.summary,
                 )
+                # ── Causal dependency: handoff produced by the last reasoning step ──
+                # The handoff event follows the explicit reasoning turn that
+                # produced it; tool results already feed into that reasoning
+                # event so they don't need to be duplicated here.
+                hoff_deps = []
+                if _last_reasoning_event_id:
+                    hoff_deps.append(_last_reasoning_event_id)
+                hoff_evt.depends_on = hoff_deps
+                _pending_deps.clear()
                 hoff_evt.observable = {
                     "handoff_from": current_role,
                     "handoff_to": payload.to_agent,
@@ -993,6 +1032,7 @@ class StageRunner:
                     handoff_payload=payload,
                     final_agent_role=current_role,
                     step_count=turn,
+                    handoff_event_id=hoff_evt.event_id,
                 )
 
             # ── SUBMIT FINAL ─────────────────────────────────────────────────
@@ -1007,6 +1047,14 @@ class StageRunner:
                     role=current_role,
                     output_text=summary,
                 )
+                # ── Causal dependency: final produced by last reasoning step ──
+                # Include pending tool results if model skipped explicit reasoning.
+                final_deps = []
+                if _last_reasoning_event_id:
+                    final_deps.append(_last_reasoning_event_id)
+                final_deps.extend(_pending_deps)
+                final_evt.depends_on = final_deps
+                _pending_deps.clear()
 
                 events.append(final_evt)
 
@@ -1020,6 +1068,7 @@ class StageRunner:
                     final_agent_role=current_role,
                     step_count=turn,
                     raw_output=summary,
+                    handoff_event_id="",
                 )
 
         # Exhausted max turns
@@ -1029,6 +1078,7 @@ class StageRunner:
             termination_reason=termination_reason,
             final_agent_role=current_role,
             step_count=max_turns,
+            handoff_event_id="",
         )
 
     # ── Helpers ──────────────────────────────────────────────────────────
