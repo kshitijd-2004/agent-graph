@@ -121,7 +121,7 @@ class StageRunner:
         ws_path,
         task_prompt: str,
         prior_events: List[TraceEvent],
-        handoff_from_payload: Optional[HandoffPayload] = None,
+        handoff_from_payload: Optional[List[HandoffPayload]] = None,
         lep_orchestrator=None,
         lep_corrupted_values: Optional[Dict[str, Any]] = None,
         global_event_counter: Optional[List[int]] = None,
@@ -138,7 +138,8 @@ class StageRunner:
             ws_path: Workspace directory path
             task_prompt: Original task description
             prior_events: Events emitted by prior stages (for provenance)
-            handoff_from_payload: Structured payload from the prior agent (if receiving)
+            handoff_from_payload: Structured payload(s) from prior agent(s) (list;
+                multiple entries when this is a merge stage receiving from several branches)
             lep_orchestrator: Active LEP orchestrator (or None for benign)
             lep_corrupted_values: Accumulated corrupted values
             global_event_counter: Shared counter [n] for globally unique event IDs/indexes
@@ -284,9 +285,12 @@ class StageRunner:
             "content": f"Task: {task_prompt}\nYou are {current_role}. Complete the assigned task.",
         })
 
-        # If receiving a handoff, add handoff context to history
+        # If receiving handoff(s), add handoff context to history.
+        # Multiple payloads arrive when this stage is a merge target
+        # receiving from several branch sources.
         handoff_received = False
-        if handoff_from_payload:
+        payloads: List[HandoffPayload] = handoff_from_payload or []
+        for handoff_from_payload in payloads:
             handoff_received = True
             handoff_content = (
                 f"[Handoff received from {handoff_from_payload.from_agent}]\n"
@@ -1322,18 +1326,22 @@ class StageRunner:
         return None
 
     def _find_next_agent_role(self, current_role: str,
-                              topology: TopologyConfig) -> str:
-        """Find the next agent role via outgoing HandoffRule, fallback to next stage."""
-        # Primary: use the explicit outgoing handoff rule
-        outgoing = topology.get_outgoing_handoff(current_role)
+                              topology: TopologyConfig) -> List[str]:
+        """Find the next agent role(s) via outgoing HandoffRules.
+
+        Returns a list of target roles. For topologies with a single outgoing
+        rule this is a one-element list; for fan-out topologies it contains
+        all valid handoff destinations.
+        """
+        outgoing = topology.get_outgoing_handoffs(current_role)
         if outgoing:
-            return outgoing.to_stage
+            return [r.to_stage for r in outgoing]
         # Fallback: next stage in the sequence, then exit_stage
         stages = topology.stages
         for i, stage in enumerate(stages):
             if stage.agent_role == current_role and i + 1 < len(stages):
-                return stages[i + 1].agent_role
-        return topology.exit_stage
+                return [stages[i + 1].agent_role]
+        return [topology.exit_stage]
 
     def _build_system_prompt(self, stage: Stage,
                              handoff_from_payload: Optional[HandoffPayload],
@@ -1361,7 +1369,7 @@ class StageRunner:
 
         elif stage.can_handoff and not stage.can_finalize:
             # Producer/drafter: must hand off, never finalize.
-            next_role = self._find_next_agent_role(stage.agent_role, topology)
+            next_roles = self._find_next_agent_role(stage.agent_role, topology)
             if receiving_handoff:
                 # Revision pass: treat incoming handoff as revision feedback
                 completion = (
@@ -1385,7 +1393,12 @@ class StageRunner:
                     "using the available tools, then call handoff exactly once to "
                     "transfer work to the next stage. "
                     "When calling the `handoff` tool, provide: "
-                    f"`target_agent` = \"{next_role}\" (the next agent in the workflow), "
+                    f"`target_agent` = \"{next_roles[0]}\" (the next agent in the workflow"
+                    + (
+                        f", alternatively: {', '.join(next_roles[1:])}"
+                        if len(next_roles) > 1
+                        else ""
+                    ) + "), "
                     "`summary` = a concise (1-3 sentence) description of your key "
                     "findings and the artifact path. "
                     "Call the native tool named exactly `handoff` with both "

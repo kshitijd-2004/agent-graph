@@ -33,7 +33,13 @@ class HandoffPayload:
 
     def to_context_string(self) -> str:
         """Render the payload as a context block for the receiving agent."""
-        parts = [f"[Handoff from {self.from_agent} to {self.to_agent}]"]
+        parts = []
+        merged_from = (self.extra or {}).get("merged_from")
+        if merged_from:
+            parts.append(
+                f"[Merged handoff from {', '.join(merged_from)}]"
+            )
+        parts.append(f"[Handoff from {self.from_agent} to {self.to_agent}]")
         if self.summary:
             parts.append(f"Summary: {self.summary}")
         if self.findings:

@@ -79,6 +79,14 @@ class TopologyConfig:
                 return rule
         return None
 
+    def get_outgoing_handoffs(self, role: str) -> List[HandoffRule]:
+        """Return all outgoing HandoffRules for a role."""
+        return [r for r in self.handoff_rules if r.from_stage == role]
+
+    def get_incoming_handoffs(self, role: str) -> List[HandoffRule]:
+        """Return all incoming HandoffRules for a role."""
+        return [r for r in self.handoff_rules if r.to_stage == role]
+
     def is_backedge(self, rule: HandoffRule) -> bool:
         """Return True if rule goes backward in stage order (to an earlier stage)."""
         positions = {s.agent_role: i for i, s in enumerate(self.stages)}

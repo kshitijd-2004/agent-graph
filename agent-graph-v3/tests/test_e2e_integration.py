@@ -2608,5 +2608,88 @@ def test_no_third_researcher_with_max_iterations_2():
     ok("no_third_researcher_with_max_iterations_2")
 
 
+def test_branch_and_verify_dry_run():
+    """End-to-end: branch_and_verify topology must produce events from all 3 stages,
+    include a merge on verifier, and emit an AGENT_HANDOFF.
+    """
+    builder = ScenarioBuilder(seed=42)
+    cfg = ScenarioBuildConfig(
+        task_family="code_review",
+        fixture_id="code_review_easy",
+        task_variant="easy",
+        topology="branch_and_verify",
+        repetition_index=0,
+        seed=42,
+    )
+    spec = builder.build_benign(cfg)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        runner = ScenarioRunner(
+            dry_run=True, max_events=60,
+            output_dir=Path(tmpdir) / "ws",
+        )
+        result = runner.run(spec, FIXTURE_DIR)
+
+    # Runner must succeed (no crash)
+    assert result.runner_success, f"Run failed: {result.error}"
+    assert result.trace is not None, "Trace must not be None"
+    assert result.trace.num_events > 0, "Trace must have events"
+
+    from schemas.trace import TraceEventType
+
+    # Collect stages that produced reasoning/tool events
+    roles_seen = set()
+    for evt in result.trace.events:
+        if evt.agent_role:
+            roles_seen.add(evt.agent_role)
+
+    # All 3 stages must appear
+    for expected_role in ["researcher", "analyst", "verifier"]:
+        assert expected_role in roles_seen, (
+            f"Role '{expected_role}' never produced events. "
+            f"Seen roles: {sorted(roles_seen)}"
+        )
+
+    # At least one AGENT_HANDOFF event
+    handoffs = [e for e in result.trace.events
+                if e.event_type == TraceEventType.AGENT_HANDOFF]
+    assert len(handoffs) >= 1, "Expected at least 1 AGENT_HANDOFF event"
+
+    # ── Bug fix 1: analyst must NOT receive researcher's handoff ─────────
+    # Find all USER_INPUT events containing handoff context blocks.
+    analyst_user_inputs = [
+        e for e in result.trace.events
+        if e.event_type == TraceEventType.USER_INPUT
+        and e.agent_role == "analyst"
+    ]
+    for ui in analyst_user_inputs:
+        txt = ui.input_text or ui.output_text or ""
+        assert "[Handoff received from researcher]" not in txt, (
+            "analyst incorrectly received researcher's handoff — "
+            "siblings should not receive each other's payloads"
+        )
+
+    # ── Bug fix 2: verifier merge transition depends_on must contain both
+    # source handoff event IDs, not just one.
+    merge_transitions = [
+        e for e in result.trace.events
+        if e.event_type == TraceEventType.TOPOLOGY_TRANSITION
+        and e.agent_role == "verifier"
+    ]
+    assert len(merge_transitions) >= 1, "Expected TOPOLOGY_TRANSITION for verifier"
+    verifier_transition = merge_transitions[0]
+    depends = verifier_transition.depends_on or []
+    # Collect all distinct AGENT_HANDOFF event IDs
+    handoff_event_ids = [e.event_id for e in handoffs]
+    # The verifier transition must depend on ALL handoff event IDs
+    for hid in handoff_event_ids:
+        assert hid in depends, (
+            f"verifier TOPOLOGY_TRANSITION missing handoff dependency '{hid}'. "
+            f"depends_on={depends}"
+        )
+
+    ok("branch_and_verify_dry_run")
+
+
 if __name__ == "__main__":
     sys.exit(main())

@@ -17,7 +17,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Dict, List, Optional, Protocol, Set
 
 from schemas import (
     LEPConfig, ScenarioSpec, Trace, TraceEvent, TraceEventType, TraceVariant,
@@ -347,9 +347,20 @@ class DryRunBackend:
         self._trajectory: list = []
         self._injection_fired: bool = False
         self._corrupted_values: Dict[str, Any] = {}
+        # Track the agent name from the previous reset() call so we can
+        # detect role changes and reset the step counter for sibling/fan-out
+        # branches that need to replay the trajectory independently.
+        self._prev_agent_name: str = ""
 
     def reset(self, task: str = "", agent_name: str = "",
               mcp_tools: List[str] = None, system_prompt: str = "") -> None:
+        # Reset step counter when the agent role changes. This is required
+        # for fan-out topologies where sibling branches must each replay the
+        # trajectory from step 1. For linear topologies, stages also benefit
+        # from independent replay rather than carrying over a global counter.
+        if self._prev_agent_name and agent_name != self._prev_agent_name:
+            self._step = 0
+        self._prev_agent_name = agent_name
         self._agent_name = agent_name
         # NOTE: do NOT reset _step here — the runner calls reset() every agent
         # iteration, and the trajectory depends on monotonically increasing step.
@@ -765,22 +776,71 @@ class ScenarioRunner:
         from generation.stage_runner import StageRunner
         stage_runner = StageRunner(llm_backend=self.llm, evaluator=self.evaluator)
 
-        handoff_payload: Optional[HandoffPayload] = None
         final_result = None
-        handoff_event_id: str = ""
+        handoff_payloads: List[HandoffPayload] = []
+        handoff_event_ids: List[str] = []
 
-        # Graph-driven execution: follow HandoffRule edges, not list positions
-        current_stage = topology.stages[0]
+        # ── Queue-based execution ──────────────────────────────────────────
+        # Supports fan-out/fan-in: a stage with multiple outgoing rules
+        # queues all destinations; a merge target (multiple incoming rules)
+        # waits for all source branches before executing.
+        stage_queue: List[Stage] = [topology.stages[0]]
+        queued_stage_ids: set = {topology.stages[0].stage_id}
+        branch_handoffs: Dict[str, HandoffPayload] = {}
+        branch_handoff_event_ids: Dict[str, str] = {}
+
+        def enqueue(stage: Stage):
+            """Append stage to queue only if not already queued."""
+            if stage.stage_id not in queued_stage_ids:
+                stage_queue.append(stage)
+                queued_stage_ids.add(stage.stage_id)
+
         previous_stage: Optional[Stage] = None
         handoff_count = 0
         backedge_count = 0
 
         loop_iteration = 0
-        while loop_iteration < topology.max_iterations:
+        while stage_queue and loop_iteration < topology.max_iterations:
+            current_stage = stage_queue.pop(0)
+            queued_stage_ids.discard(current_stage.stage_id)
+
+            # ── Fan-in check: merge BEFORE emitting the transition event ──────
+            # so that transition.depends_on can reference all branch event IDs.
+            incoming_rules = topology.get_incoming_handoffs(current_stage.agent_role)
+            if len(incoming_rules) > 1:
+                missing_sources = [
+                    r.from_stage for r in incoming_rules
+                    if r.from_stage not in branch_handoffs
+                ]
+                if missing_sources:
+                    # Not all branches have arrived — queue missing sources
+                    # and re-queue this merge stage.
+                    for source_role in missing_sources:
+                        source_stage = topology.get_stage(source_role)
+                        if source_stage:
+                            enqueue(source_stage)
+                    enqueue(current_stage)
+                    continue
+
+                # All source branches present — merge payloads and event IDs.
+                # DO NOT clear branch_handoffs/branch_handoff_event_ids yet;
+                # the transition event below needs them for depends_on.
+                merged_payload = ScenarioRunner._merge_handoff_payloads(
+                    list(branch_handoffs.values()),
+                    target_role=current_stage.agent_role,
+                )
+                handoff_payloads = [merged_payload]
+                handoff_event_ids = list(branch_handoff_event_ids.values())
+            elif not incoming_rules:
+                # This stage has no incoming handoff edges in the topology.
+                # Clear any stale handoff state from a previous iteration
+                # (e.g. a sibling branch that ran before this one).
+                handoff_payloads = []
+                handoff_event_ids = []
+
             # Emit topology-transition event using actual runtime state.
-            # This event sits in the causal chain between the handoff and
-            # the receiving stage's first reasoning step, so the dependency
-            # path is: last_reasoning → handoff → topology_transition → reasoning.
+            # For merge stages, depends_on now correctly contains ALL branch
+            # handoff event IDs because the merge above ran first.
             source_id = previous_stage.agent_id if previous_stage else "system"
             prior_stage_id = previous_stage.stage_id if previous_stage else ""
             transition_evt = make_evt(
@@ -789,24 +849,25 @@ class ScenarioRunner:
                 current_stage.agent_id,
                 role=current_stage.agent_role,
                 observable={
-                    "transition_mode": "orchestrator_controlled" if handoff_payload else "agent_initiated",
-                    "handoff_summary": handoff_payload.summary if handoff_payload else "",
+                    "transition_mode": "orchestrator_controlled" if handoff_payloads else "agent_initiated",
+                    "handoff_summary": handoff_payloads[0].summary if handoff_payloads else "",
                     "prior_stage": prior_stage_id,
                 },
             )
             transition_evt.trace_id = trace_id
-            # The transition follows the handoff boundary event (if any).
-            # On the first iteration there is no prior handoff; the transition
-            # is self-rooted and the receiving stage anchors to it directly.
-            if handoff_event_id:
-                transition_evt.depends_on = [handoff_event_id]
+            if handoff_event_ids:
+                transition_evt.depends_on = list(handoff_event_ids)
             events.append(transition_evt)
 
-            # Determine handoff rule for incoming handoff
+            # Determine handoff rule for incoming handoff(s)
             handoff_rule = None
-            if handoff_payload:
+            # Use the first payload for rule lookup — the rule describes
+            # the topology edge (e.g. researcher→verifier), which is the
+            # same regardless of whether one or multiple branches arrive.
+            if handoff_payloads:
+                first = handoff_payloads[0]
                 for rule in topology.handoff_rules:
-                    if rule.from_stage == handoff_payload.from_agent and \
+                    if rule.from_stage == first.from_agent and \
                        rule.to_stage == current_stage.agent_role:
                         handoff_rule = rule
                         break
@@ -830,7 +891,7 @@ class ScenarioRunner:
                 ws_path=ws_path,
                 task_prompt=task_prompt,
                 prior_events=list(events),
-                handoff_from_payload=handoff_payload,
+                handoff_from_payload=handoff_payloads if handoff_payloads else None,
                 lep_orchestrator=orchestrator,
                 lep_corrupted_values=lep_corrupted_values,
                 global_event_counter=global_event_counter,
@@ -843,6 +904,13 @@ class ScenarioRunner:
                 evt.trace_id = trace_id
 
             events.extend(stage_result.events)
+
+            # After a merge stage runs, its source branch payloads have been
+            # consumed. Clear them so subsequent stages don't see stale
+            # sibling-branch entries.
+            if len(incoming_rules) > 1:
+                branch_handoffs.clear()
+                branch_handoff_event_ids.clear()
 
             # ── Handle stage termination ─────────────────────────────────
             reason = stage_result.termination_reason
@@ -929,11 +997,22 @@ class ScenarioRunner:
 
                 # Track handoffs and count review cycles
                 handoff_count += 1
-                handoff_payload = stage_result.handoff_payload
-                handoff_payload.to_agent = dest_role
+
+                # Store branch payload keyed by source role for merge aggregation.
+                # Use the stage's role (not the resolved dest_role) as the key
+                # so the merge stage can identify which branches contributed.
+                source_role = current_stage.agent_role
+                raw_payload = stage_result.handoff_payload
+                raw_payload.to_agent = dest_role
+                branch_handoffs[source_role] = raw_payload
+                branch_handoff_event_ids[source_role] = stage_result.handoff_event_id
+
                 # Capture the AGENT_HANDOFF event ID so the receiving stage can
                 # use it as a dependency anchor for its first reasoning step.
-                handoff_event_id = stage_result.handoff_event_id
+                # For linear stages this is a single-element list; for merge
+                # stages it will contain all branch event IDs after aggregation.
+                handoff_payloads = [raw_payload]
+                handoff_event_ids = [stage_result.handoff_event_id]
 
                 # Count only backedge traversals (edges that go backward
                 # in the stage list). Forward revisits are normal and should
@@ -979,9 +1058,19 @@ class ScenarioRunner:
                         self.evaluator.reset()
                         return trace
 
-                # Advance along the graph edge
+                # Queue all destinations from outgoing rules (fan-out support).
+                # For single-rule topologies this queues one stage — equivalent
+                # to the old sequential behavior. For fan-out topologies this
+                # queues all branch destinations.
+                outgoing_rules = topology.get_outgoing_handoffs(
+                    current_stage.agent_role
+                )
+                for rule in outgoing_rules:
+                    dest = topology.get_stage(rule.to_stage)
+                    if dest:
+                        enqueue(dest)
+
                 previous_stage = current_stage
-                current_stage = dest_stage
                 continue
 
             elif reason == "loop":
@@ -1099,9 +1188,6 @@ class ScenarioRunner:
                 self.evaluator.reset()
                 return trace
 
-            # Track that this stage was visited (for cycle detection)
-            visited_roles.add(current_stage.agent_role)
-
             loop_iteration += 1
 
             if final_result:
@@ -1169,6 +1255,69 @@ class ScenarioRunner:
             original_result=original_result,
             perturbed_result=original_result,
             altered_fields=[],
+        )
+
+    @staticmethod
+    def _merge_handoff_payloads(
+        payloads: List[HandoffPayload],
+        target_role: str,
+    ) -> HandoffPayload:
+        """Merge multiple handoff payloads into one for a merge-stage target.
+
+        Branch payloads are treated symmetrically — all findings, summaries,
+        and metadata are aggregated without bias toward any single branch.
+
+        Per-branch ``extra`` dicts are preserved under ``extra["branch_metadata"]``
+        so downstream LEP propagation analysis can identify which branch carried
+        which interventions.
+        """
+        from generation.handoff import HandoffPayload as HP
+
+        all_findings: List[str] = []
+        all_source_paths: List[str] = []
+        all_provenance: List[str] = []
+        summaries: List[str] = []
+        merged_extra: Dict[str, Any] = {}
+        branch_metadata: Dict[str, Any] = {}
+        has_corruption = False
+        source_roles = []
+
+        for p in payloads:
+            source_roles.append(p.from_agent)
+            all_findings.extend(p.findings)
+            all_source_paths.extend(p.source_paths)
+            all_provenance.extend(p.provenance_event_ids)
+            if p.summary:
+                summaries.append(f"[{p.from_agent}] {p.summary}")
+            if p.contains_corrupted_data:
+                has_corruption = True
+            # Preserve per-branch extra dict for LEP analysis
+            branch_metadata[p.from_agent] = dict(p.extra) if p.extra else {}
+
+        # Deduplicate findings (order-preserving)
+        seen = set()
+        deduped_findings = []
+        for f in all_findings:
+            key = f.strip().lower()
+            if key not in seen:
+                seen.add(key)
+                deduped_findings.append(f)
+
+        merged_extra["merged_from"] = source_roles
+        merged_extra["branch_event_ids"] = [
+            pid for pid in all_provenance if pid
+        ]
+        merged_extra["branch_metadata"] = branch_metadata
+
+        return HP(
+            from_agent="+".join(source_roles),
+            to_agent=target_role,
+            findings=deduped_findings[:20],
+            source_paths=list(dict.fromkeys(all_source_paths)),
+            provenance_event_ids=list(dict.fromkeys(all_provenance)),
+            summary="\n".join(summaries),
+            contains_corrupted_data=has_corruption,
+            extra=merged_extra,
         )
 
     def _setup_workspace(self, ws_path: Path, fixture_dir: Path) -> None:
