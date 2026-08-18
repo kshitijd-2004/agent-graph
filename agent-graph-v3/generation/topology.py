@@ -247,6 +247,58 @@ def _build_registry() -> Dict[str, callable]:
             max_iterations=1,
         )
 
+    def fanout_2(agent_map: Dict[str, str]) -> TopologyConfig:
+        """Pure fan-out: researcher branches into two independent agents.
+
+        Isolates diffusion (RQ1) — no convergence, both branches terminate.
+        Compare to linear_2 (same agent count, no branching) to attribute
+        diffusion effects to branching structure.
+        """
+        return TopologyConfig(
+            topology_id="fanout_2",
+            display_name="Fan-out (2 branches)",
+            stages=[
+                Stage("researcher", "researcher", agent_map["researcher"],
+                      max_turns=8, can_handoff=True, can_finalize=False),
+                Stage("branch_a", "branch_a", agent_map["branch_a"],
+                      max_turns=8, can_handoff=False, can_finalize=True),
+                Stage("branch_b", "branch_b", agent_map["branch_b"],
+                      max_turns=8, can_handoff=False, can_finalize=True),
+            ],
+            handoff_rules=[
+                HandoffRule("researcher", "branch_a"),
+                HandoffRule("researcher", "branch_b"),
+            ],
+            exit_stage="branch_a",  # First branch to terminate is the exit
+            max_iterations=1,
+        )
+
+    def merge_2(agent_map: Dict[str, str]) -> TopologyConfig:
+        """Pure fan-in: two independent agents feed a single synthesizer.
+
+        Isolates convergence (RQ2) — no branching upstream, both sources
+        converge on one decision point. Compare to linear_3 (same agent
+        count, sequential) to attribute accumulation effects to fan-in.
+        """
+        return TopologyConfig(
+            topology_id="merge_2",
+            display_name="Merge (2 sources)",
+            stages=[
+                Stage("source_a", "source_a", agent_map["source_a"],
+                      max_turns=6, can_handoff=True, can_finalize=False),
+                Stage("source_b", "source_b", agent_map["source_b"],
+                      max_turns=6, can_handoff=True, can_finalize=False),
+                Stage("synthesizer", "synthesizer", agent_map["synthesizer"],
+                      max_turns=8, can_handoff=False, can_finalize=True),
+            ],
+            handoff_rules=[
+                HandoffRule("source_a", "synthesizer"),
+                HandoffRule("source_b", "synthesizer"),
+            ],
+            exit_stage="synthesizer",
+            max_iterations=1,
+        )
+
     return {
         "linear_2": linear_2,
         "linear_3": linear_3,
@@ -255,6 +307,8 @@ def _build_registry() -> Dict[str, callable]:
         "review_loop": review_loop,
         "shared_memory_collaboration": shared_memory_collaboration,
         "branch_and_verify": branch_and_verify,
+        "fanout_2": fanout_2,
+        "merge_2": merge_2,
     }
 
 

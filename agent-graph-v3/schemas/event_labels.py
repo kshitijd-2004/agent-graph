@@ -15,7 +15,6 @@ class EventLabelType(str, Enum):
     """Event-level annotation types."""
     # Injection lifecycle
     IS_INJECTION_ORIGIN = "is_injection_origin"
-    IS_ABNORMAL_EVENT = "is_abnormal_event"
 
     # Consumption/transformation
     CONSUMES_PERTURBED_INFO = "consumes_perturbed_information"
@@ -56,7 +55,6 @@ class EventLabels:
     """
     # Injection
     is_injection_origin: bool = False
-    is_abnormal_event: bool = False
 
     # Perturbation flow
     consumes_perturbed_info: bool = False

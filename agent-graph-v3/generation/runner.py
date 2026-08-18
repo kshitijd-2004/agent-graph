@@ -673,9 +673,29 @@ class ScenarioRunner:
             for i, role in enumerate([
                 "researcher", "analyst", "verifier",
                 "coordinator", "specialist_a", "specialist_b",
+                "branch_a", "branch_b", "source_a", "source_b", "synthesizer",
             ])
         }
         topology = get_topology(topology_id, generic_agent_map, max_agent_turns=max_agent_turns)
+
+        # Remap topology stage roles to task-specific agent names.
+        # Topology builders use generic roles (researcher, analyst, verifier, …).
+        # Each task family defines its own role names (inspector, reviewer, …).
+        # We map positionally: stage 0 → task_agents[0], stage 1 → task_agents[1], etc.
+        from generation.scenario_builder import TASK_CONFIGS
+        task_cfg = TASK_CONFIGS.get(scenario.task_family, {})
+        task_agents = task_cfg.get("default_agents", [])
+        if task_agents and len(task_agents) == len(topology.stages):
+            role_mapping = {
+                stage.agent_role: task_agents[i]
+                for i, stage in enumerate(topology.stages)
+            }
+            for stage in topology.stages:
+                stage.agent_role = role_mapping.get(stage.agent_role, stage.agent_role)
+            for rule in topology.handoff_rules:
+                rule.from_stage = role_mapping.get(rule.from_stage, rule.from_stage)
+                rule.to_stage = role_mapping.get(rule.to_stage, rule.to_stage)
+
         agent_map = build_agent_map_from_topology(topology)
 
         def make_evt(event_type: TraceEventType, source: str, target: str,

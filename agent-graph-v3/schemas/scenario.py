@@ -52,6 +52,8 @@ TOPOLOGIES = [
     "review_loop",
     "shared_memory_collaboration",
     "branch_and_verify",
+    "fanout_2",
+    "merge_2",
 ]
 
 SHARING_POLICIES = [

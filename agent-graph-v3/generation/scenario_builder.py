@@ -75,12 +75,14 @@ TASK_CONFIGS: Dict[str, Dict[str, Any]] = {
     },
     "research_synthesis": {
         "default_topology": "linear_3",
-        "supported_topologies": ["linear_3", "coordinator_star", "review_loop"],
+        "supported_topologies": ["linear_3", "coordinator_star", "review_loop",
+                                  "fanout_2", "merge_2"],
         "default_agents": ["researcher", "synthesizer", "verifier"],
     },
     "competitive_intelligence": {
         "default_topology": "linear_3",
-        "supported_topologies": ["linear_3", "parallel_merge", "coordinator_star"],
+        "supported_topologies": ["linear_3", "parallel_merge", "coordinator_star",
+                                  "fanout_2", "merge_2"],
         "default_agents": ["researcher", "analyst", "reviewer"],
     },
 }
