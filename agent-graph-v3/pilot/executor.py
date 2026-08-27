@@ -223,7 +223,13 @@ class PilotExecutor:
 
     def _fixture_id(self, entry: dict[str, Any]) -> str:
         family = entry["task_family"]
-        return f"{family}_default"
+        # Map task families to actual fixture directory names.
+        FIXTURE_MAP = {
+            "code_review": "code_review_easy",
+            "financial_analysis": "financial_clean",
+            "research_synthesis": "research_conflicting",
+        }
+        return FIXTURE_MAP.get(family, f"{family}_default")
 
     def _resolve_lep(self, code: str) -> LEPConfig:
         from pilot.config import LEP_BY_CODE

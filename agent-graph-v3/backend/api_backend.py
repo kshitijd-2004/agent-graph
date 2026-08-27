@@ -171,6 +171,32 @@ TOOL_DEFINITIONS = [
             "additionalProperties": False,
         },
     },
+    {
+        "name": "read_memory",
+        "description": "Search the shared memory store for relevant prior findings, facts, or conclusions stored by any agent.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query for memory retrieval"},
+                "top_k": {"type": "integer", "description": "Maximum number of results to return (default 3)"},
+            },
+            "required": ["query"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "write_memory",
+        "description": "Write a key-value record to the shared memory store. Other agents can retrieve this later.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "key": {"type": "string", "description": "Memory key (e.g. 'preliminary_findings')"},
+                "value": {"type": "string", "description": "Memory value content"},
+            },
+            "required": ["key", "value"],
+            "additionalProperties": False,
+        },
+    },
 ]
 
 

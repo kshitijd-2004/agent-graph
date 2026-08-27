@@ -220,6 +220,7 @@ def test_lep_orchestrator():
         name="Test", category="test",
         description="test", target_agent="researcher",
         trigger=InjectionTrigger(tool_name="read_text_file"),
+        task_family="code_review",
     )
     orch.register_lep(lep)
     assert "LEP_TOOL_RESULT_CORRUPTION" in orch._active_leps
@@ -239,6 +240,7 @@ def test_lep_instance_creation():
         name="Test", category="test",
         description="test", target_agent="researcher",
         trigger=InjectionTrigger(tool_name="read_text_file"),
+        task_family="code_review",
     )
     instance = create_lep_instance(lep)
     assert instance is not None
@@ -253,6 +255,7 @@ def test_all_lep_types_instantiate():
         lep = LEPConfig(
             code=code, name="Test", category="test",
             description="test", target_agent="agent",
+            task_family="code_review",
         )
         instance = cls(lep)
         assert instance is not None

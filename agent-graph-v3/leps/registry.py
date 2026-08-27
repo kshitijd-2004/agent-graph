@@ -57,6 +57,9 @@ BOUNDARY_LEPS: Dict[str, Set[str]] = {
         "LEP_HANDOFF_CORRUPTION",
         "LEP_INPUT_DISREGARD",
     },
+    "memory_write": {
+        "LEP_MEMORY_POISONING",
+    },
 }
 
 # Reverse map: lep_code -> preferred boundary event type

@@ -1,0 +1,107 @@
+\subsection{TODO}
+
+\paragraph{Immediate (blocking publication)}
+None — all items moved to resolved.
+
+\paragraph{Near-term (needed for full benchmark)}
+\begin{itemize}
+    \item \textbf{Ground tasks in standard multi-agent benchmarks.} Current task families (code\_review, financial\_analysis, research\_synthesis, competitive\_intelligence) use only synthetic workspace fixtures. The methodology section needs to situate these against real multi-agent benchmarks/datasets (e.g., GAIA, AgentBench, ToolBench) and clearly describe the agent setup (roles, tools, model, memory). The evaluation matrix (topology $\times$ task $\times$ LEP condition) should be explicitly documented.
+    \item \textbf{Implement the \texttt{benchmark/} directory.} Currently empty. Needs configuration schemas, scenario manifests, validators, and a runner interface. Once built, one command should generate the full trace suite across all task families ($\times$4), topologies ($\times$9), and LEP conditions. Note: evaluator coverage is partial until the evaluator gaps below are resolved — trace generation works, but task-success scoring will fail or be missing for some task families.
+    \item \textbf{Build and validate the graph construction module.} Convert enriched \texttt{Trace} objects (with \texttt{depends\_on} populated) into event-as-node graphs for GNN training, encoding node features (event type, agent role, tool name, metadata) and \texttt{depends\_on} edges as directed causal dependencies. Produce both static graph snapshots (per-event) and temporal event-stream formats.
+    \item \textbf{Wire up memory subsystem for \texttt{LEP\_MEMORY\_POISONING}.} The \texttt{MemoryStore} and \texttt{MemoryRetriever} exist in \texttt{memory/} but are not integrated into the execution pipeline. Memory poisoning cannot fire without it. IN-PROGRESS
+    \item \textbf{Expand task evaluator coverage.} \texttt{CompetitiveIntelligenceEvaluator} does not exist at all — needs a deterministic rule-based evaluator matching the depth of \texttt{FinancialEvaluator} and \texttt{CodeReviewEvaluator}. \texttt{ResearchSynthesisEvaluator} exists but is a lightweight 5-check heuristic; needs expansion to proper depth. Without these, the benchmark runner cannot score task success for those families. IN-PROGRESS
+
+    \item \textbf{Diagrammatic representation of topologies for the paper}
+    
+\end{itemize}
+
+\paragraph{Medium-term (experimental)}
+\begin{itemize}
+    \item \textbf{Generate large-scale trace dataset.} Current \texttt{pilot\_output/} has 24 executions and \texttt{out/} has 72. Target is a dataset covering all topologies ($\times$9), all task families ($\times$4), all LEP types ($\times$5), with benign, single-LEP, and counterfactual conditions, with repetition.
+    \item \textbf{Train and evaluate GNN detectors.} Use the \texttt{ObservableExporter} traces (detector-visible only) to train GNNs for LEP detection, then evaluate on held-out traces. Compare against baselines (random, degree-based, temporal heuristics).
+    \item \textbf{Add propagation-magnitude metrics.} Inspired by QUIVER: per-edge sensitivity classification (amplifier/absorber/threshold-sensitive), path-product approximation for transitive LEP amplification, and bifurcation thresholds (minimum perturbation strength causing structural graph changes).
+\end{itemize}
+
+\subsection{Details}
+
+\paragraph{System overview.}
+AgentGraph-v3 is a benchmark for studying how Local Execution Perturbations (LEPs) cause downstream failures in multi-agent LLM systems and how those failures propagate across agent boundaries. A \texttt{ScenarioSpec} defines a task family, workspace fixture, execution topology, and a set of LEP configurations. The \texttt{ScenarioRunner} executes the scenario by running agents through a topology of stages, recording every event as a \texttt{TraceEvent} in a \texttt{Trace} (schema version 3.0.0). Paired traces share an \texttt{execution\_id} and differ only in \texttt{variant} (benign=\texttt{a}, malignant=\texttt{b}), enabling direct comparison. The trace schema enforces a strict \texttt{observable}/\texttt{hidden} split: the \texttt{ObservableExporter} strips all LEP-related keys and benchmark metadata for safe distribution to detector models, while the \texttt{AnalysisExporter} retains full labels for offline analysis.
+
+\paragraph{Trace schema (v3.0.0).}
+Each trace contains 10 event types: \texttt{user\_input}, \texttt{system\_init}, \texttt{topology\_transition}, \texttt{reasoning}, \texttt{tool\_call}, \texttt{tool\_result}, \texttt{agent\_handoff}, \texttt{memory\_retrieval}, \texttt{memory\_write}, \texttt{final\_response}. Every event carries \texttt{source\_entity\_id}, \texttt{target\_entity\_id}, \texttt{agent\_id}, \texttt{agent\_role}, and an \texttt{event\_labels} annotation layer with boolean flags: \texttt{is\_injection\_origin}, \texttt{consumes\_perturbed\_info}, \texttt{forwards\_perturbed\_info}, \texttt{introduces\_downstream\_failure}, \texttt{failure\_type} (enum: \texttt{factual\_error}, \texttt{numeric\_error}, \texttt{omission}, \texttt{misattribution}, \texttt{derailment}, \texttt{safety\_violation}, etc.). The \texttt{depends\_on} field stores causal dependency edges between events, populated at event emission time. Events also carry a three-way payload: \texttt{observable} (detector-safe), \texttt{hidden} (benchmark-only ground truth), and \texttt{event\_labels} (annotations).
+
+\paragraph{LEP subsystem.}
+Five LEP families are implemented in \texttt{leps/} and orchestrated by \texttt{LEPOrchestrator}:
+\begin{itemize}
+    \item \textbf{ToolResultCorruptionLEP}: Replaces the return value of a targeted \texttt{read\_text\_file} call with corrupted content. Seven canonical variants per task family (e.g., \texttt{numeric\_corruption} for financial analysis, \texttt{partial\_omission} for code review, \texttt{source\_swap} for research synthesis). Fires at the \texttt{tool\_result} boundary.
+    \item \textbf{IndirectPromptInjectionLEP}: Embeds adversarial instructions inside retrieved file content (six variants: \texttt{ignore\_previous}, \texttt{exfiltrate}, \texttt{skip\_verification}, \texttt{change\_destination}, \texttt{trust\_this}, \texttt{terminate\_early}). Fires at the \texttt{tool\_result} boundary.
+    \item \textbf{HandoffCorruptionLEP}: Mutates the \texttt{HandoffPayload} (summary, findings, attribution) in transit between agents. Six variants: \texttt{omit\_key\_finding}, \texttt{alter\_severity}, \texttt{replace\_value}, \texttt{remove\_uncertainty}, \texttt{unsupported\_recommendation}, \texttt{swap\_attribution}. Fires at the \texttt{agent\_handoff} boundary.
+    \item \textbf{InputDisregardLEP}: Injects a behavioral instruction into the receiving agent's context, causing it to ignore or underweight the handoff. Five variants: \texttt{start\_scratch}, \texttt{discard\_warnings}, \texttt{ignore\_verifier}, \texttt{recency\_bias}, \texttt{prefer\_memory}. Fires at the \texttt{agent\_handoff} boundary.
+    \item \textbf{MemoryPoisoningLEP}: Seeds false entries into the memory store for later retrieval by agents. Currently incompatible — no memory subsystem integration. Three pre-defined poisoned values per task family.
+\end{itemize}
+LEPs use boundary-aware routing: \texttt{BOUNDARY\_LEPS} maps \texttt{tool\_result} to \texttt{LEP\_TOOL\_RESULT\_CORRUPTION} and \texttt{LEP\_INDIRECT\_PROMPT\_INJECTION}; \texttt{agent\_handoff} to \texttt{LEP\_HANDOFF\_CORRUPTION} and \texttt{LEP\_INPUT\_DISREGARD}. One-shot semantics prevent re-firing after a successful mutation. The \texttt{TriggerMatcher} evaluates \texttt{InjectionTrigger} conditions (event type, source agent, tool name, path pattern, content pattern, occurrence count, event index bounds, probability) with idempotency enforcement.
+
+\paragraph{Execution topologies.}
+Nine topologies serve two experimental purposes. Four controlled topologies isolate structural dimensions for causal attribution: \texttt{linear\_3} (3-stage sequential baseline), \texttt{fanout\_2} (pure diffusion: researcher branches into two independent agents with no convergence), \texttt{merge\_2} (pure convergence: two independent agents feed a single synthesizer), and one diamond topology (\texttt{parallel\_merge} or \texttt{branch\_and\_verify}). The remaining five provide ecological validity across realistic workflow patterns: \texttt{linear\_2} (2-stage baseline), \texttt{coordinator\_star} (specialists feeding a coordinator), \texttt{review\_loop} (back-and-forth with max\_review\_cycles=1), \texttt{shared\_memory\_collaboration} (shared memory variant), and whichever diamond topology is not used in the controlled set. For the role-semantics experiment, \texttt{branch\_and\_verify} and \texttt{parallel\_merge} share identical graph shape but assign the downstream agent the role of verifier (checks and resolves disagreement) versus synthesizer (combines outputs), enabling isolation of role semantics from structure.
+
+\paragraph{Task families and evaluators.}
+Three task families with deterministic rule-based evaluators:
+\begin{itemize}
+    \item \textbf{code\_review}: Two fixtures (\texttt{easy}, \texttt{conflicting}) with required security issues (path traversal, sanitize stub, validate access bypass, off-by-one). \texttt{CodeReviewEvaluator} keyword-matches output against required issues and checks for false-positive acceptance phrases.
+    \item \textbf{financial\_analysis}: Two fixtures (\texttt{clean}, \texttt{version\_conflict}) with 9 required numeric facts (Q3 revenue \$1.52M, operating costs \$790K, etc.) and version conflict detection (v1 vs. v2). \texttt{FinancialEvaluator} extracts figures via regex and flags downstream failure when v1 values appear in v2-required output.
+    \item \textbf{research\_synthesis}: One fixture (\texttt{conflicting}) with Paper A and Paper B. \texttt{ResearchSynthesisEvaluator} uses a 5-check weighted heuristic (retrieval, no fabrication, synthesis, report quality, gap identification) with pass threshold 0.5.
+\end{itemize}
+
+\paragraph{Exporters.}
+Three export formats serve distinct audiences: \texttt{ObservableExporter} (detector-safe, strips \texttt{LEP\_*} keys, \texttt{hidden} fields, and \texttt{event\_labels}); \texttt{AnalysisExporter} (full trace with labels, LEP instances, propagation paths); \texttt{PrefixExporter} (event prefixes up to injection/failure milestones with binary labels for early-warning causal forecasting).
+
+\paragraph{Current pilot results.}
+A 24-execution pilot with \texttt{linear\_2} topology: \texttt{LEP\_TOOL\_RESULT\_CORRUPTION} is the only LEP demonstrating the full injection$\to$consumption$\to$propagation$\to$failure chain. \texttt{LEP\_HANDOFF\_CORRUPTION} and \texttt{LEP\_INPUT\_DISREGARD} fire but show zero consumption.
+
+\subsection{Methodology}
+
+\Yue{We may need a clear setup here, including: What platform are we using (like your reproducibility and infra below, with GPU specified)? What tasks we are doing (we should build our experiments on some real multi-agent task benchmarks---datasets)? How do we set up the agents? What matrices are we evaluating? You may refer to the example below.}
+
+\color{teal}
+\textbf{Execution Platform and Infrastructure.}
+We implement our multi-agent workflows using \textit{[orchestration framework]}, with LLM inference served through \textit{[serving framework]}.
+Our experiments use \textit{[LLM model(s)]} with \textit{[precision / quantization / context length]}.
+All experiments are conducted on \textit{[GPU model and number of GPUs]}, with \textit{[CPU / memory / other relevant hardware information]}.
+Unless otherwise stated, all agents in a workflow use the same LLM backend to isolate the effects of workflow structure and abnormality propagation. We report the full software and hardware configuration to support reproducibility.
+
+\textbf{Multi-Agent Tasks and Workloads.}
+We evaluate \OurMethod{} using both real-world multi-agent benchmarks and
+controlled synthesized workloads. For real workloads, we use \textit{[Benchmark A]}, \textit{[Benchmark B]}, and \textit{[Benchmark C]}, covering tasks such as \textit{[tool use / retrieval / planning / coding / coordination]}.
+These benchmarks provide realistic task objectives, tool interactions, and standardized success criteria.
+
+To complement the real workloads, we also construct synthesized multi-agent tasks that allow us to systematically control workflow structure and risk propagation patterns. Each synthesized task is generated from \textit{[task templates/workflow templates/scenario generators]} and instantiates a set of agents, tools, memories, intermediate dependencies, and a target task outcome. We vary
+\textit{[number of agents]},
+\textit{[workflow topology]},
+\textit{[communication pattern]},
+\textit{[information-sharing policy]},
+\textit{[memory configuration]}, and
+\textit{[task dependency depth]} to produce workflows with different propagation characteristics.
+
+For each synthesized workflow, we generate a valid normal execution and then create controlled variants by introducing one or more abnormalities at selected agents, tools, handoffs, or memory operations. The injected abnormalities are configured to produce \textit{[isolated / one-to-many / many-to-one / multi-hop]} propagation patterns. We additionally generate counterfactual variants by removing individual abnormalities while keeping the remaining workflow unchanged.
+This enables precise ground-truth annotation of abnormality sources, propagation paths, and downstream outcomes, and allows us to distinguish true risk accumulation from simple co-occurrence.
+
+\color{black}
+
+
+\paragraph{Experimental design.}
+Two experiments structure the topology analysis. Experiment 1 (structure effect) compares propagation across \texttt{linear\_3}, \texttt{fanout\_2}, and \texttt{merge\_2}. Experiment 2 (role-semantics effect) compares \texttt{branch\_and\_verify} and \texttt{parallel\_merge}, which share identical graph shape but assign the downstream agent the role of verifier (checks and resolves disagreement) versus synthesizer (combines outputs), isolating role semantics from structure. The remaining topologies (\texttt{linear\_2}, \texttt{coordinator\_star}, \texttt{review\_loop}, \texttt{shared\_memory\_collaboration}) serve as ecological coverage, demonstrating that patterns observed in controlled topologies generalize to realistic workflow configurations. Each scenario is defined by a \texttt{ScenarioSpec} with four parameters: \texttt{task\_family} (code\_review, financial\_analysis, research\_synthesis), \texttt{fixture\_id} (workspace fixture), \texttt{topology} (one of nine), and \texttt{condition} (\texttt{benign}, \texttt{single\_lep}, \texttt{counterfactual}). For each task--fixture pair, we generate one benign trace, one single-LEP trace per LEP type, and one counterfactual trace (same as single-LEP but with LEPs removed). Paired traces share an \texttt{execution\_id} and differ only in \texttt{variant}, enabling within-scenario causal attribution: if benign passes and malignant fails on the same task and topology, the LEP is causally implicated.
+
+\paragraph{LEP injection.}
+Canonical operators are selected deterministically per (task\_family, LEP\_code) pair via \texttt{get\_canonical\_operator()}, ensuring reproducible injection across runs. The \texttt{LEPOrchestrator} registers LEP instances from \texttt{LEPConfig} objects and evaluates them at boundary events using \texttt{evaluate\_for\_boundary()}, which routes to eligible LEPs based on event type. Triggers use \texttt{TriggerMatcher} for semantic condition matching with idempotency (a trigger fires at most once per scenario) and occurrence counting.
+
+\paragraph{LLM backend.}
+The primary execution backend is \texttt{APIBackend}, which makes HTTP requests to the OpusMax API gateway (\texttt{LLM\_BASE\_URL}) using only the Python stdlib \texttt{urllib} — no Anthropic SDK required. It supports native \texttt{tool\_use} mode with system prompt, conversation history, and tool definitions. The default model is \texttt{claude-sonnet-5} with temperature 0.1. Model selection is configurable via \texttt{LLM\_MODEL}.
+
+\paragraph{Trace annotation and evaluation.}
+After execution, each trace is annotated with \texttt{EventLabels} recording the perturbation lifecycle. Task-specific evaluators (\texttt{CodeReviewEvaluator}, \texttt{FinancialEvaluator}, \texttt{ResearchSynthesisEvaluator}) check the final output against fixture ground truth to determine \texttt{task\_success} and \texttt{downstream\_failure}.
+
+\paragraph{Reproducibility and infrastructure.}
+All experiments are run on a Linux machine (kernel 5.15.0-185-generic, x86\_64) with Python 3.12.3, 48 Intel Xeon E5-2670 v3 vCPUs, and 125 GiB RAM. GPU inference is available on 2$\times$ NVIDIA Tesla P100 PCIe 16GB (driver 580.173.02); quantization is not applied. LLM inference is served through the OpusMax API gateway, contacted via stdlib \texttt{urllib} (no Anthropic SDK). All agents in a workflow use the same backend to isolate the effects of workflow structure and abnormality propagation. The codebase uses \texttt{torch} for the graph encoding module (encoder, exporter, graph builder), \texttt{anthropic} SDK is not used, and \texttt{scikit-learn} is not currently used (the memory retriever uses a dense retrieval fallback, not TF-IDF). Seeds are set per scenario via \texttt{ScenarioBuildConfig.seed}. Traces are serialized as JSON files (schema v3.0.0) and also exported as JSONL via the three exporters. Pilot results and experimental outputs are stored in \texttt{pilot\_output/} and \texttt{out/} respectively.
+
+\paragraph{Graph construction (planned).}
+Once \texttt{depends\_on} is populated internally, each trace is converted into an event-as-node graph: every execution event becomes a node, and \texttt{depends\_on} causal dependencies become directed edges (A$\to$B when B depends on A). This preserves fan-in structure and enables path-based propagation analysis directly on the execution graph. Node features carry event type, agent role, tool name, stage-local index, and observable metadata; LEP labels (injection origin, consumption, propagation, failure) are node-level annotations for training. Graph-level labels indicate whether the execution ultimately experienced a downstream failure.

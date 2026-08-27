@@ -192,19 +192,10 @@ class ScenarioBuilder:
 
         validate_lep_config(lep_config, config.task_family)
 
-        # ── Compatibility gate: Memory Poisoning ──────────────────────────────
-        # No memory subsystem exists; scenarios that require it are marked
-        # incompatible (not fabricated). See leps/canonical_operators.py
-        # for the authoritative LEP capability map.
-        if lep_config.code == "LEP_MEMORY_POISONING":
-            raise ValueError(
-                "LEP_MEMORY_POISONING has no injection surface in the current "
-                "implementation (no memory subsystem). "
-                "Mark as incompatible in the experimental matrix; do not fabricate."
-            )
-
         # Resolve and record the canonical operator for this (task_family, LEP).
-        # This is fixed at scenario-build time — no runtime variant selection.
+        # This is fixed at scenario-build time -- no runtime variant selection.
+        # If no operator is registered for this (family, code) pair, raise --
+        # the canonical_operators registry is the authoritative capability map.
         canonical_operator = get_canonical_operator(config.task_family, lep_config.code)
         if canonical_operator is None:
             raise ValueError(

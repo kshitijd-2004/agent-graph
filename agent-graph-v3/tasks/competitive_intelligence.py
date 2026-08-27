@@ -37,6 +37,35 @@ class CompetitiveIntelligenceTask(BaseTask):
         ),
     }
 
+    def get_benign_prompt(self, agent: str) -> str:
+        """Return the prompt for an agent role.
+
+        Overrides BaseTask to return the BENIGN_PROMPTS entry for the role,
+        falling back to a generic prompt.
+        """
+        return self.BENIGN_PROMPTS.get(
+            agent,
+            f"You are {agent}. Complete the task.",
+        )
+
+    def get_memory_addition(self, agent: str) -> str:
+        """Return the memory-specific instruction fragment for an agent role.
+
+        This is appended to the system prompt (which already contains the
+        role definition and workflow instructions) when memory_mode != "none".
+        """
+        if agent == "searcher":
+            return (
+                "\n\nStore your key market, pricing, and strategic findings "
+                "in shared memory (using the write_memory tool) before handing off."
+            )
+        elif agent == "analyst":
+            return (
+                "\n\nConsult relevant shared-memory findings (using the read_memory tool) "
+                "while producing the final analysis."
+            )
+        return ""
+
     def get_lep_configs(self) -> Dict[str, LEPConfig]:
         return {
             "FC2.3": LEPConfig(

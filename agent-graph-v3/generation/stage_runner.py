@@ -33,6 +33,7 @@ from schemas.scenario import ScenarioSpec
 from generation.handoff import HandoffPayload
 from generation.topology import TopologyConfig, Stage, HandoffRule
 from backend.api_backend import ToolCall, ModelTurn
+from memory.memory_store import MemoryStore, MemoryRecord
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +100,7 @@ class StageRunner:
     NATIVE_TOOL_ACTIONS = frozenset({
         "list_directory", "read_text_file", "write_file",
         "search_files", "create_directory",
+        "read_memory", "write_memory",
         "handoff", "submit_final",
     })
 
@@ -127,6 +129,7 @@ class StageRunner:
         global_event_counter: Optional[List[int]] = None,
         remaining_reviews: Optional[int] = None,
         incoming_dep_event_id: str = "",
+        memory_store: Optional[MemoryStore] = None,
     ) -> StageResult:
         """Execute one agent stage.
 
@@ -236,11 +239,38 @@ class StageRunner:
         # so the backend's native _messages uses the correct prompt.
         system_prompt = self._build_system_prompt(stage, handoff_from_payload, remaining_reviews, topology)
 
+        # ── Per-stage memory store for ephemeral_private ──────────────────
+        # In ephemeral_private mode, each agent gets its own isolated store
+        # so writes from one stage are not visible to the next.  The store
+        # is created fresh for this stage and never shared.
+        # For shared modes the runner passes the shared store via the
+        # memory_store parameter; stage-local store is None in that case.
+        _memory_mode = getattr(
+            getattr(scenario, "workflow_config", None), "memory_mode", "none"
+        )
+        stage_memory_store: Optional[MemoryStore] = (
+            MemoryStore() if _memory_mode == "ephemeral_private" else memory_store
+        )
+
+        # Append task-specific memory instructions only when memory is shared.
+        # For ephemeral_private, telling an agent to "consult shared memory"
+        # would be misleading — its writes are isolated.
+        if _memory_mode in ("ephemeral_shared", "persistent_shared") \
+                and scenario is not None:
+            from tasks.registry import get_task
+            task_cls = get_task(scenario.task_family)
+            if task_cls is not None:
+                task_instance = task_cls()
+                memory_addition = task_instance.get_memory_addition(current_role)
+                if memory_addition:
+                    system_prompt += memory_addition
+
         # Build tool list: include handoff/submit_final only if the stage
         # is allowed to use them (prevents premature use).
         available_tools = [
             "list_directory", "read_text_file", "write_file",
             "search_files", "create_directory",
+            "read_memory", "write_memory",
         ]
         if stage.can_handoff:
             available_tools.append("handoff")
@@ -282,7 +312,13 @@ class StageRunner:
         })
         stage_history.append({
             "role": "user",
-            "content": f"Task: {task_prompt}\nYou are {current_role}. Complete the assigned task.",
+            "content": (
+                f"Task: {task_prompt}\n"
+                f"You are {current_role}. Complete the assigned task.\n\n"
+                f"Workspace: you are working in a sandboxed directory. "
+                f"All file paths must be relative (e.g. 'documents/README.md', '.', 'output/'). "
+                f"Do not use absolute paths."
+            ),
         })
 
         # If receiving handoff(s), add handoff context to history.
@@ -708,6 +744,145 @@ class StageRunner:
                 # Legacy fallback block removed — trigger evaluation at lines
                 # 555-633 is the canonical path for tool-result LEPs.
 
+            # ── READ_MEMORY ───────────────────────────────────────────────────
+            if action == "read_memory":
+                query = action_input.get("query", "")
+                top_k = int(action_input.get("top_k", 3))
+                results = []
+                poisoned_keys_in_results = []
+                if stage_memory_store is not None:
+                    results = stage_memory_store.retrieve(query, top_k=top_k)
+                    for rec, score in results:
+                        if lep_orchestrator:
+                            mp_lep = lep_orchestrator.get_lep_instance("LEP_MEMORY_POISONING")
+                            if mp_lep and mp_lep.is_poisoned(rec.key):
+                                poisoned_keys_in_results.append(rec.key)
+
+                # Format results for the model
+                if results:
+                    lines = [f"Memory results for query '{query}':"]
+                    for rec, score in results:
+                        lines.append(f"- [{rec.key}] {rec.value[:300]}")
+                    result_text = "\n".join(lines)
+                else:
+                    result_text = f"No memory records found for query '{query}'."
+
+                # Create MEMORY_RETRIEVAL event
+                retrieval_evt = make_evt(
+                    TraceEventType.MEMORY_RETRIEVAL, "memory_store", agent_id,
+                    role=current_role,
+                    tool_name="read_memory",
+                    tool_call_id=tc.id,
+                    tool_arguments=action_input,
+                    output_text=result_text,
+                )
+                # depends_on is built from ALL retrieved records' write_event_id
+                # metadata (not just poisoned ones) — the graph structure must
+                # not depend on whether an LEP exists.
+                retrieval_evt.depends_on = [
+                    rec.metadata["write_event_id"]
+                    for rec, _ in results
+                    if rec.metadata.get("write_event_id")
+                ]
+                events.append(retrieval_evt)
+
+                # Label consumption if any retrieved record is poisoned
+                if poisoned_keys_in_results:
+                    label_consumption(retrieval_evt, "LEP_MEMORY_POISONING")
+                    if lep_orchestrator:
+                        mp_lep = lep_orchestrator.get_lep_instance("LEP_MEMORY_POISONING")
+                        if mp_lep:
+                            for key in poisoned_keys_in_results:
+                                mp_lep.record_retrieval(key, retrieval_evt.event_id, agent_id)
+
+                # Create TOOL_RESULT event
+                tr_evt = make_evt(
+                    TraceEventType.TOOL_RESULT, "tool_read_memory", agent_id,
+                    role=current_role,
+                    tool_name="read_memory",
+                    tool_call_id=tc.id,
+                    tool_arguments=action_input,
+                    output_text=result_text,
+                    tool_result=result_text,
+                )
+                tr_evt.depends_on = [tc_evt.event_id] if tc_evt.event_id else [retrieval_evt.event_id]
+                events.append(tr_evt)
+                stage_history.append({"role": "tool", "tool_name": "read_memory", "content": result_text})
+                self.llm._append_tool_result(tc, result_text)
+                _pending_deps.append(tr_evt.event_id)
+                continue
+
+            # ── WRITE_MEMORY ──────────────────────────────────────────────────
+            if action == "write_memory":
+                key = action_input.get("key", "")
+                value = action_input.get("value", "")
+                original_value = value
+                write_was_poisoned = False
+
+                # Create MEMORY_WRITE event (boundary for LEP evaluation)
+                write_evt = make_evt(
+                    TraceEventType.MEMORY_WRITE, "memory_store", agent_id,
+                    role=current_role,
+                    tool_name="write_memory",
+                    tool_call_id=tc.id,
+                    tool_arguments=action_input,
+                    output_text=f"Memory written: {key}",
+                )
+                write_evt.depends_on = [tc_evt.event_id] if tc_evt.event_id else []
+                events.append(write_evt)
+
+                # Evaluate memory poisoning LEP at the MEMORY_WRITE boundary
+                if lep_orchestrator:
+                    results = lep_orchestrator.evaluate_for_boundary(write_evt)
+                    mp_decision = results.get("LEP_MEMORY_POISONING")
+                    if mp_decision and mp_decision.fired:
+                        mp_lep = lep_orchestrator.get_lep_instance("LEP_MEMORY_POISONING")
+                        if mp_lep:
+                            poison_result = mp_lep.poison(key, scenario.task_family)
+                            value = poison_result.memory_value
+                            write_was_poisoned = True
+
+                            # Label the injection origin
+                            label_injection(write_evt, "LEP_MEMORY_POISONING")
+                            lep_orchestrator.mark_successful_mutation("LEP_MEMORY_POISONING")
+                            mp_lep.record_write(key, write_evt.event_id)
+
+                            active_perturbations.append({
+                                "lep_code": "LEP_MEMORY_POISONING",
+                                "event_id": write_evt.event_id,
+                                "memory_key": key,
+                            })
+
+                # Write to MemoryStore, preserving the MEMORY_WRITE event_id
+                # in the record's metadata so read_memory can build depends_on
+                if stage_memory_store is not None:
+                    record = MemoryRecord(
+                        id=f"{agent_id}_{key}",
+                        key=key,
+                        value=value,
+                        tags=["agent_written", "poisoned" if write_was_poisoned else "clean"],
+                        metadata={"write_event_id": write_evt.event_id},
+                    )
+                    stage_memory_store.add(record)
+
+                # Create TOOL_RESULT event for the write_memory call
+                tool_result_text = f"Memory record stored: {key}"
+                tr_evt = make_evt(
+                    TraceEventType.TOOL_RESULT, "tool_write_memory", agent_id,
+                    role=current_role,
+                    tool_name="write_memory",
+                    tool_call_id=tc.id,
+                    tool_arguments=action_input,
+                    output_text=tool_result_text,
+                    tool_result=tool_result_text,
+                )
+                tr_evt.depends_on = [tc_evt.event_id]
+                events.append(tr_evt)
+                stage_history.append({"role": "tool", "tool_name": "write_memory", "content": tool_result_text})
+                self.llm._append_tool_result(tc, tool_result_text)
+                _pending_deps.append(tr_evt.event_id)
+                continue
+
             # ── HANDOFF ──────────────────────────────────────────────────────
             if action == "handoff":
                 if not stage.can_handoff:
@@ -1109,6 +1284,8 @@ class StageRunner:
             "write_file": {"path", "content"},
             "search_files": {"path", "pattern"},
             "create_directory": {"path"},
+            "read_memory": {"query", "top_k"},
+            "write_memory": {"key", "value"},
             "handoff": {"target_agent", "summary", "report_path", "source_paths", "verification_requests"},
             "submit_final": {"summary", "report_path"},
         }
@@ -1158,6 +1335,13 @@ class StageRunner:
             (ws_path / dir_path).mkdir(parents=True, exist_ok=True)
             return f"Directory created: {dir_path}"
 
+        elif tool_name == "read_memory":
+            query = args.get("query", "")
+            return f"(dry-run) Memory query '{query}' — no memory store available in simulation."
+
+        elif tool_name == "write_memory":
+            key = args.get("key", "")
+            return f"Memory record stored: {key}"
         return f"Unknown tool: {tool_name}"
 
     def _apply_lep_corruption(self, orchestrator, trigger_event: TraceEvent,

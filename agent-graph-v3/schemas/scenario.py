@@ -64,6 +64,18 @@ SHARING_POLICIES = [
     "shared_memory_only",
 ]
 
+# Memory mode semantics:
+#   none              — no memory tools; agents rely only on workspace files
+#   ephemeral_private — each agent gets its own isolated store; handoff
+#                       recipients cannot see the source agent's writes
+#   ephemeral_shared  — one store shared by all agents for the entire
+#                       scenario execution; survives across stage revisits,
+#                       review loops, and fan-in merges within one run
+#   persistent_shared — same store-lifetime as ephemeral_shared (one store
+#                       per scenario).  The "persistent" distinction is
+#                       reserved for a future runner-level store that would
+#                       survive across scenario runs within the same session;
+#                       for now both shared modes behave identically
 MEMORY_MODES = [
     "none",
     "ephemeral_private",

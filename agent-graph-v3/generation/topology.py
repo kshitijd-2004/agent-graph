@@ -127,7 +127,7 @@ def _build_registry() -> Dict[str, callable]:
                 HandoffRule("researcher", "analyst"),
             ],
             exit_stage="analyst",
-            max_iterations=1,
+            max_iterations=2,  # researcher + analyst
         )
 
     def linear_3(agent_map: Dict[str, str]) -> TopologyConfig:
@@ -147,7 +147,7 @@ def _build_registry() -> Dict[str, callable]:
                 HandoffRule("analyst", "verifier"),
             ],
             exit_stage="verifier",
-            max_iterations=1,
+            max_iterations=3,  # researcher + analyst + verifier
         )
 
     def coordinator_star(agent_map: Dict[str, str]) -> TopologyConfig:
@@ -167,7 +167,7 @@ def _build_registry() -> Dict[str, callable]:
                 HandoffRule("specialist_b", "coordinator"),
             ],
             exit_stage="coordinator",
-            max_iterations=2,
+            max_iterations=3,  # specialist_a + specialist_b + coordinator
         )
 
     def parallel_merge(agent_map: Dict[str, str]) -> TopologyConfig:
@@ -187,7 +187,7 @@ def _build_registry() -> Dict[str, callable]:
                 HandoffRule("analyst", "verifier"),
             ],
             exit_stage="verifier",
-            max_iterations=1,
+            max_iterations=3,  # researcher + analyst + verifier
         )
 
     def review_loop(agent_map: Dict[str, str]) -> TopologyConfig:
@@ -269,8 +269,8 @@ def _build_registry() -> Dict[str, callable]:
                 HandoffRule("researcher", "branch_a"),
                 HandoffRule("researcher", "branch_b"),
             ],
-            exit_stage="branch_a",  # First branch to terminate is the exit
-            max_iterations=1,
+            exit_stage="branch_a",  # Metadata: both branches are equivalent exits
+            max_iterations=3,  # 1 researcher + 2 branches = 3 stage passes
         )
 
     def merge_2(agent_map: Dict[str, str]) -> TopologyConfig:

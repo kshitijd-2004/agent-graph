@@ -134,7 +134,7 @@ def get_lep_config(code: str) -> LEPConfig:
 DEFAULT_WORKFLOW_CONFIG = WorkflowConfig(
     topology="linear_2",
     sharing_policy="handoff_summary_only",
-    memory_mode="ephemeral_private",
+    memory_mode="ephemeral_shared",
     verification_mode="self_check",
     max_events=40,
     max_agent_turns=20,

@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, Set
 
+from memory.memory_store import MemoryStore
 from schemas import (
     LEPConfig, ScenarioSpec, Trace, TraceEvent, TraceEventType, TraceVariant,
     WorkflowConfig,
@@ -302,13 +303,12 @@ class DryRunBackend:
                             "content": "# Report\nCORRUPTED_VALUE"}, False),  # propagates
             ("handoff", {"target_agent": "analyst", "summary": "Research complete"}, True),
         ],
-        # Memory poisoning: read → write memory → read poisoned memory → write report → final
+        # Memory poisoning: read docs → write_memory (trigger fires) → read_memory (consumes poisoned) → write report → handoff
         "LEP_MEMORY_POISONING": [
             ("list_directory", {"path": "."}, False),
             ("read_text_file", {"path": "documents/source.md"}, False),
-            ("write_file", {"path": "memory/analysis_notes.md",
-                            "content": "POISONED_MEMORY"}, False),  # trigger: after first write
-            ("read_text_file", {"path": "memory/analysis_notes.md"}, False),  # consumes poisoned
+            ("write_memory", {"key": "analysis_notes", "value": "POISONED_MEMORY"}, False),  # trigger fires
+            ("read_memory", {"query": "analysis notes"}, False),  # consumes poisoned
             ("write_file", {"path": "output/analyst_report.md",
                             "content": "# Report\nPOISONED_MEMORY"}, True),  # propagates
         ],
@@ -366,7 +366,8 @@ class DryRunBackend:
         # iteration, and the trajectory depends on monotonically increasing step.
 
     def set_context(self, lep_code: str, task_family: str,
-                    lep_corrupted_values: Dict[str, Any] = None) -> None:
+                    lep_corrupted_values: Dict[str, Any] = None,
+                    memory_store=None) -> None:
         """Set the scenario context for LEP-specific trajectory generation."""
         self._lep_code = lep_code or "benign"
         self._task_family = task_family
@@ -375,6 +376,7 @@ class DryRunBackend:
         ))
         self._injection_fired = False
         self._corrupted_values = lep_corrupted_values or {}
+        self._memory_store = memory_store
 
     def record_corrupted_value(self, key: str, value: Any) -> None:
         """Record a corrupted value (called by runner when LEP fires)."""
@@ -642,6 +644,21 @@ class ScenarioRunner:
                 )
             orchestrator.register_leps(scenario.lep_configs)
 
+        # ── Memory store setup ───────────────────────────────────────────
+        # * shared modes (ephemeral_shared, persistent_shared): one store
+        #   lives for the entire scenario — survives across stage revisits,
+        #   review loops, and fan-in merges.  "persistent" means the store
+        #   is not reset between topology iterations; "ephemeral" means the
+        #   same thing within one scenario but is fresh on the next run.
+        # * ephemeral_private: each stage gets its own isolated store so
+        #   handoff recipients cannot see the source agent's writes.
+        # * none: no memory store (all memory ops are no-ops).
+        _memory_mode = getattr(wcfg, "memory_mode", "none")
+        if _memory_mode in ("ephemeral_shared", "persistent_shared"):
+            memory_store = MemoryStore()
+        else:
+            memory_store = None  # ephemeral_private: stage runner creates per-stage stores
+
         # Configure dry-run backend with LEP-specific trajectory
         if isinstance(self.llm, DryRunBackend):
             self.llm.set_context(
@@ -780,10 +797,7 @@ class ScenarioRunner:
             orchestrator.evaluate_for_boundary(evt)
 
         # Execute stages in topology order
-        from generation.topology import get_topology
-        topology_id = wcfg.topology if wcfg else "linear_2"
-        max_agent_turns = wcfg.max_agent_turns if wcfg else 40
-        topology = get_topology(topology_id, agent_map, max_agent_turns=max_agent_turns)
+        # (topology was already built at line 679 with role remapping applied)
 
         logger.info(
             "_execute_scenario: scenario=%s topology=%s max_events=%d max_agent_turns=%d",
@@ -917,6 +931,7 @@ class ScenarioRunner:
                 global_event_counter=global_event_counter,
                 remaining_reviews=remaining_reviews,
                 incoming_dep_event_id=transition_evt.event_id,
+                memory_store=memory_store,
             )
 
             # Update trace_id on stage events
@@ -936,7 +951,19 @@ class ScenarioRunner:
             reason = stage_result.termination_reason
             if reason == "final":
                 final_result = stage_result
-                break
+                # For fan-out topologies: if the stage that called submit_final
+                # also has outgoing handoff rules (e.g. researcher → branch_a,
+                # researcher → branch_b), queue those branches now. The stage
+                # used submit_final (not handoff), so the normal handoff block
+                # below is skipped.
+                outgoing_rules = topology.get_outgoing_handoffs(
+                    current_stage.agent_role
+                )
+                for rule in outgoing_rules:
+                    dest = topology.get_stage(rule.to_stage)
+                    if dest:
+                        enqueue(dest)
+                continue
 
             elif reason == "handoff":
                 # Validate: does the current stage have an outgoing handoff
@@ -1210,11 +1237,8 @@ class ScenarioRunner:
 
             loop_iteration += 1
 
-            if final_result:
-                break
-
-        # If no stage produced final, don't force one — let the evaluator
-        # detect that no terminal event was emitted
+        # Queue is empty — loop exits naturally via while condition.
+        # final_result holds the last stage that submitted_final (if any).
         trace_metadata = {
             "scenario_id": scenario_id,
             "task_family": scenario.task_family,

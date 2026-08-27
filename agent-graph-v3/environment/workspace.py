@@ -23,6 +23,13 @@ class Workspace:
 
     def execute(self, tool_name: str, args: Dict[str, Any]) -> str:
         """Execute a tool against the workspace files."""
+        try:
+            return self._dispatch(tool_name, args)
+        except ValueError as e:
+            return f"Error: {e}"
+
+    def _dispatch(self, tool_name: str, args: Dict[str, Any]) -> str:
+        """Route tool calls to their handlers."""
         if tool_name == "list_directory":
             return self._list_directory(args)
         elif tool_name == "read_text_file":
@@ -93,10 +100,26 @@ class Workspace:
         return "Memory record stored."
 
     def _safe_path(self, relative: str) -> Path:
-        """Resolve a relative path within the workspace, preventing escapes."""
-        p = self.root / relative
-        p = p.resolve()
-        if not str(p).startswith(str(self.root.resolve())):
+        """Resolve a relative path within the workspace, preventing escapes.
+
+        Normalizes bare '/' to workspace root (the LLM sometimes sends this
+        as an absolute path).  All other absolute paths are rejected since
+        they reference locations outside the sandbox.
+        """
+        # Normalize bare '/' -> workspace root
+        if relative == "/":
+            relative = "."
+        elif relative.startswith("/"):
+            raise ValueError(
+                f"Absolute paths are not allowed: {relative}. "
+                f"Use relative paths (e.g. 'documents/' or '.')"
+            )
+        p = (self.root / relative).resolve()
+        root_resolved = self.root.resolve()
+        # Allow the workspace root itself (e.g. path=".").
+        if p == root_resolved:
+            return p
+        if not str(p).startswith(str(root_resolved) + os.sep):
             raise ValueError(f"Path escapes workspace: {relative}")
         return p
 

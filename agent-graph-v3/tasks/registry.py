@@ -236,7 +236,6 @@ DEFAULT_LEPS: Dict[str, list[LEPConfig]] = {
 # or that are not yet registered in leps/registry.py.
 # These are filtered out of get_default_leps() so the pilot can build.
 INCOMPATIBLE_LEPS: set[str] = {
-    "LEP_MEMORY_POISONING",     # requires memory subsystem
     "LEP_RETRIEVAL_MANIPULATION",  # not yet registered in leps/registry.py
 }
 

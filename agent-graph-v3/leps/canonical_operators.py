@@ -44,6 +44,7 @@ CANONICAL_INJECTIONS: Dict[str, Dict[str, str]] = {
     # ── competitive_intelligence ───────────────────────────────────────────
     "competitive_intelligence": {
         "LEP_TOOL_RESULT_CORRUPTION":       "stale_pricing",
+        "LEP_MEMORY_POISONING":             "false_fact_insertion",
         "LEP_HANDOFF_CORRUPTION":           "omission_in_handoff",
         "LEP_INPUT_DISREGARD":              "discard_evidence",
         "LEP_INDIRECT_PROMPT_INJECTION":    "false_competitor_claim",
