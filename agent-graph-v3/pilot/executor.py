@@ -29,6 +29,7 @@ class ExecutionRecord:
     variant: str
     trace: Optional[Trace]
     trace_id: str = ""
+    pair_tag: str = ""
     success: bool = False
     error: Optional[str] = None
     runtime_seconds: float = 0.0
@@ -55,6 +56,7 @@ class ExecutionRecord:
             "lep_codes": self.lep_codes,
             "variant": self.variant,
             "trace_id": self.trace_id,
+            "pair_tag": self.pair_tag,
             "success": self.success,
             "error": self.error,
             "runtime_seconds": self.runtime_seconds,
@@ -117,6 +119,7 @@ class PilotExecutor:
                 "counterfactual" if entry["condition"] == "counterfactual" else "malignant"
             ),
             trace=None,
+            pair_tag=entry.get("pair_tag", ""),
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -146,6 +149,12 @@ class PilotExecutor:
             # Execute
             result = runner.run(spec, self.fixture_root)
             trace = result.trace
+
+            # Write trace file to output_dir
+            trace_path = self.output_dir / f"{entry['scenario_id']}_trace.json"
+            with open(trace_path, "w") as f:
+                json.dump(trace.to_dict(), f, indent=2, default=str)
+            logger.info("Trace saved: %s", trace_path)
 
             record.trace = trace
             record.trace_id = trace.trace_id

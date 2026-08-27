@@ -19,10 +19,6 @@ from schemas import (
 # Pilot parameters
 PILOT_ID = "pilot-2026-08"
 SCHEMA_VERSION = "3.0.0"
-NUM_BENIGN_BASELINES = 8
-NUM_PERTURBED = 16
-NUM_COUNTERFACTUALS = 4
-TOTAL_EXECUTIONS = NUM_BENIGN_BASELINES + NUM_PERTURBED + NUM_COUNTERFACTUALS  # 28
 
 
 # Task families available for pilot
@@ -130,6 +126,17 @@ def get_lep_config(code: str) -> LEPConfig:
     return LEP_BY_CODE[code]
 
 
+# Pilot size: 5 LEPs × 3 task families = 15 pairs
+# Each pair = 1 benign + 1 LEP = 30, plus 3 counterfactuals = 33 total
+NUM_LEPS = len(PILOT_LEP_CONFIGS)                # 5
+NUM_TASK_FAMILIES = len(PILOT_TASK_FAMILIES)     # 3
+NUM_PAIRS = NUM_LEPS * NUM_TASK_FAMILIES         # 15
+NUM_BENIGN_BASELINES = NUM_PAIRS                 # one benign per LEP pair
+NUM_PERTURBED = NUM_PAIRS                        # one LEP per pair
+NUM_COUNTERFACTUALS = NUM_TASK_FAMILIES          # one per task family
+TOTAL_EXECUTIONS = NUM_BENIGN_BASELINES + NUM_PERTURBED + NUM_COUNTERFACTUALS  # 33
+
+
 # Default workflow config for pilot
 DEFAULT_WORKFLOW_CONFIG = WorkflowConfig(
     topology="linear_2",
@@ -161,35 +168,38 @@ class PilotConfig:
     workflow_config: WorkflowConfig = field(default_factory=lambda: DEFAULT_WORKFLOW_CONFIG)
 
     def execution_plan(self) -> list[dict[str, Any]]:
-        """Build the full execution plan as a list of scenario specs."""
+        """Build the full execution plan as a list of scenario specs.
+
+        Each perturbed (LEP) scenario is paired with a matching benign trace
+        so downstream analysis can compare agent behavior with and without
+        the failure injection.
+        """
         plan = []
         idx = 0
 
-        # Benign baselines: one per task family, repeated
-        for task_family in self.task_families:
-            for rep in range(self.num_benign // len(self.task_families)):
-                plan.append({
-                    "scenario_id": f"{self.pilot_id}_benign_{task_family}_{rep:02d}",
-                    "task_family": task_family,
-                    "condition": "benign",
-                    "lep_codes": [],
-                    "topology": "linear_2",
-                    "repetition_index": rep,
-                })
-                idx += 1
-
-        # Perturbed: one per LEP per task family (spread across reps)
+        # Each perturbed run is paired with a matching benign trace
         leps_per_task = max(1, self.num_perturbed // (len(self.task_families) * len(self.lep_configs)))
         for lep in self.lep_configs:
             for task_family in self.task_families:
                 for rep in range(leps_per_task):
+                    pair_id = f"{self.pilot_id}_{lep.code}_{task_family}_{rep:02d}"
                     plan.append({
-                        "scenario_id": f"{self.pilot_id}_pert_{lep.code}_{task_family}_{rep:02d}",
+                        "scenario_id": f"{pair_id}_benign",
+                        "task_family": task_family,
+                        "condition": "benign",
+                        "lep_codes": [],
+                        "topology": "linear_2",
+                        "repetition_index": rep,
+                        "pair_tag": pair_id,
+                    })
+                    plan.append({
+                        "scenario_id": f"{pair_id}_lep",
                         "task_family": task_family,
                         "condition": "single_lep",
                         "lep_codes": [lep.code],
                         "topology": "linear_2",
                         "repetition_index": rep,
+                        "pair_tag": pair_id,
                     })
                     idx += 1
 

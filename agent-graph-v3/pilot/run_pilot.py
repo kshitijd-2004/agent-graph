@@ -84,27 +84,28 @@ def run_pilot(
     # Build execution plan
     plan = []
     for task_family in task_families:
-        # Benign
-        for rep in range(config.num_benign // len(task_families)):
-            plan.append({
-                "scenario_id": f"{config.pilot_id}_benign_{task_family}_{rep:02d}",
-                "task_family": task_family,
-                "condition": "benign",
-                "lep_codes": [],
-                "topology": "linear_2",
-                "repetition_index": rep,
-            })
-
-        # Perturbed (one per LEP)
+        # Each perturbed (LEP) run is paired with a matching benign trace
+        # so downstream analysis can compare the two directly.
         for lep in lep_configs:
             for rep in range(max(1, config.num_perturbed // (len(task_families) * len(lep_configs)))):
+                pair_id = f"{config.pilot_id}_{lep.code}_{task_family}_{rep:02d}"
                 plan.append({
-                    "scenario_id": f"{config.pilot_id}_{lep.code}_{task_family}_{rep:02d}",
+                    "scenario_id": f"{pair_id}_benign",
+                    "task_family": task_family,
+                    "condition": "benign",
+                    "lep_codes": [],
+                    "topology": "linear_2",
+                    "repetition_index": rep,
+                    "pair_tag": pair_id,
+                })
+                plan.append({
+                    "scenario_id": f"{pair_id}_lep",
                     "task_family": task_family,
                     "condition": "single_lep",
                     "lep_codes": [lep.code],
                     "topology": "linear_2",
                     "repetition_index": rep,
+                    "pair_tag": pair_id,
                 })
 
         # Counterfactuals
@@ -119,7 +120,8 @@ def run_pilot(
             })
 
     if max_executions:
-        plan = plan[:max_executions]
+        # Round up to nearest even so we never split a benign+LEP pair in half.
+        plan = plan[:max_executions + (max_executions % 2)]
 
     logger.info("Execution plan: %d scenarios", len(plan))
 
@@ -146,9 +148,19 @@ def run_pilot(
     failed = sum(1 for r in records if r.error)
     all_pass = len(report_gen.issues) == 0
 
+    # Pair summary: for each pair_tag, count benign + malignant traces
+    pairs: dict[str, list] = {}
+    for rec in records:
+        tag = rec.pair_tag or rec.scenario_id
+        pairs.setdefault(tag, []).append(rec)
+    paired = sum(1 for v in pairs.values() if len(v) == 2 and
+                 any(r.condition == "benign" for r in v) and
+                 any(r.condition == "single_lep" for r in v))
+
     logger.info("=" * 60)
     logger.info("PILOT COMPLETE")
     logger.info("Executions: %d total, %d passed, %d failed", len(records), passed, failed)
+    logger.info("LEP pairs (benign + malignant): %d / %d", paired, len(pairs))
     logger.info("Audit issues: %d", len(report_gen.issues))
     logger.info("Report: %s", report_path)
     logger.info("=" * 60)

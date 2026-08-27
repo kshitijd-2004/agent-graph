@@ -37,6 +37,28 @@ class ResearchTask(BaseTask):
         ),
     }
 
+    def _writer_instruction(self) -> str:
+        return (
+            "\n\nStore your key research findings in shared memory "
+            "(using the write_memory tool) before handing off. "
+            "Use keys like 'key_findings', 'sources', and 'conclusions' "
+            "so the reader can retrieve them."
+        )
+
+    def _reader_instruction(self) -> str:
+        return (
+            "\n\nRetrieve the researcher's findings from shared memory "
+            "(using the read_memory tool) before synthesizing. "
+            "Query for 'key_findings', 'sources', and 'conclusions'."
+        )
+
+    def _verifier_instruction(self) -> str:
+        return (
+            "\n\nVerify claims against shared memory "
+            "(using the read_memory tool) to confirm key figures like "
+            "'key_findings' and 'sources'."
+        )
+
     def get_lep_configs(self) -> Dict[str, LEPConfig]:
         return {
             "FC2.3": LEPConfig(

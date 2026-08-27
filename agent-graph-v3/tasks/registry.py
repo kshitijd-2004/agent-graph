@@ -1,7 +1,7 @@
 """Task registry for agent-graph-v3.
 
 Maps task family names to task classes and provides
-default LEP configurations.
+default LEP configurations. All tasks auto-register on import.
 """
 
 from __future__ import annotations
@@ -23,14 +23,14 @@ def register_task(name: str, cls: Any) -> None:
     logger.debug("Registered task: %s -> %s", name, cls.__name__)
 
 
-def get_task_registry() -> Dict[str, Any]:
-    """Get the task registry."""
-    return dict(_task_registry)
-
-
 def get_task(name: str) -> Optional[Any]:
     """Get a task class by name."""
     return _task_registry.get(name)
+
+
+def get_task_registry() -> Dict[str, Any]:
+    """Get the task registry."""
+    return dict(_task_registry)
 
 
 # Default LEP configs for each task family
@@ -250,3 +250,15 @@ def get_default_leps(task_family: str) -> list[LEPConfig]:
         lep for lep in DEFAULT_LEPS.get(task_family, [])
         if lep.code not in INCOMPATIBLE_LEPS
     ]
+
+
+# Auto-register all tasks on import
+from tasks.code_review import CodeReviewTask
+from tasks.financial import FinancialTask
+from tasks.research import ResearchTask
+from tasks.competitive_intelligence import CompetitiveIntelligenceTask
+
+register_task("code_review", CodeReviewTask)
+register_task("financial_analysis", FinancialTask)
+register_task("research_synthesis", ResearchTask)
+register_task("competitive_intelligence", CompetitiveIntelligenceTask)

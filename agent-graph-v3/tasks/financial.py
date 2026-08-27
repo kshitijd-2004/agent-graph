@@ -61,3 +61,25 @@ class FinancialTask(BaseTask):
 
     def get_tasks(self) -> List[str]:
         return list(self.TASK_PROMPTS)
+
+    def _writer_instruction(self) -> str:
+        return (
+            "\n\nStore your key financial findings in shared memory "
+            "(using the write_memory tool) before handing off. "
+            "Use keys like 'revenue_figures', 'margin_analysis', and 'key_trends' "
+            "so the reader can retrieve them."
+        )
+
+    def _reader_instruction(self) -> str:
+        return (
+            "\n\nRetrieve the prior agent's findings from shared memory "
+            "(using the read_memory tool) before starting your analysis. "
+            "Query for 'revenue_figures', 'margin_analysis', and 'key_trends'."
+        )
+
+    def _verifier_instruction(self) -> str:
+        return (
+            "\n\nCross-check your verification against shared memory "
+            "(using the read_memory tool) to confirm key figures like "
+            "'revenue_figures' and 'margin_analysis'."
+        )

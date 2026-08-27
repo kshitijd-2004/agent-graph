@@ -48,23 +48,27 @@ class CompetitiveIntelligenceTask(BaseTask):
             f"You are {agent}. Complete the task.",
         )
 
-    def get_memory_addition(self, agent: str) -> str:
-        """Return the memory-specific instruction fragment for an agent role.
+    def _writer_instruction(self) -> str:
+        return (
+            "\n\nStore your key market, pricing, and strategic findings "
+            "in shared memory (using the write_memory tool) before handing off. "
+            "Use keys like 'market_findings', 'pricing_data', and 'strategic_signals' "
+            "so the reader can retrieve them."
+        )
 
-        This is appended to the system prompt (which already contains the
-        role definition and workflow instructions) when memory_mode != "none".
-        """
-        if agent == "searcher":
-            return (
-                "\n\nStore your key market, pricing, and strategic findings "
-                "in shared memory (using the write_memory tool) before handing off."
-            )
-        elif agent == "analyst":
-            return (
-                "\n\nConsult relevant shared-memory findings (using the read_memory tool) "
-                "while producing the final analysis."
-            )
-        return ""
+    def _reader_instruction(self) -> str:
+        return (
+            "\n\nConsult relevant shared-memory findings (using the read_memory tool) "
+            "while producing the final analysis. "
+            "Query for 'market_findings', 'pricing_data', and 'strategic_signals'."
+        )
+
+    def _verifier_instruction(self) -> str:
+        return (
+            "\n\nCross-check your verification against shared memory "
+            "(using the read_memory tool) to confirm key claims like "
+            "'market_findings' and 'pricing_data'."
+        )
 
     def get_lep_configs(self) -> Dict[str, LEPConfig]:
         return {

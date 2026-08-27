@@ -63,22 +63,25 @@ class CodeReviewTask(BaseTask):
     def get_tasks(self) -> List[str]:
         return list(self.TASK_PROMPTS)
 
-    def get_memory_addition(self, agent: str) -> str:
-        """Return memory-specific instructions for each agent role."""
-        # NOTE: roles are the task-remapped names (inspector, reviewer),
-        # not the topology-level names (researcher, analyst).
-        role_map = {
-            "inspector": (
-                "Before handing off, store your key findings in shared memory "
-                "using the write_memory tool. Use keys like 'security_issues', "
-                "'bug_findings', and 'performance_concerns' so the reviewer "
-                "can retrieve them."
-            ),
-            "reviewer": (
-                "Before starting your review, retrieve the inspector's findings "
-                "from shared memory using the read_memory tool. Query for "
-                "'security_issues', 'bug_findings', and 'performance_concerns' "
-                "to build on the inspector's work."
-            ),
-        }
-        return role_map.get(agent, "")
+    def _writer_instruction(self) -> str:
+        return (
+            "Before handing off, store your key findings in shared memory "
+            "using the write_memory tool. Use keys like 'security_issues', "
+            "'bug_findings', and 'performance_concerns' so the reader "
+            "can retrieve them."
+        )
+
+    def _reader_instruction(self) -> str:
+        return (
+            "Before starting your analysis, retrieve the prior agent's findings "
+            "from shared memory using the read_memory tool. Query for "
+            "'security_issues', 'bug_findings', and 'performance_concerns' "
+            "to build on their work."
+        )
+
+    def _verifier_instruction(self) -> str:
+        return (
+            "Cross-check your verification against shared memory "
+            "(using the read_memory tool) to confirm key issues like "
+            "'security_issues' and 'bug_findings'."
+        )
