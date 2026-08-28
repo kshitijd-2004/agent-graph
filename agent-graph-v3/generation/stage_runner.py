@@ -51,6 +51,11 @@ ACTION_ALIASES: Dict[str, str] = {
     "final": "submit_final",
 }
 
+NATIVE_TOOL_ACTIONS = {
+    "list_directory", "read_text_file", "write_file",
+    "search_files", "create_directory",
+}
+NATIVE_MEMORY_ACTIONS = {"read_memory", "write_memory"}
 ORCHESTRATION_ACTIONS = {"handoff", "submit_final"}
 
 
@@ -267,11 +272,15 @@ class StageRunner:
 
         # Build tool list: include handoff/submit_final only if the stage
         # is allowed to use them (prevents premature use).
+        # Memory tools are only exposed when memory_mode is active — otherwise
+        # non-memory scenarios (e.g. Input Disregard) can accidentally wander
+        # into the memory path.
         available_tools = [
             "list_directory", "read_text_file", "write_file",
             "search_files", "create_directory",
-            "read_memory", "write_memory",
         ]
+        if _memory_mode in ("ephemeral_shared", "persistent_shared"):
+            available_tools += ["read_memory", "write_memory"]
         if stage.can_handoff:
             available_tools.append("handoff")
         if stage.can_finalize:
@@ -418,6 +427,11 @@ class StageRunner:
         last_corruption_origin_event_id: str = ""
         last_corruption_lep_code: str = ""
 
+        # ── Memory write tracking ─────────────────────────────────────────
+        # Writer-stage agents must call write_memory(key, value) before
+        # handing off. This flag gates the handoff path.
+        write_memory_succeeded: bool = False
+
         # ── Loop recovery ─────────────────────────────────────────────────
         loop_recovery_attempted = False
 
@@ -515,7 +529,7 @@ class StageRunner:
             )
 
             # ── Loop detection ───────────────────────────────────────────────
-            if action not in ORCHESTRATION_ACTIONS:
+            if action not in ORCHESTRATION_ACTIONS and action not in NATIVE_MEMORY_ACTIONS:
                 action_history.append(action)
                 recent = action_history[-10:]
                 if recent.count(action) >= 8:
@@ -603,20 +617,23 @@ class StageRunner:
                 lep_orchestrator.evaluate_for_boundary(reasoning_evt)
 
             # ── TOOL EXECUTION ───────────────────────────────────────────────
-            if action not in ORCHESTRATION_ACTIONS:
-                tc = model_turn.tool_call
-                tc_evt = make_evt(
-                    TraceEventType.TOOL_CALL, agent_id,
-                    f"tool_{tc.name}",
-                    role=current_role,
-                    tool_name=tc.name,
-                    tool_call_id=tc.id,
-                    tool_arguments=action_input,
-                )
-                # ── Causal dependency: tool call is produced BY the reasoning step ──
-                if _last_reasoning_event_id:
-                    tc_evt.depends_on = [_last_reasoning_event_id]
-                events.append(tc_evt)
+            # Build the TOOL_CALL event for every action (generic + memory).
+            # Memory-specific blocks create their own TOOL_RESULT / MEMORY_*
+            # events; the generic block creates TOOL_RESULT for workspace tools.
+            tc = model_turn.tool_call
+            tc_evt = make_evt(
+                TraceEventType.TOOL_CALL, agent_id,
+                f"tool_{tc.name}",
+                role=current_role,
+                tool_name=tc.name,
+                tool_call_id=tc.id,
+                tool_arguments=action_input,
+            )
+            if _last_reasoning_event_id:
+                tc_evt.depends_on = [_last_reasoning_event_id]
+            events.append(tc_evt)
+
+            if action not in ORCHESTRATION_ACTIONS and action not in NATIVE_MEMORY_ACTIONS:
 
                 # Execute the tool
                 original_result = self._execute_tool(
@@ -814,10 +831,51 @@ class StageRunner:
 
             # ── WRITE_MEMORY ──────────────────────────────────────────────────
             if action == "write_memory":
-                key = action_input.get("key", "")
-                value = action_input.get("value", "")
-                original_value = value
-                write_was_poisoned = False
+                key = (action_input.get("key") or "").strip()
+                value = (action_input.get("value") or "").strip()
+
+                # ── Strict argument validation ────────────────────────────────
+                # The model sometimes calls write_memory with read_memory args
+                # (query/top_k). Detect that and any other missing-field case,
+                # inject a repair, and skip the write so the model retries.
+                if not key or not value:
+                    is_read_args = (
+                        "query" in action_input or "top_k" in action_input
+                    )
+                    if is_read_args:
+                        reason = (
+                            "You called `write_memory` with read-only arguments "
+                            "(`query`/`top_k`). `write_memory` requires both "
+                            "`key` (a string label) and `value` (the content). "
+                            "Call `write_memory` again with `{\"key\": ..., "
+                            "\"value\": ...}` before proceeding."
+                        )
+                    else:
+                        reason = (
+                            "`write_memory` requires both `key` and `value`. "
+                            "Call `write_memory` again with both fields populated "
+                            "before proceeding to handoff or submit_final."
+                        )
+
+                    # Label the malformed call
+                    malformed_evt = make_evt(
+                        TraceEventType.TOOL_RESULT, "tool_write_memory", agent_id,
+                        role=current_role,
+                        tool_name="write_memory",
+                        tool_call_id=tc.id,
+                        tool_arguments=action_input,
+                        output_text=f"Error: {reason}",
+                    )
+                    malformed_evt.depends_on = [tc_evt.event_id]
+                    events.append(malformed_evt)
+                    stage_history.append({
+                        "role": "tool",
+                        "tool_name": "write_memory",
+                        "content": f"Error: {reason}",
+                    })
+                    self.llm._append_tool_result(tc, f"Error: {reason}")
+                    _pending_deps.append(malformed_evt.event_id)
+                    continue
 
                 # Create MEMORY_WRITE event (boundary for LEP evaluation)
                 write_evt = make_evt(
@@ -830,6 +888,8 @@ class StageRunner:
                 )
                 write_evt.depends_on = [tc_evt.event_id] if tc_evt.event_id else []
                 events.append(write_evt)
+
+                write_was_poisoned = False
 
                 # Evaluate memory poisoning LEP at the MEMORY_WRITE boundary
                 if lep_orchestrator:
@@ -881,6 +941,7 @@ class StageRunner:
                 stage_history.append({"role": "tool", "tool_name": "write_memory", "content": tool_result_text})
                 self.llm._append_tool_result(tc, tool_result_text)
                 _pending_deps.append(tr_evt.event_id)
+                write_memory_succeeded = True
                 continue
 
             # ── HANDOFF ──────────────────────────────────────────────────────
@@ -888,6 +949,53 @@ class StageRunner:
                 if not stage.can_handoff:
                     termination_reason = "premature_final"
                     break
+
+                # ── Pre-handoff guard: writer agents must call
+                # write_memory(key, value) before handing off so that
+                # LEP injection targets are populated and downstream
+                # readers can retrieve them. Block the handoff and nudge
+                # the model to write first if it hasn't.
+                from generation.role_categories import role_category
+                if role_category(current_role) == "writer" \
+                        and not write_memory_succeeded:
+                    repair_prompt = (
+                        "You must store your findings in shared memory "
+                        "before handing off. Call `write_memory` with both "
+                        "`key` (e.g. 'security_issues') and `value` (your "
+                        "findings text). After the memory write succeeds, "
+                        "then call `handoff`."
+                    )
+                    repair_evt = make_evt(
+                        TraceEventType.REASONING, agent_id, "internal",
+                        role=current_role,
+                        input_text=repair_prompt,
+                        output_text="[protocol_repair]",
+                    )
+                    repair_evt.depends_on = _pending_deps.copy()
+                    _pending_deps.clear()
+                    _last_reasoning_event_id = repair_evt.event_id
+                    repair_evt.observable = {
+                        "protocol_repair": True,
+                        "reason": "missing_write_memory_before_handoff",
+                        "attempt": 1,
+                    }
+                    events.append(repair_evt)
+                    stage_history.append({
+                        "role": "user",
+                        "content": repair_prompt,
+                    })
+                    if hasattr(self.llm, '_append_assistant'):
+                        self.llm._append_assistant(repair_prompt)
+                    elif hasattr(self.llm, '_messages'):
+                        msgs = self.llm._messages
+                        if callable(msgs):
+                            msgs = msgs()
+                        msgs.append({"role": "user", "content": repair_prompt})
+                    logger.info(
+                        "Pre-handoff guard: writer=%s blocked handoff "
+                        "until write_memory succeeds", current_role,
+                    )
+                    continue
 
                 # ── Build payload from structured tool arguments ───────────
                 summary = action_input.get("summary", "").strip()

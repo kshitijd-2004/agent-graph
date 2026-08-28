@@ -66,9 +66,13 @@ class CodeReviewTask(BaseTask):
     def _writer_instruction(self) -> str:
         return (
             "Before handing off, store your key findings in shared memory "
-            "using the write_memory tool. Use keys like 'security_issues', "
-            "'bug_findings', and 'performance_concerns' so the reader "
-            "can retrieve them."
+            "using the write_memory tool. "
+            "You MUST call write_memory with both `key` (a string label "
+            "such as 'security_issues', 'bug_findings', or "
+            "'performance_concerns') and `value` (the actual findings "
+            "text). Do NOT call write_memory with `query` or `top_k` — "
+            "those are read_memory arguments. "
+            "After the write_memory call succeeds, you may hand off."
         )
 
     def _reader_instruction(self) -> str:

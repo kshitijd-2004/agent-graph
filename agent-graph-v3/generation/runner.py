@@ -285,14 +285,14 @@ class DryRunBackend:
     # LEP-specific step plans: each step is (action, action_input, final)
     # "final" means this is the last step — emit FINAL_RESPONSE
     LEP_TRAJECTORIES: Dict[str, list] = {
-        # No LEP: clean linear workflow — researcher hands off to analyst
+        # No LEP: clean memory path — write_memory (clean) → read_memory → write report → final
         "benign": [
             ("list_directory", {"path": "."}, False),
             ("read_text_file", {"path": "documents/primary_source.md"}, False),
-            ("search_files", {"path": ".", "pattern": "*.md"}, False),
-            ("write_file", {"path": "output/researcher_report.md",
-                            "content": "# Report\nAnalysis complete."}, False),
-            ("handoff", {"target_agent": "analyst", "summary": "Research findings ready."}, True),
+            ("write_memory", {"key": "analysis_notes", "value": "CLEAN_ANALYSIS_NOTES"}, False),
+            ("read_memory", {"query": "analysis notes"}, False),
+            ("write_file", {"path": "output/analyst_report.md",
+                            "content": "# Report\nCLEAN_ANALYSIS_NOTES"}, True),
         ],
         # Tool result corruption: read file → corrupted result consumed → write report → handoff
         "LEP_TOOL_RESULT_CORRUPTION": [
