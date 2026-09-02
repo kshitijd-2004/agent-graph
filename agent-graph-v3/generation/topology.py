@@ -170,26 +170,6 @@ def _build_registry() -> Dict[str, callable]:
             max_iterations=3,  # specialist_a + specialist_b + coordinator
         )
 
-    def parallel_merge(agent_map: Dict[str, str]) -> TopologyConfig:
-        return TopologyConfig(
-            topology_id="parallel_merge",
-            display_name="Parallel Merge",
-            stages=[
-                Stage("researcher", "researcher", agent_map["researcher"],
-                      max_turns=6, can_handoff=True, can_finalize=False),
-                Stage("analyst", "analyst", agent_map["analyst"],
-                      max_turns=6, can_handoff=True, can_finalize=False),
-                Stage("verifier", "verifier", agent_map["verifier"],
-                      max_turns=8, can_handoff=False, can_finalize=True),
-            ],
-            handoff_rules=[
-                HandoffRule("researcher", "verifier"),
-                HandoffRule("analyst", "verifier"),
-            ],
-            exit_stage="verifier",
-            max_iterations=3,  # researcher + analyst + verifier
-        )
-
     def review_loop(agent_map: Dict[str, str]) -> TopologyConfig:
         return TopologyConfig(
             topology_id="review_loop",
@@ -232,19 +212,34 @@ def _build_registry() -> Dict[str, callable]:
             topology_id="branch_and_verify",
             display_name="Branch and Verify",
             stages=[
+                # Stage 0: Researcher — independent analysis branch A
                 Stage("researcher", "researcher", agent_map["researcher"],
-                      max_turns=6, can_handoff=True, can_finalize=False),
+                      stage_type="branch", max_turns=8,
+                      can_handoff=True, can_finalize=False),
+                # Stage 1: Analyst — independent analysis branch B
                 Stage("analyst", "analyst", agent_map["analyst"],
-                      max_turns=6, can_handoff=True, can_finalize=False),
+                      stage_type="branch", max_turns=8,
+                      can_handoff=True, can_finalize=False),
+                # Stage 2: Verifier — verification/recovery stage
                 Stage("verifier", "verifier", agent_map["verifier"],
-                      max_turns=8, can_handoff=False, can_finalize=True),
+                      stage_type="merge", max_turns=10,
+                      can_handoff=False, can_finalize=True),
             ],
             handoff_rules=[
                 HandoffRule("researcher", "verifier"),
                 HandoffRule("analyst", "verifier"),
             ],
             exit_stage="verifier",
-            max_iterations=1,
+            max_iterations=3,
+            max_review_cycles=2,
+            metadata={
+                "research_purpose": "redundancy + verification + recovery",
+                "primary_question": "Can independent redundant evidence allow the verifier to detect/reject/recover from a perturbation?",
+                "branch_independence": True,
+                "verification_mode": "independent",
+                "branch_roles": ["researcher", "analyst"],
+                "merge_role": "verifier",
+            },
         )
 
     def fanout_2(agent_map: Dict[str, str]) -> TopologyConfig:
@@ -299,14 +294,57 @@ def _build_registry() -> Dict[str, callable]:
             max_iterations=1,
         )
 
+    def coordinator_workers(agent_map: Dict[str, str]) -> TopologyConfig:
+        return TopologyConfig(
+            topology_id="coordinator_workers",
+            display_name="Coordinator Workers",
+            stages=[
+                # Stage 0: Coordinator — decomposes (first run), aggregates (second run)
+                Stage("coordinator", "coordinator", agent_map["coordinator"],
+                      stage_type="coordinate", max_turns=6,
+                      can_handoff=True, can_finalize=True),
+                # Stage 1: Worker A — security specialist
+                Stage("security_worker", "specialist_a", agent_map["specialist_a"],
+                      stage_type="execute", max_turns=6,
+                      can_handoff=True, can_finalize=False),
+                # Stage 2: Worker B — correctness specialist
+                Stage("correctness_worker", "specialist_b", agent_map["specialist_b"],
+                      stage_type="execute", max_turns=6,
+                      can_handoff=True, can_finalize=False),
+                # Stage 3: Worker C — test specialist
+                Stage("test_worker", "synthesizer", agent_map["synthesizer"],
+                      stage_type="execute", max_turns=6,
+                      can_handoff=True, can_finalize=False),
+            ],
+            handoff_rules=[
+                HandoffRule("coordinator", "specialist_a"),
+                HandoffRule("coordinator", "specialist_b"),
+                HandoffRule("coordinator", "synthesizer"),
+                HandoffRule("specialist_a", "coordinator"),
+                HandoffRule("specialist_b", "coordinator"),
+                HandoffRule("synthesizer", "coordinator"),
+            ],
+            exit_stage="coordinator",
+            max_iterations=8,
+            max_review_cycles=3,
+            metadata={
+                "research_purpose": "many-to-one aggregation trust",
+                "primary_question": "Can one perturbed branch contaminate a many-to-one aggregation?",
+                "worker_count": 3,
+                "coordination_mode": "decompose_delegate_aggregate",
+                "coordinator_role": "coordinator",
+                "worker_roles": ["specialist_a", "specialist_b", "synthesizer"],
+            },
+        )
+
     return {
         "linear_2": linear_2,
         "linear_3": linear_3,
         "coordinator_star": coordinator_star,
-        "parallel_merge": parallel_merge,
         "review_loop": review_loop,
         "shared_memory_collaboration": shared_memory_collaboration,
         "branch_and_verify": branch_and_verify,
+        "coordinator_workers": coordinator_workers,
         "fanout_2": fanout_2,
         "merge_2": merge_2,
     }

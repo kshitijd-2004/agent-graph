@@ -88,6 +88,9 @@ class LEPOrchestrator:
         # should not mutate subsequent compatible boundaries in the same
         # scenario unless explicitly configured for repeated injection.
         self._successfully_mutated: set = set()
+        # Topology-aware target filter: lep_code -> agent_role to target,
+        # or None to fire on any stage. Populated by set_topology().
+        self._topology_target_stages: Dict[str, Optional[str]] = {}
 
     def register_lep(self, lep_config: LEPConfig) -> None:
         """Register a LEP for execution."""
@@ -104,7 +107,32 @@ class LEPOrchestrator:
         lep_class = LEP_REGISTRY[code]
         instance = lep_class(lep_config)
         self._active_leps[code] = instance
+        # Invalidate any previous topology binding so register_leps followed
+        # by set_topology() always re-resolves from the new config.
+        self._topology_target_stages.pop(code, None)
         logger.debug("Registered LEP: %s (%s)", code, LEP_NAMES.get(code, code))
+
+    def set_topology(self, topology) -> None:
+        """Resolve topology_target for every registered LEP against this topology.
+
+        Validates and stores each LEP's target stage so that
+        ``evaluate_for_boundary`` can skip events whose ``agent_role`` does
+        not match the target. Raises ``InvalidTopologyTargetError`` if any
+        LEP references a role not present in the topology.
+        """
+        from leps.topology_target import (
+            resolve_target_stage,
+            InvalidTopologyTargetError,
+        )
+        for code, lep in self._active_leps.items():
+            try:
+                self._topology_target_stages[code] = resolve_target_stage(
+                    lep.config, topology
+                )
+            except InvalidTopologyTargetError:
+                # Re-raise immediately — invalid targets should fail fast at
+                # scenario setup, not silently degrade at run time.
+                raise
 
     def register_leps(self, lep_configs: list[LEPConfig]) -> None:
         """Register multiple LEPs."""
@@ -171,6 +199,12 @@ class LEPOrchestrator:
             # controlled intervention, not repeated mutations.
             if code in self._successfully_mutated:
                 continue
+            # Topology-aware target filter: when set_topology() resolved a
+            # topology_target for this LEP, skip events from non-target stages.
+            target_stage = self._topology_target_stages.get(code)
+            if target_stage is not None:
+                if (getattr(event, "agent_role", "") or "") != target_stage:
+                    continue
             lep_instance = self._active_leps.get(code)
             if lep_instance is None or not hasattr(lep_instance, "evaluate"):
                 continue

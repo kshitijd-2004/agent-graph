@@ -48,10 +48,10 @@ TOPOLOGIES = [
     "linear_2",
     "linear_3",
     "coordinator_star",
-    "parallel_merge",
     "review_loop",
     "shared_memory_collaboration",
     "branch_and_verify",
+    "coordinator_workers",
     "fanout_2",
     "merge_2",
 ]

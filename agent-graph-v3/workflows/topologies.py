@@ -12,10 +12,10 @@ class TopologyType(str, Enum):
     LINEAR_2 = "linear_2"
     LINEAR_3 = "linear_3"
     COORDINATOR_STAR = "coordinator_star"
-    PARALLEL_MERGE = "parallel_merge"
     REVIEW_LOOP = "review_loop"
     SHARED_MEMORY = "shared_memory_collaboration"
     BRANCH_AND_VERIFY = "branch_and_verify"
+    COORDINATOR_WORKERS = "coordinator_workers"
 
 
 @dataclass

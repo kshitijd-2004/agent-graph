@@ -299,6 +299,7 @@ class DryRunBackend:
             ("list_directory", {"path": "."}, False),
             ("read_text_file", {"path": "documents/financial_data.md"}, False),  # trigger fires here
             ("search_files", {"path": ".", "pattern": "*.md"}, False),
+            ("write_memory", {"key": "researcher_notes", "value": "RESEARCHER_NOTES"}, False),
             ("write_file", {"path": "output/extractor_report.md",
                             "content": "# Report\nCORRUPTED_VALUE"}, False),  # propagates
             ("handoff", {"target_agent": "analyst", "summary": "Research complete"}, True),
@@ -351,6 +352,22 @@ class DryRunBackend:
         # detect role changes and reset the step counter for sibling/fan-out
         # branches that need to replay the trajectory independently.
         self._prev_agent_name: str = ""
+        # Per-role trajectory overrides so sibling branches replay independently.
+        self._per_role_trajectories: Dict[str, list] = {}
+        # Iteration counter: incremented each time reset() is called for the
+        # same agent (e.g., coordinator running a second time after fan-in).
+        # Used to switch the final action from handoff → submit_final.
+        self._iteration: Dict[str, int] = {}
+
+    def set_role_trajectory(self, role: str, trajectory: list) -> None:
+        """Inject a role-specific trajectory (used by topology-aware runners).
+
+        Branching topologies need each branch to replay the same trajectory
+        independently. The default trajectory is a "researcher-finishes-with-
+        handoff" pattern; downstream branches need an "analyst-like" pattern
+        that ingests the prior handoff and then forwards.
+        """
+        self._per_role_trajectories[role] = trajectory
 
     def reset(self, task: str = "", agent_name: str = "",
               mcp_tools: List[str] = None, system_prompt: str = "") -> None:
@@ -362,21 +379,57 @@ class DryRunBackend:
             self._step = 0
         self._prev_agent_name = agent_name
         self._agent_name = agent_name
+        # Track iteration count per agent: increment when the same agent
+        # runs again (e.g., coordinator after fan-in aggregation).
+        self._iteration[agent_name] = self._iteration.get(agent_name, 0) + 1
+        # Pick role-specific trajectory if one was injected for this agent.
+        if agent_name in self._per_role_trajectories:
+            self._trajectory = list(self._per_role_trajectories[agent_name])
         # NOTE: do NOT reset _step here — the runner calls reset() every agent
         # iteration, and the trajectory depends on monotonically increasing step.
 
     def set_context(self, lep_code: str, task_family: str,
                     lep_corrupted_values: Dict[str, Any] = None,
                     memory_store=None) -> None:
-        """Set the scenario context for LEP-specific trajectory generation."""
+        """Set the scenario context for LEP-specific trajectory generation.
+
+        Preserves any per-role trajectory registered via set_role_trajectory().
+        Per-role trajectories take precedence over the default LEP trajectory.
+        """
         self._lep_code = lep_code or "benign"
         self._task_family = task_family
-        self._trajectory = list(self.LEP_TRAJECTORIES.get(
-            self._lep_code, self.LEP_TRAJECTORIES["benign"]
-        ))
         self._injection_fired = False
         self._corrupted_values = lep_corrupted_values or {}
         self._memory_store = memory_store
+
+        # Canonical target files per task family (mirrors LEP TARGET_FILES).
+        # Used to select the correct read_text_file path in LEP trajectories.
+        TARGET_FILES = {
+            "code_review": "src/main.py",
+            "financial_analysis": "documents/financial_data.md",
+            "research_synthesis": "documents/primary_source.md",
+            "competitive_intelligence": "documents/pricing_data.md",
+        }
+        target_file = TARGET_FILES.get(task_family, "documents/primary_source.md")
+
+        # If a per-role trajectory was registered for the *current* agent, keep it.
+        if self._agent_name in self._per_role_trajectories:
+            self._trajectory = list(self._per_role_trajectories[self._agent_name])
+        else:
+            self._trajectory = list(self.LEP_TRAJECTORIES.get(
+                self._lep_code, self.LEP_TRAJECTORIES["benign"]
+            ))
+
+        # Patch the read_text_file path in the trajectory to match the task
+        # family's canonical target file so the LEP boundary check passes.
+        updated = []
+        for step in self._trajectory:
+            action, action_input, is_final = step
+            if action == "read_text_file":
+                action_input = dict(action_input)
+                action_input["path"] = target_file
+            updated.append((action, action_input, is_final))
+        self._trajectory = updated
 
     def record_corrupted_value(self, key: str, value: Any) -> None:
         """Record a corrupted value (called by runner when LEP fires)."""
@@ -387,12 +440,25 @@ class DryRunBackend:
         self._corrupted_values[f"memory_{key}"] = value
 
     def generate(self, prompt: str, tool_choice=None) -> ModelTurn:
-        """Return a structured ModelTurn."""
+        """Return a structured ModelTurn.
+
+        When the trajectory is exhausted, the final action depends on
+        iteration count:
+          - Iteration 1 (first run): return list_directory so the topology
+            queue can fan out to downstream stages.
+          - Iteration 2+ (re-run after fan-in): return submit_final so the
+            stage can terminate and hand back control.
+        """
         self._step += 1
         traj = self._trajectory
 
         if self._step > len(traj):
-            return self._structured_turn("submit_final", {}, "Task complete.")
+            iteration = self._iteration.get(self._agent_name, 1)
+            if iteration >= 2 and traj and traj[-1][0] == "handoff":
+                # Re-run after fan-in: terminate instead of fanning out again
+                return self._structured_turn("submit_final", {}, "Task complete.")
+            return self._structured_turn("list_directory", {"path": "."},
+                                          "Continuing...")
 
         action, action_input, is_final = traj[self._step - 1]
 
@@ -715,6 +781,12 @@ class ScenarioRunner:
 
         agent_map = build_agent_map_from_topology(topology)
 
+        # Pass topology to the LEP orchestrator so it can validate and resolve
+        # topology_target values (branch:<role>, worker:<role>) into concrete
+        # agent_role filters. Invalid targets raise here before execution.
+        if orchestrator._active_leps:
+            orchestrator.set_topology(topology)
+
         def make_evt(event_type: TraceEventType, source: str, target: str,
                      role: str = "", tool_name: str | None = None,
                      input_text: str | None = None, output_text: str | None = None,
@@ -799,6 +871,16 @@ class ScenarioRunner:
         # Execute stages in topology order
         # (topology was already built at line 679 with role remapping applied)
 
+        # Override per-stage max_turns to match the dry-run trajectory length
+        # so stages don't exhaust their turn budget before the trajectory ends.
+        traj_len = max(
+            (len(t) for t in self.llm._per_role_trajectories.values()),
+            default=10,
+        )
+        for stage in topology.stages:
+            if stage.max_turns > traj_len:
+                stage.max_turns = traj_len + 2
+
         logger.info(
             "_execute_scenario: scenario=%s topology=%s max_events=%d max_agent_turns=%d",
             scenario.scenario_id, topology_id, self.max_events, max_agent_turns,
@@ -814,7 +896,7 @@ class ScenarioRunner:
         handoff_payloads: List[HandoffPayload] = []
         handoff_event_ids: List[str] = []
 
-        # ── Queue-based execution ──────────────────────────────────────────
+        # Queue-based execution
         # Supports fan-out/fan-in: a stage with multiple outgoing rules
         # queues all destinations; a merge target (multiple incoming rules)
         # waits for all source branches before executing.

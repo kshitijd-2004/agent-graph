@@ -23,7 +23,7 @@ from typing import Dict, Optional
 CANONICAL_INJECTIONS: Dict[str, Dict[str, str]] = {
     # ── code_review ──────────────────────────────────────────────────────
     "code_review": {
-        "LEP_TOOL_RESULT_CORRUPTION":       "material_omission",
+        "LEP_TOOL_RESULT_CORRUPTION":       "partial_omission",
         "LEP_MEMORY_POISONING":             "false_fact_insertion",
         "LEP_HANDOFF_CORRUPTION":           "material_finding_omission",
         "LEP_INPUT_DISREGARD":              "start_scratch",

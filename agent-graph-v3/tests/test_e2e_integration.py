@@ -172,7 +172,7 @@ def test_scenario_convergence():
     builder = ScenarioBuilder(seed=42)
     cfg = ScenarioBuildConfig(
         task_family="financial_analysis", fixture_id="financial_clean",
-        topology="parallel_merge",
+        topology="branch_and_verify",
     )
     lep_a = LEPConfig(code="LEP_TOOL_RESULT_CORRUPTION", name="A", category="tool",
                       description="corrupt tool", target_agent="a",

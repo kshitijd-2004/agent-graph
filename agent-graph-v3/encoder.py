@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 
-from agentgraph.graph_builder import EntityGraph
+from generation.graph_builder import EntityGraph
 
 
 @dataclass

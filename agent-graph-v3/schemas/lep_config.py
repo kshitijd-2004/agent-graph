@@ -52,6 +52,15 @@ class LEPConfig:
 
     task_family: str = ""
     target_agent: Optional[str] = None
+    topology_target: Optional[str] = None
+    # Accepted values:
+    #   None           — target any stage (topology-agnostic, default)
+    #   "branch:<role>" — target exactly one branch in branch_and_verify
+    #                      e.g. "branch:researcher"
+    #   "worker:<role>" — target exactly one worker in coordinator_workers
+    #                      e.g. "worker:specialist_a"
+    # DEFERRED:
+    #   "upstream:<role>" — requires redesign for one-to-many fan-out
 
     trigger: Optional[InjectionTrigger] = None
     legacy_injection_steps: List[int] = field(default_factory=list)
