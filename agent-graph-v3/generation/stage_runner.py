@@ -135,6 +135,7 @@ class StageRunner:
         remaining_reviews: Optional[int] = None,
         incoming_dep_event_id: str = "",
         memory_store: Optional[MemoryStore] = None,
+        propagation_tracker=None,
     ) -> StageResult:
         """Execute one agent stage.
 
@@ -741,6 +742,21 @@ class StageRunner:
                                     "content": result_text,
                                 }
 
+                                # Annotate propagation: this TOOL_RESULT event is
+                                # where the perturbation first enters the downstream
+                                # agent's context.
+                                if propagation_tracker is not None:
+                                    lineage = propagation_tracker.register_origin(
+                                        lep_code=code,
+                                        event_id=tr_evt.event_id,
+                                        agent_role=current_role,
+                                    )
+                                    propagation_tracker.annotate_consumption(
+                                        event=tr_evt,
+                                        lineage=lineage,
+                                        consuming_agent=current_role,
+                                    )
+
                                 logger.info(
                                     "LEP %s: tool result corrupted "
                                     "event=%s tool=%s orig_len=%d perturbed_len=%d",
@@ -806,11 +822,26 @@ class StageRunner:
                 # Label consumption if any retrieved record is poisoned
                 if poisoned_keys_in_results:
                     label_consumption(retrieval_evt, "LEP_MEMORY_POISONING")
-                    if lep_orchestrator:
+                    if propagation_tracker is not None:
                         mp_lep = lep_orchestrator.get_lep_instance("LEP_MEMORY_POISONING")
                         if mp_lep:
                             for key in poisoned_keys_in_results:
-                                mp_lep.record_retrieval(key, retrieval_evt.event_id, agent_id)
+                                origin_evt = mp_lep.get_origin_event_id(key)
+                                if origin_evt:
+                                    lineage = propagation_tracker.get_lineage(
+                                        "LEP_MEMORY_POISONING", origin_evt
+                                    )
+                                    if lineage is None:
+                                        lineage = propagation_tracker.register_origin(
+                                            lep_code="LEP_MEMORY_POISONING",
+                                            event_id=origin_evt,
+                                            agent_role=current_role,
+                                        )
+                                    propagation_tracker.annotate_consumption(
+                                        event=retrieval_evt,
+                                        lineage=lineage,
+                                        consuming_agent=current_role,
+                                    )
 
                 # Create TOOL_RESULT event
                 tr_evt = make_evt(
@@ -1217,6 +1248,23 @@ class StageRunner:
                                 # (the receiving stage's handoff_from_payload
                                 # will carry this payload with corrupted summary)
                                 label_propagation(hoff_evt, "LEP_HANDOFF_CORRUPTION")
+
+                                # Propagate lineage to receiving agent
+                                if propagation_tracker is not None:
+                                    lineage = propagation_tracker.get_lineage(
+                                        "LEP_HANDOFF_CORRUPTION", last_corruption_origin_event_id
+                                    )
+                                    if lineage is None:
+                                        lineage = propagation_tracker.register_origin(
+                                            lep_code="LEP_HANDOFF_CORRUPTION",
+                                            event_id=hoff_evt.event_id,
+                                            agent_role=current_role,
+                                        )
+                                    propagation_tracker.annotate_propagation(
+                                        event=hoff_evt,
+                                        lineage=lineage,
+                                        target_agent=payload.to_agent,
+                                    )
 
                                 logger.info(
                                     "LEP_HANDOFF_CORRUPTION: handoff mutated "

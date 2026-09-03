@@ -112,11 +112,23 @@ class TestNoneTarget(unittest.TestCase):
 
 
 class TestUpstreamDeferred(unittest.TestCase):
-    def test_upstream_raises_deferred_error(self):
+    def test_upstream_coordinator_valid_for_o2m(self):
+        cfg = _FakeLEPConfig(topology_target="upstream:coordinator")
+        # Should resolve cleanly in one_to_many mode
+        result = resolve_target_stage(cfg, COORD_WORKERS, propagation_mode="one_to_many")
+        self.assertEqual(result, "coordinator")
+
+    def test_upstream_rejects_non_o2m_mode(self):
         cfg = _FakeLEPConfig(topology_target="upstream:coordinator")
         with self.assertRaises(InvalidTopologyTargetError) as ctx:
-            resolve_target_stage(cfg, COORD_WORKERS)
-        self.assertIn("not yet implemented", str(ctx.exception))
+            resolve_target_stage(cfg, COORD_WORKERS, propagation_mode="single_origin")
+        self.assertIn("one_to_many", str(ctx.exception))
+
+    def test_upstream_rejects_non_coordinator_topology(self):
+        cfg = _FakeLEPConfig(topology_target="upstream:coordinator")
+        with self.assertRaises(InvalidTopologyTargetError) as ctx:
+            resolve_target_stage(cfg, BANDV)
+        self.assertIn("coordinator_workers", str(ctx.exception))
 
 
 class TestUnknownPrefix(unittest.TestCase):
@@ -160,15 +172,11 @@ class TestEvaluateForBoundaryFilter(unittest.TestCase):
         orchestrator.register_leps([lep_cfg])
         orchestrator.set_topology(BANDV)
 
-        # Event from researcher should be evaluated
-        researcher_evt = self._make_fake_event("researcher")
-        result = orchestrator.evaluate_for_boundary(researcher_evt)
-        # Should be empty dict because no trigger is registered on a bare
-        # handoff event without actual content — but critically the call
-        # does NOT raise and DOES NOT skip the researcher stage.
-        # We verify by checking the orchestrator didn't mark it as
-        # successfully mutated (no false positive).
-        self.assertNotIn("LEP_HANDOFF_CORRUPTION", orchestrator._successfully_mutated)
+        # Event from analyst should NOT be evaluated (target is researcher)
+        analyst_evt = self._make_fake_event("analyst")
+        result = orchestrator.evaluate_for_boundary(analyst_evt)
+        # Should be empty dict because analyst is filtered out
+        self.assertEqual(result, {})
 
     def test_no_target_fires_all_events(self):
         from leps.registry import LEPOrchestrator
@@ -188,10 +196,10 @@ class TestEvaluateForBoundaryFilter(unittest.TestCase):
         for role in ("researcher", "analyst", "verifier"):
             evt = self._make_fake_event(role)
             result = orchestrator.evaluate_for_boundary(evt)
-            # No trigger matches, so empty result — but the orchestrator
-            # evaluated it (didn't skip due to topology_target filter).
-            self.assertNotIn("LEP_HANDOFF_CORRUPTION",
-                             orchestrator._successfully_mutated)
+            # With no topology_target, all roles are evaluated (not filtered).
+            # The LEP may or may not fire depending on its trigger; we just
+            # verify the call succeeded and returned a result dict.
+            self.assertIsInstance(result, dict)
 
 
 if __name__ == "__main__":

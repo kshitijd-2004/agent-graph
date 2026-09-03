@@ -790,7 +790,7 @@ class ScenarioRunner:
         # worker:<role>, upstream:<role>) into concrete agent_role filters.
         # Invalid targets raise here before execution.
         if orchestrator._active_leps:
-            propagation_mode = workflow_config.propagation_mode
+            propagation_mode = wcfg.propagation_mode
             orchestrator.set_topology(topology, propagation_mode=propagation_mode)
 
             # Configure origin budgets per propagation mode.
@@ -885,6 +885,11 @@ class ScenarioRunner:
         corrupted_tool_call_evt: Optional[TraceEvent] = None
         action_history: list[str] = []  # Bug 3: loop detection
 
+        # Perturbation lineage tracker: records how perturbations flow
+        # through the multi-agent system (origin → consumption → propagation → recovery).
+        from generation.propagation_tracker import PropagationTracker
+        propagation_tracker = PropagationTracker() if orchestrator._active_leps else None
+
         # USER_INPUT
         evt = make_evt(
             TraceEventType.USER_INPUT, "user", "multi_agent_system",
@@ -945,6 +950,11 @@ class ScenarioRunner:
             if stage.stage_id not in queued_stage_ids:
                 stage_queue.append(stage)
                 queued_stage_ids.add(stage.stage_id)
+
+        # O2M shared-artifact store: in one_to_many mode, one producer's handoff
+        # payload is a single artifact consumed by all downstream workers.
+        # Dict[artifact_id, {"payload", "event_id", "source_role", "consumed_by"}]
+        _o2m_shared_artifacts: Dict[str, Dict[str, Any]] = {}
 
         previous_stage: Optional[Stage] = None
         handoff_count = 0
@@ -1023,6 +1033,25 @@ class ScenarioRunner:
                         handoff_rule = rule
                         break
 
+            # ── O2M shared-artifact delivery ────────────────────────────────
+            # In one_to_many mode, ALL workers consume the SAME artifact
+            # from the coordinator. Override handoff_payloads with the
+            # shared artifact so every worker sees identical input.
+            if (wcfg.propagation_mode == "one_to_many"
+                    and len(handoff_payloads) == 1
+                    and current_stage.agent_role != topology.exit_stage):
+                payload = handoff_payloads[0]
+                artifact_id = f"shared:{payload.from_agent}:{payload.event_id}"
+                shared = _o2m_shared_artifacts.get(artifact_id)
+                if shared is not None:
+                    # Deliver the shared artifact (same object to all workers)
+                    handoff_payloads = [shared["payload"]]
+                    shared["consumed_by"].append(current_stage.agent_role)
+                    logger.debug(
+                        "O2M: delivering shared artifact %s to %s",
+                        artifact_id, current_stage.agent_role,
+                    )
+
             # Run the stage (backend.reset() is called ONCE inside run_stage)
             # Compute remaining reviews for prompt awareness
             reviewer_stage = topology.get_reviewer_stage()
@@ -1049,6 +1078,7 @@ class ScenarioRunner:
                 remaining_reviews=remaining_reviews,
                 incoming_dep_event_id=transition_evt.event_id,
                 memory_store=memory_store,
+                propagation_tracker=propagation_tracker,
             )
 
             # Update trace_id on stage events
@@ -1056,6 +1086,53 @@ class ScenarioRunner:
                 evt.trace_id = trace_id
 
             events.extend(stage_result.events)
+
+            # ── Recovery detection: scan stage output for perturbation recovery signals
+            if propagation_tracker is not None:
+                recovered_event_ids = propagation_tracker.post_process_stage_events(
+                    stage_result.events, current_stage.agent_role
+                )
+                if recovered_event_ids:
+                    logger.info(
+                        "Recovery detected at stage=%s role=%s events=%s",
+                        current_stage.stage_id, current_stage.agent_role,
+                        recovered_event_ids,
+                    )
+
+            # ── O2M consumption tracking: annotate shared-artifact consumption ──
+            # In one_to_many mode, workers consume the coordinator's handoff as
+            # a shared artifact. Annotate the transition event and propagation
+            # tracker so downstream analysis can identify which workers consumed
+            # the perturbation.
+            if (propagation_tracker is not None
+                    and wcfg.propagation_mode == "one_to_many"
+                    and handoff_payloads):
+                # The TOPOLOGY_TRANSITION event is the consumption boundary —
+                # it represents the worker receiving the shared artifact.
+                trans_evt = transition_evt
+                # Check if the handoff was corrupted (has LEP markers in extra)
+                handoff_extra = (handoff_payloads[0].extra or {}) if handoff_payloads[0].extra else {}
+                if any(k.startswith("lep_") for k in handoff_extra.keys()):
+                    # This worker consumed a corrupted shared artifact
+                    label_consumption(trans_evt, "LEP_HANDOFF_CORRUPTION")
+                    # Find the LEP lineage and annotate propagation to this worker
+                    for code in orchestrator._active_leps:
+                        lineage = propagation_tracker.get_lineage(code, "")
+                        if lineage is None:
+                            lineage = propagation_tracker.register_origin(
+                                lep_code=code,
+                                event_id=trans_evt.event_id,
+                                agent_role=current_stage.agent_role,
+                            )
+                        propagation_tracker.annotate_propagation(
+                            event=trans_evt,
+                            lineage=lineage,
+                            target_agent=current_stage.agent_role,
+                        )
+                    logger.debug(
+                        "O2M: worker %s consumed shared artifact (LEP markers in handoff)",
+                        current_stage.agent_role,
+                    )
 
             # After a merge stage runs, its source branch payloads have been
             # consumed. Clear them so subsequent stages don't see stale
@@ -1233,6 +1310,28 @@ class ScenarioRunner:
                     dest = topology.get_stage(rule.to_stage)
                     if dest:
                         enqueue(dest)
+
+                # ── O2M shared-artifact semantics ─────────────────────────────
+                # In one_to_many mode, the coordinator's handoff is a single
+                # artifact consumed by all workers. Store it so each worker
+                # receives the SAME payload (not independent copies).
+                # This ensures a LEP corruption on the artifact propagates
+                # to every worker, modeling the "shared read" semantics.
+                if (wcfg.propagation_mode == "one_to_many"
+                        and len(outgoing_rules) > 1
+                        and raw_payload is not None):
+                    shared_artifact_id = f"shared:{current_stage.agent_role}:{raw_payload.event_id}"
+                    _o2m_shared_artifacts[shared_artifact_id] = {
+                        "payload": raw_payload,
+                        "event_id": stage_result.handoff_event_id,
+                        "source_role": current_stage.agent_role,
+                        "consumed_by": [],
+                    }
+                    logger.info(
+                        "O2M shared artifact registered: %s (consumers: %s)",
+                        shared_artifact_id,
+                        [r.to_stage for r in outgoing_rules],
+                    )
 
                 previous_stage = current_stage
                 continue

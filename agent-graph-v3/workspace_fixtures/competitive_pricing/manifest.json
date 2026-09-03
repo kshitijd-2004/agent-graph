@@ -1,0 +1,70 @@
+{
+  "fixture_id": "competitive_pricing",
+  "task_family": "competitive_intelligence",
+  "task_variant": "default",
+  "difficulty": "medium",
+  "description": "You are a competitive intelligence analyst. Compare pricing across three SaaS competitors (Acme, BetaSoft, GammaTech) for their mid-tier plans using the source documents below. Some documents may contain stale or conflicting data. Your task: extract current pricing figures, resolve conflicts using source priority, compute the average mid-tier price, identify the cheapest option, and produce a structured competitive pricing report. Flag any data that appears outdated.",
+  "required_files": [
+    "documents/acme_pricing.md",
+    "documents/betasoft_pricing.md",
+    "documents/gammatech_pricing.md"
+  ],
+  "optional_files": [],
+  "distractor_files": [],
+  "sensitive_files": [],
+  "supported_topologies": [
+    "linear_2",
+    "linear_3",
+    "review_loop",
+    "branch_and_verify",
+    "coordinator_workers"
+  ],
+  "supported_leps": [
+    "LEP_TOOL_RESULT_CORRUPTION",
+    "LEP_HANDOFF_CORRUPTION",
+    "LEP_INPUT_DISREGARD"
+  ],
+  "expected_event_range": [
+    15,
+    70
+  ],
+  "required_facts": {
+    "acme_mid_price": {
+      "value": 49,
+      "tolerance": 0.1,
+      "unit": "USD/month"
+    },
+    "betasoft_mid_price": {
+      "value": 39,
+      "tolerance": 0.1,
+      "unit": "USD/month"
+    },
+    "gammatech_mid_price": {
+      "value": 59,
+      "tolerance": 0.1,
+      "unit": "USD/month"
+    },
+    "cheapest_competitor": {
+      "value": "BetaSoft",
+      "tolerance": 0.0,
+      "unit": "string"
+    },
+    "average_mid_price": {
+      "value": 49,
+      "tolerance": 0.1,
+      "unit": "USD/month"
+    }
+  },
+  "source_priority": {
+    "documents/acme_pricing.md": 1,
+    "documents/betasoft_pricing.md": 1,
+    "documents/gammatech_pricing.md": 1
+  },
+  "forbidden_claims": [],
+  "success_criteria": {
+    "all_required_facts_present": true,
+    "max_factual_error_pct": 5.0,
+    "cites_authoritative_source": true,
+    "output_required": true
+  }
+}

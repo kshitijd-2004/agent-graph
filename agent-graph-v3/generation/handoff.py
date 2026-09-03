@@ -28,6 +28,7 @@ class HandoffPayload:
     raw_output: str = ""
     contains_corrupted_data: bool = False
     corrupted_tool_call_event_id: str = ""
+    event_id: str = ""  # ID of the trace event that produced this handoff
     # Arbitrary metadata for LEP interventions (input_disregard, etc.)
     extra: dict = field(default_factory=dict)
 

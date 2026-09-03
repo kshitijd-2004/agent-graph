@@ -149,6 +149,7 @@ class ScenarioSpec:
                 "model_name": self.workflow_config.model_name,
                 "temperature": self.workflow_config.temperature,
                 "seed": self.workflow_config.seed,
+                "propagation_mode": self.workflow_config.propagation_mode,
             },
             "lep_configs": [
                 {
@@ -172,7 +173,21 @@ class ScenarioSpec:
     def from_dict(cls, d: Dict[str, Any]) -> ScenarioSpec:
         """Deserialize from a dictionary."""
         wcfg_data = d.get("workflow_config", {})
-        wcfg = WorkflowConfig(**wcfg_data) if wcfg_data else WorkflowConfig()
+        wcfg = WorkflowConfig(
+            topology=wcfg_data.get("topology", "linear_2"),
+            sharing_policy=wcfg_data.get("sharing_policy", "handoff_summary_only"),
+            memory_mode=wcfg_data.get("memory_mode", "ephemeral_private"),
+            verification_mode=wcfg_data.get("verification_mode", "none"),
+            max_events=wcfg_data.get("max_events", 120),
+            max_agent_turns=wcfg_data.get("max_agent_turns", 40),
+            timeout_seconds=wcfg_data.get("timeout_seconds", 300),
+            model_name=wcfg_data.get("model_name", "claude-sonnet-5"),
+            temperature=wcfg_data.get("temperature", 0.1),
+            seed=wcfg_data.get("seed"),
+            allow_parallel_agents=wcfg_data.get("allow_parallel_agents", False),
+            allow_retries=wcfg_data.get("allow_retries", True),
+            propagation_mode=wcfg_data.get("propagation_mode", "single_origin"),
+        )
 
         lep_configs = []
         for l in d.get("lep_configs", []):
