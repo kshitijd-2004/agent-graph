@@ -88,15 +88,12 @@ class ToolResultCorruptionLEP:
     def __init__(self, lep_config: LEPConfig):
         self.config = lep_config
 
-        # Task family should ideally be supplied directly by LEPConfig.
-        # getattr prevents older configs from crashing immediately.
-        self.task_family: str = lep_config.task_family
-        
-        if not self.task_family:
-            raise ValueError(
-                "ToolResultCorruptionLEP requires LEPConfig.task_family "
-                "for deterministic target selection"
-            )
+        # Task family is used for canonical target-file selection.
+        # It may be empty when the orchestrator's topology-target filter
+        # handles role-based targeting instead — in that case the LEP
+        # simply skips file-based eligibility checks and relies on the
+        # orchestrator's role filter.
+        self.task_family: str = lep_config.task_family or ""
         # Only TOOL_RESULT/read_text_file boundaries are even candidates.
         # The target-file check below further constrains the actual injection.
         if lep_config.trigger:

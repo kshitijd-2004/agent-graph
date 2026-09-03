@@ -58,6 +58,7 @@ def run_pilot(
 
     # Build config
     config = PilotConfig()
+    _plan_topology = config.workflow_config.topology
 
     # Apply filters
     task_families = [task_filter] if task_filter else config.task_families
@@ -94,7 +95,7 @@ def run_pilot(
                     "task_family": task_family,
                     "condition": "benign",
                     "lep_codes": [],
-                    "topology": "linear_2",
+                    "topology": _plan_topology,
                     "repetition_index": rep,
                     "pair_tag": pair_id,
                 })
@@ -103,7 +104,7 @@ def run_pilot(
                     "task_family": task_family,
                     "condition": "single_lep",
                     "lep_codes": [lep.code],
-                    "topology": "linear_2",
+                    "topology": _plan_topology,
                     "repetition_index": rep,
                     "pair_tag": pair_id,
                 })
@@ -115,7 +116,7 @@ def run_pilot(
                 "task_family": task_family,
                 "condition": "counterfactual",
                 "lep_codes": [],
-                "topology": "linear_2",
+                "topology": _plan_topology,
                 "repetition_index": rep,
             })
 

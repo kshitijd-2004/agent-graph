@@ -702,6 +702,10 @@ class ScenarioRunner:
         lep_corrupted_values: Dict[str, Any] = {}
         if not scenario.is_benign() and scenario.lep_configs:
             for lep in scenario.lep_configs:
+                # Ensure task_family is set on the LEP config so LEP
+                # implementations can do family-specific target selection.
+                if not lep.task_family:
+                    lep.task_family = scenario.task_family
                 print(
                     "[DEBUG RUNNER]",
                     lep.code,
@@ -781,11 +785,42 @@ class ScenarioRunner:
 
         agent_map = build_agent_map_from_topology(topology)
 
-        # Pass topology to the LEP orchestrator so it can validate and resolve
-        # topology_target values (branch:<role>, worker:<role>) into concrete
-        # agent_role filters. Invalid targets raise here before execution.
+        # Pass topology and propagation_mode to the LEP orchestrator so it can
+        # validate and resolve topology_target values (branch:<role>,
+        # worker:<role>, upstream:<role>) into concrete agent_role filters.
+        # Invalid targets raise here before execution.
         if orchestrator._active_leps:
-            orchestrator.set_topology(topology)
+            propagation_mode = workflow_config.propagation_mode
+            orchestrator.set_topology(topology, propagation_mode=propagation_mode)
+
+            # Configure origin budgets per propagation mode.
+            # single_origin → 1 origin for every LEP.
+            # one_to_many  → 1 shared upstream origin; downstream consumers are NOT reinjected.
+            # many_to_one  → 1 origin per worker; all worker outputs converge at coordinator.
+            if propagation_mode == "many_to_one":
+                # Count workers that have outgoing handoffs to the coordinator
+                # (stages that are not the coordinator and have can_handoff).
+                n_workers = sum(
+                    1 for s in topology.stages
+                    if s.agent_role != topology.exit_stage and s.can_handoff
+                )
+                n_workers = max(n_workers, 1)
+                for code in orchestrator._active_leps:
+                    orchestrator.set_max_origins(code, n_workers)
+            else:
+                # single_origin and one_to_many both use exactly 1 origin
+                for code in orchestrator._active_leps:
+                    orchestrator.set_max_origins(code, 1)
+
+            logger.info(
+                "Runner: propagation_mode=%s origin_budget=%s topology=%s",
+                propagation_mode,
+                {
+                    code: orchestrator.get_firing_state(code).max_origins
+                    for code in orchestrator._active_leps
+                },
+                topology_id,
+            )
 
         def make_evt(event_type: TraceEventType, source: str, target: str,
                      role: str = "", tool_name: str | None = None,
@@ -874,7 +909,7 @@ class ScenarioRunner:
         # Override per-stage max_turns to match the dry-run trajectory length
         # so stages don't exhaust their turn budget before the trajectory ends.
         traj_len = max(
-            (len(t) for t in self.llm._per_role_trajectories.values()),
+            (len(t) for t in getattr(self.llm, '_per_role_trajectories', {}).values()),
             default=10,
         )
         for stage in topology.stages:

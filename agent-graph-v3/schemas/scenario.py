@@ -41,19 +41,16 @@ class WorkflowConfig:
     seed: Optional[int] = None
     allow_parallel_agents: bool = False
     allow_retries: bool = True
+    propagation_mode: str = "single_origin"  # single_origin | one_to_many | many_to_one
 
 
 # Supported enum values for validation
 TOPOLOGIES = [
     "linear_2",
     "linear_3",
-    "coordinator_star",
     "review_loop",
-    "shared_memory_collaboration",
     "branch_and_verify",
     "coordinator_workers",
-    "fanout_2",
-    "merge_2",
 ]
 
 SHARING_POLICIES = [

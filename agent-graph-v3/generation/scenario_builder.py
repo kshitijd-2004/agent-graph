@@ -56,7 +56,7 @@ def validate_lep_code(code: str, task_family: str = "") -> None:
         )
 
 # Default configurations
-DEFAULT_TOPOLOGIES = ["linear_2", "linear_3", "coordinator_star",
+DEFAULT_TOPOLOGIES = ["linear_2", "linear_3", "review_loop",
                       "branch_and_verify", "coordinator_workers"]
 DEFAULT_SHARING_POLICIES = ["full_state", "handoff_summary_only", "selective_artifacts"]
 DEFAULT_MEMORY_MODES = ["none", "ephemeral_shared", "persistent_shared"]
@@ -66,28 +66,26 @@ DEFAULT_VERIFICATION_MODES = ["none", "self_check", "independent_verifier"]
 TASK_CONFIGS: Dict[str, Dict[str, Any]] = {
     "code_review": {
         "default_topology": "linear_2",
-        "supported_topologies": ["linear_2", "review_loop",
+        "supported_topologies": ["linear_2", "linear_3", "review_loop",
                                   "branch_and_verify", "coordinator_workers"],
         "default_agents": ["inspector", "reviewer"],
     },
     "financial_analysis": {
         "default_topology": "linear_2",
-        "supported_topologies": ["linear_2",
+        "supported_topologies": ["linear_2", "linear_3", "review_loop",
                                   "branch_and_verify", "coordinator_workers"],
         "default_agents": ["extractor", "analyst"],
     },
     "research_synthesis": {
         "default_topology": "linear_3",
-        "supported_topologies": ["linear_3", "coordinator_star", "review_loop",
-                                  "branch_and_verify", "coordinator_workers",
-                                  "fanout_2", "merge_2"],
+        "supported_topologies": ["linear_2", "linear_3", "review_loop",
+                                  "branch_and_verify", "coordinator_workers"],
         "default_agents": ["researcher", "synthesizer", "verifier"],
     },
     "competitive_intelligence": {
         "default_topology": "linear_3",
-        "supported_topologies": ["linear_3", "coordinator_star",
-                                  "branch_and_verify", "coordinator_workers",
-                                  "fanout_2", "merge_2"],
+        "supported_topologies": ["linear_2", "linear_3", "review_loop",
+                                  "branch_and_verify", "coordinator_workers"],
         "default_agents": ["researcher", "analyst", "reviewer"],
     },
 }

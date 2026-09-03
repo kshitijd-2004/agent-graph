@@ -703,7 +703,7 @@ class StageRunner:
                                     and corruption.perturbed_result != corruption.original_result):
                                 tool_was_corrupted = True
                                 result_text = corruption.perturbed_result
-                                lep_orchestrator.mark_successful_mutation(code)
+                                lep_orchestrator.mark_fired_origin(code, target=current_role)
 
                                 # Label the injection origin on the TOOL_RESULT event
                                 label_injection(tr_evt, code)
@@ -904,7 +904,7 @@ class StageRunner:
 
                             # Label the injection origin
                             label_injection(write_evt, "LEP_MEMORY_POISONING")
-                            lep_orchestrator.mark_successful_mutation("LEP_MEMORY_POISONING")
+                            lep_orchestrator.mark_fired_origin("LEP_MEMORY_POISONING", target=current_role)
                             mp_lep.record_write(key, write_evt.event_id)
 
                             active_perturbations.append({
@@ -1181,8 +1181,8 @@ class StageRunner:
 
                                 # Record successful mutation so this LEP is
                                 # not evaluated again in the same scenario.
-                                lep_orchestrator.mark_successful_mutation(
-                                    "LEP_HANDOFF_CORRUPTION"
+                                lep_orchestrator.mark_fired_origin(
+                                    "LEP_HANDOFF_CORRUPTION", target=current_role
                                 )
 
                                 # Label the injection on the boundary event
@@ -1302,8 +1302,8 @@ class StageRunner:
                                         disregard_result
                                     ),
                                 }
-                                lep_orchestrator.mark_successful_mutation(
-                                    "LEP_INPUT_DISREGARD"
+                                lep_orchestrator.mark_fired_origin(
+                                    "LEP_INPUT_DISREGARD", target=payload.to_agent
                                 )
                                 label_injection(hoff_evt, "LEP_INPUT_DISREGARD")
                                 logger.info(

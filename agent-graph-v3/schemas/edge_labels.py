@@ -20,6 +20,8 @@ class PropagationRole(str, Enum):
     CONVERGENCE = "convergence"         # Multiple sources combined
     RECOVERY = "recovery"               # Detection/correction
     TERMINAL_IMPACT = "terminal_impact" # Final failure event
+    PROPAGATED = "propagated"           # Edge carries perturbation from upstream
+    IS_INJECTION = "is_injection"       # Edge represents an injected/perturbed event
     UNKNOWN = "unknown"
 
 

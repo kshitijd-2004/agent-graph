@@ -37,7 +37,7 @@ PILOT_LEP_CONFIGS = [
         target_agent="researcher",
         description="Alter a tool result while keeping the tool call valid.",
         trigger=InjectionTrigger(
-            event_type="tool_call",
+            event_type="tool_result",
             tool_name="read_text_file",
             occurrence=1,
             probability=1.0,
@@ -139,7 +139,7 @@ TOTAL_EXECUTIONS = NUM_BENIGN_BASELINES + NUM_PERTURBED + NUM_COUNTERFACTUALS  #
 
 # Default workflow config for pilot
 DEFAULT_WORKFLOW_CONFIG = WorkflowConfig(
-    topology="linear_2",
+    topology="branch_and_verify",
     sharing_policy="handoff_summary_only",
     memory_mode="ephemeral_shared",
     verification_mode="self_check",
@@ -176,6 +176,7 @@ class PilotConfig:
         """
         plan = []
         idx = 0
+        _plan_topology = self.workflow_config.topology
 
         # Each perturbed run is paired with a matching benign trace
         leps_per_task = max(1, self.num_perturbed // (len(self.task_families) * len(self.lep_configs)))
@@ -188,7 +189,7 @@ class PilotConfig:
                         "task_family": task_family,
                         "condition": "benign",
                         "lep_codes": [],
-                        "topology": "linear_2",
+                        "topology": _plan_topology,
                         "repetition_index": rep,
                         "pair_tag": pair_id,
                     })
@@ -197,7 +198,7 @@ class PilotConfig:
                         "task_family": task_family,
                         "condition": "single_lep",
                         "lep_codes": [lep.code],
-                        "topology": "linear_2",
+                        "topology": _plan_topology,
                         "repetition_index": rep,
                         "pair_tag": pair_id,
                     })
@@ -211,7 +212,7 @@ class PilotConfig:
                     "task_family": task_family,
                     "condition": "counterfactual",
                     "lep_codes": [],
-                    "topology": "linear_2",
+                    "topology": _plan_topology,
                     "repetition_index": rep,
                 })
                 idx += 1

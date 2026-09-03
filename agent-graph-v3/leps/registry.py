@@ -7,6 +7,7 @@ during trace execution.
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Set
 
 from schemas import LEPConfig
@@ -69,6 +70,22 @@ for boundary, codes in BOUNDARY_LEPS.items():
         LEP_BOUNDARY[code] = boundary
 
 
+@dataclass
+class LEPFiringState:
+    """Tracks firing state per LEP across a scenario run.
+
+    Semantics of ``fired_targets`` differ by propagation mode:
+
+    * ``single_origin`` — actual injected stage/branch/worker
+    * ``many_to_one`` — independently injected workers (one entry per perturbed worker)
+    * ``one_to_many`` — ``{"upstream:coordinator"}`` — consumers A/B/C are NOT added
+    """
+    max_origins: int
+    fired_origin_count: int = 0
+    fired_targets: set = field(default_factory=set)
+    eligible_occurrence_counts: Dict[str, int] = field(default_factory=dict)
+
+
 class LEPOrchestrator:
     """Coordinates LEP instances during trace execution.
 
@@ -83,14 +100,16 @@ class LEPOrchestrator:
     def __init__(self):
         self._active_leps: Dict[str, Any] = {}  # lep_code -> LEP instance
         self._trigger_results: list = []
-        # LEP codes that have already successfully mutated content.
-        # Once a canonical LEP has applied a material perturbation, it
-        # should not mutate subsequent compatible boundaries in the same
-        # scenario unless explicitly configured for repeated injection.
-        self._successfully_mutated: set = set()
+        # Per-LEP firing state: tracks origins, targets, and occurrence counts
+        # for target-aware firing decisions in many-to-one and one-to-many scenarios.
+        self._firing_state: Dict[str, LEPFiringState] = {}
         # Topology-aware target filter: lep_code -> agent_role to target,
         # or None to fire on any stage. Populated by set_topology().
         self._topology_target_stages: Dict[str, Optional[str]] = {}
+        # Propagation mode for target-filtering semantics in evaluate_for_boundary.
+        self._propagation_mode: str = "single_origin"
+        # Topology reference for M2O target filtering.
+        self._topology: Optional[Any] = None
 
     def register_lep(self, lep_config: LEPConfig) -> None:
         """Register a LEP for execution."""
@@ -112,7 +131,7 @@ class LEPOrchestrator:
         self._topology_target_stages.pop(code, None)
         logger.debug("Registered LEP: %s (%s)", code, LEP_NAMES.get(code, code))
 
-    def set_topology(self, topology) -> None:
+    def set_topology(self, topology, propagation_mode: str = "single_origin") -> None:
         """Resolve topology_target for every registered LEP against this topology.
 
         Validates and stores each LEP's target stage so that
@@ -124,10 +143,12 @@ class LEPOrchestrator:
             resolve_target_stage,
             InvalidTopologyTargetError,
         )
+        self._topology = topology
+        self._propagation_mode = propagation_mode
         for code, lep in self._active_leps.items():
             try:
                 self._topology_target_stages[code] = resolve_target_stage(
-                    lep.config, topology
+                    lep.config, topology, propagation_mode=propagation_mode
                 )
             except InvalidTopologyTargetError:
                 # Re-raise immediately — invalid targets should fail fast at
@@ -194,20 +215,38 @@ class LEPOrchestrator:
 
         results = {}
         for code in eligible_codes:
-            # Skip LEPs that have already successfully mutated content.
-            # A single-LEP scenario should normally produce exactly one
-            # controlled intervention, not repeated mutations.
-            if code in self._successfully_mutated:
-                continue
-            # Topology-aware target filter: when set_topology() resolved a
-            # topology_target for this LEP, skip events from non-target stages.
-            target_stage = self._topology_target_stages.get(code)
-            if target_stage is not None:
-                if (getattr(event, "agent_role", "") or "") != target_stage:
-                    continue
             lep_instance = self._active_leps.get(code)
             if lep_instance is None or not hasattr(lep_instance, "evaluate"):
                 continue
+
+            # Ensure firing state exists for this LEP
+            if code not in self._firing_state:
+                self._firing_state[code] = LEPFiringState(max_origins=1)
+
+            state = self._firing_state[code]
+
+            # Origin budget: skip if this LEP has already fired its max origins
+            if state.fired_origin_count >= state.max_origins:
+                continue
+
+            # Topology-aware target filter: when set_topology() resolved a
+            # topology_target for this LEP, skip events from non-target stages.
+            # In many_to_one mode with no explicit target, any worker that has
+            # not yet fired is eligible (each worker fires at most once).
+            target_stage = self._topology_target_stages.get(code)
+            event_role = getattr(event, "agent_role", "") or ""
+            if target_stage is not None:
+                if event_role != target_stage:
+                    continue
+            elif self._propagation_mode == "many_to_one" and self._topology is not None:
+                # M2O with topology_target=None: skip workers that have already fired.
+                # Also skip the coordinator itself — LEPs fire on workers only.
+                exit_role = getattr(self._topology, "exit_stage", "")
+                if event_role == exit_role:
+                    continue
+                if event_role in state.fired_targets:
+                    continue
+
             try:
                 import inspect
                 sig = inspect.signature(lep_instance.evaluate)
@@ -231,10 +270,43 @@ class LEPOrchestrator:
     def mark_successful_mutation(self, lep_code: str) -> None:
         """Record that a LEP has successfully applied a material mutation.
 
-        After calling this, evaluate_for_boundary() will skip this LEP
-        for the remainder of the scenario, preventing repeated mutations.
+        Legacy: redirects to mark_fired_origin for backward compat.
         """
-        self._successfully_mutated.add(lep_code)
+        self.mark_fired_origin(lep_code)
+
+    def mark_fired_origin(self, lep_code: str, target: Optional[str] = None) -> None:
+        """Record that a LEP has fired at an origin point.
+
+        Increments the origin count and records the target (if any) so
+        that the firing predicate can correctly handle many-to-one and
+        one-to-many scenarios.
+
+        Args:
+            lep_code: The LEP that fired.
+            target:   The resolved target stage/role, or None if
+                      topology-agnostic.
+        """
+        if lep_code not in self._firing_state:
+            self._firing_state[lep_code] = LEPFiringState(max_origins=1)
+        state = self._firing_state[lep_code]
+        state.fired_origin_count += 1
+        if target is not None:
+            state.fired_targets.add(target)
+
+    def set_max_origins(self, lep_code: str, max_origins: int) -> None:
+        """Set the maximum number of origins for a LEP.
+
+        Must be called before scenario execution begins (before the first
+        call to evaluate_for_boundary).
+        """
+        if lep_code not in self._firing_state:
+            self._firing_state[lep_code] = LEPFiringState(max_origins=max_origins)
+        else:
+            self._firing_state[lep_code].max_origins = max_origins
+
+    def get_firing_state(self, lep_code: str) -> Optional[LEPFiringState]:
+        """Get the firing state for a LEP, or None if not initialized."""
+        return self._firing_state.get(lep_code)
 
     def get_lep_instance(self, lep_code: str) -> Any:
         """Get a specific LEP instance."""
