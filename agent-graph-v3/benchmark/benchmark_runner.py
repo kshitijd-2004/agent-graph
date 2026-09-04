@@ -137,6 +137,7 @@ class BenchmarkManifest:
     max_events: int = 50
     max_agent_turns: int = 20
     model_name: str = "claude-sonnet-5"
+    temperature: float = 0.1
     dry_run: bool = True
     output_dir: Optional[Path] = None
     fixture_root: Optional[Path] = None
@@ -407,8 +408,14 @@ class BenchmarkRunner:
     # ── Helpers ──────────────────────────────────────────────────────────────
 
     def _default_backend(self):
-        from generation.runner import DryRunBackend
-        return DryRunBackend()
+        if self.manifest.dry_run:
+            from generation.runner import DryRunBackend
+            return DryRunBackend()
+        from backend.api_backend import APIBackend
+        return APIBackend(
+            model=self.manifest.model_name,
+            temperature=self.manifest.temperature,
+        )
 
     def _build_workflow_config(self, entry: dict[str, Any]) -> WorkflowConfig:
         return WorkflowConfig(
