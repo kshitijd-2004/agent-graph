@@ -265,6 +265,13 @@ class LEPOrchestrator:
             except Exception as e:
                 logger.warning("LEP %s evaluation error: %s", code, e)
         self._trigger_results.append(results)
+
+        # Mark event type and tool as seen so after_ prerequisites can be satisfied.
+        # Mark before returning so the current event counts as "seen" — "after X"
+        # should include the current occurrence when X is the event being evaluated.
+        tool_name = getattr(event, "tool_name", "") or ""
+        self.mark_event_seen(event_type, tool_name)
+
         return results
 
     def mark_successful_mutation(self, lep_code: str) -> None:
@@ -415,6 +422,20 @@ class LEPOrchestrator:
                 lep.reset()
         self._active_leps.clear()
         self._trigger_results.clear()
+
+    def mark_event_seen(self, event_type: str, tool_name: str = "") -> None:
+        """Mark an event type and/or tool as seen on all active LEP matchers.
+
+        This enables ``after_event_type`` and ``after_tool_name`` trigger
+        prerequisites to be satisfied as the event stream progresses.
+        """
+        for lep in self._active_leps.values():
+            matcher = getattr(lep, "matcher", None)
+            if matcher is not None and hasattr(matcher, "mark_event_type_seen"):
+                matcher.mark_event_type_seen(event_type)
+            if tool_name:
+                if matcher is not None and hasattr(matcher, "mark_tool_seen"):
+                    matcher.mark_tool_seen(tool_name)
 
 
 def create_lep_instance(lep_config: LEPConfig) -> Any:

@@ -1,18 +1,18 @@
 \subsection{TODO}
 
 \paragraph{Immediate (blocking publication)}
-None — all items moved to resolved.
+None.
 
 \paragraph{Near-term (needed for full benchmark)}
 \begin{itemize}
-    \item \textbf{Ground tasks in standard multi-agent benchmarks.} Current task families (code\_review, financial\_analysis, research\_synthesis, competitive\_intelligence) use only synthetic workspace fixtures. The methodology section needs to situate these against real multi-agent benchmarks/datasets (e.g., GAIA, AgentBench, ToolBench) and clearly describe the agent setup (roles, tools, model, memory). The evaluation matrix (topology $\times$ task $\times$ LEP condition) should be explicitly documented.
-    \item \textbf{Implement the \texttt{benchmark/} directory.} Currently empty. Needs configuration schemas, scenario manifests, validators, and a runner interface. Once built, one command should generate the full trace suite across all task families ($\times$4), topologies ($\times$9), and LEP conditions. Note: evaluator coverage is partial until the evaluator gaps below are resolved — trace generation works, but task-success scoring will fail or be missing for some task families.
+    \item \textbf{Implement statistical analysis layer.} The benchmark runner produces raw per-scenario records (injection fired, consumption hits, propagation hits, recovery hits, downstream failure, task success) with $N$ repetitions per cell, but no statistical inference. We need confidence intervals, hypothesis testing (e.g., does one\_to\_many propagate failures significantly more than single\_origin?), effect sizes, and interaction analysis (topology $\times$ propagation mode $\times$ task family). Without this, we have counts but no way to draw causal conclusions or compare conditions rigorously.
     \item \textbf{Build and validate the graph construction module.} Convert enriched \texttt{Trace} objects (with \texttt{depends\_on} populated) into event-as-node graphs for GNN training, encoding node features (event type, agent role, tool name, metadata) and \texttt{depends\_on} edges as directed causal dependencies. Produce both static graph snapshots (per-event) and temporal event-stream formats.
-    \item \textbf{Wire up memory subsystem for \texttt{LEP\_MEMORY\_POISONING}.} The \texttt{MemoryStore} and \texttt{MemoryRetriever} exist in \texttt{memory/} but are not integrated into the execution pipeline. Memory poisoning cannot fire without it. IN-PROGRESS
     \item \textbf{Expand task evaluator coverage.} \texttt{CompetitiveIntelligenceEvaluator} does not exist at all — needs a deterministic rule-based evaluator matching the depth of \texttt{FinancialEvaluator} and \texttt{CodeReviewEvaluator}. \texttt{ResearchSynthesisEvaluator} exists but is a lightweight 5-check heuristic; needs expansion to proper depth. Without these, the benchmark runner cannot score task success for those families. IN-PROGRESS
 
+    \item \textbf{Generate large-scale trace dataset.} Run the full cross-product matrix (all topologies $\times$ all task families $\times$ all LEP types $\times$ all propagation modes $\times$ repetitions) to produce a statistically powered dataset for GNN training and evaluation.
+
     \item \textbf{Diagrammatic representation of topologies for the paper}
-    
+
 \end{itemize}
 
 \paragraph{Medium-term (experimental)}
@@ -28,7 +28,7 @@ None — all items moved to resolved.
 AgentGraph-v3 is a benchmark for studying how Local Execution Perturbations (LEPs) cause downstream failures in multi-agent LLM systems and how those failures propagate across agent boundaries. A \texttt{ScenarioSpec} defines a task family, workspace fixture, execution topology, and a set of LEP configurations. The \texttt{ScenarioRunner} executes the scenario by running agents through a topology of stages, recording every event as a \texttt{TraceEvent} in a \texttt{Trace} (schema version 3.0.0). Paired traces share an \texttt{execution\_id} and differ only in \texttt{variant} (benign=\texttt{a}, malignant=\texttt{b}), enabling direct comparison. The trace schema enforces a strict \texttt{observable}/\texttt{hidden} split: the \texttt{ObservableExporter} strips all LEP-related keys and benchmark metadata for safe distribution to detector models, while the \texttt{AnalysisExporter} retains full labels for offline analysis.
 
 \paragraph{Trace schema (v3.0.0).}
-Each trace contains 10 event types: \texttt{user\_input}, \texttt{system\_init}, \texttt{topology\_transition}, \texttt{reasoning}, \texttt{tool\_call}, \texttt{tool\_result}, \texttt{agent\_handoff}, \texttt{memory\_retrieval}, \texttt{memory\_write}, \texttt{final\_response}. Every event carries \texttt{source\_entity\_id}, \texttt{target\_entity\_id}, \texttt{agent\_id}, \texttt{agent\_role}, and an \texttt{event\_labels} annotation layer with boolean flags: \texttt{is\_injection\_origin}, \texttt{consumes\_perturbed\_info}, \texttt{forwards\_perturbed\_info}, \texttt{introduces\_downstream\_failure}, \texttt{failure\_type} (enum: \texttt{factual\_error}, \texttt{numeric\_error}, \texttt{omission}, \texttt{misattribution}, \texttt{derailment}, \texttt{safety\_violation}, etc.). The \texttt{depends\_on} field stores causal dependency edges between events, populated at event emission time. Events also carry a three-way payload: \texttt{observable} (detector-safe), \texttt{hidden} (benchmark-only ground truth), and \texttt{event\_labels} (annotations).
+Each trace contains 11 event types: \texttt{user\_input}, \texttt{system\_init}, \texttt{topology\_transition}, \texttt{reasoning}, \texttt{tool\_call}, \texttt{tool\_result}, \texttt{agent\_handoff}, \texttt{memory\_retrieval}, \texttt{memory\_write}, \texttt{final\_response}, \texttt{llm\_output}. Every event carries \texttt{source\_entity\_id}, \texttt{target\_entity\_id}, \texttt{agent\_id}, \texttt{agent\_role}, and an \texttt{event\_labels} annotation layer with boolean flags: \texttt{is\_injection\_origin}, \texttt{consumes\_perturbed\_info}, \texttt{forwards\_perturbed\_info}, \texttt{introduces\_downstream\_failure}, \texttt{failure\_type} (enum: \texttt{factual\_error}, \texttt{numeric\_error}, \texttt{omission}, \texttt{misattribution}, \texttt{derailment}, \texttt{safety\_violation}, etc.). The \texttt{depends\_on} field stores causal dependency edges between events, populated at event emission time. Events also carry a three-way payload: \texttt{observable} (detector-safe), \texttt{hidden} (benchmark-only ground truth), and \texttt{event\_labels} (annotations).
 
 \paragraph{LEP subsystem.}
 Five LEP families are implemented in \texttt{leps/} and orchestrated by \texttt{LEPOrchestrator}:
@@ -58,6 +58,97 @@ Three export formats serve distinct audiences: \texttt{ObservableExporter} (dete
 \paragraph{Current pilot results.}
 A 24-execution pilot with \texttt{linear\_2} topology: \texttt{LEP\_TOOL\_RESULT\_CORRUPTION} is the only LEP demonstrating the full injection$\to$consumption$\to$propagation$\to$failure chain. \texttt{LEP\_HANDOFF\_CORRUPTION} and \texttt{LEP\_INPUT\_DISREGARD} fire but show zero consumption.
 
+\subsection{Related Work}
+
+\paragraph{Single-agent tool-use evaluation.}
+The capability of LLM agents to select, sequence, and execute tools has been
+benchmarked extensively. \textbf{AgentBench}~\citep{liu2023agentbench}
+evaluates LLM-as-agent performance across eight interactive environments
+(database, web, operating system, knowledge graph, game, embodied, and
+others), establishing a standardized paradigm for measuring agent reasoning
+and decision-making under tool access. \textbf{ToolBench}~\citep{qin2023toolbench}
+and \textbf{API-Bank}~\citep{li2023apibank} extend this axis by constructing
+tool-rich environments from real-world API suites, measuring whether agents
+can retrieve, plan, and invoke the correct tools to fulfill complex
+instructions. These benchmarks establish that tool-use reliability is a
+first-class evaluation dimension, but they are inherently single-agent:
+no agent-to-agent communication, handoffs, or shared state. XXX
+inherits the tool-use evaluation paradigm and instruments individual tool
+calls as potential LEP injection boundaries.
+
+\paragraph{Multi-agent pipeline frameworks.}
+Several frameworks formalize role-based multi-agent workflows with structured
+inter-agent communication. \textbf{MetaGPT}~\citep{hong2023metagpt} encodes
+standard operating procedures into an assembly-line pipeline (product
+manager $\to$ architect $\to$ engineer $\to$ QA), using structured handoffs
+and output verification between roles to prevent cascading hallucinations.
+\textbf{AgentVerse}~\citep{chen2023agentverse} dynamically assembles
+specialized expert agents (coder, reviewer, tester) for collaborative
+task-solving. Both systems demonstrate that well-structured handoff contracts
+improve multi-agent output quality, but neither systematically injects
+failures at handoff boundaries or measures how those failures propagate
+downstream. XXX treats inter-agent handoffs as typed experimental boundaries
+at which controlled LEPs may be introduced.
+
+\paragraph{Failure attribution and multi-agent tracing.}
+Closest to XXX in spirit is \textbf{AgenTracer}~\citep{XXXX}, which
+studies failure attribution in multi-agent trajectories. AgenTracer creates
+failure trajectories using programmed fault injection and counterfactual
+replay, then trains a model to attribute failures to particular agents or
+steps. The research question it addresses is: \emph{which agent or step
+caused a failure?} XXX asks a different question: given a controlled
+local perturbation, \emph{how does its effect propagate through the
+execution dependency graph}---is the perturbation consumed, propagated,
+recovered from, or does it induce downstream failure? Where AgenTracer
+focuses on localizing responsibility for observed failures, XXX
+characterizes the propagation process between a controlled intervention
+and its eventual outcome, including recovery.
+
+\paragraph{Multi-agent execution graphs.}
+\textbf{ForestBench}~\citep{XXXX} maps heterogeneous multi-agent execution
+traces into unified collaboration graphs, enabling structural rather than
+outcome-only evaluation of multi-agent systems. ForestBench also includes
+perturbation studies, making it a close structural antecedent. However, its
+objective is collaboration-quality evaluation: given an execution trace,
+what does the collaboration graph reveal about team dynamics? XXX shares
+the commitment to graph-based trace representation but uses the graph for
+a different purpose---measuring perturbation propagation across typed
+execution boundaries (tool results, handoffs, memory writes) rather than
+evaluating collaboration structure.
+
+\paragraph{Adversarial perturbation and propagation.}
+In the single-agent setting, \textbf{ARE} (Agent Robustness Evaluation)
+~\citep{ma2024are} models an agent as a computation graph of components
+(vision encoder, policy LM, self-evaluator, tree-search value function)
+and measures how adversarial perturbations propagate through that graph.
+ARE finds that compromising the reflexion evaluator raises attack success
+by~15\% and compromising the tree-search value function adds a further~20\%,
+demonstrating that inference-time compute improving benign performance can
+simultaneously introduce new vulnerabilities. ARE is a conceptual
+precedent for modeling perturbation flow through a system graph, but its
+graph is the internal component structure of a single agent operating
+within one context window; it does not address handoff-level propagation
+across distinct agents with separate reasoning traces, memory stores, and
+tool interfaces. \textbf{AgentHarm}~\citep{andriushchenko2024agentharm}
+evaluates whether jailbroken agents maintain harmful multi-step tool-use
+capability, but operates in a single-agent setting without inter-agent
+communication.
+
+\paragraph{The gap.}
+Existing work does not jointly provide the combination XXX targets:
+typed interventions at runtime boundaries, explicit execution-dependency
+graphs, and measurement of whether perturbations are consumed, propagated,
+recovered from, or induce downstream failure across multi-agent topologies.
+AgenTracer attributes failures post-hoc; ARE measures propagation within
+single-agent component graphs; MetaGPT and AgentVerse provide multi-agent
+pipeline architecture without perturbation instrumentation; ForestBench
+enables structural trace evaluation without controlled intervention. XXX
+fills this gap by providing a systematic protocol for studying how locally
+injected failures propagate through directed multi-agent topologies,
+with reproducible perturbation injection, typed boundary routing, and
+paired controlled executions enabling attribution of downstream differences
+to localized interventions.
+
 \subsection{Methodology}
 
 \Yue{We may need a clear setup here, including: What platform are we using (like your reproducibility and infra below, with GPU specified)? What tasks we are doing (we should build our experiments on some real multi-agent task benchmarks---datasets)? How do we set up the agents? What matrices are we evaluating? You may refer to the example below.}
@@ -74,15 +165,9 @@ We evaluate \OurMethod{} using both real-world multi-agent benchmarks and
 controlled synthesized workloads. For real workloads, we use \textit{[Benchmark A]}, \textit{[Benchmark B]}, and \textit{[Benchmark C]}, covering tasks such as \textit{[tool use / retrieval / planning / coding / coordination]}.
 These benchmarks provide realistic task objectives, tool interactions, and standardized success criteria.
 
-To complement the real workloads, we also construct synthesized multi-agent tasks that allow us to systematically control workflow structure and risk propagation patterns. Each synthesized task is generated from \textit{[task templates/workflow templates/scenario generators]} and instantiates a set of agents, tools, memories, intermediate dependencies, and a target task outcome. We vary
-\textit{[number of agents]},
-\textit{[workflow topology]},
-\textit{[communication pattern]},
-\textit{[information-sharing policy]},
-\textit{[memory configuration]}, and
-\textit{[task dependency depth]} to produce workflows with different propagation characteristics.
+To complement the real workloads, we also construct synthesized multi-agent tasks that allow us to systematically control workflow structure and risk propagation patterns. Each synthesized task is drawn from one of four task families---\texttt{code\_review}, \texttt{financial\_analysis}, \texttt{research\_synthesis}, \texttt{competitive\_intelligence}---paired with workspace fixtures, and instantiated through a \texttt{ScenarioSpec} that combines a task family, fixture ID, execution topology, and LEP configuration. Each instantiation produces a set of agents with assigned roles (e.g., inspector, reviewer, analyst, synthesizer, searcher), tool access (\texttt{list\_directory}, \texttt{read\_text\_file}, \texttt{write\_file}, \texttt{search\_files}, \texttt{handoff}, \texttt{submit\_final}, \texttt{read\_memory}, \texttt{write\_memory}), a memory configuration, and a target task outcome grounded in fixture-specific ground truth. We vary the number of agents (2--5, depending on topology), workflow topology, communication pattern, information-sharing policy, memory configuration, and task dependency depth (2--5 stages) to produce workflows with different propagation characteristics.
 
-For each synthesized workflow, we generate a valid normal execution and then create controlled variants by introducing one or more abnormalities at selected agents, tools, handoffs, or memory operations. The injected abnormalities are configured to produce \textit{[isolated / one-to-many / many-to-one / multi-hop]} propagation patterns. We additionally generate counterfactual variants by removing individual abnormalities while keeping the remaining workflow unchanged.
+The injected abnormalities correspond to five LEP families---\texttt{LEP\_TOOL\_RESULT\_CORRUPTION}, \texttt{LEP\_INDIRECT\_PROMPT\_INJECTION}, \texttt{LEP\_HANDOFF\_CORRUPTION}, \texttt{LEP\_INPUT\_DISREGARD}, and \texttt{LEP\_MEMORY\_POISONING}---and are configured to produce isolated, one-to-many, many-to-one, or multi-hop propagation patterns depending on the injection boundary (\texttt{tool\_result}, \texttt{agent\_handoff}, or \texttt{memory\_write}) and the downstream topology structure.
 This enables precise ground-truth annotation of abnormality sources, propagation paths, and downstream outcomes, and allows us to distinguish true risk accumulation from simple co-occurrence.
 
 \color{black}
@@ -105,3 +190,6 @@ All experiments are run on a Linux machine (kernel 5.15.0-185-generic, x86\_64) 
 
 \paragraph{Graph construction (planned).}
 Once \texttt{depends\_on} is populated internally, each trace is converted into an event-as-node graph: every execution event becomes a node, and \texttt{depends\_on} causal dependencies become directed edges (A$\to$B when B depends on A). This preserves fan-in structure and enables path-based propagation analysis directly on the execution graph. Node features carry event type, agent role, tool name, stage-local index, and observable metadata; LEP labels (injection origin, consumption, propagation, failure) are node-level annotations for training. Graph-level labels indicate whether the execution ultimately experienced a downstream failure.
+
+\bibliography{references}
+\nocite{*}

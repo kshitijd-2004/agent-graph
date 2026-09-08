@@ -73,8 +73,8 @@ Examples:
     parser.add_argument(
         "--repetitions",
         type=int,
-        default=3,
-        help="Repetitions per (topology × task × LEP × propagation_mode) cell (default: 3)",
+        default=1,
+        help="Repetitions per (topology × task × LEP × propagation_mode) cell (default: 1)",
     )
     parser.add_argument(
         "--max-events",

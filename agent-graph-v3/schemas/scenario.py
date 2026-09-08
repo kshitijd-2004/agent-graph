@@ -53,6 +53,18 @@ TOPOLOGIES = [
     "coordinator_workers",
 ]
 
+# Propagation modes supported per topology.
+# Sequential topologies (linear_2, linear_3, review_loop) have a single
+# agent path — one_to_many and many_to_one collapse to single_origin
+# and are excluded to avoid redundant runs.
+TOPOLOGY_PROPAGATION_MODES: dict[str, list[str]] = {
+    "linear_2":           ["single_origin"],
+    "linear_3":           ["single_origin"],
+    "review_loop":        ["single_origin"],
+    "branch_and_verify":  ["single_origin", "one_to_many", "many_to_one"],
+    "coordinator_workers": ["single_origin", "one_to_many", "many_to_one"],
+}
+
 SHARING_POLICIES = [
     "full_state",
     "handoff_summary_only",

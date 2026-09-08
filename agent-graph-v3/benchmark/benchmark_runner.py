@@ -21,7 +21,7 @@ from typing import Any, Optional
 from schemas import (
     LEPConfig, ScenarioSpec, Trace, WorkflowConfig,
 )
-from schemas.scenario import CONDITIONS, TOPOLOGIES
+from schemas.scenario import CONDITIONS, TOPOLOGIES, TOPOLOGY_PROPAGATION_MODES
 
 logger = logging.getLogger("benchmark")
 
@@ -133,7 +133,7 @@ class BenchmarkManifest:
     topologies: list[str] = field(default_factory=list)
     task_families: list[str] = field(default_factory=list)
     lep_configs: list[LEPConfig] = field(default_factory=list)
-    num_repetitions: int = 3
+    num_repetitions: int = 1
     max_events: int = 50
     max_agent_turns: int = 20
     model_name: str = "claude-sonnet-5"
@@ -154,9 +154,10 @@ class BenchmarkManifest:
         idx = 0
 
         for topology in self.topologies:
+            allowed_modes = TOPOLOGY_PROPAGATION_MODES.get(topology, ["single_origin"])
             for task_family in self.task_families:
                 for lep_config in self.lep_configs:
-                    for prop_mode in self.propagation_modes:
+                    for prop_mode in allowed_modes:
                         for rep in range(self.num_repetitions):
                             pair_id = (
                                 f"b_{topology}_{task_family}_"
@@ -579,7 +580,7 @@ def run_benchmark(
     topologies: list[str] | None = None,
     task_families: list[str] | None = None,
     lep_codes: list[str] | None = None,
-    num_repetitions: int = 3,
+    num_repetitions: int = 1,
     max_events: int = 50,
     output_dir: str | None = None,
     dry_run: bool = True,
