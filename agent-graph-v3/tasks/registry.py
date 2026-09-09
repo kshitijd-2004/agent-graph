@@ -240,17 +240,6 @@ DEFAULT_LEPS: Dict[str, list[LEPConfig]] = {
             requires_handoff=True,
         ),
         LEPConfig(
-            code="LEP_PROVENANCE_FAILURE",
-            name="Provenance Failure",
-            category="provenance",
-            description="Swap source attribution in output",
-            target_agent="analyst",
-            trigger=InjectionTrigger(after_event_type="agent_handoff"),
-            injection_surface="source_attribution",
-            propagation_mode="output",
-            severity="medium",
-        ),
-        LEPConfig(
             code="LEP_INPUT_DISREGARD",
             name="Input Disregard",
             category="behavioral",

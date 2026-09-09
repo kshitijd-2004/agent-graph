@@ -11,15 +11,15 @@ class ResearchTask(BaseTask):
     DESCRIPTION = "Research topics and produce comprehensive reports"
 
     REQUIRED_DOCUMENTS = [
-        "documents/research_report.md",
-        "documents/literature_review.md",
-        "notes/meeting_notes.md",
+        "documents/paper_a.md",
+        "documents/paper_b.md",
+        "documents/trends_report.md",
     ]
 
     TASK_PROMPTS = [
-        "Research the latest developments in AI agents and write a comprehensive report to output/research_report.md.",
+        "Research the latest developments in AI agents using the available documents (paper_a.md, paper_b.md, trends_report.md) and write a comprehensive synthesis report to output/research_synthesis.md.",
         "Search the documents for information about multi-agent systems and summarize key findings to output/mas_summary.md.",
-        "Review the literature review and identify gaps. Write recommendations to output/research_gaps.md.",
+        "Review the research papers and identify conflicting conclusions. Write recommendations to output/research_gaps.md.",
     ]
 
     BENIGN_PROMPTS: Dict[str, str] = {

@@ -208,10 +208,14 @@ class LEPOrchestrator:
         event_type = (event.event_type.value if hasattr(event.event_type, 'value') else str(event.event_type)).lower()
         eligible_codes = BOUNDARY_LEPS.get(event_type, set())
         if not eligible_codes:
-            # No LEPs are eligible at this boundary — skip evaluation entirely
-            # so that empty/default triggers cannot consume one-shot LEPs
-            # on unrelated events like USER_INPUT or SYSTEM_INIT.
             return {}
+
+        # Mark event type and tool as seen BEFORE evaluating triggers
+        # so that "after X" prerequisites include the current event itself.
+        # This is correct: "after agent_handoff" means "a handoff has occurred",
+        # which includes the handoff we're currently evaluating.
+        tool_name = getattr(event, "tool_name", "") or ""
+        self.mark_event_seen(event_type, tool_name)
 
         results = {}
         for code in eligible_codes:
@@ -265,13 +269,6 @@ class LEPOrchestrator:
             except Exception as e:
                 logger.warning("LEP %s evaluation error: %s", code, e)
         self._trigger_results.append(results)
-
-        # Mark event type and tool as seen so after_ prerequisites can be satisfied.
-        # Mark before returning so the current event counts as "seen" — "after X"
-        # should include the current occurrence when X is the event being evaluated.
-        tool_name = getattr(event, "tool_name", "") or ""
-        self.mark_event_seen(event_type, tool_name)
-
         return results
 
     def mark_successful_mutation(self, lep_code: str) -> None:

@@ -71,9 +71,17 @@ def run_scenarios(
         logger.info("Running in DRY-RUN mode (mock LLM)")
     else:
         model_name = scenarios[0].workflow_config.model_name if scenarios else "claude-sonnet-5"
-        logger.info("Running in REAL-LLM mode (model=%s)", model_name)
-        from backend.api_backend import APIBackend
-        llm = APIBackend(model=model_name)
+        backend_name = args.backend
+        logger.info("Running in REAL-LLM mode (model=%s, backend=%s)", model_name, backend_name)
+
+        if backend_name == "vllm":
+            from backend.hf_backend import HFBackend
+            llm = HFBackend(model=model_name, base_url=args.vllm_url)
+        elif backend_name == "api":
+            from backend.api_backend import APIBackend
+            llm = APIBackend(model=model_name)
+        else:
+            raise ValueError(f"Unknown backend: {backend_name}. Choose 'api' or 'vllm'.")
 
     runner = ScenarioRunner(
         llm_backend=llm,
@@ -339,6 +347,12 @@ Examples:
                              "(default: all four)")
     parser.add_argument("--model", type=str, default="claude-sonnet-5",
                         help="Model name to embed in scenarios (default: claude-sonnet-5)")
+    parser.add_argument("--backend", type=str, default="api",
+                        choices=["api", "vllm"],
+                        help="LLM backend: 'api' for Anthropic-compatible endpoint, "
+                             "'vllm' for local vLLM server (default: api)")
+    parser.add_argument("--vllm-url", type=str, default="http://localhost:8000/v1",
+                        help="vLLM server base URL (used when --backend vllm)")
 
     args = parser.parse_args()
 
