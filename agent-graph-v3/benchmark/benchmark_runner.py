@@ -135,7 +135,7 @@ class BenchmarkManifest:
     lep_configs: list[LEPConfig] = field(default_factory=list)
     num_repetitions: int = 1
     max_events: int = 50
-    max_agent_turns: int = 40
+    max_agent_turns: int = 80
     model_name: str = "claude-sonnet-5"
     temperature: float = 0.1
     dry_run: bool = True

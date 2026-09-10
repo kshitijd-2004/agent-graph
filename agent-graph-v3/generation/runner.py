@@ -913,13 +913,14 @@ class ScenarioRunner:
 
         # Override per-stage max_turns to match the dry-run trajectory length
         # so stages don't exhaust their turn budget before the trajectory ends.
-        traj_len = max(
-            (len(t) for t in getattr(self.llm, '_per_role_trajectories', {}).values()),
-            default=10,
-        )
-        for stage in topology.stages:
-            if stage.max_turns > traj_len:
-                stage.max_turns = traj_len + 2
+        # Only applies to backends that replay pre-recorded trajectories.
+        if hasattr(self.llm, "_per_role_trajectories"):
+            trajectories = self.llm._per_role_trajectories
+            if trajectories:
+                traj_len = max(len(t) for t in trajectories.values())
+                for stage in topology.stages:
+                    if stage.max_turns > traj_len:
+                        stage.max_turns = traj_len + 2
 
         logger.info(
             "_execute_scenario: scenario=%s topology=%s max_events=%d max_agent_turns=%d",

@@ -11,9 +11,9 @@ class CompetitiveIntelligenceTask(BaseTask):
     DESCRIPTION = "Research competitors and produce intelligence reports"
 
     REQUIRED_DOCUMENTS = [
-        "documents/competitor_data.md",
-        "documents/pricing_history.md",
-        "market_reports/industry_report.md",
+        "documents/acme_pricing.md",
+        "documents/betasoft_pricing.md",
+        "documents/gammatech_pricing.md",
     ]
 
     TASK_PROMPTS = [

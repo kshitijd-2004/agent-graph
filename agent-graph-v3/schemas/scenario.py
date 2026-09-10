@@ -34,7 +34,7 @@ class WorkflowConfig:
     memory_mode: str = "ephemeral_private"
     verification_mode: str = "none"
     max_events: int = 120
-    max_agent_turns: int = 40
+    max_agent_turns: int = 80
     timeout_seconds: int = 300
     model_name: str = "claude-sonnet-5"
     temperature: float = 0.1

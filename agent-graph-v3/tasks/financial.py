@@ -11,9 +11,11 @@ class FinancialTask(BaseTask):
     DESCRIPTION = "Analyze financial documents and produce reports"
 
     REQUIRED_DOCUMENTS = [
-        "documents/financial_report.md",
-        "documents/quarterly_earnings.md",
-        "notes/meeting_notes.md",
+        "documents/q3_summary.md",
+        "documents/earnings_call.md",
+        "documents/q3_data_v1.md",
+        "documents/q3_data_v2.md",
+        "notes/planning_session.md",
     ]
 
     TASK_PROMPTS = [

@@ -271,6 +271,14 @@ class StageRunner:
                 if memory_addition:
                     system_prompt += memory_addition
 
+        # Inject workspace structure from the fixture manifest so the model
+        # knows exactly what files/directories exist and does not hallucinate
+        # paths (e.g. ./data/financials).
+        if ws_path is not None:
+            workspace_listing = self._build_workspace_listing(ws_path)
+            if workspace_listing:
+                system_prompt += workspace_listing
+
         # Build tool list: include handoff/submit_final only if the stage
         # is allowed to use them (prevents premature use).
         # Memory tools are only exposed when memory_mode is active — otherwise
@@ -1682,6 +1690,63 @@ class StageRunner:
             if stage.agent_role == current_role and i + 1 < len(stages):
                 return [stages[i + 1].agent_role]
         return [topology.exit_stage]
+
+    @staticmethod
+    def _build_workspace_listing(ws_path) -> str:
+        """Build a compact workspace directory listing from the fixture manifest.
+
+        Reads the agent-visible manifest.json from the workspace and presents
+        the required/optional/distractor files as a tree so the model knows
+        exactly what exists and cannot hallucinate non-existent paths.
+        """
+        import os
+        try:
+            manifest_path = ws_path / "manifest.json"
+            if not manifest_path.exists():
+                return ""
+            import json
+            with open(manifest_path) as f:
+                manifest = json.load(f)
+
+            lines = ["\n\n--- WORKSPACE CONTENTS ---"]
+            lines.append("The following files exist in your workspace. Use these exact paths.")
+
+            def _section(title, key):
+                files = manifest.get(key, [])
+                if files:
+                    lines.append(f"\n{title}:")
+                    for fp in files:
+                        lines.append(f"  - {fp}")
+
+            _section("Required files", "required_files")
+            _section("Optional files", "optional_files")
+            _section("Distractor files", "distractor_files")
+            _section("Sensitive files", "sensitive_files")
+
+            # Also list any extra files on disk not in manifest
+            disk_files = set()
+            for root, dirs, files in os.walk(ws_path):
+                dirs.sort()
+                for fname in sorted(files):
+                    if fname == "manifest.json":
+                        continue
+                    rel = os.path.relpath(os.path.join(root, fname), ws_path)
+                    disk_files.add(rel)
+
+            manifest_files = set()
+            for key in ("required_files", "optional_files", "distractor_files", "sensitive_files"):
+                manifest_files.update(manifest.get(key, []))
+
+            extras = sorted(disk_files - manifest_files)
+            if extras:
+                lines.append("\nOther files:")
+                for fp in extras:
+                    lines.append(f"  - {fp}")
+
+            lines.append("------------------------\n")
+            return "\n".join(lines)
+        except Exception:
+            return ""
 
     def _build_system_prompt(self, stage: Stage,
                              handoff_from_payload: Optional[HandoffPayload],
