@@ -81,7 +81,7 @@ def test_dry_run_scenario():
             dry_run=True, max_events=20,
             output_dir=Path(tmpdir) / "ws",
         )
-        wcfg = WorkflowConfig(topology="linear_2", max_events=20, max_agent_turns=10)
+        wcfg = WorkflowConfig(topology="review_loop", max_events=20, max_agent_turns=10)
         spec = ScenarioSpec(
             scenario_id="test_dry_run", task_family="code_review",
             task_variant="easy", fixture_id="code_review_easy",
@@ -104,7 +104,7 @@ def test_dry_run_perturbed_scenario():
             category="test", description="test", target_agent="researcher",
             trigger=InjectionTrigger(tool_name="read_text_file"),
         )
-        wcfg = WorkflowConfig(topology="linear_2", max_events=20, max_agent_turns=10)
+        wcfg = WorkflowConfig(topology="review_loop", max_events=20, max_agent_turns=10)
         spec = ScenarioSpec(
             scenario_id="test_perturbed", task_family="code_review",
             task_variant="easy", fixture_id="code_review_easy",
@@ -112,7 +112,7 @@ def test_dry_run_perturbed_scenario():
         )
         result = runner.run(spec, FIXTURE_DIR)
         assert result.runner_success, f"Run failed: {result.error}"
-        # In linear_2 topology the researcher's stage has can_finalize=False,
+        # In review_loop topology the researcher's stage has can_finalize=False,
         # so the dry-run trajectory (which ends with submit_final) will hit
         # premature_final. The test should verify the run completes without
         # crash and produces a trace, not require task_success.
@@ -124,7 +124,7 @@ def test_scenario_builder_benign():
     builder = ScenarioBuilder(seed=42)
     cfg = ScenarioBuildConfig(
         task_family="code_review", fixture_id="code_review_easy",
-        topology="linear_2", repetition_index=0,
+        topology="review_loop", repetition_index=0,
     )
     spec = builder.build_benign(cfg)
     assert spec.is_benign()
@@ -137,7 +137,7 @@ def test_scenario_builder_single_lep():
     builder = ScenarioBuilder(seed=42)
     cfg = ScenarioBuildConfig(
         task_family="financial_analysis", fixture_id="financial_clean",
-        topology="linear_2", repetition_index=0,
+        topology="review_loop", repetition_index=0,
     )
     lep = LEPConfig(
         code="LEP_MEMORY_POISONING", name="Test Poison",
@@ -155,7 +155,7 @@ def test_scenario_builder_counterfactual():
     builder = ScenarioBuilder(seed=42)
     cfg = ScenarioBuildConfig(
         task_family="code_review", fixture_id="code_review_easy",
-        topology="linear_2", repetition_index=0,
+        topology="review_loop", repetition_index=0,
     )
     lep = LEPConfig(
         code="LEP_TOOL_RESULT_CORRUPTION", name="Test",
@@ -190,7 +190,7 @@ def test_scenario_convergence():
 
 
 def test_scenario_serialization():
-    wcfg = WorkflowConfig(topology="linear_3", model_name="test")
+    wcfg = WorkflowConfig(topology="review_loop", model_name="test")
     lep = LEPConfig(
         code="LEP_TEST", name="Test", category="test",
         description="test", target_agent="agent",
@@ -405,7 +405,7 @@ def test_full_file_content_not_truncated():
         task_family="code_review",
         fixture_id="code_review_easy",
         task_variant="easy",
-        topology="linear_2",
+        topology="review_loop",
         repetition_index=0,
         seed=42,
     )
@@ -531,7 +531,7 @@ def test_loop_detection_termination():
         task_family="code_review",
         fixture_id="code_review_easy",
         task_variant="easy",
-        topology="linear_2",
+        topology="review_loop",
         repetition_index=0,
         seed=42,
     )
@@ -598,7 +598,7 @@ def test_evaluator_success_thresholds():
         fixture_id="code_review_easy",
         condition="benign",
         workflow_config=WorkflowConfig(
-            topology="linear_2", sharing_policy="handoff_summary_only",
+            topology="review_loop", sharing_policy="handoff_summary_only",
             memory_mode="none", verification_mode="none",
             max_events=40, max_agent_turns=10, timeout_seconds=300,
             model_name="dry-run", temperature=0.0, seed=42,
@@ -682,7 +682,7 @@ def test_event_fields_not_truncated():
             task_family="code_review",
             fixture_id="code_review_easy",
             task_variant="easy",
-            topology="linear_2",
+            topology="review_loop",
             repetition_index=0,
             seed=42,
         )
@@ -720,7 +720,7 @@ def test_event_fields_not_truncated():
     final_events = [e for e in trace.events if e.event_type == TraceEventType.FINAL_RESPONSE]
     assert final_events, "Missing FINAL_RESPONSE event"
     fr_text = final_events[0].output_text or ""
-    # In linear_2 topology, the researcher stage has can_finalize=False,
+    # In review_loop topology, the researcher stage has can_finalize=False,
     # so a submit_final will hit premature_final. Accept that message.
     assert "Task complete" in fr_text or "premature" in fr_text.lower(), (
         f"FINAL_RESPONSE missing expected content: {fr_text[:200]}"
@@ -815,7 +815,7 @@ def test_termination_reason_max_events():
         task_family="code_review",
         fixture_id="code_review_easy",
         task_variant="easy",
-        topology="linear_2",
+        topology="review_loop",
         repetition_index=0,
         seed=42,
     )
@@ -824,7 +824,7 @@ def test_termination_reason_max_events():
     with tempfile.TemporaryDirectory() as tmpdir:
         # Use max_agent_turns=4 so loop exits after 4 steps without terminal event
         spec.workflow_config = WorkflowConfig(
-            topology="linear_2",
+            topology="review_loop",
             sharing_policy="handoff_summary_only",
             memory_mode="none",
             verification_mode="none",
@@ -862,7 +862,7 @@ def test_termination_reason_max_events():
 
 
 def test_handoff_enforced_for_multi_agent_topo():
-    """Bug 10: linear_2 topology must NOT silently accept submit_final on a
+    """Bug 10: review_loop topology must NOT silently accept submit_final on a
     non-finalizable stage. The runner terminates with premature_final.
     """
     from generation.runner import ScenarioRunner
@@ -894,14 +894,14 @@ def test_handoff_enforced_for_multi_agent_topo():
         task_family="code_review",
         fixture_id="code_review_easy",
         task_variant="easy",
-        topology="linear_2",
+        topology="review_loop",
         repetition_index=0,
         seed=42,
     )
     spec = builder.build_benign(cfg)
     # Ensure multi-agent topology
     spec.workflow_config = WorkflowConfig(
-        topology="linear_2",
+        topology="review_loop",
         sharing_policy="handoff_summary_only",
         memory_mode="none",
         verification_mode="none",
@@ -1022,7 +1022,7 @@ def test_stage_local_history_persistence():
         task_family="code_review",
         fixture_id="code_review_easy",
         task_variant="easy",
-        topology="linear_2",
+        topology="review_loop",
         repetition_index=0,
         seed=42,
     )
@@ -1091,7 +1091,7 @@ def test_backend_reset_once_per_stage():
         task_family="code_review",
         fixture_id="code_review_easy",
         task_variant="easy",
-        topology="linear_2",
+        topology="review_loop",
         repetition_index=0,
         seed=42,
     )
@@ -1106,7 +1106,7 @@ def test_backend_reset_once_per_stage():
         )
         result = runner.run(spec, Path(__file__).resolve().parent.parent / "workspace_fixtures")
 
-    # linear_2 has 2 stages: researcher, analyst
+    # review_loop has 2 stages: researcher, analyst
     assert len(reset_log) == 2, (
         f"Expected exactly 2 backend resets (one per stage), got {len(reset_log)}: {reset_log}"
     )
@@ -1293,7 +1293,7 @@ def test_protocol_violation_plain_prose():
         runner = ScenarioRunner(llm_backend=ProseBackend(), dry_run=False, max_events=20, output_dir=Path(tmpdir))
         spec = ScenarioBuilder(seed=42).build_benign(ScenarioBuildConfig(
             task_family="code_review", fixture_id="code_review_easy",
-            task_variant="easy", topology="linear_2", repetition_index=0, seed=42,
+            task_variant="easy", topology="review_loop", repetition_index=0, seed=42,
         ))
         result = runner.run(spec, Path("workspace_fixtures"))
 
@@ -1351,7 +1351,7 @@ def test_protocol_violation_xml_tool_text():
         runner = ScenarioRunner(llm_backend=XMLToolBackend(), dry_run=False, max_events=20, output_dir=Path(tmpdir))
         spec = ScenarioBuilder(seed=42).build_benign(ScenarioBuildConfig(
             task_family="code_review", fixture_id="code_review_easy",
-            task_variant="easy", topology="linear_2", repetition_index=0, seed=42,
+            task_variant="easy", topology="review_loop", repetition_index=0, seed=42,
         ))
         result = runner.run(spec, Path("workspace_fixtures"))
 
@@ -1394,7 +1394,7 @@ def test_repair_success_native_tool():
         runner = ScenarioRunner(llm_backend=RepairableProseBackend(), dry_run=False, max_events=20, output_dir=Path(tmpdir))
         spec = ScenarioBuilder(seed=42).build_benign(ScenarioBuildConfig(
             task_family="code_review", fixture_id="code_review_easy",
-            task_variant="easy", topology="linear_2", repetition_index=0, seed=42,
+            task_variant="easy", topology="review_loop", repetition_index=0, seed=42,
         ))
         result = runner.run(spec, Path("workspace_fixtures"))
 
@@ -1434,7 +1434,7 @@ def test_repair_failure_no_continuation():
         runner = ScenarioRunner(llm_backend=UnrepairableBackend(), dry_run=False, max_events=20, output_dir=Path(tmpdir))
         spec = ScenarioBuilder(seed=42).build_benign(ScenarioBuildConfig(
             task_family="code_review", fixture_id="code_review_easy",
-            task_variant="easy", topology="linear_2", repetition_index=0, seed=42,
+            task_variant="easy", topology="review_loop", repetition_index=0, seed=42,
         ))
         result = runner.run(spec, Path("workspace_fixtures"))
 
@@ -1479,7 +1479,7 @@ def test_premature_final_terminates():
         runner = ScenarioRunner(llm_backend=PrematureFinalBackend(), dry_run=False, max_events=20, output_dir=Path(tmpdir))
         spec = ScenarioBuilder(seed=42).build_benign(ScenarioBuildConfig(
             task_family="code_review", fixture_id="code_review_easy",
-            task_variant="easy", topology="linear_2", repetition_index=0, seed=42,
+            task_variant="easy", topology="review_loop", repetition_index=0, seed=42,
         ))
         result = runner.run(spec, Path("workspace_fixtures"))
 
@@ -1573,8 +1573,8 @@ def test_researcher_stage_exposes_handoff():
     from generation.topology import TopologyConfig, Stage, HandoffRule
 
     topo = TopologyConfig(
-        topology_id="linear_2",
-        display_name="Linear 2",
+        topology_id="review_loop",
+        display_name="Review Loop",
         stages=[
             Stage("researcher", "researcher", "r1", max_turns=5,
                   can_handoff=True, can_finalize=False),
@@ -1637,8 +1637,8 @@ def test_analyst_stage_exposes_submit_final():
     from generation.topology import TopologyConfig, Stage, HandoffRule
 
     topo = TopologyConfig(
-        topology_id="linear_2",
-        display_name="Linear 2",
+        topology_id="review_loop",
+        display_name="Review Loop",
         stages=[
             Stage("researcher", "researcher", "r1", max_turns=5,
                   can_handoff=True, can_finalize=False),
@@ -1700,7 +1700,7 @@ def test_researcher_prose_gets_one_retry():
     from generation.topology import TopologyConfig, Stage, HandoffRule
 
     topo = TopologyConfig(
-        topology_id="linear_2", display_name="Linear 2",
+        topology_id="review_loop", display_name="Review Loop",
         stages=[
             Stage("researcher", "researcher", "r1", max_turns=5, can_handoff=True, can_finalize=False),
             Stage("analyst", "analyst", "a1", max_turns=5, can_handoff=False, can_finalize=True),
@@ -1761,7 +1761,7 @@ def test_retry_nudge_contains_nudge_exactly_once():
     from generation.topology import TopologyConfig, Stage, HandoffRule
 
     topo = TopologyConfig(
-        topology_id="linear_2", display_name="Linear 2",
+        topology_id="review_loop", display_name="Review Loop",
         stages=[
             Stage("researcher", "researcher", "r1", max_turns=5, can_handoff=True, can_finalize=False),
         ],
@@ -1824,7 +1824,7 @@ def test_researcher_handoff_is_native_tool():
     from generation.topology import TopologyConfig, Stage, HandoffRule
 
     topo = TopologyConfig(
-        topology_id="linear_2", display_name="Linear 2",
+        topology_id="review_loop", display_name="Review Loop",
         stages=[
             Stage("researcher", "researcher", "r1", max_turns=5, can_handoff=True, can_finalize=False),
         ],
@@ -1879,7 +1879,7 @@ def test_analyst_submit_final_is_native_tool():
     from generation.topology import TopologyConfig, Stage, HandoffRule
 
     topo = TopologyConfig(
-        topology_id="linear_2", display_name="Linear 2",
+        topology_id="review_loop", display_name="Review Loop",
         stages=[
             Stage("analyst", "analyst", "a1", max_turns=5, can_handoff=False, can_finalize=True),
         ],

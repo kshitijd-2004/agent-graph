@@ -524,21 +524,9 @@ class TestTopologyTargetResolution:
 class TestGetDefaultTopologyTarget:
     """Each topology returns its expected default target dict."""
 
-    def test_linear_2_default(self):
-        result = get_default_topology_target("linear_2")
-        assert result == {"kind": "stage", "target": "first_agent"}
-
-    def test_linear_3_default(self):
-        result = get_default_topology_target("linear_3")
-        assert result == {"kind": "stage", "target": "first_agent"}
-
-    def test_review_loop_default(self):
+    def test_review_loop_default_target(self):
         result = get_default_topology_target("review_loop")
-        assert result == {
-            "kind": "stage_invocation",
-            "target": "producer",
-            "invocation": 1,
-        }
+        assert result == {"kind": "stage_invocation", "target": "producer", "invocation": 1}
 
     def test_branch_and_verify_default(self):
         result = get_default_topology_target("branch_and_verify")

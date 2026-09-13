@@ -78,7 +78,7 @@ scenario = ScenarioSpec(
     task_family="financial_analysis",
     task_variant="default",
     fixture_id="financial_clean",
-    workflow_config=WorkflowConfig(topology="linear_2", max_agent_turns=40, memory_mode="ephemeral_shared"),
+    workflow_config=WorkflowConfig(topology="review_loop", max_agent_turns=40, memory_mode="ephemeral_shared"),
     lep_configs=[LEPConfig(code="LEP_MEMORY_POISONING", name="Memory Poisoning",
                            category="injection", description="Poison shared memory",
                            task_family="financial_analysis")],
@@ -148,7 +148,7 @@ scenario_benign = ScenarioSpec(
     task_family="financial_analysis",
     task_variant="default",
     fixture_id="fixture_001",
-    workflow_config=WorkflowConfig(topology="linear_2", max_agent_turns=40),
+    workflow_config=WorkflowConfig(topology="review_loop", max_agent_turns=40),
     lep_configs=[],
     condition="benign",
 )

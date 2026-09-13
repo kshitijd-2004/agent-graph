@@ -9,8 +9,6 @@ from typing import Any, Dict, List, Optional
 
 
 class TopologyType(str, Enum):
-    LINEAR_2 = "linear_2"
-    LINEAR_3 = "linear_3"
     COORDINATOR_STAR = "coordinator_star"
     REVIEW_LOOP = "review_loop"
     SHARED_MEMORY = "shared_memory_collaboration"
@@ -66,77 +64,6 @@ class WorkflowTopology(ABC):
         ...
 
 
-class Linear2Topology(WorkflowTopology):
-    """Two-agent linear: A → B → done.
-
-    Preserves the current two-agent behavior from v2.
-    Agent A (e.g. researcher) hands off to Agent B (e.g. analyst).
-    Agent B calls final to terminate.
-    """
-
-    def __init__(self, config: TopologyConfig):
-        super().__init__(config)
-        if len(config.agents) < 2:
-            config.agents = ["agent_001", "agent_002"]
-        self._handoff_done = False
-
-    def initialize(self) -> str:
-        self._handoff_done = False
-        return self.config.agents[0]
-
-    def next_agent(
-        self,
-        current_agent: str,
-        action: str,
-        handoff_content: Optional[str] = None,
-        iteration: int = 0,
-    ) -> Optional[str]:
-        if action == "handoff_to_analyst" and not self._handoff_done:
-            self._handoff_done = True
-            return self.config.agents[1]
-        return None
-
-    def is_terminal(self, action: str, iteration: int) -> bool:
-        return action == "final"
-
-
-class Linear3Topology(WorkflowTopology):
-    """Three-agent linear: A → B → C → done.
-
-    Agent A (researcher) hands off to Agent B (analyst),
-    who hands off to Agent C (verifier), who calls final.
-    """
-
-    def __init__(self, config: TopologyConfig):
-        super().__init__(config)
-        if len(config.agents) < 3:
-            config.agents = ["agent_001", "agent_002", "agent_003"]
-        self._handoff_1_done = False
-        self._handoff_2_done = False
-
-    def initialize(self) -> str:
-        self._handoff_1_done = False
-        self._handoff_2_done = False
-        return self.config.agents[0]
-
-    def next_agent(
-        self,
-        current_agent: str,
-        action: str,
-        handoff_content: Optional[str] = None,
-        iteration: int = 0,
-    ) -> Optional[str]:
-        if action == "handoff_to_analyst" and not self._handoff_1_done:
-            self._handoff_1_done = True
-            return self.config.agents[1]
-        if action == "handoff_to_verifier" and not self._handoff_2_done:
-            self._handoff_2_done = True
-            return self.config.agents[2]
-        return None
-
-    def is_terminal(self, action: str, iteration: int) -> bool:
-        return action == "final"
-
 
 # Placeholder stubs for topologies deferred to Milestone 2
 class CoordinatorStarTopology(WorkflowTopology):
@@ -183,11 +110,8 @@ class ReviewLoopTopology(WorkflowTopology):
 
 def create_topology(config: TopologyConfig) -> WorkflowTopology:
     """Factory function for creating topology strategies."""
-    mapping = {
-        TopologyType.LINEAR_2: Linear2Topology,
-        TopologyType.LINEAR_3: Linear3Topology,
-    }
-    cls = mapping.get(config.topology_type)
-    if cls is None:
-        raise ValueError(f"Topology {config.topology_type} not yet implemented")
-    return cls(config)
+    raise ValueError(
+        f"Topology {config.topology_type} not yet implemented. "
+        "The legacy linear_2 and linear_3 strategies have been removed. "
+        "Use generation/topology.py for active topologies."
+    )

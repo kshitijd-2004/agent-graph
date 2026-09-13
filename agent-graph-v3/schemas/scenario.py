@@ -29,7 +29,7 @@ class WorkflowConfig:
         allow_parallel_agents:  Whether agents can run in parallel
         allow_retries:          Whether failed actions can be retried
     """
-    topology: str = "linear_2"
+    topology: str = "review_loop"
     sharing_policy: str = "handoff_summary_only"
     memory_mode: str = "ephemeral_private"
     verification_mode: str = "none"
@@ -46,20 +46,16 @@ class WorkflowConfig:
 
 # Supported enum values for validation
 TOPOLOGIES = [
-    "linear_2",
-    "linear_3",
     "review_loop",
     "branch_and_verify",
     "coordinator_workers",
 ]
 
 # Propagation modes supported per topology.
-# Sequential topologies (linear_2, linear_3, review_loop) have a single
+# Sequential topologies (review_loop) have a single
 # agent path — one_to_many and many_to_one collapse to single_origin
 # and are excluded to avoid redundant runs.
 TOPOLOGY_PROPAGATION_MODES: dict[str, list[str]] = {
-    "linear_2":           ["single_origin"],
-    "linear_3":           ["single_origin"],
     "review_loop":        ["single_origin"],
     "branch_and_verify":  ["single_origin", "one_to_many", "many_to_one"],
     "coordinator_workers": ["single_origin", "one_to_many", "many_to_one"],
@@ -186,7 +182,7 @@ class ScenarioSpec:
         """Deserialize from a dictionary."""
         wcfg_data = d.get("workflow_config", {})
         wcfg = WorkflowConfig(
-            topology=wcfg_data.get("topology", "linear_2"),
+            topology=wcfg_data.get("topology", "review_loop"),
             sharing_policy=wcfg_data.get("sharing_policy", "handoff_summary_only"),
             memory_mode=wcfg_data.get("memory_mode", "ephemeral_private"),
             verification_mode=wcfg_data.get("verification_mode", "none"),

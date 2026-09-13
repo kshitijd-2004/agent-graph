@@ -193,26 +193,6 @@ class BenchmarkManifest:
                             })
                             idx += 2
 
-                        # Counterfactuals (no LEP, same config)
-                        for rep in range(self.num_repetitions):
-                            plan.append({
-                                "run_id": f"run-{idx:04d}",
-                                "scenario_id": (
-                                    f"b_{topology}_{task_family}_"
-                                    f"cf_{rep:02d}"
-                                ),
-                                "task_family": task_family,
-                                "condition": "counterfactual",
-                                "lep_codes": [],
-                                "topology": topology,
-                                "propagation_mode": prop_mode,
-                                "lep_code": "",
-                                "repetition_index": rep,
-                                "pair_tag": "",
-                                "is_baseline": False,
-                            })
-                            idx += 1
-
         return plan
 
 
@@ -223,7 +203,7 @@ class BenchmarkRunner:
 
     Usage:
         manifest = BenchmarkManifest(
-            topologies=["linear_2", "star", "mesh"],
+            topologies=["review_loop", "star", "mesh"],
             task_families=["code_review"],
             lep_configs=[...],
             num_repetitions=5,
@@ -428,7 +408,7 @@ class BenchmarkRunner:
 
     def _build_workflow_config(self, entry: dict[str, Any]) -> WorkflowConfig:
         return WorkflowConfig(
-            topology=entry.get("topology", "linear_2"),
+            topology=entry.get("topology", "review_loop"),
             sharing_policy="handoff_summary_only",
             memory_mode="ephemeral_shared",
             verification_mode="self_check",
@@ -449,7 +429,6 @@ class BenchmarkRunner:
             "code_review": "code_review_easy",
             "financial_analysis": "financial_clean",
             "research_synthesis": "research_conflicting",
-            "competitive_intelligence": "competitive_pricing",
         }
         return FIXTURE_MAP.get(family, f"{family}_default")
 

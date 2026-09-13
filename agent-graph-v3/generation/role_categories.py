@@ -22,7 +22,6 @@ MEMORY_WRITERS = {
     # Task-remapped equivalents
     "inspector",     # code_review: inspector writes findings
     "extractor",     # financial: extractor writes findings
-    "searcher",      # competitive_intelligence: searcher writes findings
 }
 
 # Agents whose primary action is consuming upstream output from shared memory

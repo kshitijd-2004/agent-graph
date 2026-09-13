@@ -165,9 +165,9 @@ def test_fan_in_logic():
     print("  PASS  fan-in waiting logic")
 
 
-def test_linear_topologies_regression():
-    """Linear topologies should have no merge targets."""
-    for name in ["linear_2", "linear_3"]:
+def test_sequential_topologies_regression():
+    """Sequential topologies should have no merge targets."""
+    for name in ["review_loop"]:
         topo = _topo(name)
         for stage in topo.stages:
             incoming = topo.get_incoming_handoffs(stage.agent_role)

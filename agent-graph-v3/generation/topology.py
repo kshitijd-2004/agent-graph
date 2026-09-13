@@ -113,43 +113,6 @@ class TopologyConfig:
 
 def _build_registry() -> Dict[str, callable]:
     """Return {topology_id: builder_fn}."""
-    def linear_2(agent_map: Dict[str, str]) -> TopologyConfig:
-        return TopologyConfig(
-            topology_id="linear_2",
-            display_name="Linear (2 agents)",
-            stages=[
-                Stage("researcher", "researcher", agent_map["researcher"],
-                      max_turns=10, can_handoff=True, can_finalize=False),
-                Stage("analyst", "analyst", agent_map["analyst"],
-                      max_turns=10, can_handoff=False, can_finalize=True),
-            ],
-            handoff_rules=[
-                HandoffRule("researcher", "analyst"),
-            ],
-            exit_stage="analyst",
-            max_iterations=2,  # researcher + analyst
-        )
-
-    def linear_3(agent_map: Dict[str, str]) -> TopologyConfig:
-        return TopologyConfig(
-            topology_id="linear_3",
-            display_name="Linear (3 agents)",
-            stages=[
-                Stage("researcher", "researcher", agent_map["researcher"],
-                      max_turns=8, can_handoff=True, can_finalize=False),
-                Stage("analyst", "analyst", agent_map["analyst"],
-                      max_turns=8, can_handoff=True, can_finalize=False),
-                Stage("verifier", "verifier", agent_map["verifier"],
-                      max_turns=8, can_handoff=False, can_finalize=True),
-            ],
-            handoff_rules=[
-                HandoffRule("researcher", "analyst"),
-                HandoffRule("analyst", "verifier"),
-            ],
-            exit_stage="verifier",
-            max_iterations=3,  # researcher + analyst + verifier
-        )
-
     def review_loop(agent_map: Dict[str, str]) -> TopologyConfig:
         return TopologyConfig(
             topology_id="review_loop",
@@ -249,8 +212,6 @@ def _build_registry() -> Dict[str, callable]:
         )
 
     return {
-        "linear_2": linear_2,
-        "linear_3": linear_3,
         "review_loop": review_loop,
         "branch_and_verify": branch_and_verify,
         "coordinator_workers": coordinator_workers,

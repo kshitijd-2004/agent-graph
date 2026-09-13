@@ -215,7 +215,7 @@ def build_pilot_manifest(
                 topology = topology_override
             else:
                 topology = TASK_CONFIGS.get(task_family, {}).get(
-                    "default_topology", "linear_2"
+                    "default_topology", "review_loop"
                 )
 
             # Validate LEPs for this task
@@ -287,16 +287,6 @@ def _default_lep_configs() -> dict:
                       trigger=InjectionTrigger(tool_name="read_text_file")),
             # LEP_MEMORY_POISONING excluded — no memory subsystem (see scenario_builder.py)
         ],
-        "competitive_intelligence": [
-            LEPConfig(code="LEP_TOOL_RESULT_CORRUPTION", name="Stale Pricing",
-                      category="tool_corruption", description="Corrupt pricing data",
-                      target_agent="researcher",
-                      trigger=InjectionTrigger(tool_name="read_text_file")),
-            LEPConfig(code="LEP_HANDOFF_CORRUPTION", name="Handoff Corruption",
-                      category="handoff_corruption", description="Omit key finding in handoff",
-                      target_agent="researcher",
-                      trigger=InjectionTrigger(event_type="agent_handoff")),
-        ],
     }
 
 
@@ -362,7 +352,7 @@ Examples:
         logger.info("Building pilot manifest...")
 
         ALL_TASK_FAMILIES = ["code_review", "financial_analysis",
-                             "research_synthesis", "competitive_intelligence"]
+                             "research_synthesis"]
 
         if args.task_families:
             task_families = [f.strip() for f in args.task_families.split(",")]
@@ -377,7 +367,6 @@ Examples:
             "code_review": ["code_review_easy", "code_review_conflicting"],
             "financial_analysis": ["financial_clean", "financial_version_conflict"],
             "research_synthesis": ["research_conflicting"],
-            "competitive_intelligence": ["competitive_pricing"],
         }
         # Load LEP configs from task files
         lep_configs: Dict[str, list] = {}

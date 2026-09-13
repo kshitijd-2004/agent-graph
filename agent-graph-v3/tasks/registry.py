@@ -215,42 +215,6 @@ DEFAULT_LEPS: Dict[str, list[LEPConfig]] = {
             severity="medium",
         ),
     ],
-    "competitive_intelligence": [
-        LEPConfig(
-            code="LEP_TOOL_RESULT_CORRUPTION",
-            name="Stale Pricing Tool Result",
-            category="tool_corruption",
-            description="Corrupt pricing data in tool output",
-            target_agent="researcher",
-            trigger=InjectionTrigger(tool_name="read_text_file", occurrence=1),
-            injection_surface="tool_return",
-            propagation_mode="downstream",
-            severity="medium",
-        ),
-        LEPConfig(
-            code="LEP_HANDOFF_CORRUPTION",
-            name="Handoff Corruption",
-            category="handoff",
-            description="Corrupt competitor analysis in handoff",
-            target_agent="analyst",
-            trigger=InjectionTrigger(after_event_type="agent_handoff"),
-            injection_surface="handoff_content",
-            propagation_mode="cross_agent",
-            severity="medium",
-            requires_handoff=True,
-        ),
-        LEPConfig(
-            code="LEP_INPUT_DISREGARD",
-            name="Input Disregard",
-            category="behavioral",
-            description="Analyst ignores researcher evidence",
-            target_agent="analyst",
-            trigger=InjectionTrigger(after_event_type="agent_handoff"),
-            injection_surface="agent_prompt",
-            propagation_mode="downstream",
-            severity="medium",
-        ),
-    ],
 }
 
 
@@ -276,9 +240,7 @@ def get_default_leps(task_family: str) -> list[LEPConfig]:
 from tasks.code_review import CodeReviewTask
 from tasks.financial import FinancialTask
 from tasks.research import ResearchTask
-from tasks.competitive_intelligence import CompetitiveIntelligenceTask
 
 register_task("code_review", CodeReviewTask)
 register_task("financial_analysis", FinancialTask)
 register_task("research_synthesis", ResearchTask)
-register_task("competitive_intelligence", CompetitiveIntelligenceTask)

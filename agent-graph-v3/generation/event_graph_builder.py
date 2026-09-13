@@ -9,7 +9,7 @@ reference.
 
 Example:
     builder = DependsOnGraphBuilder()
-    graph = builder.build(trace, topology_name="linear_3", task_family="code_review")
+    graph = builder.build(trace, topology_name="review_loop", task_family="code_review")
 """
 
 from __future__ import annotations
@@ -156,7 +156,7 @@ class DependsOnGraphBuilder:
 
         Args:
             trace:           The enriched Trace object
-            topology_name:   Topology identifier (e.g. "linear_3")
+            topology_name:   Topology identifier (e.g. "review_loop")
             task_family:     Task family (e.g. "code_review")
             strict:          If True, raise on cycle; if False, skip cycle edges
 

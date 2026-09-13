@@ -107,7 +107,7 @@ def test_event_node_count():
     section("EventNode creation")
     for label, path in [("benign", BENIGN_TRACE), ("malignant", MALIGNANT_TRACE)]:
         trace = _load_trace(path)
-        graph = build_event_graph(trace, "linear_3", "code_review")
+        graph = build_event_graph(trace, "review_loop", "code_review")
         assert graph.num_nodes == len(trace.events), (
             f"{label}: {graph.num_nodes} nodes vs {len(trace.events)} events"
         )
@@ -117,7 +117,7 @@ def test_event_node_count():
 def test_node_perturbation_flags():
     """Node perturbation flags match event_labels."""
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = build_event_graph(trace, "linear_3", "code_review")
+    graph = build_event_graph(trace, "review_loop", "code_review")
 
     origin_count = sum(1 for n in graph.nodes if n.is_injection_origin)
     assert origin_count == 1, f"Expected 1 injection origin, got {origin_count}"
@@ -133,7 +133,7 @@ def test_node_perturbation_flags():
 def test_node_indices_stable():
     """Node event_index values are monotonic and cover 0..N-1."""
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = build_event_graph(trace, "linear_3", "code_review")
+    graph = build_event_graph(trace, "review_loop", "code_review")
 
     indices = [n.event_index for n in graph.nodes]
     assert indices == list(range(len(indices))), "event_index not monotonic"
@@ -145,7 +145,7 @@ def test_event_type_vocabulary():
     vocab = set(EVENT_TYPES)
     for label, path in [("benign", BENIGN_TRACE), ("malignant", MALIGNANT_TRACE)]:
         trace = _load_trace(path)
-        graph = build_event_graph(trace, "linear_3", "code_review")
+        graph = build_event_graph(trace, "review_loop", "code_review")
         bad = [n.event_type for n in graph.nodes if n.event_type not in vocab]
         assert not bad, f"{label}: unknown event types: {bad[:10]}"
     ok("event_type_vocabulary")
@@ -154,7 +154,7 @@ def test_event_type_vocabulary():
 def test_depends_on_edges_match_events():
     """Every depends_on edge points to a valid node."""
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = build_event_graph(trace, "linear_3", "code_review")
+    graph = build_event_graph(trace, "review_loop", "code_review")
 
     id_to_idx = {n.event_id: i for i, n in enumerate(graph.nodes)}
     for src_idx, tgt_idx in graph.edges:
@@ -170,7 +170,7 @@ def test_depends_on_edges_match_events():
 def test_acyclic():
     """Graph has no cycles."""
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = build_event_graph(trace, "linear_3", "code_review", strict=True)
+    graph = build_event_graph(trace, "review_loop", "code_review", strict=True)
     assert graph.num_edges > 0, "Graph should have edges"
     ok("acyclic")
 
@@ -178,7 +178,7 @@ def test_acyclic():
 def test_timestamps_monotonic_along_edges():
     """Edge timestamps are non-decreasing (warnings ok, errors not)."""
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = build_event_graph(trace, "linear_3", "code_review")
+    graph = build_event_graph(trace, "review_loop", "code_review")
     back_ts = sum(
         1 for s, t in graph.edges
         if graph.nodes[s].timestamp > graph.nodes[t].timestamp
@@ -191,7 +191,7 @@ def test_no_self_loops():
     """No edges point to the same node."""
     for label, path in [("benign", BENIGN_TRACE), ("malignant", MALIGNANT_TRACE)]:
         trace = _load_trace(path)
-        graph = build_event_graph(trace, "linear_3", "code_review")
+        graph = build_event_graph(trace, "review_loop", "code_review")
         self_loops = [(s, t) for s, t in graph.edges if s == t]
         assert not self_loops, f"{label}: self-loops: {self_loops[:3]}"
     ok("no_self_loops")
@@ -200,7 +200,7 @@ def test_no_self_loops():
 def test_origin_event_graph_identification():
     """Injection origin event is identified in EventGraph."""
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = build_event_graph(trace, "linear_3", "code_review")
+    graph = build_event_graph(trace, "review_loop", "code_review")
 
     origins = [n for n in graph.nodes if n.is_injection_origin]
     assert len(origins) == 1, f"Expected 1 origin, got {len(origins)}"
@@ -222,8 +222,8 @@ def test_malignant_vs_benign_structure():
     benign = _load_trace(BENIGN_TRACE)
     malig = _load_trace(MALIGNANT_TRACE)
 
-    g_b = build_event_graph(benign, "linear_3", "code_review")
-    g_m = build_event_graph(malig, "linear_3", "code_review")
+    g_b = build_event_graph(benign, "review_loop", "code_review")
+    g_m = build_event_graph(malig, "review_loop", "code_review")
 
     # Benign has no injection origin
     origins_b = [n for n in g_b.nodes if n.is_injection_origin]
@@ -243,8 +243,8 @@ def test_malignant_vs_benign_structure():
 def test_topology_fields():
     """EventGraph has correct topology and task_family."""
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = build_event_graph(trace, "linear_3", "code_review")
-    assert graph.topology_name == "linear_3"
+    graph = build_event_graph(trace, "review_loop", "code_review")
+    assert graph.topology_name == "review_loop"
     assert graph.task_family == "code_review"
     assert graph.is_malignant
     ok("topology_fields")
@@ -258,7 +258,7 @@ def test_node_feature_dimensions():
     """
     builder = DependsOnGraphBuilder()
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = builder.build(trace, "linear_3", "code_review")
+    graph = builder.build(trace, "review_loop", "code_review")
 
     et_dim = len(EVENT_TYPES)
     ar_dim = len(AGENT_ROLE_VOCAB) + 1
@@ -280,7 +280,7 @@ def test_edge_feature_dimensions():
     """Edge feature vectors have expected total dimensions."""
     builder = DependsOnGraphBuilder()
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = builder.build(trace, "linear_3", "code_review")
+    graph = builder.build(trace, "review_loop", "code_review")
 
     pr_dim = len(PROPAGATION_ROLES)
     expected_dim = pr_dim + 1
@@ -298,7 +298,7 @@ def test_edge_attr_shape_matches_edges():
     """Edge feature matrix has one row per edge."""
     builder = DependsOnGraphBuilder()
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = builder.build(trace, "linear_3", "code_review")
+    graph = builder.build(trace, "review_loop", "code_review")
 
     edge_attr = builder._compute_edge_features(graph)
     assert edge_attr.shape[0] == graph.num_edges, \
@@ -309,7 +309,7 @@ def test_edge_attr_shape_matches_edges():
 def test_stage_event_index_preserved():
     """stage_event_index is preserved in node metadata."""
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = build_event_graph(trace, "linear_3", "code_review")
+    graph = build_event_graph(trace, "review_loop", "code_review")
 
     staged = [n for n in graph.nodes if n.stage_event_index is not None]
     # All events in the pilot have stage_event_index set
@@ -320,7 +320,7 @@ def test_stage_event_index_preserved():
 def test_different_topologies_work():
     """Builder works with different topology strings (same trace)."""
     trace = _load_trace(MALIGNANT_TRACE)
-    for topo in ("linear_2", "linear_3", "coordinator_star",
+    for topo in ("review_loop", "review_loop", "coordinator_star",
                  "branch_and_verify", "coordinator_workers"):
         g = build_event_graph(trace, topo, "code_review")
         assert g.num_nodes == len(trace.events)
@@ -331,7 +331,7 @@ def test_different_topologies_work():
 def test_agent_role_vocabulary_coverage():
     """All roles seen in pilot traces are in or near the fixed vocab."""
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = build_event_graph(trace, "linear_3", "code_review")
+    graph = build_event_graph(trace, "review_loop", "code_review")
     vocab = set(AGENT_ROLE_VOCAB)
     unknown = [n.agent_role for n in graph.nodes if n.agent_role not in vocab]
     # "unknown" is expected; anything else is a gap
@@ -343,7 +343,7 @@ def test_agent_role_vocabulary_coverage():
 def test_large_trace_no_issue():
     """Builder handles the full 68-event pilot trace without errors."""
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = build_event_graph(trace, "linear_3", "code_review")
+    graph = build_event_graph(trace, "review_loop", "code_review")
     assert graph.num_nodes == 68
     assert graph.num_edges > 0
     assert graph.num_edges < graph.num_nodes * (graph.num_nodes - 1)  # not dense
@@ -355,10 +355,10 @@ def test_trace_integrity_strict_mode():
     builder = DependsOnGraphBuilder()
     trace = _load_trace(MALIGNANT_TRACE)
 
-    g_strict = builder.build(trace, "linear_3", "code_review", strict=True)
+    g_strict = builder.build(trace, "review_loop", "code_review", strict=True)
     assert g_strict.num_nodes > 0
 
-    g_loose = builder.build(trace, "linear_3", "code_review", strict=False)
+    g_loose = builder.build(trace, "review_loop", "code_review", strict=False)
     assert g_loose.num_nodes > 0
     ok("trace_integrity_strict_mode")
 
@@ -367,7 +367,7 @@ def test_event_type_feature_one_hot():
     """Node feature matrix has exactly one 1.0 in the event_type block."""
     builder = DependsOnGraphBuilder()
     trace = _load_trace(MALIGNANT_TRACE)
-    graph = builder.build(trace, "linear_3", "code_review")
+    graph = builder.build(trace, "review_loop", "code_review")
 
     et_dim = len(EVENT_TYPES)
     ar_dim = len(AGENT_ROLE_VOCAB) + 1

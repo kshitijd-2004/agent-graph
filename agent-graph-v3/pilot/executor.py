@@ -215,7 +215,7 @@ class PilotExecutor:
     def _build_workflow_config(self, entry: dict[str, Any]) -> WorkflowConfig:
         from pilot.config import DEFAULT_WORKFLOW_CONFIG
         cfg = WorkflowConfig(
-            topology=entry.get("topology", "linear_2"),
+            topology=entry.get("topology", "review_loop"),
             sharing_policy=DEFAULT_WORKFLOW_CONFIG.sharing_policy,
             memory_mode=DEFAULT_WORKFLOW_CONFIG.memory_mode,
             verification_mode=DEFAULT_WORKFLOW_CONFIG.verification_mode,

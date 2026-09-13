@@ -56,8 +56,7 @@ def validate_lep_code(code: str, task_family: str = "") -> None:
         )
 
 # Default configurations
-DEFAULT_TOPOLOGIES = ["linear_2", "linear_3", "review_loop",
-                      "branch_and_verify", "coordinator_workers"]
+DEFAULT_TOPOLOGIES = ["review_loop", "branch_and_verify", "coordinator_workers"]
 DEFAULT_SHARING_POLICIES = ["full_state", "handoff_summary_only", "selective_artifacts"]
 DEFAULT_MEMORY_MODES = ["none", "ephemeral_shared", "persistent_shared"]
 DEFAULT_VERIFICATION_MODES = ["none", "self_check", "independent_verifier"]
@@ -65,28 +64,22 @@ DEFAULT_VERIFICATION_MODES = ["none", "self_check", "independent_verifier"]
 # Task families with their default configs
 TASK_CONFIGS: Dict[str, Dict[str, Any]] = {
     "code_review": {
-        "default_topology": "linear_2",
-        "supported_topologies": ["linear_2", "linear_3", "review_loop",
+        "default_topology": "review_loop",
+        "supported_topologies": ["review_loop",
                                   "branch_and_verify", "coordinator_workers"],
         "default_agents": ["inspector", "reviewer"],
     },
     "financial_analysis": {
-        "default_topology": "linear_2",
-        "supported_topologies": ["linear_2", "linear_3", "review_loop",
+        "default_topology": "review_loop",
+        "supported_topologies": ["review_loop",
                                   "branch_and_verify", "coordinator_workers"],
         "default_agents": ["extractor", "analyst"],
     },
     "research_synthesis": {
-        "default_topology": "linear_3",
-        "supported_topologies": ["linear_2", "linear_3", "review_loop",
+        "default_topology": "review_loop",
+        "supported_topologies": ["review_loop",
                                   "branch_and_verify", "coordinator_workers"],
         "default_agents": ["researcher", "synthesizer", "verifier"],
-    },
-    "competitive_intelligence": {
-        "default_topology": "linear_3",
-        "supported_topologies": ["linear_2", "linear_3", "review_loop",
-                                  "branch_and_verify", "coordinator_workers"],
-        "default_agents": ["researcher", "analyst", "reviewer"],
     },
 }
 
@@ -99,9 +92,9 @@ class ScenarioBuildConfig:
     task_variant: str = "default"
 
     # Workflow config
-    topology: str = "linear_2"
+    topology: str = "review_loop"
     sharing_policy: str = "full_state"
-    memory_mode: str = "none"
+    memory_mode: str = "ephemeral_shared"
     verification_mode: str = "none"
     max_events: int = 80
     max_agent_turns: int = 40
@@ -309,7 +302,7 @@ class ScenarioBuilder:
                 for fixture_id in fixture_ids:
                     leps = lep_configs_per_task.get(task_family, [])
                     task_cfg = TASK_CONFIGS.get(task_family, {})
-                    topology = task_cfg.get("default_topology", "linear_2")
+                    topology = task_cfg.get("default_topology", "review_loop")
 
                     # Benign
                     base_config = ScenarioBuildConfig(

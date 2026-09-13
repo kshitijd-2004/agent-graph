@@ -42,7 +42,24 @@ Five LEP families are implemented in \texttt{leps/} and orchestrated by \texttt{
 LEPs use boundary-aware routing: \texttt{BOUNDARY\_LEPS} maps \texttt{tool\_result} to \texttt{LEP\_TOOL\_RESULT\_CORRUPTION} and \texttt{LEP\_INDIRECT\_PROMPT\_INJECTION}; \texttt{agent\_handoff} to \texttt{LEP\_HANDOFF\_CORRUPTION} and \texttt{LEP\_INPUT\_DISREGARD}. One-shot semantics prevent re-firing after a successful mutation. The \texttt{TriggerMatcher} evaluates \texttt{InjectionTrigger} conditions (event type, source agent, tool name, path pattern, content pattern, occurrence count, event index bounds, probability) with idempotency enforcement.
 
 \paragraph{Execution topologies.}
-Nine topologies serve two experimental purposes. Four controlled topologies isolate structural dimensions for causal attribution: \texttt{linear\_3} (3-stage sequential baseline), \texttt{fanout\_2} (pure diffusion: researcher branches into two independent agents with no convergence), \texttt{merge\_2} (pure convergence: two independent agents feed a single synthesizer), and one diamond topology (\texttt{parallel\_merge} or \texttt{branch\_and\_verify}). The remaining five provide ecological validity across realistic workflow patterns: \texttt{linear\_2} (2-stage baseline), \texttt{coordinator\_star} (specialists feeding a coordinator), \texttt{review\_loop} (back-and-forth with max\_review\_cycles=1), \texttt{shared\_memory\_collaboration} (shared memory variant), and whichever diamond topology is not used in the controlled set. For the role-semantics experiment, \texttt{branch\_and\_verify} and \texttt{parallel\_merge} share identical graph shape but assign the downstream agent the role of verifier (checks and resolves disagreement) versus synthesizer (combines outputs), enabling isolation of role semantics from structure.
+Three topologies are implemented, each designed to isolate a distinct
+structural dimension of perturbation propagation. \texttt{review\_loop}
+is a 2-stage sequential topology (researcher $\to$ analyst) with a bounded
+backedge: the analyst can hand back to the researcher for revision, and the
+review cycle is capped at one iteration. This topology isolates the effect
+of a producer--critic feedback loop: the same perturbation can be observed
+both at first consumption (researcher $\to$ analyst) and at revision
+(analyst $\to$ researcher). \texttt{branch\_and\_verify} is a 3-stage
+diamond topology where two independent branches (researcher, analyst) feed a
+single verifier that reconciles their outputs. This topology isolates
+redundancy and verification: the verifier has two independent sources and
+can detect, reject, or recover from a perturbation that affects one branch.
+\texttt{coordinator\_workers} is a 4-stage fan-in topology where a
+coordinator decomposes a task and delegates to three specialist workers
+(security, correctness, test), each of which hands back to the coordinator
+for aggregation. This topology isolates many-to-one aggregation trust: a
+single perturbed specialist can contaminate the coordinator's synthesis of
+all three outputs.
 
 \paragraph{Task families and evaluators.}
 Three task families with deterministic rule-based evaluators:
@@ -149,6 +166,146 @@ with reproducible perturbation injection, typed boundary routing, and
 paired controlled executions enabling attribution of downstream differences
 to localized interventions.
 
+\paragraph{LEP grounding papers.}
+Each Local Execution Perturbation (LEP) implemented in this benchmark is
+grounded in peer-reviewed or workshop papers that directly study or
+demonstrate the corresponding attack vector in LLM or multi-agent systems.
+Table~\ref{tab:lep_papers} summarizes the mapping; we elaborate on the
+direct relevance of each paper below.
+
+\subsubsection{LEP-to-paper grounding}
+
+\paragraph{Tool Result Corruption.}
+\textbf{InjecAgent}~\citep{liu2024injecagent} is a benchmark specifically
+designed to evaluate indirect prompt injection attacks on LLM-powered agent
+systems. It introduces a dynamic environment where agents must process tool
+outputs that may contain embedded adversarial instructions, and measures
+whether agents consume corrupted results or detect the injection. This
+directly models our \texttt{LEP\_TOOL\_RESULT\_CORRUPTION}: a tool call
+succeeds normally, but the returned content is silently altered (numeric
+corruption, partial omission, source swap), causing the agent to act on
+false information. InjecAgent's focus on tool-output trust boundaries makes
+it the closest structural antecedent to our tool result corruption variants.
+
+\paragraph{Indirect Prompt Injection.}
+\textbf{Greshake et al.``Not What You've Signed Up For''}
+~\citep{greshake2023not} is the foundational paper that defined
+indirect prompt injection (IPI) as a distinct attack class. The authors
+demonstrate that adversaries can remotely compromise LLM-integrated
+applications by embedding malicious instructions in data sources the model
+retrieves---web pages, documents, emails, code repositories---without ever
+directly interacting with the LLM. Their taxonomy of attack impacts (data
+exfiltration, information ecosystem contamination, worming, function
+hijacking) directly underpins our six IIP variants
+(\texttt{ignore\_previous}, \texttt{exfiltrate}, \texttt{skip\_verification},
+\texttt{change\_destination}, \texttt{trust\_this}, \texttt{terminate\_early}).
+The paper's demonstration that retrieved prompts act as ``arbitrary code
+execution'' for the LLM is the core mechanism our IIP LEP exploits.
+
+\textbf{Rahman \& Kim ``The Framing Gap''}~\citep{rahman2026framing}
+extends Greshake et al.'s framework specifically to tool-using agents,
+showing that IIP exfiltration attacks defeat surface-level defenses (input
+sanitization, output filtering) that work in single-turn chatbot settings.
+This directly motivates our focus on tool-using agent topologies: the
+defenses that protect chatbots do not protect agents that retrieve and act
+on documents via tools. The paper bridges the gap between foundational IIP
+theory and the tool-using agent setting our benchmark targets.
+
+\paragraph{Memory Poisoning.}
+\textbf{ToolHazard}~\citep{mou2026toolhazard} is a security benchmark for
+LLM-based agents that includes memory and context poisoning scenarios. It
+evaluates whether agents can identify and disregard poisoned entries in
+their memory store when those entries are retrieved and presented as trusted
+prior knowledge. This directly models our
+\texttt{LEP\_MEMORY\_POISONING}: false information is seeded into the memory
+store and later retrieved by an agent that treats it as ground truth.
+ToolHazard's inclusion of memory-specific attack scenarios makes it the
+primary grounding for this LEP family.
+
+\paragraph{Handoff Corruption.}
+\textbf{MAgIC}~\citep{zhou2023magic} is the only dedicated benchmark for
+multi-agent generative communication. It evaluates how well multi-agent
+systems develop and use communication protocols for collaborative tasks,
+explicitly testing information transfer between agents. The benchmark
+documents three failure modes directly corresponding to our handoff
+corruption variants: message loss (\texttt{omit\_key\_finding}), message
+distortion (\texttt{alter\_severity}, \texttt{replace\_value}), and receiver
+failure to act on messages (\texttt{remove\_uncertainty},
+\texttt{unsupported\_recommendation}, \texttt{swap\_attribution}). MAgIC's
+focus on inter-agent message fidelity provides the only peer-reviewed
+empirical evidence that handoff corruption is a measurable, reproducible
+phenomenon in multi-agent LLM systems.
+
+\paragraph{Input Disregard.}
+\textbf{HackAPrompt}~\citep{schulhoff2023hackaprompt} is a large-scale
+benchmark of 14,134 adversarial prompts targeting LLM instruction-following.
+Its core finding---that LLMs exhibit inconsistent ``instruction hierarchy''
+and can be systematically induced to ignore, discard, or override their own
+prior instructions and context---directly models all five Input Disregard
+variants. \texttt{start\_scratch} maps to ``ignore everything above''
+patterns; \texttt{discard\_warnings} maps to risk-flag suppression;
+\texttt{ignore\_verifier} maps to correction override; \texttt{recency\_bias}
+maps to context window manipulation favoring the latest input; and
+\texttt{prefer\_memory} maps to models trusting their own prior context over
+received input. HackAPrompt demonstrates that input disregard is not a
+corner case but a systematic vulnerability across model families.
+
+\subsection{Task-family benchmarks}
+
+\paragraph{code\_review.}
+We ground the \texttt{code\_review} task family in
+\textbf{SWE-bench}~\citep{jimenez2023swebench}, a large-scale benchmark of
+real-world GitHub issues requiring code comprehension, reasoning about
+correctness, and producing patches. SWE-bench is the standard reference for
+evaluating LLM-based software engineering agents and provides the canonical
+paradigm for agentic code reasoning tasks.
+
+\paragraph{financial\_analysis.}
+We ground the \texttt{financial\_analysis} task family in
+\textbf{ConvFinQA}~\citep{chen2022convfinqa}, a conversational financial QA
+benchmark requiring multi-step numerical reasoning over tables. ConvFinQA
+directly evaluates chain-of-numerical-reasoning capabilities that
+multi-agent financial analysis systems must exhibit when extracting and
+comparing financial figures across document versions.
+
+\paragraph{research\_synthesis.}
+We ground the \texttt{research\_synthesis} task family in
+\textbf{GAIA}~\citep{mialon2023gaia}, a general AI assistant benchmark that
+evaluates whether agents can autonomously gather, synthesize, and act on
+information from multiple sources. GAIA's information-synthesis dimension
+maps directly onto the research-synthesis workflow: agents retrieve
+conflicting documents, reconcile findings, and produce a unified report.
+
+\subsubsection{Topology precedents}
+
+\paragraph{review\_loop.}
+The \texttt{review\_loop} topology implements the producer--critic--revise
+pattern described by \textbf{Reflexion}~\citep{shinn2023reflexion}, where
+one actor produces an output, a separate evaluator reviews it, and
+linguistic feedback conditions a revision on the next turn. Reflexion
+demonstrates that a bounded review cycle (actor $\to$ critic $\to$ revise)
+improves task success rates across code and reasoning tasks, providing the
+canonical precedent for our 2-agent backedge topology.
+
+\paragraph{branch\_and\_verify.}
+The \texttt{branch\_and\_verify} topology follows the independent-branch
+verification pattern of \textbf{MAVEN}~\citep{yao2026maven}, a
+multi-agent verification--elaboration network where independent reasoning
+branches produce outputs that a central judge reconciles. MAVEN explicitly
+separates logical defense from factual grounding across specialized agent
+roles, motivating our design where two independent branches (researcher,
+analyst) feed a verifier that detects and resolves disagreement.
+
+\paragraph{coordinator\_workers.}
+The \texttt{coordinator\_workers} topology implements the
+coordinator--delegate--aggregate pattern of \textbf{MetaGPT}
+~\citep{hong2023metagpt}, where a central coordinator decomposes tasks,
+fans them out to specialist workers, and aggregates results through
+structured verification gates. MetaGPT's assembly-line paradigm with
+explicit role separation and inter-stage validation is the closest
+architectural precedent for our topology, in which a coordinator fans out
+to multiple specialists and reconciles their handoffs.
+
 \subsection{Methodology}
 
 \Yue{We may need a clear setup here, including: What platform are we using (like your reproducibility and infra below, with GPU specified)? What tasks we are doing (we should build our experiments on some real multi-agent task benchmarks---datasets)? How do we set up the agents? What matrices are we evaluating? You may refer to the example below.}
@@ -174,7 +331,25 @@ This enables precise ground-truth annotation of abnormality sources, propagation
 
 
 \paragraph{Experimental design.}
-Two experiments structure the topology analysis. Experiment 1 (structure effect) compares propagation across \texttt{linear\_3}, \texttt{fanout\_2}, and \texttt{merge\_2}. Experiment 2 (role-semantics effect) compares \texttt{branch\_and\_verify} and \texttt{parallel\_merge}, which share identical graph shape but assign the downstream agent the role of verifier (checks and resolves disagreement) versus synthesizer (combines outputs), isolating role semantics from structure. The remaining topologies (\texttt{linear\_2}, \texttt{coordinator\_star}, \texttt{review\_loop}, \texttt{shared\_memory\_collaboration}) serve as ecological coverage, demonstrating that patterns observed in controlled topologies generalize to realistic workflow configurations. Each scenario is defined by a \texttt{ScenarioSpec} with four parameters: \texttt{task\_family} (code\_review, financial\_analysis, research\_synthesis), \texttt{fixture\_id} (workspace fixture), \texttt{topology} (one of nine), and \texttt{condition} (\texttt{benign}, \texttt{single\_lep}, \texttt{counterfactual}). For each task--fixture pair, we generate one benign trace, one single-LEP trace per LEP type, and one counterfactual trace (same as single-LEP but with LEPs removed). Paired traces share an \texttt{execution\_id} and differ only in \texttt{variant}, enabling within-scenario causal attribution: if benign passes and malignant fails on the same task and topology, the LEP is causally implicated.
+Three topologies serve as the structural substrate for propagation analysis.
+\texttt{review\_loop} (2-stage with bounded revision cycle) isolates the
+effect of a producer--critic feedback loop; \texttt{branch\_and\_verify}
+(3-stage diamond) isolates redundancy and verification; and
+\texttt{coordinator\_workers} (4-stage fan-in) isolates many-to-one
+aggregation trust. Each topology targets a distinct structural dimension of
+perturbation propagation: revision-cycle sensitivity in review loops,
+detection-and-recovery via redundant branches in branch-and-verify, and
+aggregation trust in coordinator-workers. Each scenario is defined by a
+\texttt{ScenarioSpec} with four parameters: \texttt{task\_family}
+(code\_review, financial\_analysis, research\_synthesis), \texttt{fixture\_id}
+(workspace fixture), \texttt{topology} (one of three), and \texttt{condition}
+(\texttt{benign}, \texttt{single\_lep}, \texttt{counterfactual}). For each
+task--fixture pair, we generate one benign trace, one single-LEP trace per
+LEP type, and one counterfactual trace (same as single-LEP but with LEPs
+removed). Paired traces share an \texttt{execution\_id} and differ only in
+\texttt{variant}, enabling within-scenario causal attribution: if benign
+passes and malignant fails on the same task and topology, the LEP is
+causally implicated.
 
 \paragraph{LEP injection.}
 Canonical operators are selected deterministically per (task\_family, LEP\_code) pair via \texttt{get\_canonical\_operator()}, ensuring reproducible injection across runs. The \texttt{LEPOrchestrator} registers LEP instances from \texttt{LEPConfig} objects and evaluates them at boundary events using \texttt{evaluate\_for\_boundary()}, which routes to eligible LEPs based on event type. Triggers use \texttt{TriggerMatcher} for semantic condition matching with idempotency (a trigger fires at most once per scenario) and occurrence counting.
@@ -186,7 +361,7 @@ The primary execution backend is \texttt{APIBackend}, which makes HTTP requests 
 After execution, each trace is annotated with \texttt{EventLabels} recording the perturbation lifecycle. Task-specific evaluators (\texttt{CodeReviewEvaluator}, \texttt{FinancialEvaluator}, \texttt{ResearchSynthesisEvaluator}) check the final output against fixture ground truth to determine \texttt{task\_success} and \texttt{downstream\_failure}.
 
 \paragraph{Reproducibility and infrastructure.}
-All experiments are run on a Linux machine (kernel 5.15.0-185-generic, x86\_64) with Python 3.12.3, 48 Intel Xeon E5-2670 v3 vCPUs, and 125 GiB RAM. GPU inference is available on 2$\times$ NVIDIA Tesla P100 PCIe 16GB (driver 580.173.02); quantization is not applied. LLM inference is served through the OpusMax API gateway, contacted via stdlib \texttt{urllib} (no Anthropic SDK). All agents in a workflow use the same backend to isolate the effects of workflow structure and abnormality propagation. The codebase uses \texttt{torch} for the graph encoding module (encoder, exporter, graph builder), \texttt{anthropic} SDK is not used, and \texttt{scikit-learn} is not currently used (the memory retriever uses a dense retrieval fallback, not TF-IDF). Seeds are set per scenario via \texttt{ScenarioBuildConfig.seed}. Traces are serialized as JSON files (schema v3.0.0) and also exported as JSONL via the three exporters. Pilot results and experimental outputs are stored in \texttt{pilot\_output/} and \texttt{out/} respectively.
+LLM inference is served through two separate backends: (1) the OpusMax API gateway for \texttt{claude-sonnet-5}, contacted via stdlib \texttt{urllib}; and (2) a \texttt{vllm} server hosting \texttt{/} (4-bit quantized), deployed on the DeltaAI cluster (GH200 120GB GPU). All experiments are run on the DeltaAI cluster login node \texttt{gh-login01.delta.ncsa.illinois.edu} (kernel 6.4.0-150600.23.53-64kb, x86\_64) with 144 CPUs and 250 GiB RAM. LLM inference for the open-source model path is served through \texttt{vllm} hosting \texttt{/} (4-bit quantized) on GH200 120GB GPUs. All agents in a workflow use the same backend to isolate the effects of workflow structure and abnormality propagation. The codebase uses \texttt{torch} for the graph encoding module (encoder, exporter, graph builder). Seeds are set per scenario via \texttt{ScenarioBuildConfig.seed}. Traces are serialized as JSON files (schema v3.0.0) and also exported as JSONL via the three exporters. Pilot results and experimental outputs are stored in \texttt{pilot\_output/} and \texttt{out/} respectively.
 
 \paragraph{Graph construction (planned).}
 Once \texttt{depends\_on} is populated internally, each trace is converted into an event-as-node graph: every execution event becomes a node, and \texttt{depends\_on} causal dependencies become directed edges (A$\to$B when B depends on A). This preserves fan-in structure and enables path-based propagation analysis directly on the execution graph. Node features carry event type, agent role, tool name, stage-local index, and observable metadata; LEP labels (injection origin, consumption, propagation, failure) are node-level annotations for training. Graph-level labels indicate whether the execution ultimately experienced a downstream failure.

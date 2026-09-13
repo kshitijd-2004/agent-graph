@@ -21,7 +21,7 @@ try:
         TraceLabels, TOPOLOGIES, CONDITIONS,
     )
     from evaluators.task_evaluators import CodeReviewEvaluator, FinancialEvaluator
-    from workflows.topologies import Linear2Topology, Linear3Topology, TopologyConfig, TopologyType
+    from generation.topology import get_topology
 except ImportError:
     # Try flat imports
     from schemas_trace import (
@@ -32,9 +32,7 @@ except ImportError:
     )
     from evaluators_code_review_evaluator import CodeReviewEvaluator
     from evaluators_financial_evaluator import FinancialEvaluator
-    from workflows_linear import Linear2Topology, Linear3Topology
     from schemas_scenario import WorkflowConfig, ScenarioSpec
-    from schemas_topology import TopologyConfig, TopologyType
 
 FIXTURE_DIR = V3_ROOT / "workspace_fixtures"
 
@@ -75,12 +73,9 @@ def main():
     run_test("financial_version_conflict_detection", lambda: test_financial_version_conflict_detection(FIXTURE_DIR))
 
     print("\n=== Workflow topologies ===")
-    from workflows.topologies import Linear2Topology, Linear3Topology, TopologyConfig, TopologyType
-
-    run_test("linear_2_initialize", test_linear2_initialize)
-    run_test("linear_2_handoff", test_linear2_handoff)
-    run_test("linear_3_initialize", test_linear3_initialize)
-    run_test("linear_3_handoffs", test_linear3_handoffs)
+    run_test("review_loop_topo", test_review_loop_topo)
+    run_test("branch_and_verify_topo", test_branch_and_verify_topo)
+    run_test("coordinator_workers_topo", test_coordinator_workers_topo)
 
     print(f"\n{'='*50}")
     print(f"Results: {passed} passed, {failed} failed")
@@ -147,7 +142,7 @@ def test_trigger_matcher_fires_once():
     assert "already fired" in d2.reason
 
 def test_scenario_spec():
-    cfg = WorkflowConfig(topology="linear_3", model_name="test")
+    cfg = WorkflowConfig(topology="review_loop", model_name="test")
     spec = ScenarioSpec(
         scenario_id="s1", task_family="code_review", task_variant="easy",
         fixture_id="code_review_easy", workflow_config=cfg, condition="benign",
@@ -169,9 +164,9 @@ def test_scenario_spec():
     assert spec2.lep_codes() == ["LEP_TEST"]
 
 def test_topology_constants():
-    assert "linear_2" in TOPOLOGIES
-    assert "linear_3" in TOPOLOGIES
-    assert "coordinator_star" in TOPOLOGIES
+    assert "review_loop" in TOPOLOGIES
+    assert "branch_and_verify" in TOPOLOGIES
+    assert "coordinator_workers" in TOPOLOGIES
     assert "benign" in CONDITIONS
     assert "single_lep" in CONDITIONS
 
@@ -213,7 +208,7 @@ def test_code_review_evaluator_empty_trace(FIXTURE_DIR):
     trace = Trace(
         trace_id="t1a", execution_id="t1", variant=TraceVariant.BENIGN, events=[],
     )
-    cfg = WorkflowConfig(topology="linear_2")
+    cfg = WorkflowConfig(topology="review_loop")
     scenario = ScenarioSpec(
         scenario_id="test", task_family="code_review", task_variant="easy",
         fixture_id="code_review_easy", workflow_config=cfg,
@@ -227,7 +222,7 @@ def test_financial_evaluator_empty_trace(FIXTURE_DIR):
     trace = Trace(
         trace_id="t1a", execution_id="t1", variant=TraceVariant.BENIGN, events=[],
     )
-    cfg = WorkflowConfig(topology="linear_2")
+    cfg = WorkflowConfig(topology="review_loop")
     scenario = ScenarioSpec(
         scenario_id="test", task_family="financial_analysis", task_variant="clean",
         fixture_id="financial_clean", workflow_config=cfg,
@@ -239,7 +234,7 @@ def test_financial_evaluator_empty_trace(FIXTURE_DIR):
 def test_financial_evaluator_correct_output(FIXTURE_DIR):
     import tempfile, shutil
     evaluator = FinancialEvaluator(fixture_dir=FIXTURE_DIR / "financial_clean")
-    cfg = WorkflowConfig(topology="linear_2")
+    cfg = WorkflowConfig(topology="review_loop")
     scenario = ScenarioSpec(
         scenario_id="test", task_family="financial_analysis", task_variant="clean",
         fixture_id="financial_clean", workflow_config=cfg,
@@ -265,7 +260,7 @@ def test_financial_evaluator_correct_output(FIXTURE_DIR):
 def test_financial_version_conflict_detection(FIXTURE_DIR):
     import tempfile, shutil
     evaluator = FinancialEvaluator(fixture_dir=FIXTURE_DIR / "financial_version_conflict")
-    cfg = WorkflowConfig(topology="linear_2")
+    cfg = WorkflowConfig(topology="review_loop")
     scenario = ScenarioSpec(
         scenario_id="test", task_family="financial_analysis",
         task_variant="version_conflict",
@@ -286,36 +281,27 @@ def test_financial_version_conflict_detection(FIXTURE_DIR):
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
-def test_linear2_initialize():
-    cfg = TopologyConfig(topology_type=TopologyType.LINEAR_2, agents=["agent_001", "agent_002"])
-    topo = Linear2Topology(cfg)
-    agent = topo.initialize()
-    assert agent == "agent_001"
+def test_review_loop_topo():
+    topo = get_topology("review_loop", {"researcher": "a1", "analyst": "a2"})
+    assert len(topo.stages) == 2
+    assert topo.exit_stage == "analyst"
+    assert any(s.can_finalize for s in topo.stages)
 
-def test_linear2_handoff():
-    cfg = TopologyConfig(topology_type=TopologyType.LINEAR_2, agents=["agent_001", "agent_002"])
-    topo = Linear2Topology(cfg)
-    topo.initialize()
-    next_agent = topo.next_agent("agent_001", "handoff_to_analyst")
-    assert next_agent == "agent_002"
-    assert topo.is_terminal("final", 0)
+def test_branch_and_verify_topo():
+    topo = get_topology("branch_and_verify", {
+        "researcher": "a1", "analyst": "a2", "verifier": "a3"
+    })
+    assert len(topo.stages) == 3
+    assert topo.exit_stage == "verifier"
+    assert any(s.stage_type == "merge" for s in topo.stages)
 
-def test_linear3_initialize():
-    cfg = TopologyConfig(topology_type=TopologyType.LINEAR_3, agents=["agent_001", "agent_002", "agent_003"])
-    topo = Linear3Topology(cfg)
-    agent = topo.initialize()
-    assert agent == "agent_001"
-
-def test_linear3_handoffs():
-    cfg = TopologyConfig(topology_type=TopologyType.LINEAR_3, agents=["agent_001", "agent_002", "agent_003"])
-    topo = Linear3Topology(cfg)
-    topo.initialize()
-    next1 = topo.next_agent("agent_001", "handoff_to_analyst")
-    assert next1 == "agent_002"
-    next2 = topo.next_agent("agent_002", "handoff_to_verifier")
-    assert next2 == "agent_003"
-    assert not topo.is_terminal("handoff_to_verifier", 0)
-    assert topo.is_terminal("final", 0)
+def test_coordinator_workers_topo():
+    topo = get_topology("coordinator_workers", {
+        "coordinator": "a1", "specialist_a": "a2",
+        "specialist_b": "a3", "synthesizer": "a4"
+    })
+    assert len(topo.stages) == 4
+    assert topo.exit_stage == "coordinator"
 
 
 if __name__ == "__main__":

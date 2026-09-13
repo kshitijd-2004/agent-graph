@@ -408,7 +408,6 @@ class DryRunBackend:
             "code_review": "src/main.py",
             "financial_analysis": "documents/financial_data.md",
             "research_synthesis": "documents/primary_source.md",
-            "competitive_intelligence": "documents/pricing_data.md",
         }
         target_file = TARGET_FILES.get(task_family, "documents/primary_source.md")
 
@@ -747,7 +746,7 @@ class ScenarioRunner:
 
         # Execute stages in topology order
         from generation.topology import get_topology, build_agent_map_from_topology
-        topology_id = wcfg.topology if wcfg else "linear_2"
+        topology_id = wcfg.topology if wcfg else "review_loop"
         max_agent_turns = wcfg.max_agent_turns if wcfg else 40
 
         # Build a generic agent_map for topology construction.
@@ -1268,13 +1267,17 @@ class ScenarioRunner:
                         backedge_count, topology.max_review_cycles,
                     )
                     if backedge_count > topology.max_review_cycles:
+                        # Hard gate: prevent enqueuing the backedge destination
+                        # so the offending stage never runs. Terminate with the
+                        # current stage's handoff as the final artifact.
                         term_evt = make_evt(
                             TraceEventType.FINAL_RESPONSE,
                             current_stage.agent_id, "user",
                             role=current_stage.agent_role,
                             output_text=(
                                 f"Terminated: review cycle limit "
-                                f"({topology.max_review_cycles}) reached."
+                                f"({topology.max_review_cycles}) reached. "
+                                f"Refusing to hand off to {dest_role}."
                             ),
                         )
                         events.append(term_evt)

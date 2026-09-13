@@ -1,7 +1,7 @@
 """Benchmark CLI — run the full experimental matrix.
 
 Usage:
-    python -m benchmark --topologies linear_2,branch_and_verify \\
+    python -m benchmark --topologies review_loop,branch_and_verify \\
         --task-families code_review \\
         --lep-codes LEP_TOOL_RESULT_CORRUPTION \\
         --repetitions 3 \\
@@ -35,7 +35,7 @@ def main() -> int:
         epilog="""
 Examples:
   # Small benchmark: one topology, one task, one LEP
-  python -m benchmark --topologies linear_2 --task-families code_review \\
+  python -m benchmark --topologies review_loop --task-families code_review \\
       --lep-codes LEP_TOOL_RESULT_CORRUPTION --repetitions 3
 
   # Full matrix across all topologies and propagation modes
@@ -55,7 +55,7 @@ Examples:
     parser.add_argument(
         "--task-families",
         type=str,
-        default="code_review,financial_analysis,research_synthesis,competitive_intelligence",
+        default="code_review,financial_analysis,research_synthesis",
         help="Comma-separated task family names",
     )
     parser.add_argument(
