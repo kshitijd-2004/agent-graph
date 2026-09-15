@@ -410,8 +410,9 @@ class DryRunBackend:
         # Used to select the correct read_text_file path in LEP trajectories.
         TARGET_FILES = {
             "code_review": "src/main.py",
-            "financial_analysis": "documents/financial_data.md",
-            "research_synthesis": "documents/primary_source.md",
+            "financial_analysis": "documents/q3_summary.md",
+            "research_synthesis": "documents/paper_a.md",
+            "competitive_intelligence": "documents/pricing_data.md",
         }
         target_file = TARGET_FILES.get(task_family, "documents/primary_source.md")
 
@@ -622,6 +623,17 @@ class ScenarioRunner:
             ineligible_reasons = {"protocol_violation", "premature_final",
                                    "invalid_handoff", "max_events_reached"}
             eligible = term_reason not in ineligible_reasons
+            # A perturbed run whose LEP never fired is a benign run carrying a
+            # positive label. Keep it out of the dataset.
+            if scenario.condition in ("single_lep", "convergence"):
+                injected = any(
+                    getattr(getattr(e, "event_labels", None), "is_injection_origin", False)
+                    for e in trace.events
+                )
+                if not injected:
+                    eligible = False
+                    if term_reason == "completed":
+                        term_reason = "lep_not_fired"
             return RunResult(
                 scenario_id=scenario_id,
                 trace=trace,

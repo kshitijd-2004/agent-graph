@@ -72,8 +72,8 @@ class ToolResultCorruptionLEP:
     # Canonical intervention point for every supported task family.
     TARGET_FILES: Dict[str, str] = {
         "code_review": "src/main.py",
-        "financial_analysis": "documents/financial_data.md",
-        "research_synthesis": "documents/primary_source.md",
+        "financial_analysis": "documents/q3_summary.md",
+        "research_synthesis": "documents/paper_a.md",
     }
 
     # Optional defensive mapping of canonical operators.
