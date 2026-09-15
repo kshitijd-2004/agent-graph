@@ -621,7 +621,8 @@ class ScenarioRunner:
             )
             is_loop = trace.metadata.get("termination_reason") == "execution_loop"
             ineligible_reasons = {"protocol_violation", "premature_final",
-                                   "invalid_handoff", "max_events_reached"}
+                                   "invalid_handoff", "max_events_reached",
+                                   "execution_loop"}
             eligible = term_reason not in ineligible_reasons
             # A perturbed run whose LEP never fired is a benign run carrying a
             # positive label. Keep it out of the dataset.
