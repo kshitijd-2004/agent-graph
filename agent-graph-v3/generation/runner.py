@@ -358,6 +358,9 @@ class DryRunBackend:
         # same agent (e.g., coordinator running a second time after fan-in).
         # Used to switch the final action from handoff → submit_final.
         self._iteration: Dict[str, int] = {}
+        # Available tools for the current stage, used for exhausted-trajectory
+        # fallback (prefer handoff when submit_final is not exposed).
+        self._available_tools: List[str] = []
 
     def set_role_trajectory(self, role: str, trajectory: list) -> None:
         """Inject a role-specific trajectory (used by topology-aware runners).
@@ -371,6 +374,7 @@ class DryRunBackend:
 
     def reset(self, task: str = "", agent_name: str = "",
               mcp_tools: List[str] = None, system_prompt: str = "") -> None:
+        self._available_tools = list(mcp_tools or [])
         # Reset step counter when the agent role changes. This is required
         # for fan-out topologies where sibling branches must each replay the
         # trajectory from step 1. For linear topologies, stages also benefit
@@ -456,6 +460,11 @@ class DryRunBackend:
             if iteration >= 2 and traj and traj[-1][0] == "handoff":
                 # Re-run after fan-in: terminate instead of fanning out again
                 return self._structured_turn("submit_final", {}, "Task complete.")
+            # Fallback: prefer handoff over list_directory so stages that
+            # cannot yet finalize (e.g. analyst before required_review_cycles)
+            # keep the topology moving instead of looping.
+            if "handoff" in (self._available_tools or []):
+                return self._structured_turn("handoff", {"target_agent": "", "summary": "Continuing..."}, "Continuing...")
             return self._structured_turn("list_directory", {"path": "."},
                                           "Continuing...")
 
@@ -550,7 +559,7 @@ class ScenarioRunner:
         self,
         llm_backend: LLMBackend | None = None,
         dry_run: bool = True,
-        max_events: int = 80,
+        max_events: int = 300,
         output_dir: Path | None = None,
     ):
         self.llm: LLMBackend = llm_backend if llm_backend is not None else DryRunBackend()
@@ -1079,6 +1088,7 @@ class ScenarioRunner:
                 incoming_dep_event_id=transition_evt.event_id,
                 memory_store=memory_store,
                 propagation_tracker=propagation_tracker,
+                backedge_count=backedge_count,
             )
 
             # Update trace_id on stage events
@@ -1086,6 +1096,43 @@ class ScenarioRunner:
                 evt.trace_id = trace_id
 
             events.extend(stage_result.events)
+
+            # ── Enforce max_events cap ────────────────────────────────────────
+            if global_event_counter[0] >= self.max_events:
+                logger.info(
+                    "max_events=%d reached (event_count=%d). Terminating scenario.",
+                    self.max_events, global_event_counter[0],
+                )
+                term_evt = make_evt(
+                    TraceEventType.FINAL_RESPONSE,
+                    current_stage.agent_id, "user",
+                    role=current_stage.agent_role,
+                    output_text=(
+                        f"Terminated: max event limit "
+                        f"({self.max_events}) reached."
+                    ),
+                )
+                events.append(term_evt)
+                trace = Trace(
+                    trace_id=trace_id,
+                    execution_id=execution_id,
+                    variant=variant,
+                    events=events,
+                    metadata={
+                        "scenario_id": scenario_id,
+                        "task_family": scenario.task_family,
+                        "task_variant": scenario.task_variant,
+                        "fixture_id": scenario.fixture_id,
+                        "topology": topology_id,
+                        "condition": scenario.condition,
+                        "lep_codes": [c.code for c in scenario.lep_configs],
+                        "dry_run": self.dry_run,
+                        "termination_reason": "max_events_reached",
+                        "event_count": global_event_counter[0],
+                    },
+                )
+                self.evaluator.reset()
+                return trace
 
             # ── Recovery detection: scan stage output for perturbation recovery signals
             if propagation_tracker is not None:
@@ -1145,19 +1192,10 @@ class ScenarioRunner:
             reason = stage_result.termination_reason
             if reason == "final":
                 final_result = stage_result
-                # For fan-out topologies: if the stage that called submit_final
-                # also has outgoing handoff rules (e.g. researcher → branch_a,
-                # researcher → branch_b), queue those branches now. The stage
-                # used submit_final (not handoff), so the normal handoff block
-                # below is skipped.
-                outgoing_rules = topology.get_outgoing_handoffs(
-                    current_stage.agent_role
-                )
-                for rule in outgoing_rules:
-                    dest = topology.get_stage(rule.to_stage)
-                    if dest:
-                        enqueue(dest)
-                continue
+                # submit_final means the stage is done — do not enqueue
+                # outgoing handoffs (e.g. backedges in review_loop).
+                # The scenario terminates with this stage's output as final.
+                break
 
             elif reason == "handoff":
                 # Validate: does the current stage have an outgoing handoff

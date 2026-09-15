@@ -127,14 +127,13 @@ def get_lep_config(code: str) -> LEPConfig:
 
 
 # Pilot size: 5 LEPs × 3 task families = 15 pairs
-# Each pair = 1 benign + 1 LEP = 30, plus 3 counterfactuals = 33 total
+# Each pair = 1 benign + 1 LEP = 30 total
 NUM_LEPS = len(PILOT_LEP_CONFIGS)                # 5
 NUM_TASK_FAMILIES = len(PILOT_TASK_FAMILIES)     # 3
 NUM_PAIRS = NUM_LEPS * NUM_TASK_FAMILIES         # 15
 NUM_BENIGN_BASELINES = NUM_PAIRS                 # one benign per LEP pair
 NUM_PERTURBED = NUM_PAIRS                        # one LEP per pair
-NUM_COUNTERFACTUALS = NUM_TASK_FAMILIES          # one per task family
-TOTAL_EXECUTIONS = NUM_BENIGN_BASELINES + NUM_PERTURBED + NUM_COUNTERFACTUALS  # 33
+TOTAL_EXECUTIONS = NUM_BENIGN_BASELINES + NUM_PERTURBED  # 30
 
 
 # Default workflow config for pilot
@@ -162,7 +161,6 @@ class PilotConfig:
     total_executions: int = TOTAL_EXECUTIONS
     num_benign: int = NUM_BENIGN_BASELINES
     num_perturbed: int = NUM_PERTURBED
-    num_counterfactuals: int = NUM_COUNTERFACTUALS
     task_families: list[str] = field(default_factory=lambda: list(PILOT_TASK_FAMILIES))
     lep_configs: list[LEPConfig] = field(default_factory=lambda: list(PILOT_LEP_CONFIGS))
     workflow_config: WorkflowConfig = field(default_factory=lambda: DEFAULT_WORKFLOW_CONFIG)
@@ -180,8 +178,8 @@ class PilotConfig:
 
         # Each perturbed run is paired with a matching benign trace
         leps_per_task = max(1, self.num_perturbed // (len(self.task_families) * len(self.lep_configs)))
-        for lep in self.lep_configs:
-            for task_family in self.task_families:
+        for task_family in self.task_families:
+            for lep in self.lep_configs:
                 for rep in range(leps_per_task):
                     pair_id = f"{self.pilot_id}_{lep.code}_{task_family}_{rep:02d}"
                     plan.append({
@@ -203,18 +201,5 @@ class PilotConfig:
                         "pair_tag": pair_id,
                     })
                     idx += 1
-
-        # Counterfactuals: remove LEP, same scenario as perturbed
-        for task_family in self.task_families:
-            for rep in range(self.num_counterfactuals // len(self.task_families)):
-                plan.append({
-                    "scenario_id": f"{self.pilot_id}_cf_{task_family}_{rep:02d}",
-                    "task_family": task_family,
-                    "condition": "counterfactual",
-                    "lep_codes": [],
-                    "topology": _plan_topology,
-                    "repetition_index": rep,
-                })
-                idx += 1
 
         return plan

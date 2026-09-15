@@ -215,7 +215,7 @@ class APIBackend:
         base_url: Optional[str] = None,
         model: Optional[str] = None,
         max_tokens: int = 4096,
-        temperature: float = 0.1,
+        temperature: float = 0.4,
     ):
         self.api_key = api_key or os.environ.get("LLM_API_KEY", "")
         self.base_url = (base_url or os.environ.get("LLM_BASE_URL", "https://api.opusmax.pro")).rstrip("/")

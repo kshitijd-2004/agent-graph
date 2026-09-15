@@ -115,9 +115,7 @@ class PilotExecutor:
             task_family=entry["task_family"],
             condition=entry["condition"],
             lep_codes=entry.get("lep_codes", []),
-            variant="benign" if entry["condition"] == "benign" else (
-                "counterfactual" if entry["condition"] == "counterfactual" else "malignant"
-            ),
+            variant="benign" if entry["condition"] == "benign" else "malignant",
             trace=None,
             pair_tag=entry.get("pair_tag", ""),
             timestamp=datetime.now(timezone.utc).isoformat(),
@@ -283,8 +281,6 @@ class PilotExecutor:
             return False  # benign should not fail
         elif condition == "single_lep":
             return record.injection_fired and record.downstream_failure
-        elif condition == "counterfactual":
-            return False  # counterfactual should not fail
         return False
 
     def _persist_record(self, record: ExecutionRecord) -> None:

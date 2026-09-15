@@ -49,7 +49,7 @@ class HFBackend:
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         max_tokens: int = 4096,
-        temperature: float = 0.1,
+        temperature: float = 0.4,
     ):
         self.model = model
         self.base_url = (base_url or os.environ.get(

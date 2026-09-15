@@ -37,7 +37,7 @@ class WorkflowConfig:
     max_agent_turns: int = 80
     timeout_seconds: int = 300
     model_name: str = "claude-sonnet-5"
-    temperature: float = 0.1
+    temperature: float = 0.4
     seed: Optional[int] = None
     allow_parallel_agents: bool = False
     allow_retries: bool = True

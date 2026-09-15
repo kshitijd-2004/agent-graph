@@ -58,7 +58,7 @@ def run_scenarios(
     fixture_root: Path,
     output_dir: Path,
     dry_run: bool = True,
-    max_events: int = 80,
+    max_events: int = 300,
 ) -> tuple[list[RunResult], ObservableExporter]:
     """Execute a list of scenarios and return results and exporter for leakage audit.
 

@@ -78,10 +78,10 @@ def make_user_event():
 def test_dry_run_scenario():
     with tempfile.TemporaryDirectory() as tmpdir:
         runner = ScenarioRunner(
-            dry_run=True, max_events=20,
+            dry_run=True, max_events=1000,
             output_dir=Path(tmpdir) / "ws",
         )
-        wcfg = WorkflowConfig(topology="review_loop", max_events=20, max_agent_turns=10)
+        wcfg = WorkflowConfig(topology="review_loop", max_events=1000, max_agent_turns=10)
         spec = ScenarioSpec(
             scenario_id="test_dry_run", task_family="code_review",
             task_variant="easy", fixture_id="code_review_easy",
@@ -96,7 +96,7 @@ def test_dry_run_scenario():
 def test_dry_run_perturbed_scenario():
     with tempfile.TemporaryDirectory() as tmpdir:
         runner = ScenarioRunner(
-            dry_run=True, max_events=20,
+            dry_run=True, max_events=300,
             output_dir=Path(tmpdir) / "ws",
         )
         lep = LEPConfig(
@@ -104,7 +104,7 @@ def test_dry_run_perturbed_scenario():
             category="test", description="test", target_agent="researcher",
             trigger=InjectionTrigger(tool_name="read_text_file"),
         )
-        wcfg = WorkflowConfig(topology="review_loop", max_events=20, max_agent_turns=10)
+        wcfg = WorkflowConfig(topology="review_loop", max_events=300, max_agent_turns=10)
         spec = ScenarioSpec(
             scenario_id="test_perturbed", task_family="code_review",
             task_variant="easy", fixture_id="code_review_easy",

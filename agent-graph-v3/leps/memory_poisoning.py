@@ -211,6 +211,13 @@ class MemoryPoisoningLEP:
                 instance.memory_write_event_id = event_id
                 break
 
+    def get_origin_event_id(self, memory_key: str) -> str | None:
+        """Return the event ID where this key was first poisoned (write or injection origin)."""
+        for instance in self._instances:
+            if instance.memory_key == memory_key:
+                return instance.memory_write_event_id
+        return None
+
     def record_retrieval(
         self,
         memory_key: str,

@@ -96,13 +96,13 @@ class ScenarioBuildConfig:
     sharing_policy: str = "full_state"
     memory_mode: str = "ephemeral_shared"
     verification_mode: str = "none"
-    max_events: int = 80
+    max_events: int = 300
     max_agent_turns: int = 40
     timeout_seconds: int = 300
 
     # Model config
     model_name: str = "mock"
-    temperature: float = 0.0
+    temperature: float = 0.4
     seed: int | None = None
 
     # LEP configs to apply

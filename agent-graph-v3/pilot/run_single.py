@@ -57,7 +57,7 @@ def run_single(
         sharing_policy=DEFAULT_WORKFLOW_CONFIG.sharing_policy,
         memory_mode=DEFAULT_WORKFLOW_CONFIG.memory_mode,
         verification_mode=DEFAULT_WORKFLOW_CONFIG.verification_mode,
-        max_events=80,
+        max_events=300,
         max_agent_turns=40,
         timeout_seconds=300,
         model_name=DEFAULT_WORKFLOW_CONFIG.model_name,

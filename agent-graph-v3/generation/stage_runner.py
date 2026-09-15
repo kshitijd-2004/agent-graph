@@ -136,6 +136,7 @@ class StageRunner:
         incoming_dep_event_id: str = "",
         memory_store: Optional[MemoryStore] = None,
         propagation_tracker=None,
+        backedge_count: int = 0,
     ) -> StageResult:
         """Execute one agent stage.
 
@@ -293,7 +294,15 @@ class StageRunner:
         if stage.can_handoff:
             available_tools.append("handoff")
         if stage.can_finalize:
-            available_tools.append("submit_final")
+            # In review_loop topologies, gate submit_final on the number of
+            # completed review cycles. The analyst may only finalize after
+            # required_review_cycles backedges have occurred.
+            can_submit_final = True
+            if topology is not None and topology.topology_id == "review_loop":
+                if backedge_count < getattr(topology, 'required_review_cycles', 1):
+                    can_submit_final = False
+            if can_submit_final:
+                available_tools.append("submit_final")
 
         # Reset backend ONCE per stage (not per turn)
         self.llm.reset(

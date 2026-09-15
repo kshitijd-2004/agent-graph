@@ -233,23 +233,23 @@ class LEPOrchestrator:
             if state.fired_origin_count >= state.max_origins:
                 continue
 
-            # Topology-aware target filter: when set_topology() resolved a
-            # topology_target for this LEP, skip events from non-target stages.
-            # In many_to_one mode with no explicit target, any worker that has
-            # not yet fired is eligible (each worker fires at most once).
-            target_stage = self._topology_target_stages.get(code)
+            # Topology-aware target filter.
+            # In many_to_one mode, each worker may fire once regardless of the
+            # LEP's static target_stage — the explicit target filter is bypassed
+            # in favour of the per-worker budget (state.fired_targets).
             event_role = getattr(event, "agent_role", "") or ""
-            if target_stage is not None:
-                if event_role != target_stage:
-                    continue
-            elif self._propagation_mode == "many_to_one" and self._topology is not None:
-                # M2O with topology_target=None: skip workers that have already fired.
-                # Also skip the coordinator itself — LEPs fire on workers only.
+            if (self._propagation_mode == "many_to_one"
+                    and self._topology is not None):
                 exit_role = getattr(self._topology, "exit_stage", "")
                 if event_role == exit_role:
                     continue
                 if event_role in state.fired_targets:
                     continue
+            else:
+                target_stage = self._topology_target_stages.get(code)
+                if target_stage is not None:
+                    if event_role != target_stage:
+                        continue
 
             try:
                 import inspect

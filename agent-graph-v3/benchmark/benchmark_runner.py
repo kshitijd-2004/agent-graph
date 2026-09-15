@@ -34,7 +34,7 @@ class BenchmarkRecord:
     run_id: str
     scenario_id: str
     task_family: str
-    condition: str          # benign | single_lep | counterfactual
+    condition: str          # benign | single_lep
     lep_code: str
     topology: str
     propagation_mode: str
@@ -137,7 +137,7 @@ class BenchmarkManifest:
     max_events: int = 50
     max_agent_turns: int = 80
     model_name: str = "claude-sonnet-5"
-    temperature: float = 0.1
+    temperature: float = 0.4
     dry_run: bool = True
     output_dir: Optional[Path] = None
     fixture_root: Optional[Path] = None
@@ -155,9 +155,9 @@ class BenchmarkManifest:
         plan: list[dict[str, Any]] = []
         idx = 0
 
-        for topology in self.topologies:
-            allowed_modes = TOPOLOGY_PROPAGATION_MODES.get(topology, ["single_origin"])
-            for task_family in self.task_families:
+        for task_family in self.task_families:
+            for topology in self.topologies:
+                allowed_modes = TOPOLOGY_PROPAGATION_MODES.get(topology, ["single_origin"])
                 for lep_config in self.lep_configs:
                     for prop_mode in allowed_modes:
                         for rep in range(self.num_repetitions):
@@ -290,7 +290,10 @@ class BenchmarkRunner:
             backend = self.llm_backend or self._default_backend()
             runner = ScenarioRunner(llm_backend=backend, dry_run=self.manifest.dry_run)
 
-            result = runner.run(spec, self.manifest.fixture_root)
+            # Use a short, descriptive execution_id so trace_id encodes
+            # task family, topology, LEP, mode, repetition, and variant.
+            short_id = self._short_trace_id(entry)
+            result = runner.run(spec, self.manifest.fixture_root, execution_id=short_id)
             trace = result.trace
 
             # Write trace
@@ -431,6 +434,48 @@ class BenchmarkRunner:
             "research_synthesis": "research_conflicting",
         }
         return FIXTURE_MAP.get(family, f"{family}_default")
+
+    @staticmethod
+    def _short_trace_id(entry: dict[str, Any]) -> str:
+        """Build a compact, human-readable execution_id.
+
+        Format: {task}.{topology}.{mode}.{rep:02d}.{lep}
+
+        Examples:
+            cr.rl.so.00.tool_corrupt
+            fa.bv.o2m.01.memory_poisoning
+            rs.cw.m2o.00.input_disregard
+
+        The runner appends _a (benign) or _b (lep) to produce the full trace_id.
+        """
+        TF = {
+            "code_review": "cr",
+            "financial_analysis": "fa",
+            "research_synthesis": "rs",
+        }
+        TOP = {
+            "review_loop": "rl",
+            "branch_and_verify": "bv",
+            "coordinator_workers": "cw",
+        }
+        MODE = {
+            "single_origin": "so",
+            "one_to_many": "o2m",
+            "many_to_one": "m2o",
+        }
+        LEP = {
+            "LEP_TOOL_RESULT_CORRUPTION": "tool_corrupt",
+            "LEP_HANDOFF_CORRUPTION": "handoff_corrupt",
+            "LEP_INPUT_DISREGARD": "input_disregard",
+            "LEP_INDIRECT_PROMPT_INJECTION": "indirect_prompt",
+            "LEP_MEMORY_POISONING": "memory_poison",
+        }
+        task = TF.get(entry["task_family"], entry["task_family"][:2])
+        topo = TOP.get(entry["topology"], entry["topology"][:2])
+        mode = MODE.get(entry.get("propagation_mode", "single_origin"), "so")
+        rep = f"{entry.get('repetition_index', 0):02d}"
+        lep = LEP.get(entry.get("lep_code", ""), "")
+        return f"{task}.{topo}.{mode}.{rep}.{lep}"
 
     def _resolve_lep(self, code: str) -> LEPConfig:
         # Build lookup from tasks.registry at call time (cheap, cached)

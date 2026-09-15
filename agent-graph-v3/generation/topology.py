@@ -55,6 +55,7 @@ class TopologyConfig:
     exit_stage: str
     max_iterations: int = 1
     max_review_cycles: int = 2   # max back-and-forth loops for review topologies
+    required_review_cycles: int = 1  # min review cycles before finalization is allowed
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -129,8 +130,9 @@ def _build_registry() -> Dict[str, callable]:
                 HandoffRule("analyst", "researcher"),  # loop back for revision
             ],
             exit_stage="analyst",
-            max_iterations=2,
-            max_review_cycles=1,
+            max_iterations=4,
+            max_review_cycles=2,
+            required_review_cycles=1,
         )
 
     def branch_and_verify(agent_map: Dict[str, str]) -> TopologyConfig:

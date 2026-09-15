@@ -46,6 +46,10 @@ def run_pilot(
     task_filter: str | None = None,
     lep_filter: str | None = None,
     topology_filter: str | None = None,
+    propagation_modes_filter: str | None = None,
+    backend: str = "api",
+    vllm_url: str = "http://localhost:8000/v1",
+    model: str = "claude-sonnet-5",
 ) -> dict[str, Any]:
     """Run the pilot via BenchmarkRunner with optional filters.
 
@@ -57,6 +61,11 @@ def run_pilot(
         task_filter: Run only this task family.
         lep_filter: Run only this LEP code.
         topology_filter: Run only this topology ID.
+        propagation_modes_filter: Comma-separated propagation modes to run.
+            If None, all modes supported by the topology are used.
+        backend: 'api' for Anthropic-compatible endpoint, 'vllm' for local vLLM server.
+        vllm_url: vLLM server base URL (used when backend='vllm').
+        model: Model name to use.
     """
     from pilot.config import PilotConfig, PILOT_LEP_CONFIGS, PILOT_TASK_FAMILIES
     from pilot.audit_report import AuditReport
@@ -96,20 +105,38 @@ def run_pilot(
             topology_filter, list(TOPOLOGY_PROPAGATION_MODES.keys()),
         )
 
+    # Build propagation modes
+    if propagation_modes_filter:
+        requested_modes = [m.strip() for m in propagation_modes_filter.split(",") if m.strip()]
+        valid_modes = set()
+        for t in topologies:
+            valid_modes.update(TOPOLOGY_PROPAGATION_MODES.get(t, ["single_origin"]))
+        prop_modes = [m for m in requested_modes if m in valid_modes]
+        if not prop_modes:
+            logger.error(
+                "No valid propagation modes. Requested: %s, Valid for %s: %s",
+                requested_modes, topologies, sorted(valid_modes),
+            )
+            sys.exit(1)
+        if len(prop_modes) < len(requested_modes):
+            skipped = set(requested_modes) - set(prop_modes)
+            logger.warning("Skipped invalid propagation modes: %s", skipped)
+    else:
+        # Auto-resolve all modes supported by the topology
+        all_prop_modes = set()
+        for t in topologies:
+            all_prop_modes.update(TOPOLOGY_PROPAGATION_MODES.get(t, ["single_origin"]))
+        prop_modes = sorted(all_prop_modes)
+
     logger.info("=" * 60)
     logger.info("AGENT-GRAPH V3 PILOT (via BenchmarkRunner)")
     logger.info("Schema: v%s | Mode: %s", SCHEMA_VERSION, "dry-run" if dry_run else "real-model")
     logger.info("Topologies: %s", ", ".join(topologies))
+    logger.info("Propagation modes: %s", ", ".join(prop_modes))
     logger.info("Task families: %s", ", ".join(task_families))
     logger.info("LEPs: %s", ", ".join(l.code for l in lep_configs) or "none (benign/cf)")
     logger.info("Output: %s", output_dir)
     logger.info("=" * 60)
-
-    # Build propagation modes per topology
-    all_prop_modes = set()
-    for t in topologies:
-        all_prop_modes.update(TOPOLOGY_PROPAGATION_MODES.get(t, ["single_origin"]))
-    prop_modes = sorted(all_prop_modes)
 
     # Build BenchmarkManifest — delegates plan construction to the benchmark
     # runner, which handles the cross-product correctly.
@@ -120,13 +147,14 @@ def run_pilot(
         num_repetitions=1,
         max_events=config.workflow_config.max_events,
         max_agent_turns=config.workflow_config.max_agent_turns,
-        model_name=config.workflow_config.model_name,
         temperature=config.workflow_config.temperature,
         dry_run=dry_run,
         output_dir=output_dir,
         fixture_root=fixture_root,
         seed=config.workflow_config.seed,
-        backend_name="api",
+        backend_name=backend,
+        vllm_url=vllm_url,
+        model_name=model,
         propagation_modes=prop_modes,
     )
 
@@ -135,19 +163,9 @@ def run_pilot(
         len(topologies), len(task_families), len(lep_configs), len(prop_modes),
     )
 
-    # Build backend
-    if dry_run:
-        from generation.runner import DryRunBackend
-        llm_backend = DryRunBackend()
-    else:
-        from backend.api_backend import APIBackend
-        llm_backend = APIBackend(
-            model=config.workflow_config.model_name,
-            temperature=config.workflow_config.temperature,
-        )
-
-    # Run via BenchmarkRunner
-    runner = BenchmarkRunner(manifest, llm_backend=llm_backend)
+    # Run via BenchmarkRunner — let it pick the backend from the manifest
+    # (dry_run → DryRunBackend, backend_name="vllm" → HFBackend, etc.)
+    runner = BenchmarkRunner(manifest)
     benchmark_summary = runner.run()
 
     # Apply max_executions cap — keep only the first N records and remove
@@ -271,7 +289,7 @@ def _extract_pair_tag(scenario_id: str) -> str:
         b_{topology}_{task}_{lep_code}_{prop_mode}_{rep:02d}_lep
     The pair_tag is everything before the _benign/_lep suffix.
     """
-    for suffix in ("_benign", "_lep", "_cf"):
+    for suffix in ("_benign", "_lep"):
         if scenario_id.endswith(suffix):
             return scenario_id[: -len(suffix)]
     return scenario_id
@@ -297,6 +315,16 @@ def main():
                         help="Run only this LEP code")
     parser.add_argument("--topology", type=str, default=None,
                         help="Run only this topology ID (default: branch_and_verify)")
+    parser.add_argument("--propagation-modes", type=str, default=None,
+                        help="Comma-separated propagation modes (default: all supported by topology)")
+    parser.add_argument("--backend", type=str, default="api",
+                        choices=["api", "vllm"],
+                        help="LLM backend: 'api' for Anthropic-compatible endpoint, "
+                             "'vllm' for local vLLM server (default: api)")
+    parser.add_argument("--vllm-url", type=str, default="http://localhost:8000/v1",
+                        help="vLLM server base URL (used when --backend vllm)")
+    parser.add_argument("--model", type=str, default="claude-sonnet-5",
+                        help="Model name to use (default: claude-sonnet-5)")
     args = parser.parse_args()
 
     dry_run = not args.real_model
@@ -308,6 +336,10 @@ def main():
         task_filter=args.task,
         lep_filter=args.lep,
         topology_filter=args.topology,
+        propagation_modes_filter=args.propagation_modes,
+        backend=args.backend,
+        vllm_url=args.vllm_url,
+        model=args.model,
     )
 
     if not result["all_checks_pass"]:

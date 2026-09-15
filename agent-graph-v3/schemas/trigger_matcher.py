@@ -4,7 +4,7 @@ Watches the event stream and fires LEPs when semantic conditions match.
 Implements the eligible → fired → exposed → consumed lifecycle.
 
 Key invariants:
-- Idempotent: a given trigger fires at most once per scenario
+- Idempotent: a given trigger fires at most once per scope per scenario
 - Immutable snapshots: triggers only see the observable event data
 - Decision logging: every evaluation is logged for audit
 """
@@ -12,7 +12,6 @@ Key invariants:
 from __future__ import annotations
 
 import fnmatch
-import hashlib
 import json
 import logging
 from typing import Any, Dict, List, Optional, Set
@@ -34,19 +33,28 @@ class TriggerMatcher:
     Tracks occurrence counts per trigger to support occurrence-based
     matching (e.g., "fire on the 2nd read of this file").
 
+    Idempotency is scoped: in ``many_to_one`` topologies, pass the
+    ``agent_role`` as ``scope`` so each worker can fire the same
+    trigger independently.
+
     Usage:
         matcher = TriggerMatcher()
         for event in event_stream:
-            decisions = matcher.evaluate(event)
+            decisions = matcher.evaluate(event, scope=worker_role)
             if decisions:
                 # Apply injections...
     """
 
     def __init__(self) -> None:
         self._occurrence_counts: Dict[str, int] = {}
-        self._fired_triggers: Set[str] = set()
+        # Keyed by (trigger_id, scope) so each worker in M2O can fire
+        # independently. Falls back to global idempotency when scope is None.
+        self._fired_triggers: Dict[str, Set[str]] = {}
         self._decisions: List[TriggerDecision] = []
         self._after_event_seen: Dict[str, bool] = {}
+
+    def _fired_key(self, trigger_id: str, scope: Optional[str] = None) -> str:
+        return f"{trigger_id}:{scope}" if scope else trigger_id
 
     def evaluate(
         self,
@@ -54,8 +62,13 @@ class TriggerMatcher:
         trigger: InjectionTrigger,
         event: TraceEvent,
         event_index: int,
+        scope: Optional[str] = None,
     ) -> TriggerDecision:
         """Evaluate a single trigger against a single event.
+
+        ``scope`` controls idempotency granularity: pass the agent_role
+        (or stage id) when each worker must be allowed to fire the same
+        trigger independently. Leave as None for global idempotency.
 
         Returns a TriggerDecision regardless of match result.
         Never raises — all conditions are checked defensively.
@@ -75,8 +88,9 @@ class TriggerMatcher:
                 reason=f"event_index {event_index} > max {trigger.max_event_index}",
             )
 
-        # Check idempotency — already fired
-        if trigger_id in self._fired_triggers:
+        # Check idempotency — already fired for this (trigger, scope)
+        fk = self._fired_key(trigger_id, scope)
+        if fk in self._fired_triggers:
             return self._log_decision(
                 trigger_id, event, matched=False, fired=False,
                 state=TriggerState.ELIGIBLE,
@@ -131,7 +145,7 @@ class TriggerMatcher:
             )
 
         # Fire!
-        self._fired_triggers.add(trigger_id)
+        self._fired_triggers.setdefault(fk, set()).add(trigger_id)
         return self._log_decision(
             trigger_id, event, matched=True, fired=True,
             state=TriggerState.FIRED,
@@ -148,9 +162,10 @@ class TriggerMatcher:
         """Record that a tool has been called (for 'after' prerequisites)."""
         self._after_event_seen[f"tool:{tool_name}"] = True
 
-    def is_fired(self, trigger_id: str) -> bool:
-        """Whether a trigger has already fired."""
-        return trigger_id in self._fired_triggers
+    def is_fired(self, trigger_id: str, scope: Optional[str] = None) -> bool:
+        """Whether a trigger has already fired for a given scope."""
+        fk = self._fired_key(trigger_id, scope)
+        return fk in self._fired_triggers
 
     def get_decisions(self) -> List[TriggerDecision]:
         """All logged trigger decisions."""
@@ -209,7 +224,7 @@ class TriggerMatcher:
             if event.input_text:
                 search_text += " " + event.input_text
             if trigger.content_pattern not in search_text:
-                unmatched.append(f"content_pattern not found")
+                unmatched.append("content_pattern not found")
 
         return {
             "all_match": len(unmatched) == 0,
