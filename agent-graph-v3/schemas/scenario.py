@@ -57,8 +57,8 @@ TOPOLOGIES = [
 # and are excluded to avoid redundant runs.
 TOPOLOGY_PROPAGATION_MODES: dict[str, list[str]] = {
     "review_loop":        ["single_origin"],
-    "branch_and_verify":  ["single_origin", "one_to_many", "many_to_one"],
-    "coordinator_workers": ["single_origin", "one_to_many", "many_to_one"],
+    "branch_and_verify":  ["single_origin", "many_to_one"],
+    "coordinator_workers": ["single_origin", "one_to_many"],
 }
 
 SHARING_POLICIES = [

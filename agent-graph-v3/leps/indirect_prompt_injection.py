@@ -107,6 +107,7 @@ class IndirectPromptInjectionLEP:
             trigger=self.trigger,
             event=event,
             event_index=event.event_index,
+            scope=event.agent_role,
         )
 
     def inject_into_content(

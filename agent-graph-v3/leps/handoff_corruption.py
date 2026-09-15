@@ -90,6 +90,7 @@ class HandoffCorruptionLEP:
             trigger=self.trigger,
             event=event,
             event_index=event.event_index,
+            scope=event.agent_role,
         )
 
     def corrupt(
