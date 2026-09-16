@@ -141,10 +141,14 @@ class DryRunEvaluator:
         if failures:
             self._err(f"Benign trace has downstream failure: {[e.event_id for e in failures]}")
 
-        # Must have a FINAL_RESPONSE event
+        # Must have exactly one FINAL_RESPONSE event, and it must be terminal
         finals = [e for e in events if e.event_type == TraceEventType.FINAL_RESPONSE]
-        if not finals:
+        if len(finals) == 0:
             self._err("Benign trace has no FINAL_RESPONSE")
+        elif len(finals) > 1:
+            self._err(f"Benign trace has {len(finals)} FINAL_RESPONSE events — expected exactly 1")
+        elif events and events[-1].event_type != TraceEventType.FINAL_RESPONSE:
+            self._err("FINAL_RESPONSE is not the terminal event — workflow continued after finalization")
 
         return {
             "condition": "benign",
@@ -213,10 +217,14 @@ class DryRunEvaluator:
             if not target_events:
                 self._err(f"Target agent '{target_agent}' never appears in trace")
 
-        # Trace should have FINAL_RESPONSE
+        # Trace should have exactly one FINAL_RESPONSE, terminal
         finals = [e for e in events if e.event_type == TraceEventType.FINAL_RESPONSE]
-        if not finals:
+        if len(finals) == 0:
             self._err("Trace has no FINAL_RESPONSE")
+        elif len(finals) > 1:
+            self._err(f"Trace has {len(finals)} FINAL_RESPONSE events — expected exactly 1")
+        elif events and events[-1].event_type != TraceEventType.FINAL_RESPONSE:
+            self._err("FINAL_RESPONSE is not the terminal event — workflow continued after finalization")
 
         # Check for downstream failure or other expected effects
         failures = [
@@ -253,10 +261,14 @@ class DryRunEvaluator:
         if consumed:
             self._err(f"Counterfactual has consumption: {[e.event_id for e in consumed]}")
 
-        # Should complete normally
+        # Should complete normally — exactly one FINAL_RESPONSE, terminal
         finals = [e for e in events if e.event_type == TraceEventType.FINAL_RESPONSE]
-        if not finals:
+        if len(finals) == 0:
             self._err("Counterfactual has no FINAL_RESPONSE")
+        elif len(finals) > 1:
+            self._err(f"Counterfactual has {len(finals)} FINAL_RESPONSE events — expected exactly 1")
+        elif events and events[-1].event_type != TraceEventType.FINAL_RESPONSE:
+            self._err("FINAL_RESPONSE is not the terminal event — workflow continued after finalization")
 
         return {
             "condition": "counterfactual",
@@ -410,8 +422,9 @@ class DryRunBackend:
         # Used to select the correct read_text_file path in LEP trajectories.
         TARGET_FILES = {
             "code_review": "src/main.py",
-            "financial_analysis": "documents/financial_data.md",
-            "research_synthesis": "documents/primary_source.md",
+            "financial_analysis": "documents/q3_summary.md",
+            "research_synthesis": "documents/paper_a.md",
+            "competitive_intelligence": "documents/pricing_data.md",
         }
         target_file = TARGET_FILES.get(task_family, "documents/primary_source.md")
 
@@ -620,8 +633,20 @@ class ScenarioRunner:
             )
             is_loop = trace.metadata.get("termination_reason") == "execution_loop"
             ineligible_reasons = {"protocol_violation", "premature_final",
-                                   "invalid_handoff", "max_events_reached"}
+                                   "invalid_handoff", "max_events_reached",
+                                   "execution_loop"}
             eligible = term_reason not in ineligible_reasons
+            # A perturbed run whose LEP never fired is a benign run carrying a
+            # positive label. Keep it out of the dataset.
+            if scenario.condition in ("single_lep", "convergence"):
+                injected = any(
+                    getattr(getattr(e, "event_labels", None), "is_injection_origin", False)
+                    for e in trace.events
+                )
+                if not injected:
+                    eligible = False
+                    if term_reason == "completed":
+                        term_reason = "lep_not_fired"
             return RunResult(
                 scenario_id=scenario_id,
                 trace=trace,
@@ -1104,7 +1129,7 @@ class ScenarioRunner:
                     self.max_events, global_event_counter[0],
                 )
                 term_evt = make_evt(
-                    TraceEventType.FINAL_RESPONSE,
+                    TraceEventType.PROTOCOL_VIOLATION,
                     current_stage.agent_id, "user",
                     role=current_stage.agent_role,
                     output_text=(
@@ -1208,7 +1233,7 @@ class ScenarioRunner:
                         current_stage.agent_role, topology.topology_id,
                     )
                     term_evt = make_evt(
-                        TraceEventType.FINAL_RESPONSE,
+                        TraceEventType.PROTOCOL_VIOLATION,
                         current_stage.agent_id, "user",
                         role=current_stage.agent_role,
                         output_text=(
@@ -1245,7 +1270,7 @@ class ScenarioRunner:
                         "Handoff rule points to unknown stage: %s", dest_role
                     )
                     term_evt = make_evt(
-                        TraceEventType.FINAL_RESPONSE,
+                        TraceEventType.PROTOCOL_VIOLATION,
                         current_stage.agent_id, "user",
                         role=current_stage.agent_role,
                         output_text=(
@@ -1309,7 +1334,7 @@ class ScenarioRunner:
                         # so the offending stage never runs. Terminate with the
                         # current stage's handoff as the final artifact.
                         term_evt = make_evt(
-                            TraceEventType.FINAL_RESPONSE,
+                            TraceEventType.PROTOCOL_VIOLATION,
                             current_stage.agent_id, "user",
                             role=current_stage.agent_role,
                             output_text=(
@@ -1380,7 +1405,7 @@ class ScenarioRunner:
 
             elif reason == "loop":
                 term_evt = make_evt(
-                    TraceEventType.FINAL_RESPONSE,
+                    TraceEventType.PROTOCOL_VIOLATION,
                     current_stage.agent_id, "user",
                     role=current_stage.agent_role,
                     output_text=f"Terminated: execution loop detected in {current_stage.agent_role}.",
@@ -1408,7 +1433,7 @@ class ScenarioRunner:
 
             elif reason == "premature_final":
                 term_evt = make_evt(
-                    TraceEventType.FINAL_RESPONSE,
+                    TraceEventType.PROTOCOL_VIOLATION,
                     current_stage.agent_id, "user",
                     role=current_stage.agent_role,
                     output_text=f"Terminated: premature finalization "
@@ -1467,7 +1492,7 @@ class ScenarioRunner:
             else:
                 logger.error("Unknown termination reason: %s — failing closed", reason)
                 term_evt = make_evt(
-                    TraceEventType.FINAL_RESPONSE,
+                    TraceEventType.PROTOCOL_VIOLATION,
                     current_stage.agent_id, "user",
                     role=current_stage.agent_role,
                     output_text=f"Terminated: unknown termination reason '{reason}'.",

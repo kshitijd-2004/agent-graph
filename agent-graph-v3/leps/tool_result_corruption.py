@@ -72,8 +72,8 @@ class ToolResultCorruptionLEP:
     # Canonical intervention point for every supported task family.
     TARGET_FILES: Dict[str, str] = {
         "code_review": "src/main.py",
-        "financial_analysis": "documents/financial_data.md",
-        "research_synthesis": "documents/primary_source.md",
+        "financial_analysis": "documents/q3_summary.md",
+        "research_synthesis": "documents/paper_a.md",
     }
 
     # Optional defensive mapping of canonical operators.
@@ -324,6 +324,14 @@ class ToolResultCorruptionLEP:
             )
 
         if variant == "partial_omission":
+            # Python sources use the marker-free operator. The old one wrote
+            # "# [OMITTED: security-critical function]" and a constant-length
+            # result, which a string or size check detects perfectly.
+            if "\ndef " in "\n" + original:
+                from leps.silent_omission import (
+                    DEFECT_FUNCTIONS, _silent_omission,
+                )
+                return _silent_omission(original, DEFECT_FUNCTIONS)
             return ToolResultCorruptionLEP._partial_omission(
                 original
             )
