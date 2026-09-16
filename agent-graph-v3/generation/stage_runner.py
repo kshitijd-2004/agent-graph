@@ -1032,8 +1032,8 @@ class StageRunner:
                         "role": "user",
                         "content": repair_prompt,
                     })
-                    if hasattr(self.llm, '_append_assistant'):
-                        self.llm._append_assistant(repair_prompt)
+                    if hasattr(self.llm, '_conversation'):
+                        self.llm._conversation.append({"role": "user", "content": repair_prompt})
                     elif hasattr(self.llm, '_messages'):
                         msgs = self.llm._messages
                         if callable(msgs):
@@ -1096,8 +1096,8 @@ class StageRunner:
                         "role": "user",
                         "content": repair_prompt,
                     })
-                    if hasattr(self.llm, '_append_assistant'):
-                        self.llm._append_assistant(repair_prompt)
+                    if hasattr(self.llm, '_conversation'):
+                        self.llm._conversation.append({"role": "user", "content": repair_prompt})
                     elif hasattr(self.llm, '_messages'):
                         msgs = self.llm._messages
                         if callable(msgs):
