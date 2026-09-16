@@ -711,10 +711,17 @@ class StageRunner:
                     for code, decision in results.items():
                         if decision.fired:
                             # Apply the actual corruption via the orchestrator
+                            # Run-level seed (event.trace_id is still empty
+                            # here) so injected wording varies across reps.
+                            _wcfg = getattr(scenario, "workflow_config", None)
                             corruption = lep_orchestrator.fire_injection(
                                 code,
                                 tr_evt,
                                 original_result,
+                                seed=(f"{getattr(scenario, 'scenario_id', '')}|"
+                                      f"{getattr(scenario, 'repetition_index', 0)}|"
+                                      f"{getattr(_wcfg, 'seed', '')}|"
+                                      f"{getattr(_wcfg, 'propagation_mode', '')}"),
                             )
                             if (hasattr(corruption, 'perturbed_result')
                                     and hasattr(corruption, 'original_result')

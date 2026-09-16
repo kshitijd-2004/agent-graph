@@ -335,6 +335,7 @@ class LEPOrchestrator:
         if lep is None:
             raise ValueError(f"LEP not registered: {lep_code}")
 
+        seed = kwargs.pop("seed", "")   # only indirect injection uses it
         if hasattr(lep, "corrupt"):
             return lep.corrupt(event, tool_result, **kwargs)
         elif hasattr(lep, "inject_into_content"):
@@ -343,7 +344,9 @@ class LEPOrchestrator:
             if not file_path and hasattr(event, "tool_arguments"):
                 file_path = (event.tool_arguments or {}).get("path", "")
             variant = kwargs.get("variant", "ignore_previous")
-            return lep.inject_into_content(file_path, tool_result, variant)
+            # The caller passes a run-level seed; trace_id is the fallback.
+            seed = seed or getattr(event, "trace_id", "") or ""
+            return lep.inject_into_content(file_path, tool_result, variant, seed=seed)
         elif hasattr(lep, "poison"):
             memory_key = kwargs.get("memory_key", "")
             task_family = kwargs.get("task_family", "financial_analysis")
