@@ -1639,6 +1639,8 @@ class ScenarioRunner:
         """Copy fixture files into workspace."""
         if fixture_dir.exists():
             for item in fixture_dir.iterdir():
+                if item.name in self.WORKSPACE_EXCLUDE:
+                    continue
                 dest = ws_path / item.name
                 if item.is_dir():
                     if dest.exists():
@@ -1660,6 +1662,14 @@ class ScenarioRunner:
                f"Fixture: {scenario.fixture_id}\n" \
                f"Complete the assigned task using available tools."
 
+    AGENT_VISIBLE_MANIFEST_KEYS = (
+        "fixture_id", "task_family", "task_variant", "difficulty",
+        "description", "required_files",
+    )  # distractor/sensitive labels would tell the agent which files to skip
+    # Fixture entries that hold answers. They are evaluator inputs and must
+    # never be copied into the agent's workspace.
+    WORKSPACE_EXCLUDE = {"ground_truth.json", "expected_outputs"}
+
     def _strip_ground_truth_from_manifest(self, manifest_path: Path) -> dict:
         """Remove evaluator ground truth from agent-visible manifest.
 
@@ -1673,10 +1683,13 @@ class ScenarioRunner:
         with open(manifest_path) as f:
             manifest = json.load(f)
 
-        # Fields the agent should NOT see
+        # Allowlist, not blocklist: financial manifests also carry
+        # required_facts, source_priority, forbidden_claims and
+        # version_conflicts, which the old blocklist let through to the
+        # agent. supported_leps and expected_event_range describe the
+        # benchmark, not the task, so they stay hidden too.
         agent_visible = {k: v for k, v in manifest.items()
-                         if k not in ("required_issues", "test_contradictions",
-                                      "false_positive_traps", "success_criteria")}
+                         if k in self.AGENT_VISIBLE_MANIFEST_KEYS}
         return agent_visible
 
     def _write_ground_truth(self, scenario: ScenarioSpec, fixture_dir: Path,
