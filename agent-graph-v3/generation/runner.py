@@ -872,7 +872,7 @@ class ScenarioRunner:
             evt.event_labels.controlled_injection = True
             evt.hidden["lep_type"] = lep_code
             evt.hidden["injected"] = True
-            evt.observable["lep_injection"] = {
+            evt.hidden["lep_injection"] = {
                 "lep_code": lep_code,
                 "is_injection_origin": True,
             }
@@ -882,7 +882,7 @@ class ScenarioRunner:
             evt.event_labels.consumes_perturbed_info = True
             evt.hidden["lep_type"] = lep_code
             evt.hidden["consumed"] = True
-            evt.observable["lep_consumption"] = {
+            evt.hidden["lep_consumption"] = {
                 "lep_code": lep_code,
                 "consumes_perturbed_info": True,
             }
@@ -891,7 +891,7 @@ class ScenarioRunner:
             """Mark event as propagating perturbed information."""
             evt.event_labels.forwards_perturbed_info = True
             evt.hidden["lep_type"] = lep_code
-            evt.observable["lep_propagation"] = {
+            evt.hidden["lep_propagation"] = {
                 "lep_code": lep_code,
                 "forwards_perturbed_info": True,
             }

@@ -79,7 +79,7 @@ Examples:
     parser.add_argument(
         "--max-events",
         type=int,
-        default=50,
+        default=300,
         help="Max events per scenario trace (default: 50)",
     )
     parser.add_argument(

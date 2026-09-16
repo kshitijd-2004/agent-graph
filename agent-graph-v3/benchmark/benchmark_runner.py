@@ -134,7 +134,7 @@ class BenchmarkManifest:
     task_families: list[str] = field(default_factory=list)
     lep_configs: list[LEPConfig] = field(default_factory=list)
     num_repetitions: int = 1
-    max_events: int = 50
+    max_events: int = 300
     max_agent_turns: int = 80
     model_name: str = "claude-sonnet-5"
     temperature: float = 0.4
@@ -288,7 +288,8 @@ class BenchmarkRunner:
             from generation.runner import ScenarioRunner
 
             backend = self.llm_backend or self._default_backend()
-            runner = ScenarioRunner(llm_backend=backend, dry_run=self.manifest.dry_run)
+            runner = ScenarioRunner(llm_backend=backend, dry_run=self.manifest.dry_run,
+                                    max_events=self.manifest.max_events)
 
             # Use a short, descriptive execution_id so trace_id encodes
             # task family, topology, LEP, mode, repetition, and variant.
@@ -613,7 +614,7 @@ def run_benchmark(
     task_families: list[str] | None = None,
     lep_codes: list[str] | None = None,
     num_repetitions: int = 1,
-    max_events: int = 100,
+    max_events: int = 300,
     output_dir: str | None = None,
     dry_run: bool = True,
     fixture_root: str | None = None,
