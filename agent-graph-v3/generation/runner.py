@@ -981,6 +981,7 @@ class ScenarioRunner:
         previous_stage: Optional[Stage] = None
         handoff_count = 0
         backedge_count = 0
+        stage_run_counts: Dict[str, int] = {}
 
         loop_iteration = 0
         while stage_queue and loop_iteration < topology.max_iterations:
@@ -1109,6 +1110,8 @@ class ScenarioRunner:
                 evt.trace_id = trace_id
 
             events.extend(stage_result.events)
+            stage_run_counts[current_stage.stage_id] = (
+                stage_run_counts.get(current_stage.stage_id, 0) + 1)
 
             # ── Enforce max_events cap ────────────────────────────────────────
             if global_event_counter[0] >= self.max_events:
@@ -1310,7 +1313,14 @@ class ScenarioRunner:
                 # in the stage list). Forward revisits are normal and should
                 # not count toward the review-cycle limit.
                 is_backedge = topology.is_backedge(outgoing)
-                if is_backedge:
+                counts_as_review = is_backedge
+                if is_backedge and topology.get_reviewer_stage() is None:
+                    # Fan-in topologies (coordinator_workers): every worker
+                    # returns to the coordinator through a backedge, so the
+                    # first return is the normal flow, not a review cycle.
+                    # Only a return from a worker that was sent back counts.
+                    counts_as_review = stage_run_counts.get(current_stage.stage_id, 0) > 1
+                if counts_as_review:
                     backedge_count += 1
                     logger.info(
                         "Backedge %s -> %s (traversal %d/%d)",
