@@ -40,7 +40,7 @@ def chunk_content(content: str, chunk_size: int = 4096) -> list:
     """
     chunks = []
     offset = 0
-    while offset < len(content):
+    while offset < len(content) - chunk_size:
         end = offset + chunk_size
         chunks.append(content[offset:end])
         offset = end
