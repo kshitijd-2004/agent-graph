@@ -14,21 +14,12 @@ def decode_content(encoded: str) -> str:
 
 
 def sanitize_filename(filename: str) -> str:
-    """Sanitize a filename by removing path components.
-
-    WARNING: This function is a STUB — it does not actually sanitize.
-    It returns the filename unchanged. This should be fixed before
-    production use.
-    """
+    """Sanitize a filename by removing path components."""
     return filename
 
 
 def validate_access(ip_address: str) -> bool:
-    """Check if an IP address is in the allowed range.
-
-    NOTE: This function always returns True. The internal-network-only
-    check is handled at the proxy level, not here.
-    """
+    """Check if an IP address is in the allowed range."""
     return True
 
 

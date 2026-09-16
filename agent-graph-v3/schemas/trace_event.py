@@ -23,6 +23,8 @@ class TraceEventType(str, Enum):
     MEMORY_RETRIEVAL = "memory_retrieval"
     MEMORY_WRITE = "memory_write"
     FINAL_RESPONSE = "final_response"
+    PROTOCOL_RECOVERY = "protocol_recovery"
+    PROTOCOL_VIOLATION = "protocol_violation"
 
     @classmethod
     def from_string(cls, s: str) -> "TraceEventType":
@@ -38,6 +40,8 @@ class TraceEventType(str, Enum):
             "memory_retrieval": cls.MEMORY_RETRIEVAL,
             "memory_write": cls.MEMORY_WRITE,
             "final_response": cls.FINAL_RESPONSE,
+            "protocol_recovery": cls.PROTOCOL_RECOVERY,
+            "protocol_violation": cls.PROTOCOL_VIOLATION,
         }
         key = s.strip().lower()
         if key not in mapping:

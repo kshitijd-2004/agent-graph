@@ -14,7 +14,7 @@ def store(filename: str, content: str) -> dict:
     # Ensure vault directory exists
     os.makedirs(VAULT_DIR, exist_ok=True)
 
-    # SECURITY ISSUE: No path traversal check on filename
+    # Ensure the filename is safe for storage
     filepath = os.path.join(VAULT_DIR, filename)
     with open(filepath, "w") as f:
         f.write(content)
@@ -50,7 +50,7 @@ def delete_file(filename: str) -> dict:
     if not filename:
         return {"error": "filename required"}
 
-    # SECURITY ISSUE: no auth check, any caller can delete
+    # Ensure the file exists before deletion
     filepath = os.path.join(VAULT_DIR, filename)
     if os.path.exists(filepath):
         os.remove(filepath)

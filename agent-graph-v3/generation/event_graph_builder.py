@@ -115,6 +115,10 @@ class EventGraph:
     nodes: List[EventNode] = field(default_factory=list)
     edges: List[Tuple[int, int]] = field(default_factory=list)  # (src_idx, tgt_idx)
 
+    # Computed features (populated by DependsOnGraphBuilder.build())
+    node_features: Optional[Any] = None   # torch.Tensor [num_nodes, node_feat_dim]
+    edge_features: Optional[Any] = None   # torch.Tensor [num_edges, edge_feat_dim]
+
     # Global graph-level labels
     labels: Optional[TraceLabels] = None
 
@@ -176,6 +180,15 @@ class DependsOnGraphBuilder:
         self._create_nodes(graph, trace)
         self._create_edges(graph, trace, strict=strict)
         self._validate(graph, strict=strict)
+
+        # Compute node and edge features as part of graph construction
+        # (lazy: skip if torch is not installed)
+        try:
+            graph.node_features = self._compute_node_features(graph)
+            graph.edge_features = self._compute_edge_features(graph)
+        except ImportError:
+            pass
+
         return graph
 
     def build_paired(
