@@ -501,9 +501,9 @@ class StageRunner:
                 )
 
                 if not model_turn.tool_call:
-                    # Retry also failed — protocol violation
+                    # Retry also failed — protocol violation (terminal)
                     protocol_evt = make_evt(
-                        TraceEventType.FINAL_RESPONSE, agent_id, "user",
+                        TraceEventType.PROTOCOL_VIOLATION, agent_id, "user",
                         role=current_role,
                         output_text="Terminated: protocol violation — "
                                     "model returned non-tool text after retry.",
@@ -555,7 +555,7 @@ class StageRunner:
                         # One-shot recovery: inject a protocol reminder
                         loop_recovery_attempted = True
                         recovery_evt = make_evt(
-                            TraceEventType.FINAL_RESPONSE, agent_id, "internal",
+                            TraceEventType.PROTOCOL_RECOVERY, agent_id, "internal",
                             role=current_role,
                             output_text=self._build_loop_recovery_message(stage),
                         )
@@ -592,7 +592,7 @@ class StageRunner:
                         continue  # allow one more model turn
                     else:
                         loop_evt = make_evt(
-                            TraceEventType.FINAL_RESPONSE, agent_id, "user",
+                            TraceEventType.PROTOCOL_VIOLATION, agent_id, "user",
                             role=current_role,
                             output_text=f"Terminated: execution loop detected "
                                         f"(repeated '{action}' {recent.count(action)} times). "
@@ -1032,8 +1032,8 @@ class StageRunner:
                         "role": "user",
                         "content": repair_prompt,
                     })
-                    if hasattr(self.llm, '_append_assistant'):
-                        self.llm._append_assistant(repair_prompt)
+                    if hasattr(self.llm, '_conversation'):
+                        self.llm._conversation.append({"role": "user", "content": repair_prompt})
                     elif hasattr(self.llm, '_messages'):
                         msgs = self.llm._messages
                         if callable(msgs):
@@ -1096,8 +1096,8 @@ class StageRunner:
                         "role": "user",
                         "content": repair_prompt,
                     })
-                    if hasattr(self.llm, '_append_assistant'):
-                        self.llm._append_assistant(repair_prompt)
+                    if hasattr(self.llm, '_conversation'):
+                        self.llm._conversation.append({"role": "user", "content": repair_prompt})
                     elif hasattr(self.llm, '_messages'):
                         msgs = self.llm._messages
                         if callable(msgs):
