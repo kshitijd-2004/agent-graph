@@ -149,6 +149,8 @@ class BenchmarkManifest:
         "one_to_many",
         "many_to_one",
     ])
+    node_id: int = 0
+    num_nodes: int = 1
 
     def build_plan(self) -> list[dict[str, Any]]:
         """Build the full cross-product execution plan."""
@@ -225,6 +227,17 @@ class BenchmarkRunner:
     def run(self) -> dict[str, Any]:
         """Execute the full benchmark plan."""
         plan = self.manifest.build_plan()
+
+        # Apply node partition if multi-node
+        if self.manifest.num_nodes > 1:
+            from benchmark.split_merge import split_plan
+            plan = split_plan(plan, self.manifest.node_id, self.manifest.num_nodes)
+            logger.info(
+                "Node %d/%d: executing %d of %d plan entries",
+                self.manifest.node_id, self.manifest.num_nodes,
+                len(plan), len(self.manifest.build_plan()),
+            )
+
         logger.info(
             "Benchmark plan: %d scenarios across %d topologies × %d tasks × "
             "%d LEPs × %d rep × %d prop_modes",
@@ -244,6 +257,9 @@ class BenchmarkRunner:
 
         summary = self._summarize()
         self._write_summary(summary)
+
+        audit_path = self.audit_injection_counts()
+        summary["injection_count_audit"] = audit_path
         logger.info(
             "Benchmark complete: %d runs, %d failed",
             len(self.results),
@@ -272,7 +288,7 @@ class BenchmarkRunner:
 
         try:
             wcfg = self._build_workflow_config(entry)
-            lep_configs = [self._resolve_lep(c) for c in entry.get("lep_codes", [])]
+            lep_configs = [self._resolve_lep(c, entry["task_family"]) for c in entry.get("lep_codes", [])]
 
             spec = ScenarioSpec(
                 scenario_id=entry["scenario_id"],
@@ -420,7 +436,7 @@ class BenchmarkRunner:
             max_agent_turns=self.manifest.max_agent_turns,
             timeout_seconds=300,
             model_name=self.manifest.model_name,
-            temperature=0.1,
+            temperature=self.manifest.temperature,
             seed=self.manifest.seed,
             allow_parallel_agents=False,
             allow_retries=True,
@@ -478,16 +494,18 @@ class BenchmarkRunner:
         lep = LEP.get(entry.get("lep_code", ""), "")
         return f"{task}.{topo}.{mode}.{rep}.{lep}"
 
-    def _resolve_lep(self, code: str) -> LEPConfig:
+    def _resolve_lep(self, code: str, task_family: str = "") -> LEPConfig:
         # Build lookup from tasks.registry at call time (cheap, cached)
         from tasks.registry import get_default_leps, get_task_registry
         for tf in get_task_registry():
             for lep in get_default_leps(tf):
                 if lep.code == code:
+                    lep.task_family = task_family
                     return lep
         return LEPConfig(
             code=code, name=code, category="unknown",
             target_agent="", description=f"Auto-resolved: {code}",
+            task_family=task_family,
         )
 
     def _evaluate(self, trace: Trace, spec: ScenarioSpec) -> dict[str, Any]:
@@ -605,6 +623,58 @@ class BenchmarkRunner:
                     writer.writerow(r.to_dict())
 
         logger.info("Summary written: %s, %s", summary_path, csv_path)
+
+    def audit_injection_counts(self) -> str:
+        """Verify that each trace's injection_origin_count matches its expected count.
+
+        Writes mismatched trace filenames to ``injection_count_mismatches.txt``
+        in the output directory. Returns the path to that file.
+        """
+        out_dir = Path(self.manifest.output_dir or "benchmark_output")
+        trace_dir = out_dir / "traces"
+        mismatches_path = out_dir / "injection_count_mismatches.txt"
+        mismatches: list[str] = []
+
+        if not trace_dir.exists():
+            return str(mismatches_path)
+
+        for trace_path in sorted(trace_dir.glob("*_trace.json")):
+            try:
+                with open(trace_path) as f:
+                    data = json.load(f)
+            except (json.JSONDecodeError, OSError):
+                continue
+
+            meta = data.get("metadata", {})
+            condition = meta.get("condition", "")
+            prop_mode = meta.get("propagation_mode", "single_origin")
+            lep_codes = meta.get("lep_codes", [])
+            actual = data.get("injection_origin_count", -1)
+
+            if condition == "benign" or not lep_codes:
+                expected = 0
+            elif prop_mode == "many_to_one":
+                expected = len(lep_codes)
+            else:
+                expected = len(lep_codes)
+
+            if actual != expected:
+                mismatches.append(
+                    f"{trace_path.name}: expected={expected} actual={actual} "
+                    f"condition={condition} prop_mode={prop_mode} leps={lep_codes}"
+                )
+
+        with open(mismatches_path, "w") as f:
+            for line in mismatches:
+                f.write(line + "\n")
+
+        logger.info(
+            "Injection count audit: %d traces checked, %d mismatches → %s",
+            len(list(trace_dir.glob("*_trace.json"))),
+            len(mismatches),
+            mismatches_path,
+        )
+        return str(mismatches_path)
 
 
 # ── CLI entry point ─────────────────────────────────────────────────────────

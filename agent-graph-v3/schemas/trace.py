@@ -73,6 +73,11 @@ class Trace:
     def failure_events(self) -> List[TraceEvent]:
         return [e for e in self.events if e.event_labels.introduces_downstream_failure]
 
+    @property
+    def injection_origin_count(self) -> int:
+        """Number of distinct LEP injection origins in this trace."""
+        return sum(1 for e in self.events if getattr(getattr(e, "event_labels", None), "is_injection_origin", False))
+
     def get_events_by_type(self, event_type: TraceEventType) -> List[TraceEvent]:
         return [e for e in self.events if e.event_type == event_type]
 
@@ -86,6 +91,7 @@ class Trace:
             "variant": self.variant.value,
             "schema_version": self.schema_version,
             "num_events": len(self.events),
+            "injection_origin_count": self.injection_origin_count,
             "events": [e.to_dict() for e in self.events],
             "metadata": self.metadata,
             "file_path": self.file_path,

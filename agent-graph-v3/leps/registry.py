@@ -143,6 +143,20 @@ class LEPOrchestrator:
             resolve_target_stage,
             InvalidTopologyTargetError,
         )
+        # Enforce topology-specific propagation mode restrictions.
+        allowed = {
+            "review_loop": {"single_origin"},
+            "branch_and_verify": {"single_origin", "many_to_one"},
+            "coordinator_workers": {"single_origin", "one_to_many"},
+        }
+        per_topology = allowed.get(topology.topology_id)
+        if per_topology is not None and propagation_mode not in per_topology:
+            raise ValueError(
+                f"propagation_mode='{propagation_mode}' is not valid for "
+                f"topology '{topology.topology_id}'. "
+                f"Allowed: {sorted(per_topology)}"
+            )
+
         self._topology = topology
         self._propagation_mode = propagation_mode
         for code, lep in self._active_leps.items():
