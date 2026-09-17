@@ -496,12 +496,19 @@ class BenchmarkRunner:
 
     def _resolve_lep(self, code: str, task_family: str = "") -> LEPConfig:
         # Build lookup from tasks.registry at call time (cheap, cached)
+        from dataclasses import replace
         from tasks.registry import get_default_leps, get_task_registry
-        for tf in get_task_registry():
+        # This run's own family first: the same LEP code exists in several
+        # families with different target agents and triggers, so the old
+        # first-match loop could hand a financial run code_review's config.
+        families = ([task_family] if task_family else []) + [
+            tf for tf in get_task_registry() if tf != task_family]
+        for tf in families:
             for lep in get_default_leps(tf):
                 if lep.code == code:
-                    lep.task_family = task_family
-                    return lep
+                    # copy: get_default_leps returns shared module-level
+                    # objects, so assigning to them leaks across runs
+                    return replace(lep, task_family=task_family or tf)
         return LEPConfig(
             code=code, name=code, category="unknown",
             target_agent="", description=f"Auto-resolved: {code}",
