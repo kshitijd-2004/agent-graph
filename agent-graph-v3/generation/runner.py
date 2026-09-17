@@ -884,7 +884,7 @@ class ScenarioRunner:
             evt.event_labels.controlled_injection = True
             evt.hidden["lep_type"] = lep_code
             evt.hidden["injected"] = True
-            evt.observable["lep_injection"] = {
+            evt.hidden["lep_injection"] = {
                 "lep_code": lep_code,
                 "is_injection_origin": True,
             }
@@ -894,7 +894,7 @@ class ScenarioRunner:
             evt.event_labels.consumes_perturbed_info = True
             evt.hidden["lep_type"] = lep_code
             evt.hidden["consumed"] = True
-            evt.observable["lep_consumption"] = {
+            evt.hidden["lep_consumption"] = {
                 "lep_code": lep_code,
                 "consumes_perturbed_info": True,
             }
@@ -903,7 +903,7 @@ class ScenarioRunner:
             """Mark event as propagating perturbed information."""
             evt.event_labels.forwards_perturbed_info = True
             evt.hidden["lep_type"] = lep_code
-            evt.observable["lep_propagation"] = {
+            evt.hidden["lep_propagation"] = {
                 "lep_code": lep_code,
                 "forwards_perturbed_info": True,
             }
@@ -993,6 +993,7 @@ class ScenarioRunner:
         previous_stage: Optional[Stage] = None
         handoff_count = 0
         backedge_count = 0
+        stage_run_counts: Dict[str, int] = {}
 
         loop_iteration = 0
         while stage_queue and loop_iteration < topology.max_iterations:
@@ -1121,6 +1122,8 @@ class ScenarioRunner:
                 evt.trace_id = trace_id
 
             events.extend(stage_result.events)
+            stage_run_counts[current_stage.stage_id] = (
+                stage_run_counts.get(current_stage.stage_id, 0) + 1)
 
             # ── Enforce max_events cap ────────────────────────────────────────
             if global_event_counter[0] >= self.max_events:
@@ -1322,7 +1325,14 @@ class ScenarioRunner:
                 # in the stage list). Forward revisits are normal and should
                 # not count toward the review-cycle limit.
                 is_backedge = topology.is_backedge(outgoing)
-                if is_backedge:
+                counts_as_review = is_backedge
+                if is_backedge and topology.get_reviewer_stage() is None:
+                    # Fan-in topologies (coordinator_workers): every worker
+                    # returns to the coordinator through a backedge, so the
+                    # first return is the normal flow, not a review cycle.
+                    # Only a return from a worker that was sent back counts.
+                    counts_as_review = stage_run_counts.get(current_stage.stage_id, 0) > 1
+                if counts_as_review:
                     backedge_count += 1
                     logger.info(
                         "Backedge %s -> %s (traversal %d/%d)",
@@ -1651,6 +1661,8 @@ class ScenarioRunner:
         """Copy fixture files into workspace."""
         if fixture_dir.exists():
             for item in fixture_dir.iterdir():
+                if item.name in self.WORKSPACE_EXCLUDE:
+                    continue
                 dest = ws_path / item.name
                 if item.is_dir():
                     if dest.exists():
@@ -1672,6 +1684,14 @@ class ScenarioRunner:
                f"Fixture: {scenario.fixture_id}\n" \
                f"Complete the assigned task using available tools."
 
+    AGENT_VISIBLE_MANIFEST_KEYS = (
+        "fixture_id", "task_family", "task_variant", "difficulty",
+        "description", "required_files",
+    )  # distractor/sensitive labels would tell the agent which files to skip
+    # Fixture entries that hold answers. They are evaluator inputs and must
+    # never be copied into the agent's workspace.
+    WORKSPACE_EXCLUDE = {"ground_truth.json", "expected_outputs"}
+
     def _strip_ground_truth_from_manifest(self, manifest_path: Path) -> dict:
         """Remove evaluator ground truth from agent-visible manifest.
 
@@ -1685,10 +1705,13 @@ class ScenarioRunner:
         with open(manifest_path) as f:
             manifest = json.load(f)
 
-        # Fields the agent should NOT see
+        # Allowlist, not blocklist: financial manifests also carry
+        # required_facts, source_priority, forbidden_claims and
+        # version_conflicts, which the old blocklist let through to the
+        # agent. supported_leps and expected_event_range describe the
+        # benchmark, not the task, so they stay hidden too.
         agent_visible = {k: v for k, v in manifest.items()
-                         if k not in ("required_issues", "test_contradictions",
-                                      "false_positive_traps", "success_criteria")}
+                         if k in self.AGENT_VISIBLE_MANIFEST_KEYS}
         return agent_visible
 
     def _write_ground_truth(self, scenario: ScenarioSpec, fixture_dir: Path,

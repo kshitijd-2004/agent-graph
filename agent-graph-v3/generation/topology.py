@@ -130,8 +130,11 @@ def _build_registry() -> Dict[str, callable]:
                 HandoffRule("analyst", "researcher"),  # loop back for revision
             ],
             exit_stage="analyst",
-            max_iterations=4,
-            max_review_cycles=2,
+            # Clean Llama runs needed up to 3 revisions (2 of 5 research
+            # runs were cut at the old limit of 2), so the limit sits above
+            # what benign runs use. max_events still bounds runaway loops.
+            max_iterations=10,
+            max_review_cycles=4,
             required_review_cycles=1,
         )
 
@@ -201,7 +204,11 @@ def _build_registry() -> Dict[str, callable]:
                 HandoffRule("synthesizer", "coordinator"),
             ],
             exit_stage="coordinator",
-            max_iterations=8,
+            # One full re-delegation round: coordinator + 3 workers, twice,
+            # plus the final coordinator pass = 9 stage runs, with headroom.
+            # Review cycles here count only returns from re-delegated workers
+            # (see runner), not the first round of hand-backs.
+            max_iterations=12,
             max_review_cycles=3,
             metadata={
                 "research_purpose": "many-to-one aggregation trust",
