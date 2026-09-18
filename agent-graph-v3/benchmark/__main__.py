@@ -1,12 +1,21 @@
-"""Benchmark CLI — run the full experimental matrix.
+"""Benchmark CLI — run the full experimental matrix with optional distributed split.
 
 Usage:
-    python -m benchmark --topologies review_loop,branch_and_verify \\
-        --task-families code_review \\
-        --lep-codes LEP_TOOL_RESULT_CORRUPTION \\
-        --repetitions 3 \\
-        --propagation-modes single_origin,one_to_many \\
-        --output-dir benchmark_output
+    # Single node (default)
+    python -m benchmark --topologies review_loop --task-families code_review \\
+        --lep-codes LEP_TOOL_RESULT_CORRUPTION --repetitions 3
+
+    # Node 0 of 2
+    python -m benchmark --topologies review_loop --run-node 0 --num-nodes 2 \\
+        --output-dir benchmark_output/node_0
+
+    # Node 1 of 2
+    python -m benchmark --topologies review_loop --run-node 1 --num-nodes 2 \\
+        --output-dir benchmark_output/node_1
+
+    # Merge after both finish
+    python -m benchmark --merge benchmark_output/node_0 benchmark_output/node_1 \\
+        --output benchmark_output
 """
 from __future__ import annotations
 
@@ -119,6 +128,26 @@ Examples:
         "--model", type=str, default="claude-sonnet-5",
         help="Model name to use (default: claude-sonnet-5)",
     )
+    parser.add_argument(
+        "--run-node", type=int, default=None,
+        help="Run only this node's partition (0-indexed). Requires --num-nodes.",
+    )
+    parser.add_argument(
+        "--num-nodes", type=int, default=1,
+        help="Total number of nodes for distributed execution (default: 1)",
+    )
+    parser.add_argument(
+        "--merge", nargs="+", type=Path, default=None,
+        help="Merge node output directories into one. Usage: --merge node_0 node_1 --output out_dir",
+    )
+    parser.add_argument(
+        "--output", type=Path, default=None,
+        help="Output directory for merge (used with --merge)",
+    )
+    parser.add_argument(
+        "--plan-manifest", type=Path, default=None,
+        help="Path to scenario manifest JSONL (for merge validation)",
+    )
 
     args = parser.parse_args()
 
@@ -169,6 +198,45 @@ Examples:
         propagation_modes=propagation_modes,
     )
 
+    # ── Mode: merge ───────────────────────────────────────────────────────────
+    if args.merge:
+        if not args.output:
+            logger.error("--merge requires --output")
+            return 1
+        from benchmark.split_merge import merge_outputs
+        report = merge_outputs(args.merge, args.output)
+        print(json.dumps(report, indent=2, default=str))
+        return 0 if not report["errors"] else 1
+
+    # ── Mode: run ─────────────────────────────────────────────────────────────
+    if args.run_node is not None:
+        if args.num_nodes < 2:
+            logger.error("--run-node requires --num-nodes >= 2")
+            return 1
+        node_id = args.run_node
+        num_nodes = args.num_nodes
+    else:
+        node_id = 0
+        num_nodes = 1
+
+    manifest = BenchmarkManifest(
+        topologies=topologies,
+        task_families=task_families,
+        lep_configs=available_leps,
+        num_repetitions=args.repetitions,
+        max_events=args.max_events,
+        model_name=args.model,
+        dry_run=dry_run,
+        output_dir=args.output_dir,
+        fixture_root=args.fixture_root,
+        seed=42,
+        backend_name=args.backend,
+        vllm_url=args.vllm_url,
+        propagation_modes=propagation_modes,
+        node_id=node_id,
+        num_nodes=num_nodes,
+    )
+
     logger.info(
         "Benchmark plan: %d topologies × %d tasks × %d LEPs × %d prop_modes × %d reps = %d scenarios",
         len(topologies),
@@ -178,6 +246,9 @@ Examples:
         args.repetitions,
         len(topologies) * len(task_families) * len(available_leps) * len(propagation_modes) * args.repetitions,
     )
+
+    if num_nodes > 1:
+        logger.info("Running as node %d/%d", node_id, num_nodes)
 
     runner = BenchmarkRunner(manifest)
     summary = runner.run()
