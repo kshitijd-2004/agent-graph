@@ -26,6 +26,9 @@ from schemas import (
 )
 from schemas.scenario import CONDITIONS
 from backend.api_backend import ToolCall, ModelTurn
+from evaluators.task_evaluators import get_evaluator
+from evaluators.evaluation_result import EvaluationResult
+from environment.workspace import Workspace
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +53,9 @@ class RunResult:
     task_success: bool = False
     termination_reason: str = "unknown"
     dataset_eligible: bool = True
+    # Structured evaluation fields (two-tier evaluation)
+    propagation_passed: Optional[bool] = None
+    task_evaluator_passed: Optional[bool] = None
 
 
 class LLMBackend(Protocol):
@@ -580,7 +586,8 @@ class ScenarioRunner:
         self.max_events = max_events
         self.output_dir = output_dir or Path(tempfile.mkdtemp(prefix="agv3_runner_"))
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.evaluator = DryRunEvaluator()
+        self.propagation_evaluator = DryRunEvaluator()
+        self._task_evaluator_cache: Dict[tuple, Any] = {}
 
     def run(
         self,
@@ -607,11 +614,9 @@ class ScenarioRunner:
             trace = self._execute_scenario(scenario, fixture_root, execution_id)
             runtime = (datetime.now(timezone.utc) - t0).total_seconds()
 
-            # Evaluate the trace
-            evaluation = self._evaluate(trace, scenario)
-            self.evaluator.reset()
-
-            # Post-hoc labels
+            # Evaluate the trace (two-tier: propagation + task correctness)
+            evaluation = self._evaluate(trace, scenario, fixture_root)
+            self.propagation_evaluator.reset()
             has_final = any(e.event_type == TraceEventType.FINAL_RESPONSE for e in trace.events)
             term_reason = trace.metadata.get("termination_reason", "completed") if hasattr(trace, "metadata") and trace.metadata else "completed"
             if term_reason == "completed":
@@ -627,10 +632,16 @@ class ScenarioRunner:
             failure_reasons = {"protocol_violation", "premature_final", "invalid_handoff",
                                 "max_events_reached", "execution_loop"}
             clean_completion = term_reason == "completed"
-            task_ok = clean_completion and (
-                evaluation.get("passed", True) if isinstance(evaluation, dict)
-                else getattr(evaluation, "passed", True)
-            )
+
+            # Extract structured two-tier results
+            propagation = evaluation.get("propagation", {})
+            propagation_passed = bool(propagation.get("passed", False))
+            task_eval = evaluation.get("task", {})
+            # task_success is the canonical task-correctness field (not "passed",
+            # which defaults to True and is never set by evaluators)
+            task_evaluator_passed = bool(task_eval.get("task_success", True))
+            overall_passed = clean_completion and propagation_passed and task_evaluator_passed
+
             is_loop = trace.metadata.get("termination_reason") == "execution_loop"
             ineligible_reasons = {"protocol_violation", "premature_final",
                                    "invalid_handoff", "max_events_reached",
@@ -652,11 +663,13 @@ class ScenarioRunner:
                 trace=trace,
                 success=True,
                 runner_success=True,
-                task_success=task_ok and not is_loop,
+                task_success=overall_passed and not is_loop,
                 termination_reason=term_reason,
                 dataset_eligible=eligible,
                 lep_results=evaluation,
                 evaluation=evaluation,
+                propagation_passed=propagation_passed,
+                task_evaluator_passed=task_evaluator_passed,
                 runtime_seconds=runtime,
             )
         except Exception as e:
@@ -678,18 +691,93 @@ class ScenarioRunner:
                 runtime_seconds=runtime,
             )
 
-    def _evaluate(self, trace: Trace, scenario: ScenarioSpec) -> Dict[str, Any]:
-        """Run deterministic evaluation on a completed trace."""
+    def _evaluate(self, trace: Trace, scenario: ScenarioSpec, fixture_root: Path) -> Dict[str, Any]:
+        """Run two-tier deterministic evaluation on a completed trace.
+
+        Tier 1 (propagation): Did the LEP/propagation experiment behave correctly?
+        Tier 2 (task): Did the agent actually solve the task correctly?
+
+        Returns a structured dict with "propagation", "task", and "overall_passed".
+        """
+        # ── Tier 1: propagation evaluation ────────────────────────────────
         cond = scenario.condition
         if cond == "benign":
-            return self.evaluator.evaluate_benign(trace, scenario)
+            propagation_result = self.propagation_evaluator.evaluate_benign(trace, scenario)
         elif cond == "single_lep":
-            return self.evaluator.evaluate_single_lep(trace, scenario, scenario.lep_configs)
+            propagation_result = self.propagation_evaluator.evaluate_single_lep(
+                trace, scenario, scenario.lep_configs
+            )
         elif cond == "counterfactual":
-            return self.evaluator.evaluate_counterfactual(trace, scenario)
+            propagation_result = self.propagation_evaluator.evaluate_counterfactual(trace, scenario)
         elif cond == "convergence":
-            return self.evaluator.evaluate_single_lep(trace, scenario, scenario.lep_configs)
-        return {"condition": cond, "passed": True, "errors": []}
+            propagation_result = self.propagation_evaluator.evaluate_single_lep(
+                trace, scenario, scenario.lep_configs
+            )
+        else:
+            propagation_result = {"condition": cond, "passed": True, "errors": []}
+
+        propagation_passed = bool(propagation_result.get("passed", False))
+
+        # ── Tier 2: task evaluation ───────────────────────────────────────
+        task_eval_result = None
+        task_evaluator = self._get_task_evaluator(
+            scenario.task_family, scenario.fixture_id, fixture_root
+        )
+        if task_evaluator is not None:
+            workspace = Workspace(self.output_dir / f"ws_{scenario.scenario_id}")
+            try:
+                eval_result = task_evaluator.evaluate(trace, workspace, scenario)
+                task_eval_result = eval_result.to_dict() if hasattr(eval_result, "to_dict") else dict(eval_result)
+            except Exception as e:
+                logger.warning("Task evaluator error for %s: %s", scenario.scenario_id, e)
+                task_eval_result = {
+                    "task_success": False,
+                    "passed": False,
+                    "errors": [f"Task evaluator error: {e}"],
+                }
+
+        # task_success is the canonical task-correctness boolean.
+        # "passed" defaults to True and is never set by evaluators.
+        task_passed = bool(task_eval_result.get("task_success", True)) if task_eval_result else True
+
+        # ── Combine ──────────────────────────────────────────────────────
+        return {
+            "propagation": {
+                "passed": propagation_passed,
+                "injection_count": propagation_result.get("injection_count", 0),
+                "consumption_count": propagation_result.get("consumption_count", 0),
+                "propagation_count": propagation_result.get("propagation_count", 0),
+                "failure_count": propagation_result.get("failure_count", 0),
+                "errors": propagation_result.get("errors", []),
+            },
+            "task": task_eval_result or {
+                "passed": True,
+                "task_success": True,
+                "note": "no task evaluator for this family",
+            },
+            "overall_passed": propagation_passed and task_passed,
+        }
+
+    def _get_task_evaluator(
+        self, task_family: str, fixture_id: str, fixture_root: Path
+    ) -> Optional[Any]:
+        """Return a cached task evaluator for (task_family, fixture_id).
+
+        Returns None if no evaluator is registered for this task family.
+        Cache key is (task_family, fixture_id) so different fixtures
+        for the same family get separate evaluator instances.
+        """
+        cache_key = (task_family, fixture_id)
+        if cache_key in self._task_evaluator_cache:
+            return self._task_evaluator_cache[cache_key]
+
+        fixture_path = fixture_root / "workspace_fixtures" / fixture_id
+        evaluator = get_evaluator(task_family, fixture_path=fixture_path)
+        if evaluator is None:
+            return None
+
+        self._task_evaluator_cache[cache_key] = evaluator
+        return evaluator
 
     def _execute_scenario(
         self,
@@ -1549,6 +1637,7 @@ class ScenarioRunner:
                 1 for e in events
                 if e.event_type == TraceEventType.AGENT_HANDOFF
             ),
+            "propagation_mode": wcfg.propagation_mode,
         }
 
         if final_result is None:
