@@ -62,6 +62,17 @@ class HandoffCorruptionLEP:
         "severity_downgrade":         "alter_severity",
         "false_confidence":           "remove_uncertainty",
         "fabricated_recommendation":  "unsupported_recommendation",
+        # canonical_operators.py also uses the variant names directly
+        # (financial_analysis and research_synthesis both use
+        # swap_attribution). Without these the lookup missed and every
+        # handoff corruption silently fell back to omit_key_finding.
+        "swap_attribution":           "swap_attribution",
+        "omit_key_finding":           "omit_key_finding",
+        "omission_in_handoff":        "omit_key_finding",
+        "alter_severity":             "alter_severity",
+        "replace_value":              "replace_value",
+        "remove_uncertainty":         "remove_uncertainty",
+        "unsupported_recommendation": "unsupported_recommendation",
     }
 
     def __init__(self, lep_config: LEPConfig):
@@ -112,7 +123,22 @@ class HandoffCorruptionLEP:
         variant = self.CANONICAL_TO_VARIANT.get(canonical, corruption_type)
 
         corrupted = self._apply_corruption(original_content, variant)
-        altered = self._detect_alterations(original_content, corrupted, variant)
+        # A narrow operator can be a no-op on a given summary (swap_attribution
+        # only bites if the text names a source or a file), and a no-op means
+        # the LEP silently does not fire. Fall back through the other operators
+        # so every fired trigger produces a real change, and record which one
+        # actually applied.
+        if corrupted == original_content:
+            for alt in ("omit_key_finding", "alter_severity", "replace_value",
+                        "remove_uncertainty", "unsupported_recommendation"):
+                if alt == variant:
+                    continue
+                attempt = self._apply_corruption(original_content, alt)
+                if attempt != original_content:
+                    corrupted, variant = attempt, f"{variant}->{alt}"
+                    break
+        altered = self._detect_alterations(original_content, corrupted,
+                                           variant.split("->")[-1])
 
         result = HandoffCorruptionResult(
             lep_instance_id=instance_id,
@@ -233,10 +259,20 @@ class HandoffCorruptionLEP:
         # Try to remove the first critical clause
         for i, clause in enumerate(clauses):
             if _is_critical(clause):
-                clauses.pop(i)
-                result = "; ".join(clauses) if clauses else "[content redacted]"
-                if result.strip() != text.strip():
-                    return result
+                rest = clauses[:i] + clauses[i + 1:]
+                if rest:
+                    result = "; ".join(rest)
+                    if result.strip() != text.strip():
+                        return result
+                # single-clause summary: drop the specific part instead of
+                # blanking the whole thing. "[content redacted]" was a fixed
+                # string a detector could match, and it destroyed the summary
+                # so nothing could propagate.
+                degraded = re.sub(r'\b(critical|severe|high|conflicting|significant)\b',
+                                  '', clause, flags=re.IGNORECASE)
+                degraded = re.sub(r'\s+', ' ', degraded).strip()
+                if degraded and degraded != clause.strip():
+                    return degraded
 
         # No critical clause found — degrade the first numeric value
         degraded = re.sub(r'(\d+\.?\d*%)', r'[~REDACTED~]', text, count=1)
