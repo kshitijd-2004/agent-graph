@@ -366,11 +366,11 @@ class BenchmarkRunner:
             record.injection_fired = len(record.injection_event_ids) > 0
             record.recovery_detected = len(record.recovery_event_ids) > 0
 
-            # Downstream failure
-            record.downstream_failure = any(
-                getattr(e, "event_labels", None) and e.event_labels.introduces_downstream_failure
-                for e in trace.events
-            )
+            # Downstream failure — from trace.labels (authoritative, set by
+            # the ScenarioRunner task evaluator). Do NOT reconstruct from
+            # individual event labels; do NOT re-run the task evaluator.
+            record.downstream_failure = trace.labels.downstream_failure
+            record.task_success = trace.labels.task_success
             for e in trace.events:
                 if (getattr(e, "event_labels", None)
                         and e.event_labels.introduces_downstream_failure):
@@ -383,11 +383,12 @@ class BenchmarkRunner:
                     record.final_output = (e.output_text or e.input_text or "")[:500]
                     break
 
-            # Evaluator
-            eval_result = self._evaluate(trace, spec)
-            record.task_success = eval_result.get("task_success", False)
-            record.evaluator_passed = eval_result.get("passed", True)
-            record.evaluator_errors = eval_result.get("errors", [])
+            # Evaluator — use the authoritative result from ScenarioRunner.
+            # The runner already evaluated the trace; do NOT re-run here.
+            eval_result = result.evaluation or {}
+            record.evaluator_passed = bool(eval_result.get("overall_passed", True))
+            task_eval = eval_result.get("task", {})
+            record.evaluator_errors = task_eval.get("errors", [])
 
             # Propagation tracking
             record.perturbation_reached_target = (

@@ -93,6 +93,7 @@ class Trace:
             "num_events": len(self.events),
             "injection_origin_count": self.injection_origin_count,
             "events": [e.to_dict() for e in self.events],
+            "labels": asdict(self.labels),
             "metadata": self.metadata,
             "file_path": self.file_path,
         }
@@ -107,6 +108,7 @@ class Trace:
             variant=variant,
             schema_version=d.get("schema_version", "3.0.0"),
             events=events,
+            labels=TraceLabels(**d.get("labels", {})),
             metadata=d.get("metadata", {}),
             file_path=d.get("file_path"),
         )

@@ -640,6 +640,20 @@ class ScenarioRunner:
             # task_success is the canonical task-correctness field (not "passed",
             # which defaults to True and is never set by evaluators)
             task_evaluator_passed = bool(task_eval.get("task_success", True))
+
+            # ── Copy evaluator results into trace.labels ──────────────────
+            trace.labels.task_success = bool(task_eval.get("task_success", False))
+            trace.labels.downstream_failure = bool(task_eval.get("downstream_failure", False))
+            trace.labels.factual_score = float(task_eval.get("factual_score", 0.0))
+            trace.labels.completeness_score = float(task_eval.get("completeness_score", 0.0))
+            trace.labels.provenance_score = float(task_eval.get("provenance_score", 0.0))
+            trace.labels.policy_score = float(task_eval.get("policy_score", 0.0))
+            trace.labels.action_safety_score = float(task_eval.get("action_safety_score", 0.0))
+            trace.labels.evaluator_confidence = float(task_eval.get("evaluator_confidence", 0.0))
+            trace.labels.evaluator_notes = list(task_eval.get("evaluator_notes", []))
+            trace.metadata["evaluation"] = task_eval
+            # ───────────────────────────────────────────────────────────────
+
             overall_passed = clean_completion and propagation_passed and task_evaluator_passed
 
             is_loop = trace.metadata.get("termination_reason") == "execution_loop"
