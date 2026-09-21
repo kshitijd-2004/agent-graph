@@ -31,14 +31,13 @@ def _stratified_group_split(
     val_frac: float = 0.15,
     seed: int = 42,
 ) -> Tuple[List[int], List[int], List[int]]:
-    """Split graph indices into train/val/test, stratified by label and grouped
-    by task-instance group_id.
+    """Split graph indices into train/val/test, grouped by task-instance group_id.
 
     All graphs sharing the same group_id stay in the same split to
-    prevent data leakage.  A group_id identifies a single task fixture /
-    instance — e.g. ``("code_review", "review_loop", "LEP_HANDOFF_CORRUPTION")`` —
-    so benign and perturbed variants of the same underlying task land
-    together.
+    prevent data leakage.  Groups are shuffled deterministically and
+    split proportionally.  The group label may be mixed (benign + LEP
+    variants of the same task instance), so stratification by max-label
+    is intentionally omitted.
 
     Args:
         graph_labels:  List of float labels (1.0 = malignant, 0.0 = benign).
@@ -58,32 +57,18 @@ def _stratified_group_split(
     for i, gid in enumerate(group_ids):
         group_to_indices[gid].append(i)
 
-    # Label each group by the max label in that group
-    group_labels = {}
-    for gid, idxs in group_to_indices.items():
-        group_labels[gid] = max(graph_labels[i] for i in idxs)
+    # Shuffle all groups and split proportionally (no stratification
+    # — each group is a mixed task instance with benign + LEP runs).
+    groups = list(group_to_indices.keys())
+    rng.shuffle(groups)
 
-    benign_groups = [g for g, lbl in group_labels.items() if lbl == 0.0]
-    mal_groups = [g for g, lbl in group_labels.items() if lbl == 1.0]
+    n_groups = len(groups)
+    n_train = int(n_groups * train_frac)
+    n_val = int(n_groups * val_frac)
 
-    rng.shuffle(benign_groups)
-    rng.shuffle(mal_groups)
-
-    def _split(groups, n_train, n_val):
-        return groups[:n_train], groups[n_train:n_train + n_val], groups[n_train + n_val:]
-
-    # Proportional split
-    n_train_b = max(1, int(len(benign_groups) * train_frac)) if benign_groups else 0
-    n_val_b   = max(1, int(len(benign_groups) * val_frac)) if benign_groups else 0
-    tr_b, va_b, te_b = _split(benign_groups, n_train_b, n_val_b)
-
-    n_train_m = max(1, int(len(mal_groups) * train_frac)) if mal_groups else 0
-    n_val_m   = max(1, int(len(mal_groups) * val_frac)) if mal_groups else 0
-    tr_m, va_m, te_m = _split(mal_groups, n_train_m, n_val_m)
-
-    train_gids = tr_b + tr_m
-    val_gids   = va_b + va_m
-    test_gids  = te_b + te_m
+    train_gids = groups[:n_train]
+    val_gids = groups[n_train:n_train + n_val]
+    test_gids = groups[n_train + n_val:]
 
     train_idx = [i for gid in train_gids for i in group_to_indices[gid]]
     val_idx   = [i for gid in val_gids   for i in group_to_indices[gid]]
@@ -95,6 +80,34 @@ def _stratified_group_split(
         len(val_idx), len(val_gids),
         len(test_idx), len(test_gids),
     )
+
+    # Assertions: leakage-free, non-empty splits, both classes present
+    train_set = set(train_gids)
+    val_set   = set(val_gids)
+    test_set  = set(test_gids)
+    assert train_set.isdisjoint(val_set), "train/val group overlap"
+    assert train_set.isdisjoint(test_set), "train/test group overlap"
+    assert val_set.isdisjoint(test_set), "val/test group overlap"
+    assert len(train_set) > 0, "train split is empty"
+    assert len(val_set) > 0, "val split is empty"
+    assert len(test_set) > 0, "test split is empty"
+
+    for name, labels in [
+        ("train", [graph_labels[i] for i in train_idx]),
+        ("val",   [graph_labels[i] for i in val_idx]),
+        ("test",  [graph_labels[i] for i in test_idx]),
+    ]:
+        pos = sum(labels)
+        neg = len(labels) - pos
+        print(f"{name}: N={len(labels)}, positive={pos}, negative={neg}")
+        assert pos > 0, f"{name}: NO POSITIVES"
+        assert neg > 0, f"{name}: NO NEGATIVES"
+
+    print(f"train groups: {len(train_set)}")
+    print(f"val groups:   {len(val_set)}")
+    print(f"test groups:  {len(test_set)}")
+    print("PASS: leakage-free grouped split with both classes")
+
     return train_idx, val_idx, test_idx
 
 
@@ -238,7 +251,7 @@ def create_dataloaders(
 ) -> Tuple[PyGDataLoader, PyGDataLoader, PyGDataLoader]:
     """Create PyG DataLoaders from a DetectorDataset.
 
-    For static GNN training (StaticGraphData with PyG tensors).
+    For static GNN training (StaticGraphData inherits PyG Data).
 
     Args:
         dataset:      DetectorDataset with train/val/test splits.

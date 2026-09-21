@@ -26,6 +26,7 @@ import numpy as np
 
 from generation.event_graph_builder import DependsOnGraphBuilder, EventGraph
 from generation.event_graph_snapshot import TemporalSnapshotBuilder
+from generation.feature_schema import OBSERVABLE_NODE_FEATURE_DIM
 from generation.heuristic_detector import DetectionResult, HeuristicDetector
 from encoder import GraphEncoder, StaticGraphData, TemporalGraphData
 from detectors.static_gnn import StaticGNN, DetectionOutput as StaticOutput
@@ -152,12 +153,15 @@ class DetectorPipeline:
     def _task_instance_id(trace: Any) -> str:
         """Build a task-instance group identifier from trace metadata.
 
-        Uses fixture_id — the stable identifier shared by all variants
-        (benign + LEP) of the same underlying task fixture — so they
-        stay in the same train/val/test split.
+        Groups by fixture_id + topology + repetition so that all variants
+        (benign, each LEP, each repetition) of the same underlying task
+        instance stay together in the same split, preventing data leakage.
         """
         meta = getattr(trace, "metadata", {}) or {}
-        return meta.get("fixture_id", "unknown")
+        fixture = meta.get("fixture_id", "unknown")
+        topology = meta.get("topology", "unknown")
+        repetition = meta.get("repetition_index", 0)
+        return f"{fixture}|{topology}|{repetition}"
 
     def _dict_to_trace(self, data: dict, variant: Any = None) -> Any:
         """Convert a trace dict (from JSON) to a Trace object."""
@@ -191,10 +195,12 @@ class DetectorPipeline:
                 event_labels = EventLabels(**evt_data["event_labels"])
 
             evt = TraceEvent(
+                trace_id=data.get("trace_id", ""),
                 event_id=evt_data.get("event_id", ""),
                 event_type=evt_type,
                 event_index=evt_data.get("event_index", 0),
                 timestamp=evt_data.get("timestamp", ""),
+                stage_event_index=evt_data.get("stage_event_index"),
                 agent_id=evt_data.get("agent_id", ""),
                 agent_role=evt_data.get("agent_role", ""),
                 depends_on=evt_data.get("depends_on", []),
@@ -219,9 +225,9 @@ class DetectorPipeline:
 
         trace = Trace(
             trace_id=data.get("trace_id", ""),
-            group_id=data.get("group_id", ""),
-            events=events,
+            execution_id=data.get("execution_id", data.get("trace_id", "")),
             variant=variant,
+            events=events,
             labels=labels or TraceLabels(),
             metadata=data.get("metadata", {}),
         )
@@ -339,14 +345,14 @@ class DetectorPipeline:
 
         # Initialize model
         if detector_type == "static_gnn":
-            model = StaticGNN(node_feature_dim=24, hidden_dim=64, num_layers=3, dropout=0.1)
+            model = StaticGNN(node_feature_dim=OBSERVABLE_NODE_FEATURE_DIM, hidden_dim=64, num_layers=3, dropout=0.1)
         elif detector_type == "tgnn":
             model = TemporalGNN(
-                node_feature_dim=24, memory_dim=64, time_dim=16, dropout=0.1
+                node_feature_dim=OBSERVABLE_NODE_FEATURE_DIM, memory_dim=64, time_dim=16, dropout=0.1
             )
         elif detector_type == "hybrid":
             model = HybridDetector(
-                node_feature_dim=24, memory_dim=64, time_dim=16, fusion_dim=32, dropout=0.1
+                node_feature_dim=OBSERVABLE_NODE_FEATURE_DIM, memory_dim=64, time_dim=16, fusion_dim=32, dropout=0.1
             )
         else:
             raise ValueError(f"Unknown detector type: {detector_type}")
