@@ -51,39 +51,36 @@ class HybridDetectionOutput:
 
 
 class HeuristicSignalExtractor(nn.Module):
-    """Extract interpretable propagation signals from event graphs.
+    """Extract deterministic propagation signals from event graphs.
 
     Each signal is a deterministic function over detector-visible graph
-    structure and features — no learned weights — matching the six
-    signals described in detect.tex:
+    structure and features — no learned weights.  Signal names describe
+    exactly what they measure:
 
-    1. rare_tool              — events involving low-frequency tool types
-    2. repeated_transitions   — same (src, dst) pair seen many times
-    3. untrusted_to_sensitive — propagation from untrusted agents to
-                                sensitive agents
-    4. fan_out                — out-degree spike at a source node
-    5. convergence            — in-degree spike at a target node
-    6. cross_agent_memory     — memory-write → memory-read chains
+    1. event_type_rarity      — target event type is rare in this execution
+    2. repeated_transition    — same (src_role, tgt_role) pair appears many times
+    3. cross_role_transition  — source and target have different agent roles
+    4. source_fan_out         — source node has many outgoing edges
+    5. target_convergence     — target node has many incoming edges
+    6. memory_chain           — a memory_write precedes a memory_read
 
     All signals are computed from detector-visible features only
     (no perturbation flags).  Each returns a per-event score in [0, 1].
     """
 
-    # Signal names match detect.tex lines 31-39
+    # Descriptive names matching actual computation
     SIGNAL_NAMES: List[str] = [
-        "rare_tool",
-        "repeated_transitions",
-        "untrusted_to_sensitive",
-        "fan_out",
-        "convergence",
-        "cross_agent_memory",
+        "event_type_rarity",
+        "repeated_transition",
+        "cross_role_transition",
+        "source_fan_out",
+        "target_convergence",
+        "memory_chain",
     ]
 
-    # Agent-role column indices (0-based within 24-dim detector-visible features)
-    # Columns 11-23 in the 24-dim space.  We treat "other" and roles not
-    # in the sensitive set as untrusted.
-    _SENSITIVE_ROLES = frozenset({0, 1, 2, 3, 4, 5, 6})  # analyst, writer, coder, reviewer, manager, planner, researcher
-    _MEMORY_EVENT_TYPES = frozenset({6, 7})  # memory_write, memory_read (event-type one-hot cols)
+    # Event-type one-hot column indices (0-10)
+    _MEMORY_WRITE_EVT = 6   # memory_write event type
+    _MEMORY_READ_EVT  = 7   # memory_read event type
 
     def __init__(
         self,
@@ -121,75 +118,60 @@ class HeuristicSignalExtractor(nn.Module):
         if num_events == 0:
             return torch.zeros(0, self.num_signals, device=device)
 
-        # Decode roles from one-hot (cols 11-23 → argmax within that range)
-        src_role_idx = node_features[edges_u.clamp(0, num_nodes - 1), 11:24].argmax(dim=1)
-        tgt_role_idx = node_features[edges_v.clamp(0, num_nodes - 1), 11:24].argmax(dim=1)
-        is_sensitive_src = torch.tensor(
-            [int(r.item() in self._SENSITIVE_ROLES) for r in src_role_idx],
-            device=device, dtype=torch.float,
-        )
-        is_sensitive_tgt = torch.tensor(
-            [int(r.item() in self._SENSITIVE_ROLES) for r in tgt_role_idx],
-            device=device, dtype=torch.float,
-        )
+        src_idx = edges_u.clamp(0, num_nodes - 1)
+        tgt_idx = edges_v.clamp(0, num_nodes - 1)
 
-        # Event types (cols 0-10)
-        src_evt_idx = node_features[edges_u.clamp(0, num_nodes - 1), 0:11].argmax(dim=1)
-        tgt_evt_idx = node_features[edges_v.clamp(0, num_nodes - 1), 0:11].argmax(dim=1)
+        # Agent role one-hot: cols 11-23 → argmax
+        src_role = node_features[src_idx, 11:24].argmax(dim=1)
+        tgt_role = node_features[tgt_idx, 11:24].argmax(dim=1)
 
-        # ── Signal 1: rare_tool ──────────────────────────────────────────────
-        tool_freq = torch.bincount(tgt_evt_idx, minlength=11)
-        tool_norm = tool_freq / max(tool_freq.sum().item(), 1)
-        rare_tool_scores = 1.0 - tool_norm[tgt_evt_idx]  # infreq tools → high score
+        # Event type one-hot: cols 0-10 → argmax
+        src_evt = node_features[src_idx, 0:11].argmax(dim=1)
+        tgt_evt = node_features[tgt_idx, 0:11].argmax(dim=1)
 
-        # ── Signal 2: repeated_transitions ───────────────────────────────────
-        transition_key = src_evt_idx * 11 + tgt_evt_idx
-        _, inv, counts = torch.unique(transition_key, return_inverse=True, return_counts=True)
-        repeat_score = counts[inv].float()
-        max_count = max(repeat_score.max().item(), 1)
-        repeated_trans = (repeat_score - 1.0) / max(max_count - 1.0, 1.0)
+        # ── Signal 1: event_type_rarity ──────────────────────────────────────
+        freq = torch.bincount(tgt_evt, minlength=11).float()
+        norm = freq / max(freq.sum().item(), 1)
+        event_type_rarity = 1.0 - norm[tgt_evt]
 
-        # ── Signal 3: untrusted_to_sensitive ──────────────────────────────────
-        untrusted_src = 1.0 - is_sensitive_src  # not sensitive = untrusted
-        untrusted_to_sensitive = untrusted_src * is_sensitive_tgt
+        # ── Signal 2: repeated_transition ────────────────────────────────────
+        pair_key = src_role * 24 + tgt_role  # role has up to 13 values
+        _, inv, counts = torch.unique(pair_key, return_inverse=True, return_counts=True)
+        max_count = max(counts.max().item(), 1)
+        repeated_transition = (counts[inv].float() - 1.0) / max(max_count - 1.0, 1.0)
 
-        # ── Signal 4: fan-out ─────────────────────────────────────────────────
-        src_counts = torch.bincount(edges_u.clamp(0, num_nodes - 1), minlength=num_nodes)
-        fan_out = src_counts[edges_u.clamp(0, num_nodes - 1)].float()
-        max_fan = max(fan_out.max().item(), 1)
-        fan_out_scores = (fan_out - 1.0) / max(max_fan - 1.0, 1.0)
+        # ── Signal 3: cross_role_transition ──────────────────────────────────
+        cross_role_transition = (src_role != tgt_role).float()
 
-        # ── Signal 5: convergence ─────────────────────────────────────────────
-        tgt_counts = torch.bincount(edges_v.clamp(0, num_nodes - 1), minlength=num_nodes)
-        convergence = tgt_counts[edges_v.clamp(0, num_nodes - 1)].float()
-        max_conv = max(convergence.max().item(), 1)
-        convergence_scores = (convergence - 1.0) / max(max_conv - 1.0, 1.0)
+        # ── Signal 4: source_fan_out ──────────────────────────────────────────
+        out_deg = torch.bincount(src_idx, minlength=num_nodes).float()
+        max_out = max(out_deg.max().item(), 1)
+        source_fan_out = (out_deg[src_idx] - 1.0) / max(max_out - 1.0, 1.0)
 
-        # ── Signal 6: cross_agent_memory ──────────────────────────────────────
-        is_mem_write = (src_evt_idx == 6).float()  # memory_write event type
-        is_mem_read  = (tgt_evt_idx == 7).float()  # memory_read event type
-        # For each memory_read, check if there was an earlier memory_write
-        # in the same execution stream.  We approximate by checking if
-        # any memory write exists upstream (lower event index) that shares
-        # the same source node as this read's target.
-        cross_agent_memory = torch.zeros(num_events, device=device)
-        if is_mem_read.sum() > 0:
-            write_times = torch.where(is_mem_write > 0)[0].float()
-            if len(write_times) > 0:
+        # ── Signal 5: target_convergence ──────────────────────────────────────
+        in_deg = torch.bincount(tgt_idx, minlength=num_nodes).float()
+        max_in = max(in_deg.max().item(), 1)
+        target_convergence = (in_deg[tgt_idx] - 1.0) / max(max_in - 1.0, 1.0)
+
+        # ── Signal 6: memory_chain ────────────────────────────────────────────
+        is_write = (src_evt == self._MEMORY_WRITE_EVT).float()
+        is_read  = (tgt_evt == self._MEMORY_READ_EVT).float()
+        memory_chain = torch.zeros(num_events, device=device)
+        if is_read.sum() > 0:
+            write_indices = torch.where(is_write > 0)[0]
+            if len(write_indices) > 0:
                 for evt_idx in range(num_events):
-                    if is_mem_read[evt_idx] > 0:
-                        # Was there a write before this event?
-                        has_prior_write = (write_times < evt_idx).any().item()
-                        cross_agent_memory[evt_idx] = float(has_prior_write)
+                    if is_read[evt_idx] > 0 and (write_indices < evt_idx).any():
+                        memory_chain[evt_idx] = 1.0
 
         signals = torch.stack([
-            rare_tool_scores,
-            repeated_trans,
-            untrusted_to_sensitive,
-            fan_out_scores,
-            convergence_scores,
-            cross_agent_memory,
-        ], dim=-1)  # [num_events, 6]
+            event_type_rarity,
+            repeated_transition,
+            cross_role_transition,
+            source_fan_out,
+            target_convergence,
+            memory_chain,
+        ], dim=-1)
 
         return signals.clamp(0.0, 1.0)
 

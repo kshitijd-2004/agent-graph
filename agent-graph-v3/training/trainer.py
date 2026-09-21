@@ -228,17 +228,21 @@ class DetectorTrainer:
                     output = self.model(
                         node_features, edges_u, edges_v, timestamps, g.num_nodes
                     )
-                    # Use the final event's raw logit for run-level prediction.
-                    # This is coherent with BCEWithLogitsLoss which expects raw logits.
-                    # The model outputs final_logit (raw) and final_score (sigmoid'd).
-                    if hasattr(output, "final_logit"):
-                        graph_logit = output.final_logit
-                    elif hasattr(output, "risk_scores"):
-                        graph_logit = output.risk_scores[-1]
+
+                    # Supervise every event logit against the eventual run label.
+                    # This trains the model to forecast downstream failure from
+                    # prefixes rather than just classifying completed runs.
+                    # Skip the first 2 events (warmup — almost no info).
+                    warmup = 2
+                    if hasattr(output, "event_risk_logits") and output.event_risk_logits.size(0) > warmup:
+                        logits = output.event_risk_logits[warmup:]
+                        targets = torch.full_like(logits, label)
+                        loss = self.criterion(logits, targets)
+                    elif hasattr(output, "final_logit"):
+                        loss = self.criterion(output.final_logit.unsqueeze(0), label.unsqueeze(0))
                     else:
                         graph_logit = output.logits[-1]
-
-                    loss = self.criterion(graph_logit.unsqueeze(0), label.unsqueeze(0))
+                        loss = self.criterion(graph_logit.unsqueeze(0), label.unsqueeze(0))
                     batch_loss += loss
 
                 batch_loss = batch_loss / len(batch_idx)
@@ -300,17 +304,16 @@ class DetectorTrainer:
                         node_features, edges_u, edges_v, timestamps, g.num_nodes
                     )
 
-                    # Use final event logit for loss, final score for predictions
-                    if hasattr(output, "final_logit"):
-                        graph_logit = output.final_logit
+                    # Use final event score for predictions
+                    if hasattr(output, "final_score"):
                         graph_pred = float(output.final_score.item())
+                        graph_logit = output.final_logit
                     else:
-                        # Fallback for other output shapes
                         logits = getattr(output, "event_risk_logits", None)
                         if logits is None:
                             logits = output.risk_scores
+                        graph_pred = float(torch.sigmoid(logits[-1]).item())
                         graph_logit = logits[-1]
-                        graph_pred = float(torch.sigmoid(graph_logit).item())
 
                     loss = self.criterion(graph_logit.unsqueeze(0), label.unsqueeze(0))
                     total_loss += loss.item()

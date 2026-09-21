@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import random
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -104,7 +104,7 @@ class DetectorDataset:
 
     Wraps lists of StaticGraphData or TemporalGraphData objects and
     provides PyTorch DataLoaders. Splits are stratified by label and
-    grouped by execution_id to prevent data leakage.
+    grouped by task-instance group_id to prevent data leakage.
 
     Attributes:
         train_graphs:   Training graphs.
@@ -113,6 +113,9 @@ class DetectorDataset:
         train_labels:   Training labels.
         val_labels:     Validation labels.
         test_labels:    Test labels.
+        _train_group_ids: Group IDs in train split (for sanity checks).
+        _val_group_ids:   Group IDs in val split.
+        _test_group_ids:  Group IDs in test split.
     """
 
     train_graphs: List[Union[StaticGraphData, TemporalGraphData]]
@@ -121,6 +124,9 @@ class DetectorDataset:
     train_labels: List[float]
     val_labels: List[float]
     test_labels: List[float]
+    _train_group_ids: List[str] = field(default_factory=list)
+    _val_group_ids: List[str] = field(default_factory=list)
+    _test_group_ids: List[str] = field(default_factory=list)
 
     @classmethod
     def from_encoded_graphs(
@@ -166,16 +172,35 @@ class DetectorDataset:
                 f"temporal={len(temporal_graphs)}, labels={len(labels)}"
             )
 
+        if not (len(graphs) == len(labels) == len(group_ids)):
+            raise ValueError(
+                f"Length mismatch: graphs={len(graphs)}, labels={len(labels)}, "
+                f"group_ids={len(group_ids)} — all must be equal"
+            )
+
         train_idx, val_idx, test_idx = _stratified_group_split(
             labels, group_ids, train_frac=train_frac, val_frac=val_frac, seed=seed
         )
 
         def _subset(indices):
-            return [graphs[i] for i in indices], [labels[i] for i in indices]
+            return [graphs[i] for i in indices], [labels[i] for i in indices], [group_ids[i] for i in indices]
 
-        train_g, train_l = _subset(train_idx)
-        val_g, val_l = _subset(val_idx)
-        test_g, test_l = _subset(test_idx)
+        train_g, train_l, train_gids = _subset(train_idx)
+        val_g, val_l, val_gids = _subset(val_idx)
+        test_g, test_l, test_gids = _subset(test_idx)
+
+        # Assert no group leaks across splits
+        train_set = set(train_gids)
+        val_set   = set(val_gids)
+        test_set  = set(test_gids)
+        overlap_train_val  = train_set & val_set
+        overlap_train_test = train_set & test_set
+        overlap_val_test   = val_set & test_set
+        if overlap_train_val or overlap_train_test or overlap_val_test:
+            raise AssertionError(
+                f"Split group overlap detected! train∩val={overlap_train_val}, "
+                f"train∩test={overlap_train_test}, val∩test={overlap_val_test}"
+            )
 
         return cls(
             train_graphs=train_g,
@@ -184,6 +209,9 @@ class DetectorDataset:
             train_labels=train_l,
             val_labels=val_l,
             test_labels=test_l,
+            _train_group_ids=train_gids,
+            _val_group_ids=val_gids,
+            _test_group_ids=test_gids,
         )
 
     def __len__(self) -> int:

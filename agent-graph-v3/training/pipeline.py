@@ -64,7 +64,7 @@ class DetectorPipeline:
     2. Build EventGraphs from traces
     3. (For static GNN) Build temporal snapshots
     4. Encode graphs for the target detector type
-    5. Train/val/test split (by execution_id)
+    5. Train/val/test split (by group_id)
     6. Train the detector
     7. Evaluate on test set
     8. Compare all detector types
@@ -152,14 +152,12 @@ class DetectorPipeline:
     def _task_instance_id(trace: Any) -> str:
         """Build a task-instance group identifier from trace metadata.
 
-        Groups traces sharing (task_family, topology, lep_type) so
-        benign + all LEP variants of one fixture stay together.
+        Uses fixture_id — the stable identifier shared by all variants
+        (benign + LEP) of the same underlying task fixture — so they
+        stay in the same train/val/test split.
         """
         meta = getattr(trace, "metadata", {}) or {}
-        task = meta.get("task_family", "unknown")
-        topo = meta.get("topology", "unknown")
-        lep  = meta.get("lep_type", "benign")
-        return f"{task}|{topo}|{lep}"
+        return meta.get("fixture_id", "unknown")
 
     def _dict_to_trace(self, data: dict, variant: Any = None) -> Any:
         """Convert a trace dict (from JSON) to a Trace object."""
@@ -221,48 +219,13 @@ class DetectorPipeline:
 
         trace = Trace(
             trace_id=data.get("trace_id", ""),
-            execution_id=data.get("execution_id", ""),
+            group_id=data.get("group_id", ""),
             events=events,
             variant=variant,
             labels=labels or TraceLabels(),
             metadata=data.get("metadata", {}),
         )
         return trace
-
-    def build_event_graphs(
-        self,
-        traces: List[Any],
-    ) -> List[EventGraph]:
-        """Build EventGraphs from a list of Trace objects.
-
-        Each trace's own metadata (topology, task_family) is used,
-        so mixed-benchmark benchmarks work correctly.
-
-        Args:
-            traces: List of Trace objects.
-
-        Returns:
-            List of EventGraph objects.
-        """
-        event_graphs = []
-        for trace in traces:
-            try:
-                meta = getattr(trace, "metadata", {}) or {}
-                topo = meta.get("topology", "unknown")
-                task = meta.get("task_family", "unknown")
-                graph = self.graph_builder.build(
-                    trace,
-                    topology_name=topo,
-                    task_family=task,
-                    strict=False,
-                )
-                if graph.num_nodes > 0:
-                    event_graphs.append(graph)
-            except Exception as e:
-                logger.warning("Failed to build EventGraph for %s: %s", trace.trace_id, e)
-
-        logger.info("Built %d EventGraphs from %d traces", len(event_graphs), len(traces))
-        return event_graphs
 
     def build_snapshots(
         self,
@@ -315,7 +278,7 @@ class DetectorPipeline:
         static_data: List[StaticGraphData],
         temporal_data: List[TemporalGraphData],
         labels: List[float],
-        execution_ids: List[str],
+        group_ids: List[str],
         train_frac: float = 0.7,
         val_frac: float = 0.15,
         prefer_temporal: bool = True,
@@ -326,7 +289,7 @@ class DetectorPipeline:
             static_data:    Encoded static graphs.
             temporal_data:  Encoded temporal graphs.
             labels:         Float labels.
-            execution_ids:  Group IDs (task-instance level) for grouped split.
+            group_ids:  Group IDs (task-instance level) for grouped split.
             train_frac:     Training fraction.
             val_frac:       Validation fraction.
             prefer_temporal: Use temporal graphs if available.
@@ -338,7 +301,7 @@ class DetectorPipeline:
             static_graphs=static_data,
             temporal_graphs=temporal_data,
             labels=labels,
-            execution_ids=execution_ids,
+            group_ids=group_ids,
             train_frac=train_frac,
             val_frac=val_frac,
             seed=self.seed,
@@ -473,21 +436,36 @@ class DetectorPipeline:
 
         all_traces = benign_traces + malignant_traces
         # Labels from actual downstream failure, not from variant
-        all_labels = [float(t.labels.downstream_failure) for t in all_traces]
-        # Task-instance group IDs: keep all variants of the same fixture together
-        all_group_ids = [
-            self._task_instance_id(t)
-            for t in all_traces
-        ]
+        # Build graphs and collect labels/group IDs together to stay aligned
+        event_graphs = []
+        all_labels = []
+        all_group_ids = []
 
-        # Step 2: Build EventGraphs (per-trace topology/task from metadata)
-        logger.info("Step 2: Building EventGraphs")
-        event_graphs = self.build_event_graphs(all_traces)
+        logger.info("Step 2: Building EventGraphs (per-trace metadata)")
+        for trace in all_traces:
+            try:
+                meta = getattr(trace, "metadata", {}) or {}
+                topo = meta.get("topology", "unknown")
+                task = meta.get("task_family", "unknown")
+                graph = self.graph_builder.build(
+                    trace, topology_name=topo, task_family=task, strict=False,
+                )
+                if graph.num_nodes > 0:
+                    event_graphs.append(graph)
+                    all_labels.append(float(trace.labels.downstream_failure))
+                    all_group_ids.append(self._task_instance_id(trace))
+            except Exception as e:
+                logger.warning("Skipping trace %s: %s", trace.trace_id, e)
 
         if len(event_graphs) < 2:
             raise ValueError(
                 f"Need at least 2 EventGraphs for training, got {len(event_graphs)}"
             )
+
+        logger.info(
+            "Built %d EventGraphs, %d with downstream_failure=True",
+            len(event_graphs), sum(all_labels),
+        )
 
         # Step 3: Encode
         logger.info("Step 3: Encoding graphs")
