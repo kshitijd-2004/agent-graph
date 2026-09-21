@@ -228,11 +228,15 @@ class DetectorTrainer:
                     output = self.model(
                         node_features, edges_u, edges_v, timestamps, g.num_nodes
                     )
-                    # Aggregate per-event risk to graph-level prediction
-                    if hasattr(output, "risk_scores"):
-                        graph_logit = output.risk_scores.mean()
+                    # Use the final event's raw logit for run-level prediction.
+                    # This is coherent with BCEWithLogitsLoss which expects raw logits.
+                    # The model outputs final_logit (raw) and final_score (sigmoid'd).
+                    if hasattr(output, "final_logit"):
+                        graph_logit = output.final_logit
+                    elif hasattr(output, "risk_scores"):
+                        graph_logit = output.risk_scores[-1]
                     else:
-                        graph_logit = output.logits.mean()
+                        graph_logit = output.logits[-1]
 
                     loss = self.criterion(graph_logit.unsqueeze(0), label.unsqueeze(0))
                     batch_loss += loss
@@ -296,18 +300,24 @@ class DetectorTrainer:
                         node_features, edges_u, edges_v, timestamps, g.num_nodes
                     )
 
-                    if hasattr(output, "risk_scores"):
-                        graph_pred = float(output.risk_scores.mean().item())
+                    # Use final event logit for loss, final score for predictions
+                    if hasattr(output, "final_logit"):
+                        graph_logit = output.final_logit
+                        graph_pred = float(output.final_score.item())
                     else:
-                        graph_pred = float(output.probabilities.mean().item())
+                        # Fallback for other output shapes
+                        logits = getattr(output, "event_risk_logits", None)
+                        if logits is None:
+                            logits = output.risk_scores
+                        graph_logit = logits[-1]
+                        graph_pred = float(torch.sigmoid(graph_logit).item())
+
+                    loss = self.criterion(graph_logit.unsqueeze(0), label.unsqueeze(0))
+                    total_loss += loss.item()
+                    num_batches += 1
 
                     all_preds.append(graph_pred)
                     all_labels.append(lbl)
-
-                    pred_tensor = torch.tensor(graph_pred, device=self.device)
-                    loss = self.criterion(pred_tensor.unsqueeze(0), label.unsqueeze(0))
-                    total_loss += loss.item()
-                    num_batches += 1
 
         avg_loss = total_loss / max(num_batches, 1)
         all_preds = np.array(all_preds, dtype=float)

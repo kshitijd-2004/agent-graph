@@ -148,6 +148,19 @@ class DetectorPipeline:
         )
         return benign_traces, malignant_traces
 
+    @staticmethod
+    def _task_instance_id(trace: Any) -> str:
+        """Build a task-instance group identifier from trace metadata.
+
+        Groups traces sharing (task_family, topology, lep_type) so
+        benign + all LEP variants of one fixture stay together.
+        """
+        meta = getattr(trace, "metadata", {}) or {}
+        task = meta.get("task_family", "unknown")
+        topo = meta.get("topology", "unknown")
+        lep  = meta.get("lep_type", "benign")
+        return f"{task}|{topo}|{lep}"
+
     def _dict_to_trace(self, data: dict, variant: Any = None) -> Any:
         """Convert a trace dict (from JSON) to a Trace object."""
         from schemas.trace import Trace, TraceVariant
@@ -219,15 +232,14 @@ class DetectorPipeline:
     def build_event_graphs(
         self,
         traces: List[Any],
-        topology_name: str = "review_loop",
-        task_family: str = "code_review",
     ) -> List[EventGraph]:
         """Build EventGraphs from a list of Trace objects.
 
+        Each trace's own metadata (topology, task_family) is used,
+        so mixed-benchmark benchmarks work correctly.
+
         Args:
-            traces:        List of Trace objects.
-            topology_name: Topology identifier.
-            task_family:   Task family.
+            traces: List of Trace objects.
 
         Returns:
             List of EventGraph objects.
@@ -235,10 +247,13 @@ class DetectorPipeline:
         event_graphs = []
         for trace in traces:
             try:
+                meta = getattr(trace, "metadata", {}) or {}
+                topo = meta.get("topology", "unknown")
+                task = meta.get("task_family", "unknown")
                 graph = self.graph_builder.build(
                     trace,
-                    topology_name=topology_name,
-                    task_family=task_family,
+                    topology_name=topo,
+                    task_family=task,
                     strict=False,
                 )
                 if graph.num_nodes > 0:
@@ -291,9 +306,6 @@ class DetectorPipeline:
             (static_data, temporal_data) — both lists have the same length
             as event_graphs.
         """
-        if labels is None:
-            labels = [1.0 if eg.is_malignant else 0.0 for eg in event_graphs]
-
         static = self.encoder.encode_event_graph_static(event_graphs, labels)
         temporal = self.encoder.encode_event_graph_temporal(event_graphs, labels)
         return static, temporal
@@ -314,7 +326,7 @@ class DetectorPipeline:
             static_data:    Encoded static graphs.
             temporal_data:  Encoded temporal graphs.
             labels:         Float labels.
-            execution_ids:  Execution IDs (for grouped split).
+            execution_ids:  Group IDs (task-instance level) for grouped split.
             train_frac:     Training fraction.
             val_frac:       Validation fraction.
             prefer_temporal: Use temporal graphs if available.
@@ -460,21 +472,17 @@ class DetectorPipeline:
             raise ValueError("No traces found. Run the benchmark first.")
 
         all_traces = benign_traces + malignant_traces
-        all_labels = [0.0] * len(benign_traces) + [1.0] * len(malignant_traces)
-        all_exec_ids = [t.execution_id for t in all_traces]
+        # Labels from actual downstream failure, not from variant
+        all_labels = [float(t.labels.downstream_failure) for t in all_traces]
+        # Task-instance group IDs: keep all variants of the same fixture together
+        all_group_ids = [
+            self._task_instance_id(t)
+            for t in all_traces
+        ]
 
-        # Determine topology and task from trace metadata
-        topo = "review_loop"
-        task = "code_review"
-        if malignant_traces:
-            meta = getattr(malignant_traces[0], "metadata", {})
-            if isinstance(meta, dict):
-                topo = meta.get("topology", topo)
-                task = meta.get("task_family", task)
-
-        # Step 2: Build EventGraphs
-        logger.info("Step 2: Building EventGraphs (%s, %s)", topo, task)
-        event_graphs = self.build_event_graphs(all_traces, topo, task)
+        # Step 2: Build EventGraphs (per-trace topology/task from metadata)
+        logger.info("Step 2: Building EventGraphs")
+        event_graphs = self.build_event_graphs(all_traces)
 
         if len(event_graphs) < 2:
             raise ValueError(
@@ -492,20 +500,20 @@ class DetectorPipeline:
             # Build snapshots from each EventGraph
             snapshot_graphs = []
             snapshot_labels = []
-            snapshot_exec_ids = []
-            for eg, lbl, eid in zip(event_graphs, all_labels, all_exec_ids):
+            snapshot_group_ids = []
+            for eg, lbl, gid in zip(event_graphs, all_labels, all_group_ids):
                 snaps = snapshot_builder.build_from_event_graph(eg)
                 for snap in snaps:
                     snapshot_graphs.append(snap)
                     snapshot_labels.append(lbl)
-                    snapshot_exec_ids.append(f"{eid}_snap{snap.metadata.get('snapshot_idx', 0)}")
+                    snapshot_group_ids.append(gid)
 
-            # Encode snapshots
-            snap_static, _ = self.encode_graphs(snapshot_graphs)
+            # Encode snapshots (pass labels explicitly since encode_graphs no longer defaults)
+            snap_static, _ = self.encode_graphs(snapshot_graphs, snapshot_labels)
 
             # Override dataset for static GNN
             static_dataset = self.build_dataset(
-                snap_static, [], snapshot_labels, snapshot_exec_ids,
+                snap_static, [], snapshot_labels, snapshot_group_ids,
                 train_frac=train_frac, val_frac=val_frac, prefer_temporal=False,
             )
         else:
@@ -515,7 +523,7 @@ class DetectorPipeline:
         temporal_detectors = [d for d in detector_types if d in ("tgnn", "hybrid")]
         if temporal_detectors:
             temporal_dataset = self.build_dataset(
-                static_data, temporal_data, all_labels, all_exec_ids,
+                static_data, temporal_data, all_labels, all_group_ids,
                 train_frac=train_frac, val_frac=val_frac, prefer_temporal=True,
             )
         else:

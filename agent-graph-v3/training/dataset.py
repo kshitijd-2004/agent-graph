@@ -24,90 +24,77 @@ from generation.feature_schema import OBSERVABLE_NODE_FEATURE_DIM
 logger = logging.getLogger(__name__)
 
 
-def _stratified_execution_split(
+def _stratified_group_split(
     graph_labels: List[float],
-    execution_ids: List[str],
+    group_ids: List[str],
     train_frac: float = 0.7,
     val_frac: float = 0.15,
     seed: int = 42,
 ) -> Tuple[List[int], List[int], List[int]]:
     """Split graph indices into train/val/test, stratified by label and grouped
-    by execution_id.
+    by task-instance group_id.
 
-    All graphs sharing the same execution_id stay in the same split to
-    prevent data leakage (prefixes from the same execution must not be
-    split across train/val/test).
+    All graphs sharing the same group_id stay in the same split to
+    prevent data leakage.  A group_id identifies a single task fixture /
+    instance — e.g. ``("code_review", "review_loop", "LEP_HANDOFF_CORRUPTION")`` —
+    so benign and perturbed variants of the same underlying task land
+    together.
 
     Args:
-        graph_labels:   List of float labels (1.0 = malignant, 0.0 = benign).
-        execution_ids:  List of execution_id strings, one per graph.
-        train_frac:     Fraction for training (default 0.7).
-        val_frac:       Fraction for validation (default 0.15).
-        seed:           Random seed for reproducibility.
+        graph_labels:  List of float labels (1.0 = malignant, 0.0 = benign).
+        group_ids:     List of task-instance identifiers, one per graph.
+        train_frac:    Fraction for training (default 0.7).
+        val_frac:      Fraction for validation (default 0.15).
+        seed:          Random seed for reproducibility.
 
     Returns:
-        (train_indices, val_indices, test_indices) — each a list of
-        integer indices into the input arrays.
+        (train_indices, val_indices, test_indices)
     """
     rng = random.Random(seed)
     n = len(graph_labels)
 
-    # Group indices by execution_id
-    exec_to_indices: Dict[str, List[int]] = defaultdict(list)
-    for i, eid in enumerate(execution_ids):
-        exec_to_indices[eid].append(i)
+    # Group indices by group_id
+    group_to_indices: Dict[str, List[int]] = defaultdict(list)
+    for i, gid in enumerate(group_ids):
+        group_to_indices[gid].append(i)
 
-    # Group execution_ids by their label (use the max label in each group)
-    exec_labels = {}
-    for eid, idxs in exec_to_indices.items():
-        labels = [graph_labels[i] for i in idxs]
-        exec_labels[eid] = max(labels)  # if any graph in exec is malignant, label as malignant
+    # Label each group by the max label in that group
+    group_labels = {}
+    for gid, idxs in group_to_indices.items():
+        group_labels[gid] = max(graph_labels[i] for i in idxs)
 
-    # Stratify: separate benign vs malignant executions
-    benign_execs = [eid for eid, lbl in exec_labels.items() if lbl == 0.0]
-    mal_execs = [eid for eid, lbl in exec_labels.items() if lbl == 1.0]
+    benign_groups = [g for g, lbl in group_labels.items() if lbl == 0.0]
+    mal_groups = [g for g, lbl in group_labels.items() if lbl == 1.0]
 
-    rng.shuffle(benign_execs)
-    rng.shuffle(mal_execs)
+    rng.shuffle(benign_groups)
+    rng.shuffle(mal_groups)
 
-    def _split_execs(execs, train_n, val_n):
-        train = execs[:train_n]
-        val = execs[train_n:train_n + val_n]
-        test = execs[train_n + val_n:]
-        return train, val, test
+    def _split(groups, n_train, n_val):
+        return groups[:n_train], groups[n_train:n_train + n_val], groups[n_train + n_val:]
 
     # Proportional split
-    total_execs = len(exec_labels)
-    train_n_b = max(1, int(len(benign_execs) * train_frac)) if benign_execs else 0
-    val_n_b = max(1, int(len(benign_execs) * val_frac)) if benign_execs else 0
-    train_b, val_b, test_b = _split_execs(benign_execs, train_n_b, val_n_b)
+    n_train_b = max(1, int(len(benign_groups) * train_frac)) if benign_groups else 0
+    n_val_b   = max(1, int(len(benign_groups) * val_frac)) if benign_groups else 0
+    tr_b, va_b, te_b = _split(benign_groups, n_train_b, n_val_b)
 
-    train_n_m = max(1, int(len(mal_execs) * train_frac)) if mal_execs else 0
-    val_n_m = max(1, int(len(mal_execs) * val_frac)) if mal_execs else 0
-    train_m, val_m, test_m = _split_execs(mal_execs, train_n_m, val_n_m)
+    n_train_m = max(1, int(len(mal_groups) * train_frac)) if mal_groups else 0
+    n_val_m   = max(1, int(len(mal_groups) * val_frac)) if mal_groups else 0
+    tr_m, va_m, te_m = _split(mal_groups, n_train_m, n_val_m)
 
-    train_execs = train_b + train_m
-    val_execs = val_b + val_m
-    test_execs = test_b + test_m
+    train_gids = tr_b + tr_m
+    val_gids   = va_b + va_m
+    test_gids  = te_b + te_m
 
-    # Map back to graph indices
-    train_idx = []
-    val_idx = []
-    test_idx = []
-    for eid in train_execs:
-        train_idx.extend(exec_to_indices[eid])
-    for eid in val_execs:
-        val_idx.extend(exec_to_indices[eid])
-    for eid in test_execs:
-        test_idx.extend(exec_to_indices[eid])
+    train_idx = [i for gid in train_gids for i in group_to_indices[gid]]
+    val_idx   = [i for gid in val_gids   for i in group_to_indices[gid]]
+    test_idx  = [i for gid in test_gids  for i in group_to_indices[gid]]
 
     logger.info(
-        "Split %d graphs: train=%d (execs=%d), val=%d (execs=%d), test=%d (execs=%d)",
-        n, len(train_idx), len(train_execs),
-        len(val_idx), len(val_execs),
-        len(test_idx), len(test_execs),
+        "Split %d graphs: train=%d (groups=%d), val=%d (groups=%d), test=%d (groups=%d)",
+        n, len(train_idx), len(train_gids),
+        len(val_idx), len(val_gids),
+        len(test_idx), len(test_gids),
     )
-
     return train_idx, val_idx, test_idx
 
 
@@ -141,7 +128,7 @@ class DetectorDataset:
         static_graphs: List[StaticGraphData],
         temporal_graphs: List[TemporalGraphData],
         labels: List[float],
-        execution_ids: List[str],
+        group_ids: List[str],
         train_frac: float = 0.7,
         val_frac: float = 0.15,
         seed: int = 42,
@@ -156,7 +143,8 @@ class DetectorDataset:
             static_graphs:    List of StaticGraphData objects.
             temporal_graphs:  List of TemporalGraphData objects.
             labels:           List of float labels (1.0 = malignant, 0.0 = benign).
-            execution_ids:    List of execution_id strings.
+            group_ids:        List of task-instance group identifiers.  All
+                              graphs sharing a group_id stay in the same split.
             train_frac:       Training fraction.
             val_frac:         Validation fraction.
             seed:             Random seed.
@@ -178,8 +166,8 @@ class DetectorDataset:
                 f"temporal={len(temporal_graphs)}, labels={len(labels)}"
             )
 
-        train_idx, val_idx, test_idx = _stratified_execution_split(
-            labels, execution_ids, train_frac=train_frac, val_frac=val_frac, seed=seed
+        train_idx, val_idx, test_idx = _stratified_group_split(
+            labels, group_ids, train_frac=train_frac, val_frac=val_frac, seed=seed
         )
 
         def _subset(indices):

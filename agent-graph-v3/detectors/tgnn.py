@@ -34,12 +34,18 @@ class TemporalDetectionOutput:
     """Output of a temporal detector forward pass.
 
     Attributes:
-        event_risk_scores: Risk score per event [num_events]
-        node_memories: Final node memory states [num_nodes, memory_dim]
-        event_embeddings: Embedding used for each event's risk prediction
-                          [num_events, hidden_dim]
+        event_risk_logits: Raw risk logit per event [num_events]
+        event_risk_scores: Risk score (sigmoid(logits)) per event [num_events]
+        final_logit:        Logit of the last event [1]
+        final_score:        Score (sigmoid) of the last event [1]
+        node_memories:      Final node memory states [num_nodes, memory_dim]
+        event_embeddings:   Embedding used for each event's risk prediction
+                            [num_events, hidden_dim]
     """
+    event_risk_logits: torch.Tensor
     event_risk_scores: torch.Tensor
+    final_logit: torch.Tensor
+    final_score: torch.Tensor
     node_memories: torch.Tensor
     event_embeddings: torch.Tensor
 
@@ -192,7 +198,7 @@ class TemporalGNN(nn.Module):
         node_memories = self.node_proj(node_features)  # [num_nodes, memory_dim]
 
         # Storage for per-event outputs
-        event_risk_scores = torch.zeros(num_events, device=device)
+        event_logits = torch.zeros(num_events, device=device)
         event_embeddings = torch.zeros(num_events, self.memory_dim, device=device)
 
         # Encode all timestamps upfront
@@ -225,16 +231,21 @@ class TemporalGNN(nn.Module):
             new_dst_mem = self.memory_cell(message, dst_mem)
             node_memories[dst] = new_dst_mem
 
-            # Compute risk score at this event
+            # Compute raw risk logit at this event (no sigmoid)
             risk_input = torch.cat([new_dst_mem, ts_enc, dst_feat], dim=-1)
-            risk_logit = self.risk_head(risk_input)
-            event_risk_scores[i] = risk_logit.squeeze()
+            event_logits[i] = self.risk_head(risk_input).squeeze()
             event_embeddings[i] = new_dst_mem.detach()
 
-        probs = torch.sigmoid(event_risk_scores)
+        # Sigmoid applied here only for scores exposed to callers
+        event_scores = torch.sigmoid(event_logits)
+        final_logit = event_logits[-1]
+        final_score = event_scores[-1]
 
         return TemporalDetectionOutput(
-            event_risk_scores=probs,
+            event_risk_logits=event_logits,
+            event_risk_scores=event_scores,
+            final_logit=final_logit,
+            final_score=final_score,
             node_memories=node_memories,
             event_embeddings=event_embeddings,
         )

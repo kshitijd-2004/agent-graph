@@ -3,9 +3,9 @@
 Operates on independent graph snapshots. Each snapshot is processed
 without temporal context from previous snapshots.
 
-Architecture (per detect.tex):
-- Relational GNN (GCN) with configurable depth
-- Global pooling for graph-level representation
+Architecture:
+- GCN (GCNConv) with configurable depth
+- Global mean pooling for graph-level representation
 - Linear readout for binary classification
 
 All models operate on detector-visible features only (no perturbation flags).
@@ -30,13 +30,17 @@ class DetectionOutput:
     """Output of a learned detector forward pass.
 
     Attributes:
-        logits: Raw logits [N] (one per input graph).
+        logits:        Raw logits [N] (one per input graph).
         probabilities: Sigmoid probabilities [N].
-        is_malignant: Boolean predictions [N] (threshold=0.5).
+        is_malignant:  Boolean predictions [N] (threshold=0.5).
+        final_logit:   Logit of the last graph in the batch [1].
+        final_score:   Sigmoid of the last graph's logit [1].
     """
     logits: torch.Tensor
     probabilities: torch.Tensor
     is_malignant: torch.Tensor
+    final_logit: torch.Tensor
+    final_score: torch.Tensor
 
 
 class StaticGNN(torch.nn.Module):
@@ -141,6 +145,8 @@ class StaticGNN(torch.nn.Module):
             logits=logits,
             probabilities=probs,
             is_malignant=preds,
+            final_logit=logits[-1] if logits.numel() > 0 else torch.tensor(0.0, device=logits.device),
+            final_score=probs[-1] if probs.numel() > 0 else torch.tensor(0.0, device=probs.device),
         )
 
     @torch.no_grad()
