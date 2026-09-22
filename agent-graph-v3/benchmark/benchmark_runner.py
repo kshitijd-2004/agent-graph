@@ -60,6 +60,8 @@ class BenchmarkRecord:
     task_success: bool = False
     evaluator_passed: bool = False
     evaluator_errors: list[str] = field(default_factory=list)
+    # Execution variant
+    execution_variant: str = "standard"
     # Propagation tracking
     perturbation_reached_target: bool = False
     perturbation_propagated_to_consumer: bool = False
@@ -102,6 +104,7 @@ class BenchmarkRecord:
             "task_success": self.task_success,
             "evaluator_passed": self.evaluator_passed,
             "evaluator_errors": self.evaluator_errors,
+            "execution_variant": self.execution_variant,
             "perturbation_reached_target": self.perturbation_reached_target,
             "perturbation_propagated_to_consumer": self.perturbation_propagated_to_consumer,
             "perturbation_propagated_to_producer": self.perturbation_propagated_to_producer,
@@ -153,47 +156,94 @@ class BenchmarkManifest:
     num_nodes: int = 1
 
     def build_plan(self) -> list[dict[str, Any]]:
-        """Build the full cross-product execution plan."""
+        """Build the full cross-product execution plan.
+
+        Produces two types of entries:
+        - Benign: one per (fixture_id, topology, execution_variant, rep).
+          "standard" is always emitted; "memory_enabled" is emitted only
+          if at least one LEP for this task family requires memory.
+        - LEP: one per (LEP, propagation_mode, rep), paired to the
+          correct execution_variant via pair_tag.
+
+        Clean-reference identity for anomaly detection:
+            (fixture_id, topology, execution_variant)
+
+        pair_tag links one LEP execution to its matched benign repetition
+        (bookkeeping). Behavioral reference pools ALL benign runs with
+        the same clean-reference identity.
+        """
         plan: list[dict[str, Any]] = []
         idx = 0
 
         for task_family in self.task_families:
+            # Pre-compute which LEPs need memory for this task family
+            family_leps = [
+                lep for lep in self.lep_configs
+                if lep.task_family == task_family or not lep.task_family
+            ]
+            has_memory_lep = any(lep.requires_memory for lep in family_leps)
+            variants = ["standard"] + (["memory_enabled"] if has_memory_lep else [])
+
             for topology in self.topologies:
+                fixture_id = self._fixture_id({"task_family": task_family})
                 allowed_modes = TOPOLOGY_PROPAGATION_MODES.get(topology, ["single_origin"])
-                for lep_config in self.lep_configs:
-                    for prop_mode in allowed_modes:
-                        for rep in range(self.num_repetitions):
-                            pair_id = (
-                                f"b_{topology}_{task_family}_"
-                                f"{lep_config.code}_{prop_mode}_{rep:02d}"
-                            )
-                            plan.append({
-                                "run_id": f"run-{idx:04d}",
-                                "scenario_id": f"{pair_id}_benign",
-                                "task_family": task_family,
-                                "condition": "benign",
-                                "lep_codes": [],
-                                "topology": topology,
-                                "propagation_mode": prop_mode,
-                                "lep_code": lep_config.code,
-                                "repetition_index": rep,
-                                "pair_tag": pair_id,
-                                "is_baseline": True,
-                            })
-                            plan.append({
-                                "run_id": f"run-{idx + 1:04d}",
-                                "scenario_id": f"{pair_id}_lep",
-                                "task_family": task_family,
-                                "condition": "single_lep",
-                                "lep_codes": [lep_config.code],
-                                "topology": topology,
-                                "propagation_mode": prop_mode,
-                                "lep_code": lep_config.code,
-                                "repetition_index": rep,
-                                "pair_tag": pair_id,
-                                "is_baseline": False,
-                            })
-                            idx += 2
+
+                # ── Benign entries: one per variant × rep ─────────────────
+                for variant in variants:
+                    for rep in range(self.num_repetitions):
+                        pair_tag = (
+                            f"b_{topology}_{fixture_id}_{variant}_{rep:02d}"
+                        )
+                        plan.append({
+                            "run_id": f"run-{idx:04d}",
+                            "scenario_id": (
+                                f"{topology}_{fixture_id}_{variant}_{rep:02d}_benign"
+                            ),
+                            "task_family": task_family,
+                            "condition": "benign",
+                            "execution_variant": variant,
+                            "lep_codes": [],
+                            "topology": topology,
+                            "propagation_mode": allowed_modes[0],
+                            "lep_code": "",
+                            "repetition_index": rep,
+                            "pair_tag": pair_tag,
+                            "is_baseline": True,
+                        })
+                        idx += 1
+
+                # ── LEP entries: one per LEP × mode × rep ────────────────
+                lep_mode_combos = [
+                    (lep, mode)
+                    for lep in family_leps
+                    for mode in allowed_modes
+                ]
+                for lep_config, prop_mode in lep_mode_combos:
+                    exec_variant = (
+                        "memory_enabled" if lep_config.requires_memory else "standard"
+                    )
+                    for rep in range(self.num_repetitions):
+                        pair_tag = (
+                            f"b_{topology}_{fixture_id}_{exec_variant}_{rep:02d}"
+                        )
+                        plan.append({
+                            "run_id": f"run-{idx:04d}",
+                            "scenario_id": (
+                                f"{topology}_{fixture_id}_"
+                                f"{lep_config.code}_{prop_mode}_{rep:02d}_lep"
+                            ),
+                            "task_family": task_family,
+                            "condition": "single_lep",
+                            "execution_variant": exec_variant,
+                            "lep_codes": [lep_config.code],
+                            "topology": topology,
+                            "propagation_mode": prop_mode,
+                            "lep_code": lep_config.code,
+                            "repetition_index": rep,
+                            "pair_tag": pair_tag,
+                            "is_baseline": False,
+                        })
+                        idx += 1
 
         return plan
 
@@ -283,6 +333,7 @@ class BenchmarkRunner:
             repetition_index=entry.get("repetition_index", 0),
             pair_tag=entry.get("pair_tag", ""),
             is_baseline=entry.get("is_baseline", False),
+            execution_variant=entry.get("execution_variant", "standard"),
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -312,6 +363,13 @@ class BenchmarkRunner:
             short_id = self._short_trace_id(entry)
             result = runner.run(spec, self.manifest.fixture_root, execution_id=short_id)
             trace = result.trace
+
+            # Stamp execution_variant into trace metadata so downstream
+            # analysis can group by (fixture_id, topology, execution_variant)
+            # without reconstructing it from other fields.
+            trace.metadata["execution_variant"] = entry.get(
+                "execution_variant", "standard"
+            )
 
             # Write trace
             trace_dir = (
@@ -428,10 +486,19 @@ class BenchmarkRunner:
         )
 
     def _build_workflow_config(self, entry: dict[str, Any]) -> WorkflowConfig:
+        # Memory mode depends on execution_variant:
+        #   standard        → ephemeral_private (no shared memory)
+        #   memory_enabled  → ephemeral_shared  (shared memory; benign runs
+        #                     use clean content, memory LEPs poison it)
+        memory_mode = (
+            "ephemeral_shared"
+            if entry.get("execution_variant") == "memory_enabled"
+            else "ephemeral_private"
+        )
         return WorkflowConfig(
             topology=entry.get("topology", "review_loop"),
             sharing_policy="handoff_summary_only",
-            memory_mode="ephemeral_shared",
+            memory_mode=memory_mode,
             verification_mode="self_check",
             max_events=self.manifest.max_events,
             max_agent_turns=self.manifest.max_agent_turns,
@@ -455,45 +522,42 @@ class BenchmarkRunner:
 
     @staticmethod
     def _short_trace_id(entry: dict[str, Any]) -> str:
-        """Build a compact, human-readable execution_id.
+        """Build a compact, collision-safe execution_id.
 
-        Format: {task}.{topology}.{mode}.{rep:02d}.{lep}
+        Format for LEP runs:
+            {fixture}.{topo}.{lep}.{mode}.{rep:02d}.{variant_short}
+        Format for benign runs:
+            {fixture}.{topo}.{rep:02d}.{variant_short}.benign
 
         Examples:
-            cr.rl.so.00.tool_corrupt
-            fa.bv.o2m.01.memory_poisoning
-            rs.cw.m2o.00.input_disregard
+            financial_clean.coord.MEMORY_POISONING.single_origin.00.mem
+            financial_clean.coord.INPUT_DISREGARD.single_origin.00.std
+            financial_clean.coord.00.std.benign
+            financial_clean.coord.00.mem.benign
 
         The runner appends _a (benign) or _b (lep) to produce the full trace_id.
         """
-        TF = {
-            "code_review": "cr",
-            "financial_analysis": "fa",
-            "research_synthesis": "rs",
-        }
+        fixture = entry.get("fixture_id", "unknown")
         TOP = {
             "review_loop": "rl",
             "branch_and_verify": "bv",
-            "coordinator_workers": "cw",
+            "coordinator_workers": "coord",
         }
-        MODE = {
-            "single_origin": "so",
-            "one_to_many": "o2m",
-            "many_to_one": "m2o",
+        VARIANT_SHORT = {
+            "standard": "std",
+            "memory_enabled": "mem",
         }
-        LEP = {
-            "LEP_TOOL_RESULT_CORRUPTION": "tool_corrupt",
-            "LEP_HANDOFF_CORRUPTION": "handoff_corrupt",
-            "LEP_INPUT_DISREGARD": "input_disregard",
-            "LEP_INDIRECT_PROMPT_INJECTION": "indirect_prompt",
-            "LEP_MEMORY_POISONING": "memory_poison",
-        }
-        task = TF.get(entry["task_family"], entry["task_family"][:2])
-        topo = TOP.get(entry["topology"], entry["topology"][:2])
-        mode = MODE.get(entry.get("propagation_mode", "single_origin"), "so")
+        topo = TOP.get(entry.get("topology", ""), entry.get("topology", ""))
+        mode = entry.get("propagation_mode", "single_origin")
         rep = f"{entry.get('repetition_index', 0):02d}"
-        lep = LEP.get(entry.get("lep_code", ""), "")
-        return f"{task}.{topo}.{mode}.{rep}.{lep}"
+        variant_short = VARIANT_SHORT.get(
+            entry.get("execution_variant", "standard"), "std"
+        )
+        lep_code = entry.get("lep_code", "")
+
+        if lep_code:
+            return f"{fixture}.{topo}.{lep_code}.{mode}.{rep}.{variant_short}"
+        return f"{fixture}.{topo}.{rep}.{variant_short}.benign"
 
     def _resolve_lep(self, code: str, task_family: str = "") -> LEPConfig:
         # Build lookup from tasks.registry at call time (cheap, cached)
