@@ -11,6 +11,7 @@ import logging
 from typing import Optional, Tuple
 
 import numpy as np
+from sklearn.metrics import average_precision_score, roc_auc_score
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +22,15 @@ logger = logging.getLogger(__name__)
 def compute_auroc(y_true: np.ndarray, y_scores: np.ndarray) -> float:
     """Compute Area Under the Receiver Operating Characteristic curve.
 
+    Uses sklearn.metrics.roc_auc_score for correctness.
+
     Args:
         y_true:  Boolean or float array of ground-truth labels [N].
         y_scores: Float array of probability scores [N].
 
     Returns:
-        AUROC value in [0, 1]. Returns 0.5 if all labels are the same.
+        AUROC value in [0, 1]. Returns 0.5 if all labels are the same or
+        if the input is empty.
     """
     y_true = np.asarray(y_true, dtype=float)
     y_scores = np.asarray(y_scores, dtype=float)
@@ -34,30 +38,13 @@ def compute_auroc(y_true: np.ndarray, y_scores: np.ndarray) -> float:
     if len(y_true) == 0 or y_true.min() == y_true.max():
         return 0.5
 
-    # Sort by score descending
-    order = np.argsort(-y_scores)
-    y_sorted = y_true[order]
-    scores_sorted = y_scores[order]
-
-    # Count positive/negative pairs
-    pos = y_sorted == 1
-    neg = y_sorted == 0
-    n_pos = pos.sum()
-    n_neg = neg.sum()
-
-    if n_pos == 0 or n_neg == 0:
-        return 0.5
-
-    # Wilcoxon-Mann-Whitney: rank-based
-    ranks = np.arange(1, len(y_sorted) + 1)
-    rank_sum_pos = ranks[pos].sum()
-
-    auc = (rank_sum_pos - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)
-    return float(np.clip(auc, 0.0, 1.0))
+    return float(roc_auc_score(y_true, y_scores))
 
 
 def compute_aupr(y_true: np.ndarray, y_scores: np.ndarray) -> float:
-    """Compute Area Under the Precision-Recall curve.
+    """Compute Area Under the Precision-Recall curve (Average Precision).
+
+    Uses sklearn.metrics.average_precision_score for correctness.
 
     Args:
         y_true:  Boolean or float array of ground-truth labels [N].
@@ -65,7 +52,7 @@ def compute_aupr(y_true: np.ndarray, y_scores: np.ndarray) -> float:
 
     Returns:
         AUPR value in [0, 1]. Returns the positive-class proportion if all
-        labels are the same.
+        labels are the same (matches sklearn behavior for single class).
     """
     y_true = np.asarray(y_true, dtype=float)
     y_scores = np.asarray(y_scores, dtype=float)
@@ -73,22 +60,7 @@ def compute_aupr(y_true: np.ndarray, y_scores: np.ndarray) -> float:
     if len(y_true) == 0:
         return 0.0
 
-    if y_true.min() == y_true.max():
-        return float(y_true.mean())
-
-    # Sort by score descending
-    order = np.argsort(-y_scores)
-    y_sorted = y_true[order]
-
-    # Compute precision and recall at each threshold
-    tp = np.cumsum(y_sorted == 1)
-    fp = np.cumsum(y_sorted == 0)
-    precision = tp / (tp + fp + 1e-10)
-    recall = tp / (tp[-1] + 1e-10)
-
-    # Area under precision-recall curve (trapezoidal rule)
-    aupr = np.trapz(precision, recall)
-    return float(np.clip(aupr, 0.0, 1.0))
+    return float(average_precision_score(y_true, y_scores))
 
 
 def compute_classification_metrics(

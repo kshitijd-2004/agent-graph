@@ -17,6 +17,7 @@ Pipeline (staged):
 from __future__ import annotations
 
 import logging
+import math
 import os
 import re
 from collections import Counter, defaultdict
@@ -24,7 +25,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Counter as CounterType, Dict, List, Optional, Tuple
 
-from schemas.trace import Trace, TraceEvent, TraceEventType
+from schemas.trace import Trace, TraceEvent, TraceEventType, TraceVariant
 from schemas.trace_labels import TraceLabels
 from generation.event_graph_builder import EventGraph, EventNode
 
@@ -34,6 +35,10 @@ logger = logging.getLogger(__name__)
 
 STABLE_SUPPORT_THRESHOLD = 0.8
 MIN_CLEAN_RUNS_REQUIRED = 5
+ACTIVE_EVENT_TYPES = {
+    TraceEventType.TOOL_CALL, TraceEventType.MEMORY_WRITE, TraceEventType.AGENT_HANDOFF,
+    TraceEventType.FINAL_RESPONSE, TraceEventType.LLM_OUTPUT, TraceEventType.REASONING,
+}
 
 
 # ── Stability classification ───────────────────────────────────────────────────
@@ -89,6 +94,7 @@ class CleanSlotProfile:
     required_ancestor_slots: CounterType[SemanticEventSlot]
     successor_slots: CounterType[SemanticEventSlot]
     structured_facts: list[TaskFact]
+    fact_support: dict[tuple[str, Any], int] = field(default_factory=dict)
 
 
 @dataclass
@@ -109,6 +115,7 @@ class CleanBehaviorReference:
     repetition_indices: list[int]     # the dedup'd repetition indices used
     slot_profiles: dict               # SemanticEventSlot → CleanSlotProfile
     total_runs: int
+    fixture_spec: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -189,8 +196,7 @@ def semantic_slot(event: TraceEvent, trace_context: Optional[dict] = None) -> Se
     if trace_context:
         workflow_phase = trace_context.get("workflow_phase")
     # Also check event-level metadata
-    if not workflow_phase and event.stage_event_index is not None:
-        workflow_phase = f"stage_{event.stage_event_index}"
+    workflow_phase = event.observable.get("workflow_phase") or workflow_phase
 
     return SemanticEventSlot(
         agent_role=agent_role,
@@ -202,6 +208,23 @@ def semantic_slot(event: TraceEvent, trace_context: Optional[dict] = None) -> Se
 
 
 # ── Task fact extraction (fixture oracles) ─────────────────────────────────────
+
+
+def _fact_text(event: TraceEvent) -> str:
+    """Read the content actually asserted or submitted by this event.
+
+    Production tool calls carry their payload in tool_arguments, often without
+    input_text/output_text. Do not mix an agent's input context into its output.
+    """
+    if event.event_type in (TraceEventType.TOOL_CALL, TraceEventType.MEMORY_WRITE) and event.tool_arguments:
+        def content_strings(value):
+            if isinstance(value, dict):
+                return "\n".join(content_strings(v) for v in value.values())
+            if isinstance(value, (list, tuple)):
+                return "\n".join(content_strings(v) for v in value)
+            return str(value)
+        return content_strings(event.tool_arguments)
+    return event.output_text or event.tool_result or event.input_text or ""
 
 
 def extract_financial_facts(trace: Trace, fixture_spec: dict) -> list[TaskFact]:
@@ -227,7 +250,7 @@ def extract_financial_facts(trace: Trace, fixture_spec: dict) -> list[TaskFact]:
     version_conflicts = fixture_spec.get("version_conflicts", [])
 
     for event in trace.events:
-        text = event.output_text or event.input_text or ""
+        text = _fact_text(event)
         if not text:
             continue
         text_lower = text.lower()
@@ -286,7 +309,7 @@ def extract_code_review_issue_presence(trace: Trace, fixture_spec: dict) -> list
     required_issues = fixture_spec.get("required_issues", [])
 
     for event in trace.events:
-        text = event.output_text or event.input_text or ""
+        text = _fact_text(event)
         if not text:
             continue
         text_lower = text.lower()
@@ -302,7 +325,11 @@ def extract_code_review_issue_presence(trace: Trace, fixture_spec: dict) -> list
             negation_patterns = [f"not {kw}" for kw in keywords[:3]]
             negated = any(pat in text_lower for pat in negation_patterns)
 
-            if negated and not present:
+            negated = negated or any(
+                re.search(r"\b(?:not vulnerable to|no|without)\s+" + re.escape(kw), text_lower)
+                for kw in keywords
+            )
+            if negated:
                 present = False
 
             facts.append(TaskFact(
@@ -323,7 +350,7 @@ def extract_research_claims(trace: Trace, fixture_spec: dict) -> list[TaskFact]:
     required_facts = fixture_spec.get("required_facts", {})
 
     for event in trace.events:
-        text = event.output_text or event.input_text or ""
+        text = _fact_text(event)
         if not text:
             continue
         text_lower = text.lower()
@@ -352,8 +379,14 @@ def extract_research_claims(trace: Trace, fixture_spec: dict) -> list[TaskFact]:
 
             # Check for negation
             if found:
-                negation_terms = spec.get("negation_keywords", ["not ", "no ", "absent", "missing"])
-                if any(neg in text_lower for neg in negation_terms):
+                keywords = spec.get("keywords", []) + [
+                    kw for group in spec.get("groups", []) for kw in group]
+                negation_terms = spec.get("negation_keywords", [])
+                if any(neg.lower() in text_lower for neg in negation_terms) or any(
+                    re.search(r"\b(?:not|no|without|absent|missing)\s+(?:\w+\s+){0,2}"
+                              + re.escape(kw.lower()), text_lower)
+                    for kw in keywords
+                ):
                     found = False
 
             facts.append(TaskFact(
@@ -439,7 +472,7 @@ def _is_task_relevant_code_review(
     event: TraceEvent, deviation: BehaviorComparison, fixture_spec: dict
 ) -> bool:
     """Code review task relevance: deviation must affect required issues or required workflow steps."""
-    if "CONTENT" in deviation.deviation_types:
+    if "CONTENT" in deviation.deviation_types or "STATE" in deviation.deviation_types:
         return True
     if "CONTROL_FLOW" in deviation.deviation_types:
         return True
@@ -498,24 +531,17 @@ def is_lep_consistent_manifestation(
 
 def _event_uses_or_forwards_perturbed(event: TraceEvent, trace_context: dict) -> bool:
     """Check if event actively uses, stores, forwards, or asserts information."""
-    # Events that consume information
-    consuming_types = {
-        TraceEventType.TOOL_CALL,
-        TraceEventType.MEMORY_WRITE,
-        TraceEventType.AGENT_HANDOFF,
-        TraceEventType.FINAL_RESPONSE,
-        TraceEventType.LLM_OUTPUT,
-        TraceEventType.REASONING,
-    }
-    if event.event_type in consuming_types:
+    if event.event_type not in ACTIVE_EVENT_TYPES:
+        return False
+    labels = event.event_labels
+    if labels and (labels.consumes_perturbed_info or labels.transforms_perturbed_info
+                   or labels.stores_perturbed_info):
         return True
-    # Memory writes explicitly store
-    if event.event_type == TraceEventType.MEMORY_WRITE:
-        return True
-    # Handoffs forward
-    if event.event_type == TraceEventType.AGENT_HANDOFF:
-        return True
-    return False
+    facts = trace_context.get("event_facts", {}).get(event.event_id)
+    if facts is None:
+        facts = _event_facts(event, trace_context.get("fixture_spec", {}), trace_context.get("task_family", ""))
+    return any(f.key in trace_context.get("deviation_fact_keys", set())
+               and (f.key, f.value) in trace_context.get("perturbed_facts", set()) for f in facts)
 
 
 def _tool_result_corruption_consistent(event: TraceEvent, deviation: BehaviorComparison, trace_context: dict) -> bool:
@@ -539,9 +565,6 @@ def _memory_poisoning_consistent(event: TraceEvent, deviation: BehaviorCompariso
 
 def _handoff_corruption_consistent(event: TraceEvent, deviation: BehaviorComparison, trace_context: dict) -> bool:
     """Handoff corruption: event must consume/forward corrupted handoff info."""
-    if event.event_type == TraceEventType.AGENT_HANDOFF:
-        # Receiving a handoff is exposure; acting on it is the anomaly
-        return False
     if not _event_uses_or_forwards_perturbed(event, trace_context):
         return False
     return True
@@ -612,6 +635,7 @@ def build_clean_reference(
     fixture_id: str,
     topology: str,
     execution_variant: str,
+    fixture_spec: Optional[dict] = None,
 ) -> CleanBehaviorReference:
     """Build an empirical clean reference from matched benign executions.
 
@@ -629,6 +653,10 @@ def build_clean_reference(
         raise ValueError("execution_variant is required for clean reference construction")
     if not benign_traces:
         raise ValueError(f"No benign traces provided for {fixture_id}/{topology}/{execution_variant}")
+
+    for trace in benign_traces:
+        if trace.metadata.get("execution_variant", execution_variant) != execution_variant:
+            raise ValueError("Mixed execution variants in clean reference")
 
     # Deduplicate by repetition_index
     seen_reps: set[int] = set()
@@ -657,7 +685,7 @@ def build_clean_reference(
     task_family = unique_traces[0].metadata.get("task_family", "unknown")
 
     # Build slot profiles
-    slot_profiles = _aggregate_slot_profiles(unique_traces, len(unique_traces))
+    slot_profiles = _aggregate_slot_profiles(unique_traces, len(unique_traces), fixture_spec or {})
 
     return CleanBehaviorReference(
         fixture_id=fixture_id,
@@ -668,112 +696,76 @@ def build_clean_reference(
         repetition_indices=rep_indices,
         slot_profiles=slot_profiles,
         total_runs=len(unique_traces),
+        fixture_spec=fixture_spec or {},
     )
 
 
+def _ancestors(index, parents):
+    found = set()
+    pending = list(parents.get(index, ()))
+    while pending:
+        parent = pending.pop()
+        if parent != index and parent not in found:
+            found.add(parent)
+            pending.extend(parents.get(parent, ()))
+    return found
+
+
+def _event_facts(event: TraceEvent, fixture_spec: dict, task_family: str) -> list[TaskFact]:
+    trace = Trace("facts", "facts", TraceVariant.BENIGN, events=[event])
+    return extract_structured_facts(trace, fixture_spec, task_family)
+
+
 def _aggregate_slot_profiles(
-    benign_traces: list[Trace],
-    total_runs: int,
+    benign_traces: list[Trace], total_runs: int, fixture_spec: Optional[dict] = None,
 ) -> dict[SemanticEventSlot, CleanSlotProfile]:
-    """Aggregate semantic slot profiles across all benign traces.
-
-    IMPORTANT: All traces in benign_traces must be from the same execution
-    variant. Do not mix standard and memory_enabled traces.
-    """
-    # Collect all slots with their metadata per run
-    run_slots: list[dict[SemanticEventSlot, dict]] = []
+    """Count each slot, dependency and unambiguous fact value once per run."""
+    run_slots = []
     for trace in benign_traces:
-        trace_context = {"fixture_id": trace.metadata.get("fixture_id", "")}
-        slot_data: dict[SemanticEventSlot, dict] = {}
-        slots_in_order: list[SemanticEventSlot] = []
-
+        slots = {e.event_id: semantic_slot(e) for e in trace.events}
+        parents = {e.event_id: set(e.depends_on) & slots.keys() for e in trace.events}
+        data = {}
         for event in trace.events:
-            slot = semantic_slot(event, trace_context)
-            slots_in_order.append(slot)
-            if slot not in slot_data:
-                slot_data[slot] = {
-                    "operations": set(),
-                    "objects": set(),
-                    "handoff_targets": set(),
-                    "predecessors": set(),
-                    "successors": set(),
-                }
-            op = event.tool_name or (
-                event.event_type.value if isinstance(event.event_type, TraceEventType) else str(event.event_type)
-            )
-            slot_data[slot]["operations"].add(op)
-            if event.memory_key:
-                slot_data[slot]["objects"].add(event.memory_key)
-            if event.target_entity_id:
-                slot_data[slot]["handoff_targets"].add(event.target_entity_id)
+            slot = slots[event.event_id]
+            entry = data.setdefault(slot, {"parents": set(), "ancestors": set(),
+                                           "successors": set(), "facts": defaultdict(set)})
+            entry["parents"].update(slots[p] for p in parents[event.event_id])
+            entry["ancestors"].update(slots[p] for p in _ancestors(event.event_id, parents))
+            for fact in _event_facts(event, fixture_spec or {}, trace.metadata.get("task_family", "unknown")):
+                entry["facts"][fact.key].add(fact.value)
+        for event in trace.events:
+            for parent in parents[event.event_id]:
+                data[slots[parent]]["successors"].add(slots[event.event_id])
+        run_slots.append(data)
 
-        # Build predecessor/successor relationships
-        for i, slot in enumerate(slots_in_order):
-            if i > 0:
-                slot_data[slot]["predecessors"].add(slots_in_order[i - 1])
-            if i < len(slots_in_order) - 1:
-                slot_data[slot]["successors"].add(slots_in_order[i + 1])
-
-        run_slots.append(slot_data)
-
-    # Aggregate across runs
-    all_slots: set[SemanticEventSlot] = set()
-    for rd in run_slots:
-        all_slots.update(rd.keys())
-
-    profiles: dict[SemanticEventSlot, CleanSlotProfile] = {}
-    for slot in all_slots:
-        runs_with_slot = sum(1 for rd in run_slots if slot in rd)
-        support_fraction = runs_with_slot / total_runs
-
-        if support_fraction >= STABLE_SUPPORT_THRESHOLD:
-            if runs_with_slot == total_runs:
-                stability = InvariantStrength.STRONG_INVARIANT
-            else:
-                stability = InvariantStrength.STABLE_EXPECTATION
-        else:
-            stability = InvariantStrength.VARIABLE
-
-        # Aggregate across runs
-        all_ops: set[str] = set()
-        all_objects: set[str] = set()
-        all_handoff_targets: set[str] = set()
-        immediate_predecessors: CounterType[SemanticEventSlot] = Counter()
-        required_ancestor_slots: CounterType[SemanticEventSlot] = Counter()
-        successor_slots: CounterType[SemanticEventSlot] = Counter()
-
-        for rd in run_slots:
-            if slot not in rd:
-                continue
-            all_ops.update(rd[slot]["operations"])
-            all_objects.update(rd[slot]["objects"])
-            all_handoff_targets.update(rd[slot]["handoff_targets"])
-
-        # Count predecessor relationships
-        for rd in run_slots:
-            if slot not in rd:
-                continue
-            for pred in rd[slot]["predecessors"]:
-                immediate_predecessors[pred] += 1
-                required_ancestor_slots[pred] += 1
-            for succ in rd[slot]["successors"]:
-                successor_slots[succ] += 1
-
+    profiles = {}
+    for slot in set().union(*(d.keys() for d in run_slots)):
+        entries = [d[slot] for d in run_slots if slot in d]
+        support = len(entries) / total_runs
+        counters = {name: Counter(x for d in entries for x in d[name])
+                    for name in ("parents", "ancestors", "successors")}
+        fact_support = Counter((key, next(iter(values))) for d in entries
+                               for key, values in d["facts"].items() if len(values) == 1)
+        stable_facts = [TaskFact(key, value, "clean_reference")
+                        for (key, value), count in fact_support.items()
+                        if count / total_runs >= STABLE_SUPPORT_THRESHOLD]
         profiles[slot] = CleanSlotProfile(
             slot=slot,
-            run_support=runs_with_slot,
+            run_support=len(entries),
             total_runs=total_runs,
-            support_fraction=support_fraction,
-            stability=stability,
-            observed_operations=all_ops,
-            observed_objects=all_objects,
-            observed_handoff_targets=all_handoff_targets,
-            immediate_predecessors=immediate_predecessors,
-            required_ancestor_slots=required_ancestor_slots,
-            successor_slots=successor_slots,
-            structured_facts=[],
+            support_fraction=support,
+            stability=(InvariantStrength.STRONG_INVARIANT if support == 1 else
+                       InvariantStrength.STABLE_EXPECTATION if support >= STABLE_SUPPORT_THRESHOLD else
+                       InvariantStrength.VARIABLE),
+            observed_operations={slot.operation},
+            observed_objects={slot.canonical_object},
+            observed_handoff_targets={slot.canonical_object},
+            immediate_predecessors=counters["parents"],
+            required_ancestor_slots=counters["ancestors"],
+            successor_slots=counters["successors"],
+            structured_facts=stable_facts,
+            fact_support=dict(fact_support),
         )
-
     return profiles
 
 
@@ -809,10 +801,8 @@ def compare_event_to_clean_reference(
     deviation_types: list[str] = []
     reasons: list[str] = []
 
-    # Action deviation: unexpected operation or object
-    op = event.tool_name or (
-        event.event_type.value if isinstance(event.event_type, TraceEventType) else str(event.event_type)
-    )
+    # Operations use exactly the same semantic identity as clean profiling.
+    op = slot.operation
     if op not in profile.observed_operations:
         deviation_types.append("ACTION")
         reasons.append(f"unexpected_operation:{op}")
@@ -821,6 +811,23 @@ def compare_event_to_clean_reference(
     if obj and obj not in profile.observed_objects and obj not in profile.observed_handoff_targets:
         deviation_types.append("ACTION")
         reasons.append(f"unexpected_object:{obj}")
+
+    facts = trace_context.get("event_facts", {}).get(event.event_id)
+    if facts is None:
+        facts = _event_facts(event, clean_ref.fixture_spec, clean_ref.task_family)
+    actual_facts = {f.key: f.value for f in facts}
+    for expected in profile.structured_facts:
+        actual = actual_facts.get(expected.key)
+        matches = actual == expected.value
+        if type(actual) in (int, float) and type(expected.value) in (int, float):
+            # Match the fixture evaluator's relative tolerance for material numeric changes.
+            spec = clean_ref.fixture_spec.get("required_facts", {}).get(expected.key, {})
+            matches = math.isclose(actual, expected.value, rel_tol=spec.get("tolerance", 0.0))
+        if not matches:
+            dtype = "STATE" if event.event_type == TraceEventType.MEMORY_WRITE else "CONTENT"
+            if dtype not in deviation_types:
+                deviation_types.append(dtype)
+            reasons.append(f"structured_fact_mismatch:{expected.key}")
 
     if not deviation_types:
         return BehaviorComparison(
@@ -853,6 +860,8 @@ def detect_omissions(
     event: TraceEvent,
     graph: EventGraph,
     clean_ref: CleanBehaviorReference,
+    event_slots: Optional[dict] = None,
+    eligible_indices: Optional[set] = None,
 ) -> list[tuple[str, str]]:
     """Detect omitted required predecessors for an event.
 
@@ -860,6 +869,8 @@ def detect_omissions(
     Attaches omission to the first actual observed event whose behavior
     becomes invalid because a stable predecessor was omitted.
     """
+    if event.event_type not in ACTIVE_EVENT_TYPES:
+        return []
     slot = semantic_slot(event, {})
     profile = clean_ref.slot_profiles.get(slot)
     if profile is None:
@@ -867,36 +878,33 @@ def detect_omissions(
 
     omissions: list[tuple[str, str]] = []
 
-    # Check if this event's actual predecessors include all required ancestors
-    event_idx = event.event_index
-    actual_predecessor_indices = set()
-    for src_idx, tgt_idx in graph.edges:
-        if tgt_idx == event_idx:
-            actual_predecessor_indices.add(src_idx)
-
-    actual_predecessor_slots = set()
-    for node in graph.nodes:
-        if node.event_index in actual_predecessor_indices:
-            pred_event_type = node.event_type
-            pred_op = node.tool_name or pred_event_type
-            pred_obj = canonicalize_artifact(node.target_entity_id or "")
-            pred_slot = SemanticEventSlot(
-                agent_role=node.agent_role,
-                event_type=pred_event_type,
-                operation=pred_op,
-                canonical_object=pred_obj,
-                workflow_phase=None,
-            )
-            actual_predecessor_slots.add(pred_slot)
-
-    # Find required ancestors not present in actual predecessors
-    for ancestor_slot, count in profile.required_ancestor_slots.items():
-        if count >= 0.8 * profile.total_runs and ancestor_slot not in actual_predecessor_slots:
-            op = ancestor_slot.operation
-            omissions.append((
-                "OMISSION",
-                f"missing_required_predecessor:{op}",
-            ))
+    parents = defaultdict(set)
+    for src, tgt in graph.edges:
+        parents[tgt].add(src)
+    slots = event_slots or {
+        n.event_index: SemanticEventSlot(n.agent_role, n.event_type,
+            n.tool_name if n.event_type == "tool_call" and n.tool_name else n.event_type,
+            canonicalize_artifact(n.target_entity_id or ""), None)
+        for n in graph.nodes
+    }
+    ancestors = _ancestors(event.event_index, parents)
+    actual_slots = {slots[i] for i in ancestors}
+    for required, count in profile.required_ancestor_slots.items():
+        if count / profile.total_runs < STABLE_SUPPORT_THRESHOLD or required in actual_slots:
+            continue
+        # Attribute a missing dependency to the first affected action on each DAG branch.
+        origins = {n.event_index for n in graph.nodes if n.is_injection_origin}
+        already_missing = any(
+            i not in origins
+            and (eligible_indices is None or i in eligible_indices)
+            and slots[i].event_type in ACTIVE_EVENT_TYPES
+            and (prior := clean_ref.slot_profiles.get(slots[i])) is not None
+            and prior.required_ancestor_slots.get(required, 0) / prior.total_runs >= STABLE_SUPPORT_THRESHOLD
+            and required not in {slots[j] for j in _ancestors(i, parents)}
+            for i in ancestors
+        )
+        if not already_missing:
+            omissions.append(("OMISSION", f"missing_required_predecessor:{required.operation}"))
 
     return omissions
 
@@ -928,12 +936,22 @@ def detect_behavioral_anomalies(
         "topology": clean_ref.topology,
     }
 
-    # Pre-extract structured facts for task relevance
-    structured_facts = extract_structured_facts(trace, fixture_spec, clean_ref.task_family)
-    trace_context["structured_facts"] = {f.key: f for f in structured_facts}
+    # Preserve event provenance: a later recovery must not overwrite an earlier fact.
+    event_facts = {event.event_id: [] for event in trace.events}
+    for fact in extract_structured_facts(trace, fixture_spec, clean_ref.task_family):
+        event_facts[fact.provenance_event_id].append(fact)
+    trace_context["event_facts"] = event_facts
 
     origin_indices = {n.event_index for n in origin_nodes}
     reachable = _reachable_from_origins(graph, origin_nodes)
+    trace_context["perturbed_facts"] = {
+        (f.key, f.value) for e in trace.events if e.event_index in origin_indices
+        for f in event_facts[e.event_id]
+        if not any(f.key == clean.key and f.value == clean.value
+                   for clean in getattr(clean_ref.slot_profiles.get(semantic_slot(e)), "structured_facts", []))
+    }
+    trace_context["fixture_spec"] = fixture_spec
+    event_slots = {e.event_index: semantic_slot(e) for e in trace.events}
 
     for event in trace.events:
         # Skip injection origins
@@ -947,7 +965,7 @@ def detect_behavioral_anomalies(
         comparison = compare_event_to_clean_reference(event, trace_context, clean_ref)
 
         # Check for omissions at this event
-        omission_types = detect_omissions(event, graph, clean_ref)
+        omission_types = detect_omissions(event, graph, clean_ref, event_slots, reachable - origin_indices)
 
         if not comparison.deviates and not omission_types:
             continue
@@ -962,6 +980,10 @@ def detect_behavioral_anomalies(
             if reason not in all_reasons:
                 all_reasons.append(reason)
 
+        comparison.deviation_types = all_deviation_types
+        comparison.reasons = all_reasons
+        comparison.deviates = bool(all_deviation_types)
+
         # Stage 3: Task relevance
         if not is_task_relevant(event, comparison, fixture_spec, trace_context):
             if not omission_types:
@@ -970,6 +992,10 @@ def detect_behavioral_anomalies(
             if not any("OMISSION" in dt or "CONTROL_FLOW" in dt for dt in all_deviation_types):
                 continue
 
+        trace_context["deviation_fact_keys"] = {
+            reason.split(":", 1)[1] for reason in all_reasons
+            if reason.startswith("structured_fact_mismatch:")
+        }
         # Stage 4: LEP-consistent manifestation
         if not is_lep_consistent_manifestation(event, comparison, lep_code, trace_context):
             continue

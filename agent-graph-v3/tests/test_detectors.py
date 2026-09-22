@@ -370,6 +370,81 @@ class TestMetrics:
         y_scores = np.array([0.1, 0.2, 0.8, 0.9])
         assert abs(compute_aupr(y_true, y_scores) - 1.0) < 1e-5
 
+    def test_aupr_random(self):
+        """AUPR matches sklearn for random predictions."""
+        from training.metrics import compute_aupr
+
+        rng = np.random.RandomState(42)
+        y_true = np.array([0, 0, 0, 1, 1, 1])
+        y_scores = rng.uniform(0, 1, 6)
+        result = compute_aupr(y_true, y_scores)
+        from sklearn.metrics import average_precision_score
+        expected = average_precision_score(y_true, y_scores)
+        assert abs(result - expected) < 1e-5
+
+    def test_aupr_single_class(self):
+        """AUPR equals positive-class proportion when all labels are the same."""
+        from training.metrics import compute_aupr
+
+        y_true = np.array([1, 1, 1])
+        y_scores = np.array([0.1, 0.5, 0.9])
+        result = compute_aupr(y_true, y_scores)
+        assert abs(result - 1.0) < 1e-5
+
+        y_true_neg = np.array([0, 0, 0])
+        result_neg = compute_aupr(y_true_neg, y_scores)
+        assert abs(result_neg - 0.0) < 1e-5
+
+    def test_auroc_reversed_ranking(self):
+        """Reversed predictions (all negatives scored higher) give AUROC ≈ 0.0."""
+        from training.metrics import compute_auroc
+
+        y_true = np.array([0, 0, 0, 1, 1, 1])
+        y_scores = np.array([0.9, 0.8, 0.7, 0.1, 0.2, 0.3])
+        assert abs(compute_auroc(y_true, y_scores) - 0.0) < 1e-5
+
+    def test_auroc_tied_scores(self):
+        """Tied scores do not crash and give a valid AUROC."""
+        from training.metrics import compute_auroc
+
+        y_true = np.array([0, 0, 1, 1])
+        y_scores = np.array([0.5, 0.5, 0.5, 0.5])
+        result = compute_auroc(y_true, y_scores)
+        assert 0.0 <= result <= 1.0
+
+    def test_aupr_tied_scores(self):
+        """Tied scores do not crash and give a valid AUPR."""
+        from training.metrics import compute_aupr
+
+        y_true = np.array([0, 0, 1, 1])
+        y_scores = np.array([0.5, 0.5, 0.5, 0.5])
+        result = compute_aupr(y_true, y_scores)
+        assert 0.0 <= result <= 1.0
+
+    def test_auroc_matches_sklearn(self):
+        """AUROC matches sklearn.roc_auc_score for various inputs."""
+        from training.metrics import compute_auroc
+        from sklearn.metrics import roc_auc_score
+
+        rng = np.random.RandomState(123)
+        y_true = rng.randint(0, 2, 100)
+        y_scores = rng.uniform(0, 1, 100)
+        result = compute_auroc(y_true, y_scores)
+        expected = roc_auc_score(y_true, y_scores)
+        assert abs(result - expected) < 1e-5
+
+    def test_aupr_matches_sklearn(self):
+        """AUPR matches sklearn.average_precision_score for various inputs."""
+        from training.metrics import compute_aupr
+        from sklearn.metrics import average_precision_score
+
+        rng = np.random.RandomState(123)
+        y_true = rng.randint(0, 2, 100)
+        y_scores = rng.uniform(0, 1, 100)
+        result = compute_aupr(y_true, y_scores)
+        expected = average_precision_score(y_true, y_scores)
+        assert abs(result - expected) < 1e-5
+
     def test_classification_metrics(self):
         """Classification metrics are correct for known inputs."""
         from training.metrics import compute_classification_metrics

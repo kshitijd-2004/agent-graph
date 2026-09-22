@@ -41,7 +41,7 @@ from benchmark.behavioral_anomaly import (
     CleanBehaviorReference,
     InvariantStrength,
     detect_behavioral_anomalies,
-    should_skip_cell,
+    MIN_CLEAN_RUNS_REQUIRED,
 )
 
 logger = logging.getLogger(__name__)
@@ -248,8 +248,8 @@ class PropagationAnalyzer:
                 )
                 continue
 
-            skip, skip_reason = should_skip_cell(ref)
-            if skip:
+            if ref.num_runs < MIN_CLEAN_RUNS_REQUIRED:
+                skip_reason = f"insufficient_clean_runs:{ref.num_runs}<{MIN_CLEAN_RUNS_REQUIRED}"
                 coverage["skip_reasons"].append(skip_reason)
                 coverage["skipped_insufficient_clean_reference"] += 1
                 logger.warning(
@@ -529,81 +529,11 @@ class PropagationAnalyzer:
 
     @staticmethod
     def _to_behavioral_clean_ref(ref: CleanReference) -> CleanBehaviorReference:
-        """Convert internal CleanReference to behavioral_anomaly.CleanBehaviorReference."""
-        from benchmark.behavioral_anomaly import (
-            CleanBehaviorReference,
-            SemanticEventSlot,
-            CleanSlotProfile,
-            InvariantStrength,
-        )
-        # Build slot profiles from the stored traces
-        slot_profiles = {}
-        for trace in ref.traces:
-            trace_context = {"fixture_id": ref.fixture_id}
-            slots_in_order = []
-            for event in trace.events:
-                from benchmark.behavioral_anomaly import semantic_slot
-                slot = semantic_slot(event, trace_context)
-                slots_in_order.append(slot)
-                if slot not in slot_profiles:
-                    slot_profiles[slot] = {
-                        "ops": set(),
-                        "objects": set(),
-                        "handoff_targets": set(),
-                        "predecessors": Counter(),
-                        "successors": Counter(),
-                    }
-                op = event.tool_name or (
-                    event.event_type.value if hasattr(event.event_type, 'value') else str(event.event_type)
-                )
-                slot_profiles[slot]["ops"].add(op)
-                if event.memory_key:
-                    slot_profiles[slot]["objects"].add(event.memory_key)
-                if event.target_entity_id:
-                    slot_profiles[slot]["handoff_targets"].add(event.target_entity_id)
-
-            # Predecessor/successor relationships
-            for i, slot in enumerate(slots_in_order):
-                if i > 0:
-                    slot_profiles[slot]["predecessors"][slots_in_order[i - 1]] += 1
-                if i < len(slots_in_order) - 1:
-                    slot_profiles[slot]["successors"][slots_in_order[i + 1]] += 1
-
-        # Convert to CleanSlotProfile objects
-        total_runs = ref.num_runs
-        profiles: dict = {}
-        for slot, data in slot_profiles.items():
-            run_support = total_runs  # Each trace contributes one occurrence
-            support_fraction = run_support / max(total_runs, 1)
-            if support_fraction >= STABLE_SUPPORT_THRESHOLD:
-                stability = InvariantStrength.STRONG_INVARIANT if run_support == total_runs else InvariantStrength.STABLE_EXPECTATION
-            else:
-                stability = InvariantStrength.VARIABLE
-
-            profiles[slot] = CleanSlotProfile(
-                slot=slot,
-                run_support=run_support,
-                total_runs=total_runs,
-                support_fraction=support_fraction,
-                stability=stability,
-                observed_operations=data["ops"],
-                observed_objects=data["objects"],
-                observed_handoff_targets=data["handoff_targets"],
-                immediate_predecessors=data["predecessors"],
-                required_ancestor_slots=data["predecessors"],
-                successor_slots=data["successors"],
-                structured_facts=[],
-            )
-
-        return CleanBehaviorReference(
-            fixture_id=ref.fixture_id,
-            task_family=ref.task_family,
-            topology=ref.topology,
-            execution_variant=ref.execution_variant,
-            benign_trace_ids=ref.benign_trace_ids,
-            repetition_indices=ref.repetition_indices,
-            slot_profiles=profiles,
-            total_runs=total_runs,
+        """Use the shared run-supported, structured-fact clean profiler."""
+        from benchmark.behavioral_anomaly import build_clean_reference
+        return build_clean_reference(
+            ref.traces, ref.fixture_id, ref.topology, ref.execution_variant,
+            fixture_spec=PropagationAnalyzer._load_fixture_spec(ref),
         )
 
     @staticmethod
@@ -963,7 +893,7 @@ class PropagationAnalyzer:
             return 0
         distances = [nearest_distance(n) for n in anomalous_nodes]
         valid = [d for d in distances if d >= 0]
-        return max(valid) if valid else 0
+        return min(valid) if valid else 0
 
     def _compute_handoff_depth(
         self, graph: EventGraph, origin_nodes: List[EventNode],
