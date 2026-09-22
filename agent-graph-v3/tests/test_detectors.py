@@ -7,8 +7,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from generation.feature_schema import OBSERVABLE_NODE_FEATURE_DIM
+
 import numpy as np
-import torch
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -16,7 +17,7 @@ sys.path.insert(0, str(ROOT))
 import pytest
 
 # ── Optional imports (skip all tests if torch not installed) ──────────────────
-pytest.importorskip("torch")
+torch = pytest.importorskip("torch")
 pytest.importorskip("torch_geometric")
 
 
@@ -60,9 +61,9 @@ class TestStaticGNN:
             torch.ones(8, dtype=torch.long),
         ]
 
-        from torch_geometric.data import Batch
+        from torch_geometric.data import Batch, Data
         batch = Batch.from_data_list([
-            type('Data', (), {'x': x, 'edge_index': e, 'batch': b})()
+            Data(x=x, edge_index=e)
             for x, e, b in zip(x_list, edge_list, batch_list)
         ])
 
@@ -193,6 +194,15 @@ class TestHybridDetector:
         assert 0.0 <= float(output.risk_scores.min()) <= 1.0
         assert 0.0 <= float(output.risk_scores.max()) <= 1.0
 
+    def test_fusion_backpropagates_into_temporal_backbone(self):
+        from detectors.hybrid import HybridDetector
+        model = HybridDetector(node_feature_dim=24, memory_dim=16, time_dim=8, fusion_dim=8)
+        output = model(torch.randn(3, 24), torch.tensor([0, 1]),
+                       torch.tensor([1, 2]), torch.tensor([0., 1.]), 3)
+        output.final_logit.backward()
+        gradient = model.gnn_backbone.node_proj.weight.grad
+        assert gradient is not None and gradient.abs().sum() > 0
+
     def test_heuristic_signal_extractor(self):
         """HeuristicSignalExtractor produces 6 signals per event."""
         from detectors.hybrid import HeuristicSignalExtractor
@@ -213,8 +223,8 @@ class TestHybridDetector:
 
         extractor = HeuristicSignalExtractor()
         expected = [
-            "rare_tool", "repeated_transitions", "untrusted_to_sensitive",
-            "fan_out", "convergence", "cross_agent_memory",
+            "event_type_rarity", "repeated_transition", "cross_role_transition",
+            "source_fan_out", "target_convergence", "memory_chain",
         ]
         assert extractor.SIGNAL_NAMES == expected
 
@@ -237,7 +247,8 @@ class TestTemporalSnapshotBuilder:
         events = []
         for i in range(num_events):
             evt = TraceEvent(
-                event_id=str(i),
+                trace_id="test_trace",
+                event_id=f"e{i}",
                 event_type=TraceEventType.REASONING,
                 event_index=i,
                 timestamp=f"2026-09-15T20:00:{i:02d}.000000+00:00",
@@ -346,13 +357,13 @@ class TestMetrics:
         assert abs(compute_auroc(y_true, y_scores) - 1.0) < 1e-5
 
     def test_auroc_random(self):
-        """AUROC ≈ 0.5 for random predictions."""
+        """A small random sample need not have AUROC near 0.5."""
         from training.metrics import compute_auroc
 
         rng = np.random.RandomState(42)
         y_true = np.array([0, 0, 0, 1, 1, 1])
         y_scores = rng.uniform(0, 1, 6)
-        assert abs(compute_auroc(y_true, y_scores) - 0.5) < 0.2
+        assert compute_auroc(y_true, y_scores) == pytest.approx(1 / 9)
 
     def test_auroc_single_class(self):
         """AUROC = 0.5 when all labels are the same."""
@@ -455,10 +466,10 @@ class TestMetrics:
         metrics = compute_classification_metrics(y_true, y_scores, threshold=0.5)
 
         # 2 TN, 0 FP, 3 TP, 0 FN → accuracy = 1.0
-        assert metrics["accuracy"] == 1.0
-        assert metrics["precision"] == 1.0
-        assert metrics["recall"] == 1.0
-        assert metrics["f1"] == 1.0
+        assert metrics["accuracy"] == pytest.approx(1.0)
+        assert metrics["precision"] == pytest.approx(1.0)
+        assert metrics["recall"] == pytest.approx(1.0)
+        assert metrics["f1"] == pytest.approx(1.0)
 
     def test_lead_time_calculation(self):
         """Lead time is correct when alert precedes failure."""
@@ -522,7 +533,7 @@ class TestMetrics:
         agg = aggregate_metrics(dicts)
         assert abs(agg["auroc_mean"] - 0.85) < 1e-5
         assert abs(agg["f1_mean"] - 0.75) < 1e-5
-        assert abs(agg["accuracy_std"] - 0.05) < 1e-5
+        assert abs(agg["accuracy_std"] - np.std([0.75, 0.85, 0.80])) < 1e-5
 
     def test_aggregate_empty(self):
         """Aggregate metrics handles empty input."""
@@ -561,6 +572,7 @@ class TestDetectorTrainer:
         from encoder import TemporalGraphData
         graphs = [
             TemporalGraphData(
+                trace_id="test", execution_id="test", label=0.0,
                 edges_u=torch.tensor([0, 1]),
                 edges_v=torch.tensor([1, 2]),
                 edge_timestamps=torch.tensor([0.0, 1.0]),
@@ -570,6 +582,7 @@ class TestDetectorTrainer:
                 node_features=torch.randn(3, 24),
             ),
             TemporalGraphData(
+                trace_id="test", execution_id="test", label=0.0,
                 edges_u=torch.tensor([0]),
                 edges_v=torch.tensor([1]),
                 edge_timestamps=torch.tensor([0.0]),
@@ -647,6 +660,7 @@ class TestIntegration:
             event_labels = EventLabels(**event_labels_data) if event_labels_data else EventLabels()
 
             evt = TraceEvent(
+                trace_id=data.get("trace_id", ""),
                 event_id=evt_data.get("event_id", ""),
                 event_type=evt_type,
                 event_index=evt_data.get("event_index", 0),
@@ -733,12 +747,12 @@ class TestIntegration:
 
         static = encoder.encode_event_graph_static([graph], labels=[1.0])
         assert len(static) == 1
-        assert static[0].x.shape[1] == 24, f"Expected 24 features, got {static[0].x.shape[1]}"
+        assert static[0].x.shape[1] == OBSERVABLE_NODE_FEATURE_DIM, f"Expected 24 features, got {static[0].x.shape[1]}"
         assert static[0].edge_index.shape[1] == graph.num_edges
 
         temporal = encoder.encode_event_graph_temporal([graph], labels=[1.0])
         assert len(temporal) == 1
-        assert temporal[0].node_features.shape[1] == 24
+        assert temporal[0].node_features.shape[1] == OBSERVABLE_NODE_FEATURE_DIM
         assert temporal[0].edges_v.numel() == temporal[0].edges_u.numel()
 
     def test_static_gnn_on_real_data(self):
@@ -757,7 +771,7 @@ class TestIntegration:
         static = encoder.encode_event_graph_static([graph], labels=[1.0])
         sg = static[0]
 
-        model = StaticGNN(node_feature_dim=24, hidden_dim=32, num_layers=2)
+        model = StaticGNN(node_feature_dim=OBSERVABLE_NODE_FEATURE_DIM, hidden_dim=32, num_layers=2)
         output = model.predict(sg)
         assert output.probabilities.numel() == 1
 
@@ -777,7 +791,7 @@ class TestIntegration:
         temporal = encoder.encode_event_graph_temporal([graph], labels=[1.0])
         tg = temporal[0]
 
-        model = TemporalGNN(node_feature_dim=24, memory_dim=32, time_dim=8)
+        model = TemporalGNN(node_feature_dim=OBSERVABLE_NODE_FEATURE_DIM, memory_dim=32, time_dim=8)
         output = model(tg.node_features, tg.edges_u, tg.edges_v, tg.edge_timestamps, tg.num_nodes)
         assert output.event_risk_scores.numel() == tg.edges_v.numel()
 
@@ -797,7 +811,7 @@ class TestIntegration:
         temporal = encoder.encode_event_graph_temporal([graph], labels=[1.0])
         tg = temporal[0]
 
-        model = HybridDetector(node_feature_dim=24, memory_dim=32, time_dim=8, fusion_dim=16)
+        model = HybridDetector(node_feature_dim=OBSERVABLE_NODE_FEATURE_DIM, memory_dim=32, time_dim=8, fusion_dim=16)
         output = model(tg.node_features, tg.edges_u, tg.edges_v, tg.edge_timestamps, tg.num_nodes)
         assert output.risk_scores.numel() == tg.edges_v.numel()
         assert output.heuristic_signals.shape[1] == 6
@@ -821,8 +835,171 @@ class TestIntegration:
         benign, malignant = pipeline.load_traces()
         all_traces = benign[:2] + malignant[:2]  # Use a small subset
 
-        graphs = pipeline.build_event_graphs(all_traces, "review_loop", "code_review")
+        graphs = [pipeline.graph_builder.build(t, "review_loop", "code_review", strict=False)
+                  for t in all_traces]
         assert len(graphs) > 0
         for g in graphs:
             assert g.num_nodes > 0
             assert g.topology_name == "review_loop"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Regression tests: evaluation-unit consistency (Static vs TGNN vs Hybrid)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestEvaluationUnitConsistency:
+    @staticmethod
+    def _snapshots():
+        from torch_geometric.data import Data
+        # Unequal prefix counts, deliberately misleading prefix scores.
+        labels = [0., 0., 0., 1., 1.]
+        scores = [0.9, 0.9, 0.1, 0.1, 0.9]
+        ids = ['a', 'a', 'a', 'b', 'b']
+        graphs = [Data(x=torch.tensor([[score]]),
+                       edge_index=torch.empty((2, 0), dtype=torch.long),
+                       y=torch.tensor([label]), execution_id=eid)
+                  for score, label, eid in zip(scores, labels, ids)]
+        return graphs, labels, [{'execution_id': eid} for eid in ids]
+
+    @staticmethod
+    def _trainer():
+        from detectors.static_gnn import DetectionOutput
+        from training.trainer import DetectorTrainer
+
+        class ScoreModel(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.flip = torch.nn.Parameter(torch.tensor(0.))
+
+            def forward(self, x, edge_index, batch):
+                scores = x[:, 0] * (1 - self.flip) + (1 - x[:, 0]) * self.flip
+                logits = torch.logit(scores)
+                return DetectionOutput(logits, scores, scores >= .5, logits[-1], scores[-1])
+
+        return DetectorTrainer(ScoreModel(), model_type='static', device='cpu')
+
+    def test_final_snapshot_metrics_and_singleton_batches(self):
+        from training.dataset import select_final_snapshots_per_execution
+        graphs, labels, metadata = self._snapshots()
+        final, final_labels, ids = select_final_snapshots_per_execution(graphs, labels, metadata)
+        assert ids == ['a', 'b']
+        assert final[0] is graphs[2] and final[1] is graphs[4]
+        assert final_labels == [0., 1.]
+        trainer = self._trainer()
+        prefix = trainer.evaluate(graphs, labels, batch_size=1)
+        execution = trainer.evaluate(graphs, labels, batch_size=1, snapshot_metadata=metadata)
+        assert prefix['evaluation_unit'] == 'graph'
+        assert prefix['num_predictions'] == 5
+        assert prefix['metrics']['auroc'] < 0.5
+        assert execution['evaluation_unit'] == 'execution'
+        assert execution['num_predictions'] == execution['num_executions'] == 2
+        assert execution['predictions'] == pytest.approx([.1, .9])
+        assert execution['metrics']['auroc'] == 1.
+        assert execution['metrics']['auprc'] == 1.
+        assert execution['loss'] == pytest.approx(-np.log(.9))
+        final_result = trainer.evaluate(final, final_labels, snapshot_metadata=[{'execution_id': e} for e in ids])
+        assert final_result['evaluation_unit'] == 'execution'
+        assert final_result['predictions'] == execution['predictions']
+        with pytest.raises(ValueError, match='metadata'):
+            trainer.evaluate(graphs, labels, snapshot_metadata=metadata[:-1])
+
+    def test_early_stopping_uses_execution_ranking_and_restores_best(self, monkeypatch):
+        graphs, labels, metadata = self._snapshots()
+        trainer = self._trainer()
+        steps = iter([0., 1.])
+
+        def train_epoch(*args, **kwargs):
+            with torch.no_grad():
+                trainer.model.flip.fill_(next(steps))
+            return 0.
+
+        monkeypatch.setattr(trainer, 'train_epoch', train_epoch)
+        history = trainer.train(graphs, labels, graphs, labels, num_epochs=2,
+                                snapshot_metadata=metadata, verbose=False)
+        assert [e['val_auroc'] for e in history['history']] == [1., 0.]
+        assert trainer.best_epoch == 0
+        assert trainer.model.flip.item() == 0.
+        # The later model wins on prefixes, but loses on full executions.
+        with torch.no_grad():
+            trainer.model.flip.fill_(1.)
+        assert trainer.evaluate(graphs, labels)['metrics']['auroc'] > .5
+
+    def test_small_splits_and_task_groups(self):
+        from training.dataset import split_at_execution_level
+        ids = list('abcde')
+        splits = split_at_execution_level(ids, [0.] * 5)
+        assert all(splits)
+        assert set.union(*splits) == set(ids)
+        assert sum(map(len, splits)) == 5
+        with pytest.raises(ValueError, match='at least 3'):
+            split_at_execution_level(['a', 'b'], [0., 1.])
+        ids = [f'{i}-{variant}' for i in range(5) for variant in ('a', 'b')]
+        groups = [str(i) for i in range(5) for _ in range(2)]
+        splits = split_at_execution_level(ids, [0., 1.] * 5, group_ids=groups)
+        for split in splits:
+            for i in range(5):
+                assert (f'{i}-a' in split) == (f'{i}-b' in split)
+
+    def test_pipeline_uses_same_executions_and_saves_counts(self, tmp_path, monkeypatch):
+        import json
+        from training.pipeline import DetectorPipeline
+        from training.trainer import DetectorTrainer
+        from generation.event_graph_snapshot import TemporalSnapshotBuilder
+
+        traces = []
+        for i in range(5):
+            for label in (0, 1):
+                trace = TestTemporalSnapshotBuilder()._make_minimal_trace(3 + i * 2 + label)
+                trace.trace_id = trace.execution_id = f'{i}-{label}'
+                trace.labels.downstream_failure = bool(label)
+                trace.metadata['fixture_id'] = f'fixture-{i}'
+                for event in trace.events:
+                    event.trace_id = trace.trace_id
+                traces.append(trace)
+        pipeline = DetectorPipeline(tmp_path, device='cpu')
+        monkeypatch.setattr(pipeline, 'load_traces', lambda: (traces[::2], traces[1::2]))
+        observed = []
+        evaluated = []
+        original_evaluate = DetectorTrainer.evaluate
+
+        def evaluate(trainer, graphs, labels, *args, **kwargs):
+            evaluated.append((trainer.model_type, graphs))
+            return original_evaluate(trainer, graphs, labels, *args, **kwargs)
+
+        monkeypatch.setattr(DetectorTrainer, "evaluate", evaluate)
+        original_train = DetectorTrainer.train
+
+        def train(trainer, *args, **kwargs):
+            observed.append((trainer.model_type, kwargs['train_graphs'], kwargs['val_graphs']))
+            return original_train(trainer, *args, **kwargs)
+
+        monkeypatch.setattr(DetectorTrainer, 'train', train)
+        results = pipeline.run(num_epochs=1, batch_size=3, snapshot_interval=2,
+                               train_frac=.4, val_frac=.2,
+                               use_heuristic_baselines=False)
+        static = results['static_gnn']
+        full = {t.execution_id: pipeline.graph_builder.build(t, 'linear', 'code_review', strict=False)
+                for t in traces}
+        builder = TemporalSnapshotBuilder(snapshot_interval=2)
+        expected_train = sum(len(builder.build_from_event_graph(full[eid])) for eid in static.train_execution_ids)
+        assert static.train_sample_count == expected_train > len(static.train_execution_ids)
+        for kind in ('static_gnn', 'tgnn', 'hybrid'):
+            result = results[kind]
+            assert result.train_execution_ids == static.train_execution_ids
+            assert result.val_execution_ids == static.val_execution_ids
+            assert result.test_execution_ids == static.test_execution_ids
+            assert result.evaluation_unit == result.test_metrics['evaluation_unit'] == 'execution'
+            assert result.test_metrics['num_predictions'] == len(result.test_execution_ids)
+            assert result.test_metrics['labels'] == [float(full[eid].labels.downstream_failure) for eid in result.test_execution_ids]
+        train_graphs, val_graphs = observed[0][1:]
+        assert len(train_graphs) == expected_train
+        assert {g.execution_id for g in val_graphs} == set(static.val_execution_ids)
+        assert all(g.num_nodes == full[g.execution_id].num_nodes for g in val_graphs)
+        final_test = evaluated[1][1]
+        assert [g.execution_id for g in final_test] == static.test_execution_ids
+        assert all(g.num_nodes == full[g.execution_id].num_nodes for g in final_test)
+        saved = json.loads((tmp_path / 'detector_results.json').read_text())
+        assert saved['static_gnn']['evaluation_unit'] == 'execution'
+        assert saved['static_gnn']['train_sample_count'] == expected_train
+        assert saved['static_gnn']['test_execution_ids'] == static.test_execution_ids

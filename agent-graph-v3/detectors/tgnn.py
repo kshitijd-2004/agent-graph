@@ -79,6 +79,8 @@ class SinusoidalTimeEncoder(nn.Module):
             Time encoding tensor of shape [N, dim].
         """
         # Normalize timestamps to [0, 1] range to keep encoding stable
+        if timestamps.numel() == 0:
+            return timestamps.new_empty((0, self.dim))
         ts_min = timestamps.min()
         ts_max = timestamps.max()
         if ts_max > ts_min:
@@ -231,17 +233,18 @@ class TemporalGNN(nn.Module):
 
             # Update target node memory
             new_dst_mem = self.memory_cell(message, dst_mem)
+            node_memories = node_memories.clone()
             node_memories[dst] = new_dst_mem
 
             # Compute raw risk logit at this event (no sigmoid)
             risk_input = torch.cat([new_dst_mem, ts_enc, dst_feat], dim=-1)
             event_logits[i] = self.risk_head(risk_input).squeeze()
-            event_embeddings[i] = new_dst_mem.detach()
+            event_embeddings[i] = new_dst_mem
 
         # Sigmoid applied here only for scores exposed to callers
         event_scores = torch.sigmoid(event_logits)
-        final_logit = event_logits[-1]
-        final_score = event_scores[-1]
+        final_logit = event_logits[-1] if num_events else node_memories.sum() * 0.0
+        final_score = torch.sigmoid(final_logit)
 
         return TemporalDetectionOutput(
             event_risk_logits=event_logits,

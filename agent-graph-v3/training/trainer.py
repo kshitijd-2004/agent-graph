@@ -7,6 +7,7 @@ Provides:
 
 from __future__ import annotations
 
+import copy
 import logging
 import time
 from pathlib import Path
@@ -197,7 +198,7 @@ class DetectorTrainer:
 
                 output = self.model(batch_graphs.x, batch_graphs.edge_index, batch_graphs.batch)
                 logits = output.logits
-                loss = self.criterion(logits, batch_graphs.y.squeeze())
+                loss = self.criterion(logits, batch_graphs.y.reshape(-1))
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                 self.optimizer.step()
@@ -260,22 +261,47 @@ class DetectorTrainer:
         graphs: List,
         labels: List[float],
         batch_size: int = 16,
+        snapshot_metadata: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Evaluate the model on a dataset.
+
+        For static GNN with multiple snapshots per execution, provides
+        execution-level aggregation: selects the final snapshot per execution
+        for headline metrics when ``snapshot_metadata`` is provided.
 
         Args:
             graphs:      List of StaticGraphData or TemporalGraphData objects.
             labels:      Float labels [len(graphs)].
             batch_size:  Batch size (for static GNN only).
+            snapshot_metadata: Optional list of metadata dicts (one per graph)
+                         with an ``execution_id`` key. For static GNN with
+                         multiple snapshots per execution, predictions are
+                         aggregated to execution-level by selecting the final
+                         snapshot per execution.  Temporal models ignore this
+                         parameter (they always produce one score per graph).
 
         Returns:
-            Dict with loss, metrics, predictions, and labels.
+            Dict with loss, metrics, predictions, and labels.  When
+            ``snapshot_metadata`` triggers execution-level aggregation for
+            static GNN, ``predictions`` and ``labels`` contain one entry per
+            execution, and ``evaluation_unit`` is set to ``"execution"``.
+            Temporal models also use ``"execution"``; static evaluation
+            without metadata uses ``"graph"``.
         """
         self.model.eval()
         total_loss = 0.0
         num_batches = 0
-        all_preds = []
-        all_labels = []
+        all_preds: List[float] = []
+        all_labels: List[float] = []
+        snapshot_exec_ids: Optional[List[str]] = None
+
+        if len(graphs) != len(labels):
+            raise ValueError("graphs and labels must have equal lengths")
+        if snapshot_metadata is not None and self.model_type == "static":
+            from training.dataset import select_final_snapshots_per_execution
+            graphs, labels, snapshot_exec_ids = select_final_snapshots_per_execution(
+                graphs, labels, snapshot_metadata,
+            )
 
         with torch.no_grad():
             if self.model_type == "static":
@@ -285,13 +311,14 @@ class DetectorTrainer:
                     batch_graphs = batch_graphs.to(self.device)
                     output = self.model(batch_graphs.x, batch_graphs.edge_index, batch_graphs.batch)
                     logits = output.logits
-                    batch_y = batch_graphs.y.squeeze()
+                    batch_y = batch_graphs.y.reshape(-1)
                     loss = self.criterion(logits, batch_y)
                     total_loss += loss.item()
                     num_batches += 1
 
                     all_preds.extend(output.probabilities.cpu().numpy().tolist())
                     all_labels.extend(batch_y.cpu().numpy().tolist())
+
             else:
                 for g, lbl in zip(graphs, labels):
                     node_features = g.node_features.to(self.device)
@@ -329,11 +356,20 @@ class DetectorTrainer:
         metrics = compute_classification_metrics(all_labels, all_preds)
         metrics["loss"] = float(avg_loss)
 
+        # Determine evaluation unit for downstream reporting
+        num_executions = len(set(snapshot_exec_ids)) if snapshot_exec_ids else len(all_preds)
+        evaluation_unit = (
+            "execution" if self.model_type != "static" or snapshot_exec_ids is not None else "graph"
+        )
+
         return {
             "loss": avg_loss,
             "metrics": metrics,
             "predictions": all_preds.tolist(),
             "labels": all_labels.tolist(),
+            "evaluation_unit": evaluation_unit,
+            "num_predictions": len(all_preds),
+            "num_executions": num_executions,
         }
 
     def train(
@@ -346,6 +382,7 @@ class DetectorTrainer:
         batch_size: int = 16,
         patience: int = 10,
         verbose: bool = True,
+        snapshot_metadata: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Full training loop with early stopping.
 
@@ -358,6 +395,11 @@ class DetectorTrainer:
             batch_size:    Batch size.
             patience:      Early stopping patience (epochs without improvement).
             verbose:       Print progress.
+            snapshot_metadata: Optional per-graph metadata with ``execution_id``
+                         for execution-level aggregation in static GNN
+                         validation.  When provided for a static model,
+                         early stopping uses execution-level final-snapshot
+                         AUROC rather than per-snapshot AUROC.
 
         Returns:
             Training history dict with per-epoch metrics.
@@ -377,7 +419,10 @@ class DetectorTrainer:
             train_loss = self.train_epoch(train_graphs, train_labels, batch_size=batch_size)
 
             # Validate
-            val_results = self.evaluate(val_graphs, val_labels, batch_size=batch_size)
+            val_results = self.evaluate(
+                val_graphs, val_labels, batch_size=batch_size,
+                snapshot_metadata=snapshot_metadata,
+            )
             val_auroc = val_results["metrics"]["auroc"]
             val_loss = val_results["loss"]
 
@@ -403,12 +448,12 @@ class DetectorTrainer:
                 )
 
             # Early stopping on validation AUROC
-            if val_auroc > self.best_val_auroc:
+            if best_state is None or val_auroc > self.best_val_auroc:
                 self.best_val_auroc = val_auroc
                 self.best_epoch = epoch
                 patience_counter = 0
                 best_state = {
-                    "model_state_dict": self.model.state_dict(),
+                    "model_state_dict": copy.deepcopy(self.model.state_dict()),
                     "optimizer_state_dict": self.optimizer.state_dict(),
                     "epoch": epoch,
                     "val_auroc": val_auroc,
@@ -449,7 +494,7 @@ class DetectorTrainer:
         if path is None:
             return
         torch.save({
-            "model_state_dict": self.model.state_dict(),
+            "model_state_dict": copy.deepcopy(self.model.state_dict()),
             "optimizer_state_dict": self.optimizer.state_dict(),
             "best_val_auroc": self.best_val_auroc,
             "best_epoch": self.best_epoch,

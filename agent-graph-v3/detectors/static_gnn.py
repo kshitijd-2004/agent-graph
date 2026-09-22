@@ -25,6 +25,9 @@ from torch_geometric.data import Batch
 from generation.feature_schema import OBSERVABLE_NODE_FEATURE_DIM
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
 class DetectionOutput:
     """Output of a learned detector forward pass.
 

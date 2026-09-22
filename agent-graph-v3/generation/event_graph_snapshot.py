@@ -68,6 +68,8 @@ class TemporalSnapshotBuilder:
         Returns:
             List of EventGraph snapshots, ordered by increasing cutoff
         """
+        if not trace.events:
+            return []
         full_graph = self._graph_builder.build(
             trace, topology_name=topology_name, task_family=task_family, strict=self.strict
         )

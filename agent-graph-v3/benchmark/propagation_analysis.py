@@ -86,6 +86,7 @@ class PropagationResult:
 
     trace_id: str
     task_family: str
+    fixture_id: str
     topology: str
     lep_code: str
     propagation_mode: str
@@ -111,6 +112,7 @@ class PropagationResult:
         return {
             "trace_id": self.trace_id,
             "task_family": self.task_family,
+            "fixture_id": self.fixture_id,
             "topology": self.topology,
             "lep_code": self.lep_code,
             "propagation_mode": self.propagation_mode,
@@ -130,8 +132,9 @@ class PropagationResult:
 
 @dataclass
 class CellSummary:
-    """Aggregate metrics for one (task_family × topology × lep_code × mode) cell."""
+    """Aggregate metrics for one (fixture_id × topology × lep_code × mode) cell."""
 
+    fixture_id: str
     task_family: str
     topology: str
     lep_code: str
@@ -161,6 +164,7 @@ class CellSummary:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "fixture_id": self.fixture_id,
             "task_family": self.task_family,
             "topology": self.topology,
             "lep_code": self.lep_code,
@@ -228,8 +232,7 @@ class PropagationAnalyzer:
         builder = DependsOnGraphBuilder()
 
         for key, traces in lep_traces.items():
-            task_family, topology, lep_code, mode = key
-            fixture_id = traces[0].metadata.get("fixture_id", "") if traces else ""
+            fixture_id, task_family, topology, lep_code, mode = key
 
             # Select appropriate execution variant for this LEP type
             execution_variant = _select_execution_variant(lep_code)
@@ -267,6 +270,7 @@ class PropagationAnalyzer:
                     lep_code=lep_code,
                     propagation_mode=mode,
                     builder=builder,
+                    fixture_id=fixture_id,
                 )
                 per_trace_results.append(result)
 
@@ -287,17 +291,21 @@ class PropagationAnalyzer:
 
     def _load_and_group_traces(
         self,
-    ) -> Tuple[Dict[Tuple[str, str, str], CleanReference], Dict[Tuple[str, str, str, str], List[Trace]]]:
+    ) -> Tuple[Dict[Tuple[str, str, str], CleanReference], Dict[Tuple[str, str, str, str, str], List[Trace]]]:
         """Load all trace JSONs and group traces.
 
         Benign traces are grouped by (fixture_id, topology, execution_variant)
         and deduplicated by repetition_index within each group.
 
+        LEP traces are grouped by (fixture_id, task_family, topology,
+        lep_code, propagation_mode) so that different fixtures for the same
+        task family never share a clean reference.
+
         IMPORTANT: execution_variant must NOT be mixed. "standard" and
         "memory_enabled" are intentionally different experimental conditions.
         """
         benign_refs: Dict[Tuple[str, str, str], CleanReference] = {}
-        lep_traces: Dict[Tuple[str, str, str, str], List[Trace]] = {}
+        lep_traces: Dict[Tuple[str, str, str, str, str], List[Trace]] = {}
 
         if not self.traces_dir.exists():
             logger.warning("Traces directory does not exist: %s", self.traces_dir)
@@ -346,7 +354,10 @@ class PropagationAnalyzer:
                     ref.repetition_indices.append(repetition_index)
             else:
                 lep_code = lep_codes[0]
-                cell_key = (task_family, topology, lep_code, prop_mode)
+                # Group by (fixture_id, task_family, topology, lep_code, prop_mode)
+                # to prevent two fixtures for the same task family from sharing
+                # a cell or clean reference.
+                cell_key = (fixture_id, task_family, topology, lep_code, prop_mode)
                 lep_traces.setdefault(cell_key, []).append(trace)
 
         # Log clean reference stats
@@ -389,7 +400,7 @@ class PropagationAnalyzer:
     def _analyze_single_trace(
         self, trace: Trace, benign_ref: CleanReference,
         lep_code: str, propagation_mode: str,
-        builder: DependsOnGraphBuilder,
+        builder: DependsOnGraphBuilder, fixture_id: str = "",
     ) -> PropagationResult:
         """Compute all propagation metrics for one LEP trace."""
         # Build the dependency DAG
@@ -444,6 +455,7 @@ class PropagationAnalyzer:
         return PropagationResult(
             trace_id=trace.trace_id,
             task_family=benign_ref.task_family,
+            fixture_id=fixture_id or benign_ref.fixture_id,
             topology=benign_ref.topology,
             lep_code=lep_code,
             propagation_mode=propagation_mode,
@@ -923,18 +935,31 @@ class PropagationAnalyzer:
     def _aggregate_by_cell(
         self,
         results: List[PropagationResult],
-        benign_refs: Dict[Tuple[str, str], CleanReference],
+        benign_refs: Dict[Tuple[str, str, str], CleanReference],
     ) -> Dict[str, CellSummary]:
-        """Aggregate per-trace results into per-cell summaries."""
+        """Aggregate per-trace results into per-cell summaries.
+
+        Cell identity is (fixture_id × topology × LEP × propagation_mode).
+        ``task_family`` is retained as metadata on each CellSummary for
+        higher-level grouping, but two cells with different fixture_ids
+        are never merged even when they share task_family, topology, LEP,
+        and propagation_mode.
+        """
         cells: Dict[str, List[PropagationResult]] = defaultdict(list)
         for r in results:
-            key = f"{r.task_family}|{r.topology}|{r.lep_code}|{r.propagation_mode}"
+            key = f"{r.fixture_id}|{r.topology}|{r.lep_code}|{r.propagation_mode}"
             cells[key].append(r)
 
         summaries: Dict[str, CellSummary] = {}
         for key, cell_results in cells.items():
-            task_family, topology, lep_code, mode = key.split("|")
-            ref = benign_refs.get((task_family, topology))
+            fixture_id, topology, lep_code, mode = key.split("|")
+            task_family = cell_results[0].task_family
+
+            # Determine execution variant from the LEP code and look up
+            # the clean reference using (fixture_id, topology, execution_variant).
+            execution_variant = _select_execution_variant(lep_code)
+            ref_key = (fixture_id, topology, execution_variant)
+            ref = benign_refs.get(ref_key)
             num_benign = ref.num_runs if ref else 0
 
             depths = [r.event_depth for r in cell_results]
@@ -954,6 +979,7 @@ class PropagationAnalyzer:
                     role_counts[role] += 1
 
             summaries[key] = CellSummary(
+                fixture_id=fixture_id,
                 task_family=task_family,
                 topology=topology,
                 lep_code=lep_code,

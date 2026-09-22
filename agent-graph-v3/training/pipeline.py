@@ -18,9 +18,9 @@ from __future__ import annotations
 import json
 import logging
 import pickle
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -32,7 +32,8 @@ from encoder import GraphEncoder, StaticGraphData, TemporalGraphData
 from detectors.static_gnn import StaticGNN, DetectionOutput as StaticOutput
 from detectors.tgnn import TemporalGNN, TemporalDetectionOutput
 from detectors.hybrid import HybridDetector, HybridDetectionOutput
-from training.dataset import DetectorDataset, create_dataloaders
+from training.dataset import (DetectorDataset, FinalSnapshotDataset,
+                              create_dataloaders, select_final_snapshots_per_execution)
 from training.trainer import DetectorTrainer
 from training.evaluator import DetectionEvaluator, BaselineComparator
 
@@ -49,12 +50,27 @@ class PipelineResult:
         best_epoch:     Epoch of best validation AUROC.
         test_metrics:   Test set metrics dict.
         train_history:  Per-epoch training history.
+        evaluation_unit: ``"execution"`` or ``"graph"`` — what each
+                         prediction in ``test_metrics`` corresponds to.
+        train_sample_count: Number of training samples used.
+        val_execution_count: Number of validation executions (if execution-level).
+        test_execution_count: Number of test executions (if execution-level).
+        train_execution_ids: Execution IDs in the train split.
+        val_execution_ids:   Execution IDs in the val split.
+        test_execution_ids:  Execution IDs in the test split.
     """
     detector_type: str
     best_val_auroc: float
     best_epoch: int
     test_metrics: Dict[str, Any]
     train_history: List[Dict[str, float]]
+    evaluation_unit: str = "graph"
+    train_sample_count: int = 0
+    val_execution_count: int = 0
+    test_execution_count: int = 0
+    train_execution_ids: List[str] = field(default_factory=list)
+    val_execution_ids: List[str] = field(default_factory=list)
+    test_execution_ids: List[str] = field(default_factory=list)
 
 
 class DetectorPipeline:
@@ -89,6 +105,7 @@ class DetectorPipeline:
         self.output_dir = Path(output_dir)
         self.snapshot_interval = snapshot_interval
         self.seed = seed
+        self.device = device
         self.graph_builder = DependsOnGraphBuilder()
         self.encoder = GraphEncoder()
         self.snapshot_builder = TemporalSnapshotBuilder(
@@ -362,10 +379,15 @@ class DetectorPipeline:
         trainer = DetectorTrainer(
             model=model,
             model_type=model_type,
-            device="auto",
+            device=self.device,
             lr=lr,
             checkpoint_dir=ckpt_dir,
         )
+
+        val_metadata = test_metadata = None
+        if detector_type == "static_gnn":
+            val_metadata = [{"execution_id": g.execution_id} for g in dataset.val_graphs]
+            test_metadata = [{"execution_id": g.execution_id} for g in dataset.test_graphs]
 
         # Train
         history = trainer.train(
@@ -377,11 +399,13 @@ class DetectorPipeline:
             batch_size=batch_size,
             patience=patience,
             verbose=True,
+            snapshot_metadata=val_metadata,
         )
 
         # Evaluate on test set
         test_results = trainer.evaluate(
-            dataset.test_graphs, dataset.test_labels, batch_size=batch_size
+            dataset.test_graphs, dataset.test_labels, batch_size=batch_size,
+            snapshot_metadata=test_metadata
         )
 
         result = PipelineResult(
@@ -390,6 +414,7 @@ class DetectorPipeline:
             best_epoch=trainer.best_epoch,
             test_metrics=test_results,
             train_history=history["history"],
+            evaluation_unit=test_results["evaluation_unit"],
         )
 
         logger.info(
@@ -477,60 +502,192 @@ class DetectorPipeline:
         logger.info("Step 3: Encoding graphs")
         static_data, temporal_data = self.encode_graphs(event_graphs)
 
-        # Step 4: Build snapshots for static GNN
+        # Execution IDs per EventGraph (needed for execution-level split)
+        execution_ids: List[str] = [
+            eg.execution_id for eg in event_graphs
+        ]
+
+        # ── Step 4: Split at execution level ─────────────────────────────────
+        # One shared split for ALL detectors: disjoint execution IDs.
+        # This ensures Static, TGNN, and Hybrid headline evaluations
+        # use the same held-out executions.
+        logger.info("Step 4: Splitting at execution level")
+        from training.dataset import split_at_execution_level
+        train_eids, val_eids, test_eids = split_at_execution_level(
+            execution_ids, all_labels, group_ids=all_group_ids,
+            train_frac=train_frac, val_frac=val_frac, seed=self.seed,
+        )
+
+        if len(set(execution_ids)) != len(execution_ids):
+            raise ValueError("Expected a unique execution_id for each trace")
+
+        # Map execution_id → index in event_graphs list
+        exec_to_idx: Dict[str, int] = {}
+        for i, eg in enumerate(event_graphs):
+            exec_to_idx[eg.execution_id] = i
+
+        train_indices = {exec_to_idx[eid] for eid in train_eids if eid in exec_to_idx}
+        val_indices   = {exec_to_idx[eid] for eid in val_eids   if eid in exec_to_idx}
+        test_indices  = {exec_to_idx[eid] for eid in test_eids  if eid in exec_to_idx}
+
+        train_exec_ids_ordered  = [eid for eid in execution_ids if eid in train_eids]
+        val_exec_ids_ordered    = [eid for eid in execution_ids if eid in val_eids]
+        test_exec_ids_ordered   = [eid for eid in execution_ids if eid in test_eids]
+
+        logger.info(
+            "Execution split: train=%d, val=%d, test=%d (total=%d executions)",
+            len(train_exec_ids_ordered), len(val_exec_ids_ordered),
+            len(test_exec_ids_ordered), len(execution_ids),
+        )
+
+        # Assert the three detectors will see the same execution sets
+        assert set(train_exec_ids_ordered) == train_eids
+        assert set(val_exec_ids_ordered)   == val_eids
+        assert set(test_exec_ids_ordered)  == test_eids
+
+        # ── Step 5: Build datasets for each detector type ─────────────────────
+        results = {}
+
+        # ── Static GNN ────────────────────────────────────────────────────────
         if "static_gnn" in detector_types:
-            logger.info("Step 4: Building temporal snapshots for static GNN")
+            logger.info("Step 5a: Building Static GNN datasets")
             snapshot_builder = TemporalSnapshotBuilder(snapshot_interval=snapshot_interval)
-            # Build snapshots from each EventGraph
-            snapshot_graphs = []
-            snapshot_labels = []
-            snapshot_group_ids = []
-            for eg, lbl, gid in zip(event_graphs, all_labels, all_group_ids):
+
+            # Build ALL snapshots from each EventGraph
+            all_snapshots: List[Any] = []
+            snap_labels: List[float] = []
+            snap_metadata: List[Dict[str, Any]] = []
+            snap_exec_ids: List[str] = []
+
+            for eg, lbl in zip(event_graphs, all_labels):
                 snaps = snapshot_builder.build_from_event_graph(eg)
                 for snap in snaps:
-                    snapshot_graphs.append(snap)
-                    snapshot_labels.append(lbl)
-                    snapshot_group_ids.append(gid)
+                    all_snapshots.append(snap)
+                    snap_labels.append(lbl)
+                    snap_exec_ids.append(eg.execution_id)
+                    snap_metadata.append({
+                        "execution_id": eg.execution_id,
+                        "trace_id": snap.trace_id,
+                        "num_nodes": snap.num_nodes,
+                        "is_final": snap.num_nodes == eg.num_nodes,
+                    })
 
-            # Encode snapshots (pass labels explicitly since encode_graphs no longer defaults)
-            snap_static, _ = self.encode_graphs(snapshot_graphs, snapshot_labels)
+            # Encode all snapshots
+            snap_static, _ = self.encode_graphs(all_snapshots, snap_labels)
 
-            # Override dataset for static GNN
-            static_dataset = self.build_dataset(
-                snap_static, [], snapshot_labels, snapshot_group_ids,
-                train_frac=train_frac, val_frac=val_frac, prefer_temporal=False,
+            # ── Training: ALL snapshots from training executions ─────────────
+            train_snap_indices = [
+                i for i, eid in enumerate(snap_exec_ids) if eid in train_eids
+            ]
+            train_snap_graphs  = [snap_static[i] for i in train_snap_indices]
+            train_snap_labels  = [snap_labels[i] for i in train_snap_indices]
+            train_snap_gids    = [snap_exec_ids[i] for i in train_snap_indices]
+            train_snap_meta    = [snap_metadata[i] for i in train_snap_indices]
+
+            # ── Val / Test: FINAL snapshot per execution ────────────────────
+            def _select_final_snapshots(eid_set: set) -> tuple:
+                """Select the final snapshot for each execution in eid_set."""
+                indices = [i for i, eid in enumerate(snap_exec_ids) if eid in eid_set]
+                graphs, labels, ids = select_final_snapshots_per_execution(
+                    [snap_static[i] for i in indices],
+                    [snap_labels[i] for i in indices],
+                    [snap_metadata[i] for i in indices],
+                )
+                if set(ids) != eid_set:
+                    raise ValueError("Missing final snapshots for held-out executions")
+                metadata = [{"execution_id": eid} for eid in ids]
+                return graphs, labels, metadata, ids
+
+            val_snap_graphs, val_snap_labels, val_snap_meta, val_snap_gids = \
+                _select_final_snapshots(val_eids)
+            test_snap_graphs, test_snap_labels, test_snap_meta, test_snap_gids = \
+                _select_final_snapshots(test_eids)
+
+            # Build datasets
+            from training.dataset import DetectorDataset
+            train_sample_count = len(train_snap_graphs)
+
+            # We need a dataset-like structure for val/test that carries
+            # snapshot_metadata.  Use DetectorDataset for train (all snapshots)
+            # and FinalSnapshotDataset for val/test (one per execution).
+            from training.dataset import FinalSnapshotDataset
+
+            static_train_dataset = DetectorDataset(
+                train_graphs=train_snap_graphs,
+                val_graphs=val_snap_graphs,
+                test_graphs=test_snap_graphs,
+                train_labels=train_snap_labels,
+                val_labels=val_snap_labels,
+                test_labels=test_snap_labels,
+                _train_group_ids=train_snap_gids,
+                _val_group_ids=val_snap_gids,
+                _test_group_ids=test_snap_gids,
             )
-        else:
-            static_dataset = None
 
-        # Step 5: Build dataset for temporal models
+            # Use a dataset wrapper that carries snapshot_metadata for
+            # execution-level evaluation
+            static_val_dataset = FinalSnapshotDataset(
+                graphs=val_snap_graphs, labels=val_snap_labels,
+                snapshot_metadata=val_snap_meta, execution_ids=list(val_snap_gids),
+            )
+            static_test_dataset = FinalSnapshotDataset(
+                graphs=test_snap_graphs, labels=test_snap_labels,
+                snapshot_metadata=test_snap_meta, execution_ids=list(test_snap_gids),
+            )
+
+        # ── Temporal models (TGNN, Hybrid) ───────────────────────────────────
         temporal_detectors = [d for d in detector_types if d in ("tgnn", "hybrid")]
         if temporal_detectors:
-            temporal_dataset = self.build_dataset(
-                static_data, temporal_data, all_labels, all_group_ids,
-                train_frac=train_frac, val_frac=val_frac, prefer_temporal=True,
+            logger.info("Step 5b: Building temporal datasets (execution-level)")
+            # Use execution-level split: one TemporalGraphData per execution
+            train_temporal_graphs = [temporal_data[i] for i in sorted(train_indices)]
+            train_temporal_labels = [all_labels[i] for i in sorted(train_indices)]
+            val_temporal_graphs   = [temporal_data[i] for i in sorted(val_indices)]
+            val_temporal_labels   = [all_labels[i] for i in sorted(val_indices)]
+            test_temporal_graphs  = [temporal_data[i] for i in sorted(test_indices)]
+            test_temporal_labels  = [all_labels[i] for i in sorted(test_indices)]
+
+            temporal_dataset = DetectorDataset(
+                train_graphs=train_temporal_graphs,
+                val_graphs=val_temporal_graphs,
+                test_graphs=test_temporal_graphs,
+                train_labels=train_temporal_labels,
+                val_labels=val_temporal_labels,
+                test_labels=test_temporal_labels,
+                _train_group_ids=list(train_exec_ids_ordered),
+                _val_group_ids=list(val_exec_ids_ordered),
+                _test_group_ids=list(test_exec_ids_ordered),
             )
         else:
             temporal_dataset = None
 
-        # Step 6: Train and evaluate
-        results = {}
-
+        # ── Step 6: Train and evaluate each detector ──────────────────────────
         for det_type in detector_types:
             logger.info("Training %s detector...", det_type)
-            if det_type == "static_gnn" and static_dataset is not None:
-                result = self.train_detector(
-                    det_type, static_dataset,
-                    num_epochs=num_epochs, batch_size=batch_size, patience=patience, lr=lr,
+
+            if det_type == "static_gnn" and static_train_dataset is not None:
+                result = self._train_static_gnn(
+                    static_train_dataset, static_val_dataset, static_test_dataset,
+                    num_epochs=num_epochs, batch_size=batch_size,
+                    patience=patience, lr=lr,
+                    train_sample_count=train_sample_count,
+                    train_exec_ids=train_exec_ids_ordered,
+                    val_exec_ids=val_exec_ids_ordered,
+                    test_exec_ids=test_exec_ids_ordered,
                 )
-            elif temporal_dataset is not None:
-                result = self.train_detector(
+            elif det_type in ("tgnn", "hybrid") and temporal_dataset is not None:
+                result = self._train_temporal_detector(
                     det_type, temporal_dataset,
-                    num_epochs=num_epochs, batch_size=batch_size, patience=patience, lr=lr,
+                    num_epochs=num_epochs, batch_size=batch_size,
+                    patience=patience, lr=lr,
+                    train_exec_ids=train_exec_ids_ordered,
+                    val_exec_ids=val_exec_ids_ordered,
+                    test_exec_ids=test_exec_ids_ordered,
                 )
             else:
                 logger.warning("No dataset available for %s, skipping", det_type)
                 continue
+
             results[det_type] = result
 
         # Step 7: Heuristic baselines
@@ -559,6 +716,140 @@ class DetectorPipeline:
         # Save results
         self._save_results(results)
         return results
+
+    def _train_static_gnn(
+        self,
+        train_dataset: DetectorDataset,
+        val_dataset: FinalSnapshotDataset,
+        test_dataset: FinalSnapshotDataset,
+        num_epochs: int,
+        batch_size: int,
+        patience: int,
+        lr: float,
+        train_sample_count: int,
+        train_exec_ids: List[str],
+        val_exec_ids: List[str],
+        test_exec_ids: List[str],
+    ) -> PipelineResult:
+        """Train static GNN with execution-level headline evaluation.
+
+        Training uses all snapshots from training executions.  Validation
+        and test use the final snapshot per execution.  The trainer
+        receives ``snapshot_metadata`` for execution-level aggregation.
+        """
+        from detectors.static_gnn import StaticGNN
+        from generation.feature_schema import OBSERVABLE_NODE_FEATURE_DIM
+
+        model = StaticGNN(
+            node_feature_dim=OBSERVABLE_NODE_FEATURE_DIM,
+            hidden_dim=64, num_layers=3, dropout=0.1,
+        )
+
+        ckpt_dir = self.checkpoint_dir / "static_gnn"
+        trainer = DetectorTrainer(
+            model=model, model_type="static", device=self.device,
+            lr=lr, checkpoint_dir=ckpt_dir,
+        )
+
+        # Train on ALL snapshots from training executions
+        history = trainer.train(
+            train_graphs=train_dataset.train_graphs,
+            train_labels=train_dataset.train_labels,
+            val_graphs=val_dataset.graphs,
+            val_labels=val_dataset.labels,
+            num_epochs=num_epochs, batch_size=batch_size,
+            patience=patience, verbose=True,
+            snapshot_metadata=val_dataset.snapshot_metadata,
+        )
+
+        # Evaluate on FINAL snapshots per execution for test headline
+        test_results = trainer.evaluate(
+            test_dataset.graphs, test_dataset.labels,
+            batch_size=batch_size,
+            snapshot_metadata=test_dataset.snapshot_metadata,
+        )
+
+        return PipelineResult(
+            detector_type="static_gnn",
+            best_val_auroc=trainer.best_val_auroc,
+            best_epoch=trainer.best_epoch,
+            test_metrics=test_results,
+            train_history=history["history"],
+            evaluation_unit=test_results.get("evaluation_unit", "execution"),
+            train_sample_count=train_sample_count,
+            val_execution_count=len(val_dataset),
+            test_execution_count=len(test_dataset),
+            train_execution_ids=list(train_exec_ids),
+            val_execution_ids=list(val_exec_ids),
+            test_execution_ids=list(test_exec_ids),
+        )
+
+    def _train_temporal_detector(
+        self,
+        det_type: str,
+        dataset: DetectorDataset,
+        num_epochs: int,
+        batch_size: int,
+        patience: int,
+        lr: float,
+        train_exec_ids: List[str],
+        val_exec_ids: List[str],
+        test_exec_ids: List[str],
+    ) -> PipelineResult:
+        """Train TGNN or Hybrid detector (execution-level by design)."""
+        from detectors.tgnn import TemporalGNN
+        from detectors.hybrid import HybridDetector
+        from generation.feature_schema import OBSERVABLE_NODE_FEATURE_DIM
+
+        if det_type == "tgnn":
+            model = TemporalGNN(
+                node_feature_dim=OBSERVABLE_NODE_FEATURE_DIM,
+                memory_dim=64, time_dim=16, dropout=0.1,
+            )
+        elif det_type == "hybrid":
+            model = HybridDetector(
+                node_feature_dim=OBSERVABLE_NODE_FEATURE_DIM,
+                memory_dim=64, time_dim=16, fusion_dim=32, dropout=0.1,
+            )
+        else:
+            raise ValueError(f"Unknown temporal detector: {det_type}")
+
+        ckpt_dir = self.checkpoint_dir / det_type
+        trainer = DetectorTrainer(
+            model=model, model_type="tgnn", device=self.device,
+            lr=lr, checkpoint_dir=ckpt_dir,
+        )
+
+        # Train: one TemporalGraphData per execution → naturally execution-level
+        history = trainer.train(
+            train_graphs=dataset.train_graphs,
+            train_labels=dataset.train_labels,
+            val_graphs=dataset.val_graphs,
+            val_labels=dataset.val_labels,
+            num_epochs=num_epochs, batch_size=batch_size,
+            patience=patience, verbose=True,
+        )
+
+        # Evaluate: one final score per execution
+        test_results = trainer.evaluate(
+            dataset.test_graphs, dataset.test_labels,
+            batch_size=batch_size,
+        )
+
+        return PipelineResult(
+            detector_type=det_type,
+            best_val_auroc=trainer.best_val_auroc,
+            best_epoch=trainer.best_epoch,
+            test_metrics=test_results,
+            train_history=history["history"],
+            evaluation_unit="execution",
+            train_sample_count=len(dataset.train_graphs),
+            val_execution_count=len(dataset.val_graphs),
+            test_execution_count=len(dataset.test_graphs),
+            train_execution_ids=list(train_exec_ids),
+            val_execution_ids=list(val_exec_ids),
+            test_execution_ids=list(test_exec_ids),
+        )
 
     def _evaluate_heuristics(
         self, dataset: DetectorDataset, benign_traces: List[Any]
@@ -636,13 +927,7 @@ class DetectorPipeline:
         serializable = {}
         for key, value in results.items():
             if isinstance(value, PipelineResult):
-                serializable[key] = {
-                    "detector_type": value.detector_type,
-                    "best_val_auroc": value.best_val_auroc,
-                    "best_epoch": value.best_epoch,
-                    "test_metrics": value.test_metrics,
-                    "train_history": value.train_history,
-                }
+                serializable[key] = asdict(value)
             elif hasattr(value, "to_string"):  # DataFrame
                 serializable[key] = value.to_dict(orient="records")
             else:

@@ -6,6 +6,8 @@ Differences from pilot:
 - Supports multiple repetitions for statistical significance
 - Emits per-repetition trace files plus an aggregated results CSV
 - Does not require real API keys — dry-run backends work offline
+- Fixture-aware: each plan entry carries an explicit fixture_id and task_variant
+  sourced from the fixture's own manifest.json
 """
 from __future__ import annotations
 
@@ -26,8 +28,76 @@ from schemas.scenario import CONDITIONS, TOPOLOGIES, TOPOLOGY_PROPAGATION_MODES
 logger = logging.getLogger("benchmark")
 
 
+# ── Fixture discovery ───────────────────────────────────────────────────────────
+
+
+def _load_fixture_manifest(fixture_dir: Path) -> dict[str, Any]:
+    """Read a fixture's manifest.json and return the parsed dict.
+
+    Returns an empty dict when the manifest is missing or unreadable so
+    callers can degrade gracefully.
+    """
+    manifest_path = fixture_dir / "manifest.json"
+    if not manifest_path.is_file():
+        return {}
+    try:
+        with open(manifest_path) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def discover_fixtures(
+    fixture_root: Path | None = None,
+    *,
+    task_families: list[str] | None = None,
+) -> dict[str, list[dict[str, Any]]]:
+    """Discover all fixtures under ``fixture_root`` grouped by task_family.
+
+    Each returned dict carries the raw manifest plus the derived
+    ``fixture_dir`` path so callers do not need to re-resolve it.
+
+    The default ``fixture_root`` is ``<repo>/workspace_fixtures``.  Pass
+    ``None`` to skip discovery and return an empty mapping.
+
+    ``task_families`` limits discovery to the listed families; ``None``
+    means "all families present on disk".
+    """
+    if fixture_root is None:
+        # Default: workspace_fixtures next to this file's package root.
+        fixture_root = Path(__file__).resolve().parent.parent / "workspace_fixtures"
+
+    result: dict[str, list[dict[str, Any]]] = {}
+    if not fixture_root.is_dir():
+        return result
+
+    allowed_families = set(task_families) if task_families is not None else None
+    for fixture_dir in sorted(fixture_root.iterdir()):
+        if not fixture_dir.is_dir():
+            continue
+        manifest = _load_fixture_manifest(fixture_dir)
+        family = manifest.get("task_family")
+        if not family:
+            continue
+        if allowed_families is not None and family not in allowed_families:
+            continue
+        result.setdefault(family, []).append({
+            "fixture_id": manifest.get("fixture_id", fixture_dir.name),
+            "task_family": family,
+            "task_variant": manifest.get("task_variant", "default"),
+            "fixture_dir": fixture_dir,
+            "manifest": manifest,
+        })
+    return result
+
+
 def fixture_id_for_task_family(task_family: str) -> str:
-    """Resolve the default fixture consistently for planning and execution."""
+    """Resolve the default fixture consistently for planning and execution.
+
+    Kept for backward compatibility with existing tests and the
+    ``_execute`` fallback path.  New code should prefer explicit fixture
+    selection via ``BenchmarkManifest.fixture_ids`` or discovery.
+    """
     fixture_ids = {
         "code_review": "code_review_easy",
         "financial_analysis": "financial_clean",
@@ -146,6 +216,13 @@ class BenchmarkManifest:
         max_agent_turns:  Upper bound on turns per agent per stage.
         model_name:       Model to use (default: claude-sonnet-5).
         dry_run:          If True, use DryRunBackend.
+        fixture_root:     Root directory containing workspace_fixtures/.
+        fixture_ids:      Optional explicit fixture selection per task family.
+                          Maps task_family -> list[fixture_id].  When None the
+                          planner discovers all applicable fixtures from disk.
+                          Use a single-element list to restrict to one fixture.
+        smoke_fixtures:   If True, restrict to the legacy single-default fixture
+                          per task family (backward-compatible smoke mode).
     """
     topologies: list[str] = field(default_factory=list)
     task_families: list[str] = field(default_factory=list)
@@ -168,6 +245,96 @@ class BenchmarkManifest:
     ])
     node_id: int = 0
     num_nodes: int = 1
+    fixture_ids: Optional[dict[str, list[str]]] = None
+    smoke_fixtures: bool = False
+
+    # ── Fixture resolution helpers ──────────────────────────────────────────────
+
+    def _resolve_fixtures_for_family(
+        self, task_family: str,
+    ) -> list[dict[str, Any]]:
+        """Return the list of fixture dicts to plan for ``task_family``.
+
+        Resolution order:
+        1. Explicit ``fixture_ids[task_family]`` — match by fixture_id.
+        2. ``smoke_fixtures=True`` — the legacy single default fixture.
+        3. Discovery on disk — all fixtures whose manifest.task_family matches.
+        """
+        # 1. Explicit selection
+        if self.fixture_ids and task_family in self.fixture_ids:
+            requested = set(self.fixture_ids[task_family])
+            discovered = discover_fixtures(
+                self.fixture_root, task_families=[task_family],
+            ).get(task_family, [])
+            selected = [fx for fx in discovered if fx["fixture_id"] in requested]
+            if selected:
+                return selected
+            # If explicit IDs were not found on disk, fall back so the
+            # planner does not silently produce zero entries.
+            if not discovered:
+                return [{
+                    "fixture_id": fid,
+                    "task_family": task_family,
+                    "task_variant": "default",
+                    "fixture_dir": Path("."),
+                    "manifest": {},
+                } for fid in requested]
+
+        # 2. Smoke mode — single default fixture only
+        if self.smoke_fixtures:
+            default_id = fixture_id_for_task_family(task_family)
+            return [{
+                "fixture_id": default_id,
+                "task_family": task_family,
+                "task_variant": "default",
+                "fixture_dir": Path("."),
+                "manifest": {},
+            }]
+
+        # 3. Discovery on disk
+        discovered = discover_fixtures(
+            self.fixture_root, task_families=[task_family],
+        ).get(task_family, [])
+        if discovered:
+            return discovered
+
+        # 4. Fallback: legacy single default (preserves existing behavior
+        #    when fixtures are not yet present on disk).
+        default_id = fixture_id_for_task_family(task_family)
+        return [{
+            "fixture_id": default_id,
+            "task_family": task_family,
+            "task_variant": "default",
+            "fixture_dir": Path("."),
+            "manifest": {},
+        }]
+
+    def _compatible_topologies(
+        self, fixture: dict[str, Any], requested: list[str],
+    ) -> list[str]:
+        """Return the intersection of requested topologies and those
+        supported by the fixture manifest.
+
+        Falls back to all requested topologies when the fixture manifest
+        does not declare ``supported_topologies`` (legacy/default behavior).
+        """
+        supported = set(fixture.get("manifest", {}).get("supported_topologies", []))
+        if not supported:
+            return list(requested)
+        return [t for t in requested if t in supported]
+
+    def _compatible_leps(
+        self, fixture: dict[str, Any], family_leps: list[LEPConfig],
+    ) -> list[LEPConfig]:
+        """Return family-level LEP configs filtered to those the fixture supports.
+
+        Falls back to all family LEPs when the fixture manifest does not
+        declare ``supported_leps`` (legacy/default behavior).
+        """
+        supported = set(fixture.get("manifest", {}).get("supported_leps", []))
+        if not supported:
+            return list(family_leps)
+        return [lep for lep in family_leps if lep.code in supported]
 
     def build_plan(self) -> list[dict[str, Any]]:
         """Build the full cross-product execution plan.
@@ -190,6 +357,7 @@ class BenchmarkManifest:
         idx = 0
 
         for task_family in self.task_families:
+            fixtures = self._resolve_fixtures_for_family(task_family)
             # Pre-compute which LEPs need memory for this task family
             family_leps = [
                 lep for lep in self.lep_configs
@@ -198,75 +366,80 @@ class BenchmarkManifest:
             has_memory_lep = any(lep.requires_memory for lep in family_leps)
             variants = ["standard"] + (["memory_enabled"] if has_memory_lep else [])
 
-            for topology in self.topologies:
-                fixture_id = fixture_id_for_task_family(task_family)
-                allowed_modes = [
-                    mode for mode in TOPOLOGY_PROPAGATION_MODES.get(topology, [])
-                    if mode in self.propagation_modes
-                ]
-                # No requested experiment is supported by this topology, so it
-                # needs neither LEP executions nor corresponding benign controls.
-                if not allowed_modes:
-                    continue
+            for fixture in fixtures:
+                fixture_id = fixture["fixture_id"]
+                task_variant = fixture.get("task_variant", "default")
+                fixture_topologies = self._compatible_topologies(fixture, self.topologies)
+                fixture_leps = self._compatible_leps(fixture, family_leps)
 
-                # ── Benign entries: one per variant × rep ─────────────────
-                for variant in variants:
-                    for rep in range(self.num_repetitions):
-                        pair_tag = (
-                            f"b_{topology}_{fixture_id}_{variant}_{rep:02d}"
-                        )
-                        plan.append({
-                            "run_id": f"run-{idx:04d}",
-                            "scenario_id": (
-                                f"{topology}_{fixture_id}_{variant}_{rep:02d}_benign"
-                            ),
-                            "task_family": task_family,
-                            "fixture_id": fixture_id,
-                            "condition": "benign",
-                            "execution_variant": variant,
-                            "lep_codes": [],
-                            "topology": topology,
-                            "propagation_mode": allowed_modes[0],
-                            "lep_code": "",
-                            "repetition_index": rep,
-                            "pair_tag": pair_tag,
-                            "is_baseline": True,
-                        })
-                        idx += 1
+                for topology in fixture_topologies:
+                    allowed_modes = [
+                        mode for mode in TOPOLOGY_PROPAGATION_MODES.get(topology, [])
+                        if mode in self.propagation_modes
+                    ]
+                    if not allowed_modes:
+                        continue
 
-                # ── LEP entries: one per LEP × mode × rep ────────────────
-                lep_mode_combos = [
-                    (lep, mode)
-                    for lep in family_leps
-                    for mode in allowed_modes
-                ]
-                for lep_config, prop_mode in lep_mode_combos:
-                    exec_variant = (
-                        "memory_enabled" if lep_config.requires_memory else "standard"
-                    )
-                    for rep in range(self.num_repetitions):
-                        pair_tag = (
-                            f"b_{topology}_{fixture_id}_{exec_variant}_{rep:02d}"
+                    # ── Benign entries: one per variant × rep ─────────────────
+                    for variant in variants:
+                        for rep in range(self.num_repetitions):
+                            pair_tag = (
+                                f"b_{topology}_{fixture_id}_{variant}_{rep:02d}"
+                            )
+                            plan.append({
+                                "run_id": f"run-{idx:04d}",
+                                "scenario_id": (
+                                    f"{topology}_{fixture_id}_{variant}_{rep:02d}_benign"
+                                ),
+                                "task_family": task_family,
+                                "fixture_id": fixture_id,
+                                "task_variant": task_variant,
+                                "condition": "benign",
+                                "execution_variant": variant,
+                                "lep_codes": [],
+                                "topology": topology,
+                                "propagation_mode": allowed_modes[0],
+                                "lep_code": "",
+                                "repetition_index": rep,
+                                "pair_tag": pair_tag,
+                                "is_baseline": True,
+                            })
+                            idx += 1
+
+                    # ── LEP entries: one per LEP × mode × rep ────────────────
+                    lep_mode_combos = [
+                        (lep, mode)
+                        for lep in fixture_leps
+                        for mode in allowed_modes
+                    ]
+                    for lep_config, prop_mode in lep_mode_combos:
+                        exec_variant = (
+                            "memory_enabled" if lep_config.requires_memory else "standard"
                         )
-                        plan.append({
-                            "run_id": f"run-{idx:04d}",
-                            "scenario_id": (
-                                f"{topology}_{fixture_id}_"
-                                f"{lep_config.code}_{prop_mode}_{rep:02d}_lep"
-                            ),
-                            "task_family": task_family,
-                            "fixture_id": fixture_id,
-                            "condition": "single_lep",
-                            "execution_variant": exec_variant,
-                            "lep_codes": [lep_config.code],
-                            "topology": topology,
-                            "propagation_mode": prop_mode,
-                            "lep_code": lep_config.code,
-                            "repetition_index": rep,
-                            "pair_tag": pair_tag,
-                            "is_baseline": False,
-                        })
-                        idx += 1
+                        for rep in range(self.num_repetitions):
+                            pair_tag = (
+                                f"b_{topology}_{fixture_id}_{exec_variant}_{rep:02d}"
+                            )
+                            plan.append({
+                                "run_id": f"run-{idx:04d}",
+                                "scenario_id": (
+                                    f"{topology}_{fixture_id}_"
+                                    f"{lep_config.code}_{prop_mode}_{rep:02d}_lep"
+                                ),
+                                "task_family": task_family,
+                                "fixture_id": fixture_id,
+                                "task_variant": task_variant,
+                                "condition": "single_lep",
+                                "execution_variant": exec_variant,
+                                "lep_codes": [lep_config.code],
+                                "topology": topology,
+                                "propagation_mode": prop_mode,
+                                "lep_code": lep_config.code,
+                                "repetition_index": rep,
+                                "pair_tag": pair_tag,
+                                "is_baseline": False,
+                            })
+                            idx += 1
 
         return plan
 

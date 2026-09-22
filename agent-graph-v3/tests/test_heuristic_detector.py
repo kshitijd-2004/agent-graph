@@ -103,11 +103,11 @@ def _make_node_features_with_roles(
 
 
 def test_observable_feature_dim():
-    """Detector-visible node features are 24 dims, not 29."""
-    assert OBSERVABLE_NODE_FEATURE_DIM == 24
+    """Detector-visible features exclude all five hidden perturbation flags."""
+    assert OBSERVABLE_NODE_FEATURE_DIM == 25
     assert len(LEAKAGE_COLUMNS) == 5
-    assert 24 in LEAKAGE_COLUMNS
-    assert 28 in LEAKAGE_COLUMNS
+    assert 25 in LEAKAGE_COLUMNS
+    assert 29 in LEAKAGE_COLUMNS
 
 
 def test_random_determinism():
@@ -301,19 +301,19 @@ def test_presets_are_distinct():
 
 
 def test_encoder_strips_leakage():
-    """StaticGraphData.x has 24 dims, edge_attr is empty."""
+    """The encoder preserves observable features and strips perturbation flags."""
     from encoder import _strip_perturbation_columns
 
-    # 29-dim raw features
-    raw = torch.zeros(3, 29)
+    # 30-dim raw features
+    raw = torch.zeros(3, 30)
     raw[0, 0] = 1.0  # event_type
     raw[0, 11] = 1.0  # agent_role
-    raw[0, 24] = 1.0  # perturbation flag — should be stripped
+    raw[:, 25:] = 1.0  # all perturbation flags must be stripped
 
     clean = _strip_perturbation_columns(raw)
-    assert clean.shape == (3, 24)
-    # Perturbation column should be all zeros
-    assert clean[:, 23].sum().item() == 0.0
+    assert clean.shape == (3, OBSERVABLE_NODE_FEATURE_DIM)
+    assert torch.equal(clean, raw[:, :OBSERVABLE_NODE_FEATURE_DIM])
+    assert clean.sum().item() == 2.0
     # Event type and agent role preserved
     assert clean[0, 0].item() == 1.0
     assert clean[0, 11].item() == 1.0
