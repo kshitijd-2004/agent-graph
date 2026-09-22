@@ -22,10 +22,9 @@ import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, global_mean_pool
 from torch_geometric.data import Batch
 
+from generation.feature_schema import OBSERVABLE_NODE_FEATURE_DIM
+
 logger = logging.getLogger(__name__)
-
-
-@dataclass
 class DetectionOutput:
     """Output of a learned detector forward pass.
 
@@ -63,7 +62,7 @@ class StaticGNN(torch.nn.Module):
 
     def __init__(
         self,
-        node_feature_dim: int = 24,
+        node_feature_dim: int = OBSERVABLE_NODE_FEATURE_DIM,
         hidden_dim: int = 64,
         num_layers: int = 3,
         dropout: float = 0.1,

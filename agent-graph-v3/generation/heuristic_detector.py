@@ -45,13 +45,16 @@ class DetectionResult:
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 
+from generation.feature_schema import OBS_AGENT_ROLE_SLICE
+
+
 def _agent_role(node_features: torch.Tensor, node_idx: int) -> int:
     """Decode agent_role from detector-visible node_features.
 
-    The agent_role slice occupies columns 11–23 (13 dims, 12 roles + OTHER).
+    Uses the canonical OBS_AGENT_ROLE_SLICE from feature_schema.
     Returns the argmax of that slice.
     """
-    role_slice = node_features[node_idx, 11:24]
+    role_slice = node_features[node_idx, OBS_AGENT_ROLE_SLICE]
     return int(role_slice.argmax().item())
 
 

@@ -11,13 +11,15 @@ And EventGraph objects into:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import torch
 
+from torch_geometric.data import Data
+
 from generation.event_graph_builder import EventGraph
 from generation.feature_schema import (
-    LEAKAGE_COLUMNS,
     OBSERVABLE_NODE_FEATURE_DIM,
     PERTURBATION_FLAG_COLUMNS,
 )
@@ -26,71 +28,47 @@ if TYPE_CHECKING:
     from graph_builder import EntityGraph
 
 
+def _parse_timestamp(ts: Any) -> float:
+    """Convert an ISO 8601 timestamp string to a Unix-epoch float."""
+    if isinstance(ts, (int, float)):
+        return float(ts)
+    if isinstance(ts, str):
+        try:
+            return datetime.fromisoformat(ts).timestamp()
+        except ValueError:
+            return float(ts)
+    raise TypeError(f"Cannot convert {type(ts).__name__} to timestamp: {ts!r}")
+
+
 def _strip_perturbation_columns(x: torch.Tensor) -> torch.Tensor:
     """Remove perturbation-flag columns from node features.
 
-    Raw EventGraph.node_features is 29-dim: [event_type(11) | agent_role(13) | perturbation_flags(5)].
-    The last 5 columns encode perturbation ground-truth and must not be
-    visible to any detector. Returns a 24-dim tensor with only the
-    event-type and agent-role one-hot slices.
+    Raw EventGraph.node_features is 30-dim. The last 5 columns encode
+    perturbation ground-truth and must not be visible to any detector.
+    Returns 25-dim tensor (event_type + agent_role only).
     """
-    if x.shape[1] != 29:
-        # If the feature dimension is already 24 (detector-visible) or some
-        # other size, return as-is. This makes the function safe to call
-        # on already-sanitized tensors.
+    if x.shape[1] == OBSERVABLE_NODE_FEATURE_DIM:
         return x
-    keep = [c for c in range(x.shape[1]) if c not in LEAKAGE_COLUMNS]
-    return x[:, keep].contiguous()
+
+    if x.shape[1] != 30:
+        raise ValueError(
+            f"Unexpected node feature dimension {x.shape[1]}; "
+            "expected 30 raw or 25 observable."
+        )
+
+    return x[:, :OBSERVABLE_NODE_FEATURE_DIM].contiguous()
 
 
-@dataclass
-class StaticGraphData:
+class StaticGraphData(Data):
     """A single graph encoded for static GNN training.
+
+    Inherits from torch_geometric.data.Data for DataLoader compatibility.
 
     Node features are detector-visible only: event-type one-hot (11 dims)
     + agent-role one-hot (13 dims) = 24 dims. Perturbation-flag columns
     (5 dims) are stripped. Edge features are omitted entirely.
-
-    Attributes:
-        x:              Node features [num_nodes, 24] (detector-visible)
-        edge_index:     Edge connectivity [2, num_edges]
-        edge_attr:      Edge features [num_edges, 0] (empty — propagation_role
-                        derived from perturbation flags, not detector-visible)
-        y:              Graph-level label [1] (1.0 = malignant, 0.0 = benign)
-        trace_id:       Trace identifier
-        execution_id:   Execution identifier
-        num_nodes:      Number of nodes
-        num_edges:      Number of edges
     """
-
-    x: torch.Tensor           # [num_nodes, 24] (detector-visible)
-    edge_index: torch.Tensor  # [2, num_edges]
-    edge_attr: torch.Tensor   # [num_edges, 0] — perturbation-derived features excluded
-    y: torch.Tensor           # [1]
-    trace_id: str
-    execution_id: str
-    num_nodes: int
-    num_edges: int
-
-    def to(self, device: torch.device) -> "StaticGraphData":
-        """Move all tensors to a device."""
-        return StaticGraphData(
-            x=self.x.to(device),
-            edge_index=self.edge_index.to(device),
-            edge_attr=self.edge_attr.to(device),
-            y=self.y.to(device),
-            trace_id=self.trace_id,
-            execution_id=self.execution_id,
-            num_nodes=self.num_nodes,
-            num_edges=self.num_edges,
-        )
-
-    def __repr__(self) -> str:
-        return (
-            f"StaticGraphData(trace={self.trace_id}, "
-            f"nodes={self.num_nodes}, edges={self.num_edges}, "
-            f"y={self.y.item():.0f})"
-        )
+    pass
 
 
 @dataclass
@@ -361,8 +339,8 @@ class GraphEncoder:
 
         for i, eg in enumerate(event_graphs):
             # ── Node features (detector-visible only) ────────────────────
-            # Raw EventGraph.node_features is 29-dim:
-            #   [event_type(11) | agent_role(13) | perturbation_flags(5)]
+            # Raw EventGraph.node_features is ~30-dim:
+            #   [event_type(11) | agent_role(14) | perturbation_flags(5)]
             # The last 5 columns encode perturbation ground-truth and must be
             # excluded from any detector input.
             if eg.node_features is None:
@@ -432,6 +410,12 @@ class GraphEncoder:
         data_list: List[TemporalGraphData] = []
 
         for i, eg in enumerate(event_graphs):
+            # ── Label ─────────────────────────────────────────────────────
+            label = labels[i] if labels is not None else (
+                float(eg.labels.downstream_failure)
+                if eg.labels is not None else 0.0
+            )
+
             # ── Node features (detector-visible only) ────────────────────
             if eg.node_features is None:
                 raise ValueError(
@@ -454,7 +438,7 @@ class GraphEncoder:
                 raw_timestamps: List[float] = []
                 for (src_idx, dst_idx) in eg.edges:
                     dst_node = eg.nodes[dst_idx]
-                    ts = float(dst_node.timestamp)
+                    ts = _parse_timestamp(dst_node.timestamp)
                     raw_timestamps.append(ts)
 
                 # Stable sort by timestamp ascending

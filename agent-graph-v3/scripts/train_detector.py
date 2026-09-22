@@ -25,7 +25,7 @@ from typing import List, Optional
 # Ensure project root is importable
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from training.pipeline import BenchmarkPipeline
+from training.pipeline import DetectorPipeline
 from training.trainer import DetectorTrainer
 
 logging.basicConfig(
@@ -158,11 +158,10 @@ def main() -> int:
                 (1 - args.train_frac - args.val_frac) * 100)
 
     # ── Build pipeline ────────────────────────────────────────────────────────
-    pipeline = BenchmarkPipeline(
-        output_dir=str(output_dir),
-        traces_dir=str(traces_dir),
+    pipeline = DetectorPipeline(
+        output_dir=output_dir,
         seed=args.seed,
-        device=args.device,
+        snapshot_interval=args.snapshot_interval,
     )
 
     # ── Run ───────────────────────────────────────────────────────────────────

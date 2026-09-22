@@ -23,6 +23,7 @@ import torch.nn.functional as F
 
 from detectors.tgnn import TemporalGNN, TemporalDetectionOutput
 from generation.event_graph_builder import EventGraph
+from generation.feature_schema import OBS_AGENT_ROLE_SLICE, OBSERVABLE_NODE_FEATURE_DIM
 from torch_geometric.nn import global_mean_pool
 
 logger = logging.getLogger(__name__)
@@ -84,7 +85,7 @@ class HeuristicSignalExtractor(nn.Module):
 
     def __init__(
         self,
-        node_feature_dim: int = 24,
+        node_feature_dim: int = OBSERVABLE_NODE_FEATURE_DIM,
         hidden_dim: int = 32,
     ) -> None:
         super().__init__()
@@ -121,9 +122,9 @@ class HeuristicSignalExtractor(nn.Module):
         src_idx = edges_u.clamp(0, num_nodes - 1)
         tgt_idx = edges_v.clamp(0, num_nodes - 1)
 
-        # Agent role one-hot: cols 11-23 → argmax
-        src_role = node_features[src_idx, 11:24].argmax(dim=1)
-        tgt_role = node_features[tgt_idx, 11:24].argmax(dim=1)
+        # Agent role one-hot: use canonical OBS_AGENT_ROLE_SLICE
+        src_role = node_features[src_idx, OBS_AGENT_ROLE_SLICE].argmax(dim=1)
+        tgt_role = node_features[tgt_idx, OBS_AGENT_ROLE_SLICE].argmax(dim=1)
 
         # Event type one-hot: cols 0-10 → argmax
         src_evt = node_features[src_idx, 0:11].argmax(dim=1)
@@ -200,7 +201,7 @@ class HybridDetector(nn.Module):
 
     def __init__(
         self,
-        node_feature_dim: int = 24,
+        node_feature_dim: int = OBSERVABLE_NODE_FEATURE_DIM,
         memory_dim: int = 64,
         time_dim: int = 16,
         fusion_dim: int = 32,

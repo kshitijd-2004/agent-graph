@@ -26,6 +26,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from generation.feature_schema import OBSERVABLE_NODE_FEATURE_DIM
+
 logger = logging.getLogger(__name__)
 
 
@@ -118,7 +120,7 @@ class TemporalGNN(nn.Module):
 
     def __init__(
         self,
-        node_feature_dim: int = 24,
+        node_feature_dim: int = OBSERVABLE_NODE_FEATURE_DIM,
         memory_dim: int = 64,
         time_dim: int = 16,
         num_layers: int = 2,
