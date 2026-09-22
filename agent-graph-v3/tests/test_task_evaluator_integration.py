@@ -307,3 +307,21 @@ if __name__ == "__main__":
             failed += 1
     print(f"\n{passed} passed, {failed} failed out of {len(tests)} tests")
     sys.exit(1 if failed else 0)
+
+
+def test_execution_reaches_two_tier_evaluation_after_event_limit(tmp_path):
+    """Stage construction and early termination must use the renamed evaluator."""
+    runner = ScenarioRunner(dry_run=True, max_events=10, output_dir=tmp_path)
+    spec = _make_spec()
+    task_evaluator = _mock_task_evaluator(task_success=False)
+    with patch.object(runner, "_get_task_evaluator", return_value=task_evaluator):
+        result = runner.run(spec, ROOT / "workspace_fixtures")
+
+    assert result.runner_success, result.errors
+    assert result.termination_reason == "max_events_reached"
+    assert any(event.event_type == TraceEventType.TOOL_CALL for event in result.trace.events)
+    task_evaluator.evaluate.assert_called_once()
+    assert task_evaluator.evaluate.call_args.args[0] is result.trace
+    assert "propagation" in result.evaluation
+    assert result.task_evaluator_passed is False
+    assert not hasattr(runner, "evaluator")

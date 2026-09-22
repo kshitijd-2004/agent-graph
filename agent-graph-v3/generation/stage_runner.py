@@ -115,9 +115,8 @@ class StageRunner:
         "Do not describe or print the call."
     )
 
-    def __init__(self, llm_backend, evaluator=None):
+    def __init__(self, llm_backend):
         self.llm = llm_backend
-        self.evaluator = evaluator
 
     def run_stage(
         self,
@@ -268,6 +267,9 @@ class StageRunner:
         _memory_mode = getattr(
             getattr(scenario, "workflow_config", None), "memory_mode", "none"
         )
+        shared_memory_coordination_enabled = _memory_mode in (
+            "ephemeral_shared", "persistent_shared"
+        )
         stage_memory_store: Optional[MemoryStore] = (
             MemoryStore() if _memory_mode == "ephemeral_private" else memory_store
         )
@@ -275,8 +277,7 @@ class StageRunner:
         # Append task-specific memory instructions only when memory is shared.
         # For ephemeral_private, telling an agent to "consult shared memory"
         # would be misleading — its writes are isolated.
-        if _memory_mode in ("ephemeral_shared", "persistent_shared") \
-                and scenario is not None:
+        if shared_memory_coordination_enabled and scenario is not None:
             from tasks.registry import get_task
             task_cls = get_task(scenario.task_family)
             if task_cls is not None:
@@ -302,7 +303,7 @@ class StageRunner:
             "list_directory", "read_text_file", "write_file",
             "search_files", "create_directory",
         ]
-        if _memory_mode in ("ephemeral_shared", "persistent_shared"):
+        if shared_memory_coordination_enabled:
             available_tools += ["read_memory", "write_memory"]
         if stage.can_handoff:
             available_tools.append("handoff")
@@ -1024,7 +1025,8 @@ class StageRunner:
                 # readers can retrieve them. Block the handoff and nudge
                 # the model to write first if it hasn't.
                 from generation.role_categories import role_category
-                if role_category(current_role) == "writer" \
+                if shared_memory_coordination_enabled \
+                        and role_category(current_role) == "writer" \
                         and not write_memory_succeeded:
                     repair_prompt = (
                         "You must store your findings in shared memory "

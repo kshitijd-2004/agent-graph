@@ -617,20 +617,13 @@ class ScenarioRunner:
             # Evaluate the trace (two-tier: propagation + task correctness)
             evaluation = self._evaluate(trace, scenario, fixture_root)
             self.propagation_evaluator.reset()
-            has_final = any(e.event_type == TraceEventType.FINAL_RESPONSE for e in trace.events)
-            term_reason = trace.metadata.get("termination_reason", "completed") if hasattr(trace, "metadata") and trace.metadata else "completed"
-            if term_reason == "completed":
-                # Check if no terminal event was emitted (max_events_reached case)
-                has_terminal = any(
-                    e.event_type in (TraceEventType.FINAL_RESPONSE, TraceEventType.AGENT_HANDOFF)
-                    for e in trace.events
-                )
-                if not has_terminal:
-                    term_reason = "max_events_reached"
-
-            # Task success requires successful completion, not just any final event
-            failure_reasons = {"protocol_violation", "premature_final", "invalid_handoff",
-                                "max_events_reached", "execution_loop"}
+            term_reason = trace.metadata.get("termination_reason", "unknown")
+            # A handoff completes a stage, not the workflow. Successful execution
+            # ends with exactly one final response from a finalizing stage.
+            final_count = sum(e.event_type == TraceEventType.FINAL_RESPONSE for e in trace.events)
+            terminal_final = bool(trace.events) and trace.events[-1].event_type == TraceEventType.FINAL_RESPONSE
+            if term_reason == "completed" and (final_count != 1 or not terminal_final):
+                term_reason = "invalid_terminal_state"
             clean_completion = term_reason == "completed"
 
             # Extract structured two-tier results
@@ -656,11 +649,9 @@ class ScenarioRunner:
 
             overall_passed = clean_completion and propagation_passed and task_evaluator_passed
 
-            is_loop = trace.metadata.get("termination_reason") == "execution_loop"
-            ineligible_reasons = {"protocol_violation", "premature_final",
-                                   "invalid_handoff", "max_events_reached",
-                                   "execution_loop"}
-            eligible = term_reason not in ineligible_reasons
+            # Admission concerns execution completeness, not task correctness:
+            # a completed LEP run with an incorrect answer is still valid data.
+            eligible = clean_completion
             # A perturbed run whose LEP never fired is a benign run carrying a
             # positive label. Keep it out of the dataset.
             if scenario.condition in ("single_lep", "convergence"):
@@ -672,12 +663,14 @@ class ScenarioRunner:
                     eligible = False
                     if term_reason == "completed":
                         term_reason = "lep_not_fired"
+            trace.metadata["termination_reason"] = term_reason
+            trace.metadata["dataset_eligible"] = eligible
             return RunResult(
                 scenario_id=scenario_id,
                 trace=trace,
                 success=True,
                 runner_success=True,
-                task_success=overall_passed and not is_loop,
+                task_success=overall_passed,
                 termination_reason=term_reason,
                 dataset_eligible=eligible,
                 lep_results=evaluation,
@@ -696,6 +689,7 @@ class ScenarioRunner:
                     execution_id=execution_id,
                     variant=TraceVariant.BENIGN if scenario.is_benign() else TraceVariant.MALIGNANT,
                     events=[],
+                    metadata={"termination_reason": "unknown", "dataset_eligible": False},
                 ),
                 success=False,
                 error=str(e),
@@ -1066,7 +1060,7 @@ class ScenarioRunner:
         )
 
         from generation.stage_runner import StageRunner
-        stage_runner = StageRunner(llm_backend=self.llm, evaluator=self.evaluator)
+        stage_runner = StageRunner(llm_backend=self.llm)
 
         final_result = None
         handoff_payloads: List[HandoffPayload] = []
@@ -1263,7 +1257,7 @@ class ScenarioRunner:
                         "event_count": global_event_counter[0],
                     },
                 )
-                self.evaluator.reset()
+                self.propagation_evaluator.reset()
                 return trace
 
             # ── Recovery detection: scan stage output for perturbation recovery signals
@@ -1368,7 +1362,7 @@ class ScenarioRunner:
                             "termination_reason": "invalid_handoff",
                         },
                     )
-                    self.evaluator.reset()
+                    self.propagation_evaluator.reset()
                     return trace
 
                 # Resolve destination from the configured handoff rule
@@ -1407,7 +1401,7 @@ class ScenarioRunner:
                             "termination_reason": "invalid_handoff",
                         },
                     )
-                    self.evaluator.reset()
+                    self.propagation_evaluator.reset()
                     return trace
 
                 # Track handoffs and count review cycles
@@ -1483,7 +1477,7 @@ class ScenarioRunner:
                                 "handoff_count": handoff_count,
                             },
                         )
-                        self.evaluator.reset()
+                        self.propagation_evaluator.reset()
                         return trace
 
                 # Queue all destinations from outgoing rules (fan-out support).
@@ -1550,7 +1544,7 @@ class ScenarioRunner:
                         "termination_reason": "execution_loop",
                     },
                 )
-                self.evaluator.reset()
+                self.propagation_evaluator.reset()
                 return trace
 
             elif reason == "premature_final":
@@ -1581,7 +1575,7 @@ class ScenarioRunner:
                         "termination_reason": "premature_final",
                     },
                 )
-                self.evaluator.reset()
+                self.propagation_evaluator.reset()
                 return trace
 
             elif reason == "protocol_violation":
@@ -1608,7 +1602,7 @@ class ScenarioRunner:
                     events=events,
                     metadata=meta,
                 )
-                self.evaluator.reset()
+                self.propagation_evaluator.reset()
                 return trace
 
             elif reason == "max_turns":
@@ -1643,7 +1637,7 @@ class ScenarioRunner:
                         "termination_reason": reason,
                     },
                 )
-                self.evaluator.reset()
+                self.propagation_evaluator.reset()
                 return trace
 
             loop_iteration += 1

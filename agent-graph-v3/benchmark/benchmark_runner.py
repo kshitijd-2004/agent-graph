@@ -26,6 +26,16 @@ from schemas.scenario import CONDITIONS, TOPOLOGIES, TOPOLOGY_PROPAGATION_MODES
 logger = logging.getLogger("benchmark")
 
 
+def fixture_id_for_task_family(task_family: str) -> str:
+    """Resolve the default fixture consistently for planning and execution."""
+    fixture_ids = {
+        "code_review": "code_review_easy",
+        "financial_analysis": "financial_clean",
+        "research_synthesis": "research_conflicting",
+    }
+    return fixture_ids.get(task_family, f"{task_family}_default")
+
+
 # ── Execution record ───────────────────────────────────────────────────────
 
 @dataclass
@@ -41,6 +51,8 @@ class BenchmarkRecord:
     repetition_index: int
     trace_id: str = ""
     success: bool = False
+    dataset_eligible: bool = False
+    termination_reason: str = "unknown"
     error: Optional[str] = None
     runtime_seconds: float = 0.0
     num_events: int = 0
@@ -87,6 +99,8 @@ class BenchmarkRecord:
             "repetition_index": self.repetition_index,
             "trace_id": self.trace_id,
             "success": self.success,
+            "dataset_eligible": self.dataset_eligible,
+            "termination_reason": self.termination_reason,
             "error": self.error,
             "runtime_seconds": self.runtime_seconds,
             "num_events": self.num_events,
@@ -185,8 +199,15 @@ class BenchmarkManifest:
             variants = ["standard"] + (["memory_enabled"] if has_memory_lep else [])
 
             for topology in self.topologies:
-                fixture_id = self._fixture_id({"task_family": task_family})
-                allowed_modes = TOPOLOGY_PROPAGATION_MODES.get(topology, ["single_origin"])
+                fixture_id = fixture_id_for_task_family(task_family)
+                allowed_modes = [
+                    mode for mode in TOPOLOGY_PROPAGATION_MODES.get(topology, [])
+                    if mode in self.propagation_modes
+                ]
+                # No requested experiment is supported by this topology, so it
+                # needs neither LEP executions nor corresponding benign controls.
+                if not allowed_modes:
+                    continue
 
                 # ── Benign entries: one per variant × rep ─────────────────
                 for variant in variants:
@@ -200,6 +221,7 @@ class BenchmarkManifest:
                                 f"{topology}_{fixture_id}_{variant}_{rep:02d}_benign"
                             ),
                             "task_family": task_family,
+                            "fixture_id": fixture_id,
                             "condition": "benign",
                             "execution_variant": variant,
                             "lep_codes": [],
@@ -233,6 +255,7 @@ class BenchmarkManifest:
                                 f"{lep_config.code}_{prop_mode}_{rep:02d}_lep"
                             ),
                             "task_family": task_family,
+                            "fixture_id": fixture_id,
                             "condition": "single_lep",
                             "execution_variant": exec_variant,
                             "lep_codes": [lep_config.code],
@@ -345,7 +368,7 @@ class BenchmarkRunner:
                 scenario_id=entry["scenario_id"],
                 task_family=entry["task_family"],
                 task_variant=entry.get("task_variant", "default"),
-                fixture_id=self._fixture_id(entry),
+                fixture_id=entry.get("fixture_id") or fixture_id_for_task_family(entry["task_family"]),
                 workflow_config=wcfg,
                 lep_configs=lep_configs,
                 condition=entry["condition"],
@@ -371,10 +394,11 @@ class BenchmarkRunner:
                 "execution_variant", "standard"
             )
 
-            # Write trace
+            # Keep incomplete executions for auditing, outside the dataset directory
+            # scanned by clean-reference construction and detector training.
             trace_dir = (
                 self.manifest.output_dir or Path("benchmark_output")
-            ) / "traces"
+            ) / ("traces" if result.dataset_eligible else "rejected_traces")
             trace_dir.mkdir(parents=True, exist_ok=True)
             trace_path = trace_dir / f"{entry['scenario_id']}_trace.json"
             with open(trace_path, "w") as f:
@@ -384,6 +408,8 @@ class BenchmarkRunner:
             # Populate record
             record.trace_id = trace.trace_id
             record.success = result.runner_success
+            record.dataset_eligible = result.dataset_eligible
+            record.termination_reason = result.termination_reason
             record.error = result.error
             record.num_events = len(trace.events)
 
@@ -510,15 +536,6 @@ class BenchmarkRunner:
             allow_retries=True,
             propagation_mode=entry.get("propagation_mode", "single_origin"),
         )
-
-    def _fixture_id(self, entry: dict[str, Any]) -> str:
-        family = entry["task_family"]
-        FIXTURE_MAP = {
-            "code_review": "code_review_easy",
-            "financial_analysis": "financial_clean",
-            "research_synthesis": "research_conflicting",
-        }
-        return FIXTURE_MAP.get(family, f"{family}_default")
 
     @staticmethod
     def _short_trace_id(entry: dict[str, Any]) -> str:
