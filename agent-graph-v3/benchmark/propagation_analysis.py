@@ -35,6 +35,15 @@ from generation.event_graph_builder import (
     EventNode,
 )
 
+from benchmark.behavioral_anomaly import (
+    BehavioralAnomaly,
+    BehaviorComparison,
+    CleanBehaviorReference,
+    InvariantStrength,
+    detect_behavioral_anomalies,
+    should_skip_cell,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,17 +52,24 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CleanReference:
-    """Empirical clean behavioral reference built from benign runs.
+    """Empirical clean behavioral reference built from benign executions.
 
     Attributes:
-        traces: the raw Trace objects
-        task_family / topology: grouping key
+        fixture_id: task fixture identifier (primary grouping key)
+        task_family: task family (metadata, for task-specific checks)
+        topology: topology name (secondary grouping key)
+        execution_variant: "standard" or "memory_enabled"
+        traces: the raw Trace objects (deduplicated by repetition_index)
         benign_trace_ids: list of trace_id strings
+        repetition_indices: the dedup'd repetition indices used
     """
 
+    fixture_id: str
     task_family: str
     topology: str
+    execution_variant: str
     traces: List[Trace] = field(default_factory=list)
+    repetition_indices: List[int] = field(default_factory=list)
 
     @property
     def benign_trace_ids(self) -> List[str]:
@@ -84,6 +100,7 @@ class PropagationResult:
     # Detail
     anomalous_event_count: int
     anomalous_event_ids: List[str]
+    anomaly_details: Dict[str, Any] = field(default_factory=dict)
     injection_origin_event_id: str = ""
     num_injection_origins: int = 0
 
@@ -104,6 +121,7 @@ class PropagationResult:
             "num_downstream_agents": self.num_downstream_agents,
             "anomalous_event_count": self.anomalous_event_count,
             "anomalous_event_ids": self.anomalous_event_ids,
+            "anomaly_details": self.anomaly_details,
             "injection_origin_event_id": self.injection_origin_event_id,
             "num_injection_origins": self.num_injection_origins,
             "num_benign_reference_runs": self.num_benign_reference_runs,
@@ -197,19 +215,50 @@ class PropagationAnalyzer:
             len(lep_traces),
         )
 
+        # Coverage tracking
+        coverage = {
+            "eligible_cells": 0,
+            "evaluated_cells": 0,
+            "skipped_insufficient_clean_reference": 0,
+            "skip_reasons": [],
+        }
+
         # Per-trace results
         per_trace_results: List[PropagationResult] = []
         builder = DependsOnGraphBuilder()
 
         for key, traces in lep_traces.items():
             task_family, topology, lep_code, mode = key
-            ref = benign_refs.get((task_family, topology))
+            fixture_id = traces[0].metadata.get("fixture_id", "") if traces else ""
+
+            # Select appropriate execution variant for this LEP type
+            execution_variant = _select_execution_variant(lep_code)
+            ref_key = (fixture_id, topology, execution_variant)
+
+            ref = benign_refs.get(ref_key)
+            coverage["eligible_cells"] += 1
+
             if ref is None or ref.num_runs == 0:
+                skip_reason = f"no_clean_reference_for_{fixture_id}/{topology}/{execution_variant}"
+                coverage["skip_reasons"].append(skip_reason)
+                coverage["skipped_insufficient_clean_reference"] += 1
                 logger.warning(
-                    "No benign reference for %s — skipping %d LEP traces",
-                    key, len(traces),
+                    "No clean reference for %s (needs %s) — skipping %d LEP traces",
+                    key, execution_variant, len(traces),
                 )
                 continue
+
+            skip, skip_reason = should_skip_cell(ref)
+            if skip:
+                coverage["skip_reasons"].append(skip_reason)
+                coverage["skipped_insufficient_clean_reference"] += 1
+                logger.warning(
+                    "Skipping cell %s: %s",
+                    key, skip_reason,
+                )
+                continue
+
+            coverage["evaluated_cells"] += 1
 
             for trace in traces:
                 result = self._analyze_single_trace(
@@ -223,7 +272,7 @@ class PropagationAnalyzer:
 
         # Aggregate
         cell_summaries = self._aggregate_by_cell(per_trace_results, benign_refs)
-        summary = self._build_summary(per_trace_results, cell_summaries, benign_refs)
+        summary = self._build_summary(per_trace_results, cell_summaries, benign_refs, coverage)
 
         # Write outputs
         self._write_outputs(per_trace_results, cell_summaries, summary)
@@ -238,9 +287,16 @@ class PropagationAnalyzer:
 
     def _load_and_group_traces(
         self,
-    ) -> Tuple[Dict[Tuple[str, str], CleanReference], Dict[Tuple[str, str, str, str], List[Trace]]]:
-        """Load all trace JSONs and group by (task_family, topology) and by cell."""
-        benign_refs: Dict[Tuple[str, str], CleanReference] = {}
+    ) -> Tuple[Dict[Tuple[str, str, str], CleanReference], Dict[Tuple[str, str, str, str], List[Trace]]]:
+        """Load all trace JSONs and group traces.
+
+        Benign traces are grouped by (fixture_id, topology, execution_variant)
+        and deduplicated by repetition_index within each group.
+
+        IMPORTANT: execution_variant must NOT be mixed. "standard" and
+        "memory_enabled" are intentionally different experimental conditions.
+        """
+        benign_refs: Dict[Tuple[str, str, str], CleanReference] = {}
         lep_traces: Dict[Tuple[str, str, str, str], List[Trace]] = {}
 
         if not self.traces_dir.exists():
@@ -259,24 +315,46 @@ class PropagationAnalyzer:
             meta = trace.metadata
             task_family = meta.get("task_family", "unknown")
             topology = meta.get("topology", "unknown")
+            fixture_id = meta.get("fixture_id", "")
             condition = meta.get("condition", "")
             lep_codes = meta.get("lep_codes", [])
             prop_mode = meta.get("propagation_mode", "single_origin")
+            repetition_index = meta.get("repetition_index", 0)
+            execution_variant = meta.get("execution_variant", "standard")
 
             if condition == "benign" or not lep_codes:
-                key = (task_family, topology)
+                if not fixture_id:
+                    logger.error(
+                        "Trace %s has no fixture_id in metadata — cannot build clean reference. "
+                        "Skipping. Metadata keys: %s",
+                        trace.trace_id, list(meta.keys()),
+                    )
+                    continue
+
+                key = (fixture_id, topology, execution_variant)
                 if key not in benign_refs:
                     benign_refs[key] = CleanReference(
+                        fixture_id=fixture_id,
                         task_family=task_family,
                         topology=topology,
+                        execution_variant=execution_variant,
                     )
-                benign_refs[key].traces.append(trace)
+                ref = benign_refs[key]
+                # Deduplicate by repetition_index
+                if repetition_index not in ref.repetition_indices:
+                    ref.traces.append(trace)
+                    ref.repetition_indices.append(repetition_index)
             else:
-                # Use first LEP code as the primary code for grouping.
-                # (Future: multi-LEP convergence scenarios.)
                 lep_code = lep_codes[0]
                 cell_key = (task_family, topology, lep_code, prop_mode)
                 lep_traces.setdefault(cell_key, []).append(trace)
+
+        # Log clean reference stats
+        for key, ref in benign_refs.items():
+            logger.info(
+                "Clean reference %s/%s/%s: %d unique repetitions (indices: %s)",
+                key[0], key[1], key[2], ref.num_runs, sorted(ref.repetition_indices),
+            )
 
         return benign_refs, lep_traces
 
@@ -309,11 +387,8 @@ class PropagationAnalyzer:
     # ── Single-trace analysis ─────────────────────────────────────────────────
 
     def _analyze_single_trace(
-        self,
-        trace: Trace,
-        benign_ref: CleanReference,
-        lep_code: str,
-        propagation_mode: str,
+        self, trace: Trace, benign_ref: CleanReference,
+        lep_code: str, propagation_mode: str,
         builder: DependsOnGraphBuilder,
     ) -> PropagationResult:
         """Compute all propagation metrics for one LEP trace."""
@@ -333,12 +408,14 @@ class PropagationAnalyzer:
         origin_roles = {n.agent_role for n in origin_nodes}
         injection_origin_id = origin_nodes[0].event_id if origin_nodes else ""
 
-        # Identify anomalous events
+        # Identify anomalous events using behavioral anomaly detection
         anomalous_nodes = self._identify_anomalous_nodes(
             trace=trace,
             benign_ref=benign_ref,
             graph=graph,
             origin_nodes=origin_nodes,
+            lep_code=lep_code,
+            builder=builder,
         )
 
         # Compute metrics
@@ -350,6 +427,19 @@ class PropagationAnalyzer:
             n.agent_role for n in anomalous_nodes
             if n.agent_role not in origin_roles
         })
+
+        # Build anomaly details for output
+        anomaly_details: Dict[str, Any] = {}
+        for node in anomalous_nodes:
+            anomaly_details[node.event_id] = {
+                "event_id": node.event_id,
+                "anomaly_types": getattr(node, "anomaly_types", []),
+                "reasons": getattr(node, "anomaly_reasons", []),
+                "clean_support": getattr(node, "clean_support", 0.0),
+                "stability": getattr(node, "stability", InvariantStrength.VARIABLE.value),
+                "downstream_of_lep": True,
+                "lep_consistent_manifestation": True,
+            }
 
         return PropagationResult(
             trace_id=trace.trace_id,
@@ -364,6 +454,7 @@ class PropagationAnalyzer:
             num_downstream_agents=len(downstream_agents),
             anomalous_event_count=len(anomalous_nodes),
             anomalous_event_ids=[n.event_id for n in anomalous_nodes],
+            anomaly_details=anomaly_details,
             injection_origin_event_id=injection_origin_id,
             num_injection_origins=len(origin_nodes),
             num_benign_reference_runs=benign_ref.num_runs,
@@ -372,32 +463,164 @@ class PropagationAnalyzer:
     # ── Anomaly detection ─────────────────────────────────────────────────────
 
     def _identify_anomalous_nodes(
-        self,
-        trace: Trace,
-        benign_ref: CleanReference,
-        graph: EventGraph,
-        origin_nodes: List[EventNode],
+        self, trace: Trace, benign_ref: CleanReference,
+        graph: EventGraph, origin_nodes: List[EventNode],
+        lep_code: str, builder: DependsOnGraphBuilder,
     ) -> List[EventNode]:
-        """Find behaviorally anomalous nodes.
+        """Find behaviorally anomalous nodes using the staged pipeline.
 
-        Two-step process:
-        1. Build a set of candidate anomalous event IDs from task-evaluator
-           signals and clean-vs-clean divergence.
-        2. Restrict to nodes that are both in that set AND reachable from
-           an injection origin via the DAG.
+        Pipeline:
+          1. Semantic alignment
+          2. Clean-reference comparison
+          3. Task relevance
+          4. LEP-consistent manifestation
+          5. Strict descendant check (reachable from origin, not origin itself)
+
+        Removes:
+          - evaluator-based output string matching
+          - introduces_downstream_failure as authoritative signal
+          - _clean_vs_clean_anomalies fallback
         """
-        candidate_event_ids = self._find_candidate_anomalous_events(trace, benign_ref)
+        # Load fixture spec for task relevance
+        fixture_spec = self._load_fixture_spec(benign_ref)
+
+        # Run behavioral anomaly detection
+        try:
+            anomalies = detect_behavioral_anomalies(
+                trace=trace,
+                clean_ref=self._to_behavioral_clean_ref(benign_ref),
+                lep_code=lep_code,
+                graph=graph,
+                origin_nodes=origin_nodes,
+                fixture_spec=fixture_spec,
+            )
+        except Exception as e:
+            logger.error("Anomaly detection failed for trace %s: %s", trace.trace_id, e)
+            return []
+
+        # Collect anomalous event IDs
+        anomalous_event_ids = {a.event_id for a in anomalies}
+
+        # Build anomaly details per node for later serialization
+        anomaly_map = {a.event_id: a for a in anomalies}
 
         # Find nodes reachable from any origin
         reachable_from_origin = self._reachable_from_origins(graph, origin_nodes)
+        origin_indices = {n.event_index for n in origin_nodes}
 
-        # Intersection: reachable AND anomalous
+        # Intersection: anomalous AND reachable AND not origin
         anomalous_nodes = [
             n for n in graph.nodes
-            if n.event_id in candidate_event_ids and n.event_index in reachable_from_origin
+            if n.event_id in anomalous_event_ids
+            and n.event_index in reachable_from_origin
+            and n.event_index not in origin_indices
         ]
 
+        # Attach anomaly metadata to nodes for output
+        for node in anomalous_nodes:
+            anomaly = anomaly_map.get(node.event_id)
+            if anomaly:
+                node.anomaly_types = anomaly.anomaly_types
+                node.anomaly_reasons = anomaly.reasons
+                node.clean_support = anomaly.clean_support
+                node.stability = anomaly.stability.value
+
         return anomalous_nodes
+
+    @staticmethod
+    def _to_behavioral_clean_ref(ref: CleanReference) -> CleanBehaviorReference:
+        """Convert internal CleanReference to behavioral_anomaly.CleanBehaviorReference."""
+        from benchmark.behavioral_anomaly import (
+            CleanBehaviorReference,
+            SemanticEventSlot,
+            CleanSlotProfile,
+            InvariantStrength,
+        )
+        # Build slot profiles from the stored traces
+        slot_profiles = {}
+        for trace in ref.traces:
+            trace_context = {"fixture_id": ref.fixture_id}
+            slots_in_order = []
+            for event in trace.events:
+                from benchmark.behavioral_anomaly import semantic_slot
+                slot = semantic_slot(event, trace_context)
+                slots_in_order.append(slot)
+                if slot not in slot_profiles:
+                    slot_profiles[slot] = {
+                        "ops": set(),
+                        "objects": set(),
+                        "handoff_targets": set(),
+                        "predecessors": Counter(),
+                        "successors": Counter(),
+                    }
+                op = event.tool_name or (
+                    event.event_type.value if hasattr(event.event_type, 'value') else str(event.event_type)
+                )
+                slot_profiles[slot]["ops"].add(op)
+                if event.memory_key:
+                    slot_profiles[slot]["objects"].add(event.memory_key)
+                if event.target_entity_id:
+                    slot_profiles[slot]["handoff_targets"].add(event.target_entity_id)
+
+            # Predecessor/successor relationships
+            for i, slot in enumerate(slots_in_order):
+                if i > 0:
+                    slot_profiles[slot]["predecessors"][slots_in_order[i - 1]] += 1
+                if i < len(slots_in_order) - 1:
+                    slot_profiles[slot]["successors"][slots_in_order[i + 1]] += 1
+
+        # Convert to CleanSlotProfile objects
+        total_runs = ref.num_runs
+        profiles: dict = {}
+        for slot, data in slot_profiles.items():
+            run_support = total_runs  # Each trace contributes one occurrence
+            support_fraction = run_support / max(total_runs, 1)
+            if support_fraction >= STABLE_SUPPORT_THRESHOLD:
+                stability = InvariantStrength.STRONG_INVARIANT if run_support == total_runs else InvariantStrength.STABLE_EXPECTATION
+            else:
+                stability = InvariantStrength.VARIABLE
+
+            profiles[slot] = CleanSlotProfile(
+                slot=slot,
+                run_support=run_support,
+                total_runs=total_runs,
+                support_fraction=support_fraction,
+                stability=stability,
+                observed_operations=data["ops"],
+                observed_objects=data["objects"],
+                observed_handoff_targets=data["handoff_targets"],
+                immediate_predecessors=data["predecessors"],
+                required_ancestor_slots=data["predecessors"],
+                successor_slots=data["successors"],
+                structured_facts=[],
+            )
+
+        return CleanBehaviorReference(
+            fixture_id=ref.fixture_id,
+            task_family=ref.task_family,
+            topology=ref.topology,
+            execution_variant=ref.execution_variant,
+            benign_trace_ids=ref.benign_trace_ids,
+            repetition_indices=ref.repetition_indices,
+            slot_profiles=profiles,
+            total_runs=total_runs,
+        )
+
+    @staticmethod
+    def _load_fixture_spec(ref: CleanReference) -> dict:
+        """Load the fixture manifest for task-specific checks."""
+        import json
+        from pathlib import Path
+
+        fixture_dir = Path(__file__).parent.parent / "workspace_fixtures" / ref.fixture_id
+        manifest_path = fixture_dir / "manifest.json"
+        if manifest_path.exists():
+            try:
+                with open(manifest_path) as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, OSError):
+                pass
+        return {}
 
     def _find_candidate_anomalous_events(
         self, trace: Trace, benign_ref: CleanReference,
@@ -722,8 +945,11 @@ class PropagationAnalyzer:
         self, graph: EventGraph, origin_nodes: List[EventNode],
         anomalous_nodes: List[EventNode],
     ) -> int:
-        """Event depth = max over anomalous nodes of min shortest-path distance
-        from any reachable origin."""
+        """Event depth = min over anomalous nodes of nearest shortest-path distance
+        from any reachable origin.
+
+        Uses min (not max) to report the nearest onset of anomalous behavior.
+        """
 
         def nearest_distance(node: EventNode) -> int:
             distances = [
@@ -826,7 +1052,8 @@ class PropagationAnalyzer:
         self,
         results: List[PropagationResult],
         cell_summaries: Dict[str, CellSummary],
-        benign_refs: Dict[Tuple[str, str], CleanReference],
+        benign_refs: Dict[Tuple[str, str, str], CleanReference],
+        coverage: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Build the top-level summary dict."""
         # Overall
@@ -850,6 +1077,12 @@ class PropagationAnalyzer:
             key = f"{cs.lep_code}"
             by_lep_x_topo[key][cs.topology] = cs
 
+        # Coverage report
+        coverage_fraction = (
+            coverage["evaluated_cells"] / coverage["eligible_cells"]
+            if coverage["eligible_cells"] > 0 else 0.0
+        )
+
         return {
             "overall": {
                 "total_lep_runs": total_lep,
@@ -861,6 +1094,11 @@ class PropagationAnalyzer:
                 "handoff_depth_mean": round(_mean(all_h_depths), 2),
                 "handoff_depth_std": round(_std(all_h_depths), 2),
                 "downstream_agents_mean": round(_mean(all_n_agents), 2),
+                "coverage_eligible_cells": coverage["eligible_cells"],
+                "coverage_evaluated_cells": coverage["evaluated_cells"],
+                "coverage_skipped_insufficient_clean_reference": coverage["skipped_insufficient_clean_reference"],
+                "coverage_fraction": round(coverage_fraction, 4),
+                "coverage_skip_reasons": coverage["skip_reasons"],
             },
             "by_task_family": by_task_family,
             "by_topology": by_topology,
@@ -982,6 +1220,17 @@ def _std(values: List[float]) -> float:
     m = _mean(values)
     variance = sum((v - m) ** 2 for v in values) / len(values)
     return math.sqrt(variance)
+
+
+def _select_execution_variant(lep_code: str) -> str:
+    """Select the appropriate execution variant for a clean reference.
+
+    MEMORY_POISONING needs memory_enabled (clean memory) as reference.
+    All other LEPs use standard.
+    """
+    if (lep_code or "").upper() == "LEP_MEMORY_POISONING":
+        return "memory_enabled"
+    return "standard"
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
