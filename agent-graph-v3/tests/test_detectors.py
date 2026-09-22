@@ -371,7 +371,7 @@ class TestMetrics:
 
         y_true = np.array([0, 0, 0])
         y_scores = np.array([0.1, 0.5, 0.9])
-        assert compute_auroc(y_true, y_scores) == 0.5
+        assert np.isnan(compute_auroc(y_true, y_scores))
 
     def test_aupr_perfect(self):
         """AUPR = 1.0 for perfect predictions."""
@@ -928,10 +928,8 @@ class TestEvaluationUnitConsistency:
     def test_small_splits_and_task_groups(self):
         from training.dataset import split_at_execution_level
         ids = list('abcde')
-        splits = split_at_execution_level(ids, [0.] * 5)
-        assert all(splits)
-        assert set.union(*splits) == set(ids)
-        assert sum(map(len, splits)) == 5
+        with pytest.raises(ValueError, match="both downstream_failure classes required"):
+            split_at_execution_level(ids, [0.] * 5)
         with pytest.raises(ValueError, match='at least 3'):
             split_at_execution_level(['a', 'b'], [0., 1.])
         ids = [f'{i}-{variant}' for i in range(5) for variant in ('a', 'b')]
@@ -975,7 +973,7 @@ class TestEvaluationUnitConsistency:
             return original_train(trainer, *args, **kwargs)
 
         monkeypatch.setattr(DetectorTrainer, 'train', train)
-        results = pipeline.run(num_epochs=1, batch_size=3, snapshot_interval=2,
+        results = pipeline.run(num_epochs=3, batch_size=3, snapshot_interval=2,
                                train_frac=.4, val_frac=.2,
                                use_heuristic_baselines=False)
         static = results['static_gnn']
@@ -986,6 +984,7 @@ class TestEvaluationUnitConsistency:
         assert static.train_sample_count == expected_train > len(static.train_execution_ids)
         for kind in ('static_gnn', 'tgnn', 'hybrid'):
             result = results[kind]
+            assert len(result.train_history) == 3
             assert result.train_execution_ids == static.train_execution_ids
             assert result.val_execution_ids == static.val_execution_ids
             assert result.test_execution_ids == static.test_execution_ids
@@ -996,7 +995,7 @@ class TestEvaluationUnitConsistency:
         assert len(train_graphs) == expected_train
         assert {g.execution_id for g in val_graphs} == set(static.val_execution_ids)
         assert all(g.num_nodes == full[g.execution_id].num_nodes for g in val_graphs)
-        final_test = evaluated[1][1]
+        final_test = [graphs for model_type, graphs in evaluated if model_type == "static"][-1]
         assert [g.execution_id for g in final_test] == static.test_execution_ids
         assert all(g.num_nodes == full[g.execution_id].num_nodes for g in final_test)
         saved = json.loads((tmp_path / 'detector_results.json').read_text())

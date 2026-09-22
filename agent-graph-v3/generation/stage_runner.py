@@ -891,7 +891,7 @@ class StageRunner:
                     output_text=result_text,
                     tool_result=result_text,
                 )
-                tr_evt.depends_on = [tc_evt.event_id] if tc_evt.event_id else [retrieval_evt.event_id]
+                tr_evt.depends_on = [retrieval_evt.event_id]
                 events.append(tr_evt)
                 stage_history.append({"role": "tool", "tool_name": "read_memory", "content": result_text})
                 self.llm._append_tool_result(tc, result_text)
@@ -981,6 +981,12 @@ class StageRunner:
                                 "event_id": write_evt.event_id,
                                 "memory_key": key,
                             })
+
+                # The memory event describes the value actually stored; the
+                # TOOL_CALL retains the agent's original, unmodified arguments.
+                # Downstream behavioral comparison uses this origin payload to
+                # distinguish use of the poisoned fact from unrelated changes.
+                write_evt.tool_arguments = {**action_input, "value": value}
 
                 # Write to MemoryStore, preserving the MEMORY_WRITE event_id
                 # in the record's metadata so read_memory can build depends_on

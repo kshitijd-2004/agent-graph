@@ -164,3 +164,83 @@ def test_completed_benchmark_trace_is_a_clean_reference_candidate(tmp_path):
     assert Path(record.trace_path).parent == tmp_path / "traces"
     refs, _ = PropagationAnalyzer(tmp_path)._load_and_group_traces()
     assert sum(ref.num_runs for ref in refs.values()) == 1
+
+
+@pytest.mark.parametrize("condition,mode,topology,actual,expected", [
+    ("benign", "single_origin", "review_loop", 0, 0),
+    ("benign", "single_origin", "review_loop", 1, 0),
+    ("single_lep", "single_origin", "review_loop", 1, 1),
+    ("single_lep", "single_origin", "review_loop", 0, 1),
+    ("single_lep", "single_origin", "review_loop", 2, 1),
+    ("single_lep", "one_to_many", "coordinator_workers", 1, 1),
+    ("single_lep", "many_to_one", "coordinator_workers", 3, 3),
+    ("single_lep", "many_to_one", "coordinator_workers", 2, 3),
+    ("single_lep", "many_to_one", "branch_and_verify", 2, 2),
+    ("single_lep", "many_to_one", "branch_and_verify", 1, 2),
+])
+def test_exact_origin_admission_and_evaluation(tmp_path, monkeypatch, condition, mode, topology, actual, expected):
+    from generation.injection_origins import expected_injection_origins
+    from generation.runner import DryRunEvaluator
+    spec = scenario()
+    spec.condition = condition
+    spec.workflow_config.topology = topology
+    spec.workflow_config.propagation_mode = mode
+    spec.lep_configs = [LEPConfig(code="LEP_TOOL_RESULT_CORRUPTION", name="test",
+                                category="injection", description="test")]
+    assert expected_injection_origins(condition=condition, lep_codes=[c.code for c in spec.lep_configs],
+                                     propagation_mode=mode, topology=topology) == expected
+    events = [event(i, TraceEventType.TOOL_RESULT) for i in range(actual)]
+    for origin in events:
+        origin.event_labels.is_injection_origin = True
+    final = event(actual, TraceEventType.FINAL_RESPONSE)
+    final.event_labels.consumes_perturbed_info = True
+    final.event_labels.introduces_downstream_failure = True
+    result = execute_trace(tmp_path, monkeypatch, "completed", events + [final], spec)
+    assert result.dataset_eligible == (actual == expected)
+    assert result.trace.metadata["expected_injection_origins"] == expected
+    if actual != expected:
+        assert result.termination_reason == "injection_count_mismatch"
+        assert f"expected={expected} actual={actual}" in result.trace.metadata["admission_reason"]
+    if condition == "single_lep":
+        evaluation = DryRunEvaluator().evaluate_single_lep(result.trace, spec, spec.lep_configs)
+        assert evaluation["passed"] == (actual == expected), evaluation
+
+
+def test_count_mismatch_saved_and_audited_with_topology_expectation(tmp_path, monkeypatch):
+    import json
+    from generation.injection_origins import expected_injection_origins
+    manifest = BenchmarkManifest(output_dir=tmp_path, fixture_root=FIXTURES)
+    benchmark = BenchmarkRunner(manifest)
+    entry = benchmark_entry()
+    entry.update(condition="single_lep", topology="coordinator_workers", propagation_mode="many_to_one",
+                 lep_codes=["LEP_TOOL_RESULT_CORRUPTION"])
+    origin = event(0, TraceEventType.TOOL_RESULT)
+    origin.event_labels.is_injection_origin = True
+    trace = Trace(trace_id="partial", execution_id="partial", variant=TraceVariant.MALIGNANT,
+                  events=[origin, event(1, TraceEventType.FINAL_RESPONSE)],
+                  metadata={**entry, "termination_reason": "completed"})
+    monkeypatch.setattr(ScenarioRunner, "_execute_scenario", lambda *args: trace)
+    record = benchmark._execute(entry)
+    assert record.success, record.error
+    assert not record.dataset_eligible
+    assert Path(record.trace_path).parent == tmp_path / "rejected_traces"
+    assert json.loads(Path(record.trace_path).read_text())["injection_origin_count"] == 1
+    expected = expected_injection_origins(condition=entry["condition"], lep_codes=entry["lep_codes"],
+                                         topology=entry["topology"], propagation_mode=entry["propagation_mode"])
+    audit = Path(benchmark.audit_injection_counts()).read_text()
+    assert f"expected={expected} actual=1" in audit
+    assert Path(record.trace_path).name in audit
+
+
+def test_origin_expectation_tracks_topology_changes(monkeypatch):
+    from collections import defaultdict
+    from generation import injection_origins
+    from generation.topology import get_topology, HandoffRule, Stage
+    topology = get_topology("coordinator_workers", defaultdict(str))
+    topology.stages.append(Stage("extra", "extra", "extra", can_handoff=True))
+    topology.handoff_rules.append(HandoffRule("extra", topology.exit_stage))
+    monkeypatch.setattr(injection_origins, "get_topology", lambda *args: topology)
+    assert injection_origins.expected_injection_origins(
+        condition="single_lep", lep_codes=["LEP_MEMORY_POISONING"],
+        propagation_mode="many_to_one", topology="coordinator_workers",
+    ) == 4

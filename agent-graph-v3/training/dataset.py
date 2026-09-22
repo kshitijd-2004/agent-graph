@@ -485,4 +485,21 @@ def split_at_execution_level(
     assert train_eids.isdisjoint(test_eids), "train/test execution overlap"
     assert val_eids.isdisjoint(test_eids), "val/test execution overlap"
 
+    eid_labels = {}
+    for eid, label in zip(execution_ids, labels):
+        if label not in (0, 1):
+            raise ValueError(f"Execution {eid!r} has non-binary downstream_failure label {label!r}")
+        if eid in eid_labels and eid_labels[eid] != label:
+            raise ValueError(f"Execution {eid!r} has inconsistent downstream_failure labels")
+        eid_labels[eid] = label
+    for name, split in (("train", train_eids), ("val", val_eids), ("test", test_eids)):
+        positives = sum(eid_labels[eid] == 1 for eid in split)
+        negatives = len(split) - positives
+        groups = len({eid_groups[eid] for eid in split}) if group_ids is not None else len(split)
+        if not positives or not negatives:
+            raise ValueError(
+                f"Invalid {name} split: executions={len(split)} positive={positives} "
+                f"negative={negatives} groups={groups}; both downstream_failure classes required"
+            )
+
     return train_eids, val_eids, test_eids

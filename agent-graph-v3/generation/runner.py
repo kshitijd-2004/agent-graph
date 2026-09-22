@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, Set
 
+from generation.injection_origins import expected_injection_origins
 from memory.memory_store import MemoryStore
 from schemas import (
     LEPConfig, ScenarioSpec, Trace, TraceEvent, TraceEventType, TraceVariant,
@@ -180,15 +181,21 @@ class DryRunEvaluator:
             self._err("No LEP config for single_lep evaluation")
             return self._result()
 
-        # Must have exactly one injection origin
+        # Must have the configured number of injection origins
         injection_events = [
             e for e in events
             if getattr(e, "event_labels", None)
             and e.event_labels.is_injection_origin
         ]
         self._stats["injection_count"] = len(injection_events)
-        if len(injection_events) != 1:
-            self._err(f"Expected 1 injection origin, got {len(injection_events)}")
+        expected = expected_injection_origins(
+            condition=scenario.condition, lep_codes=[c.code for c in lep_configs],
+            propagation_mode=scenario.workflow_config.propagation_mode,
+            topology=scenario.workflow_config.topology,
+        )
+        self._stats["expected_injection_count"] = expected
+        if len(injection_events) != expected:
+            self._err(f"Expected {expected} injection origins, got {len(injection_events)}")
 
         # Trigger should have fired (injection event exists)
         if injection_events:
@@ -651,18 +658,21 @@ class ScenarioRunner:
 
             # Admission concerns execution completeness, not task correctness:
             # a completed LEP run with an incorrect answer is still valid data.
-            eligible = clean_completion
-            # A perturbed run whose LEP never fired is a benign run carrying a
-            # positive label. Keep it out of the dataset.
-            if scenario.condition in ("single_lep", "convergence"):
-                injected = any(
-                    getattr(getattr(e, "event_labels", None), "is_injection_origin", False)
-                    for e in trace.events
+            expected = expected_injection_origins(
+                condition=scenario.condition, lep_codes=[c.code for c in scenario.lep_configs],
+                propagation_mode=scenario.workflow_config.propagation_mode,
+                topology=scenario.workflow_config.topology,
+            )
+            actual = trace.injection_origin_count
+            eligible = clean_completion and actual == expected
+            trace.metadata["expected_injection_origins"] = expected
+            trace.metadata["actual_injection_origins"] = actual
+            if actual != expected:
+                trace.metadata["admission_reason"] = (
+                    f"injection-count mismatch: expected={expected} actual={actual}"
                 )
-                if not injected:
-                    eligible = False
-                    if term_reason == "completed":
-                        term_reason = "lep_not_fired"
+                if clean_completion:
+                    term_reason = "injection_count_mismatch"
             trace.metadata["termination_reason"] = term_reason
             trace.metadata["dataset_eligible"] = eligible
             return RunResult(
@@ -926,20 +936,11 @@ class ScenarioRunner:
             # single_origin → 1 origin for every LEP.
             # one_to_many  → 1 shared upstream origin; downstream consumers are NOT reinjected.
             # many_to_one  → 1 origin per worker; all worker outputs converge at coordinator.
-            if propagation_mode == "many_to_one":
-                # Count workers that have outgoing handoffs to the coordinator
-                # (stages that are not the coordinator and have can_handoff).
-                n_workers = sum(
-                    1 for s in topology.stages
-                    if s.agent_role != topology.exit_stage and s.can_handoff
-                )
-                n_workers = max(n_workers, 1)
-                for code in orchestrator._active_leps:
-                    orchestrator.set_max_origins(code, n_workers)
-            else:
-                # single_origin and one_to_many both use exactly 1 origin
-                for code in orchestrator._active_leps:
-                    orchestrator.set_max_origins(code, 1)
+            for code in orchestrator._active_leps:
+                orchestrator.set_max_origins(code, expected_injection_origins(
+                    condition=scenario.condition, lep_codes=[code],
+                    propagation_mode=propagation_mode, topology=topology_id,
+                ))
 
             logger.info(
                 "Runner: propagation_mode=%s origin_budget=%s topology=%s",

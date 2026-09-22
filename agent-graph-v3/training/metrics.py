@@ -29,14 +29,14 @@ def compute_auroc(y_true: np.ndarray, y_scores: np.ndarray) -> float:
         y_scores: Float array of probability scores [N].
 
     Returns:
-        AUROC value in [0, 1]. Returns 0.5 if all labels are the same or
+        AUROC value in [0, 1]. Returns NaN if all labels are the same or
         if the input is empty.
     """
     y_true = np.asarray(y_true, dtype=float)
     y_scores = np.asarray(y_scores, dtype=float)
 
     if len(y_true) == 0 or y_true.min() == y_true.max():
-        return 0.5
+        return float("nan")
 
     return float(roc_auc_score(y_true, y_scores))
 
