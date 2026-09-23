@@ -25,7 +25,7 @@ from typing import List, Optional
 # Ensure project root is importable
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from training.pipeline import DetectorPipeline
+from training.pipeline import DetectorPipeline, PipelineResult
 from training.trainer import DetectorTrainer
 
 logging.basicConfig(
@@ -177,11 +177,17 @@ def main() -> int:
         use_heuristic_baselines=not args.no_heuristic_baselines,
     )
 
+    # The pipeline also returns metadata such as the comparison DataFrame.
+    detector_results = {
+        name: result for name, result in results.items()
+        if isinstance(result, PipelineResult)
+    }
+
     # ── Summary ───────────────────────────────────────────────────────────────
     print("\n" + "=" * 60)
     print("RESULTS")
     print("=" * 60)
-    for name, result in results.items():
+    for name, result in detector_results.items():
         test_metrics = result.test_metrics.get("metrics", {})
         print(
             f"  {name:20s}  val AUROC={result.best_val_auroc:.4f}  "
@@ -196,7 +202,7 @@ def main() -> int:
         results_path = Path(args.results_json)
         results_path.parent.mkdir(parents=True, exist_ok=True)
         serializable = {}
-        for name, result in results.items():
+        for name, result in detector_results.items():
             serializable[name] = {
                 "best_val_auroc": result.best_val_auroc,
                 "best_epoch": result.best_epoch,

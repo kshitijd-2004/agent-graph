@@ -83,7 +83,13 @@ Examples:
         "--repetitions",
         type=int,
         default=1,
-        help="Repetitions per (topology × task × LEP × propagation_mode) cell (default: 1)",
+        help="Repetitions per LEP (topology x task x LEP x propagation_mode) cell (default: 1)",
+    )
+    parser.add_argument(
+        "--benign-repetitions",
+        type=int,
+        default=5,
+        help="Repetitions per benign (topology x task x execution_variant) cell (default: 5)",
     )
     parser.add_argument(
         "--max-events",
@@ -187,6 +193,7 @@ Examples:
         task_families=task_families,
         lep_configs=available_leps,
         num_repetitions=args.repetitions,
+        num_benign_repetitions=args.benign_repetitions,
         max_events=args.max_events,
         model_name=args.model,
         dry_run=dry_run,
@@ -224,6 +231,7 @@ Examples:
         task_families=task_families,
         lep_configs=available_leps,
         num_repetitions=args.repetitions,
+        num_benign_repetitions=args.benign_repetitions,
         max_events=args.max_events,
         model_name=args.model,
         dry_run=dry_run,

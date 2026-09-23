@@ -228,6 +228,7 @@ class BenchmarkManifest:
     task_families: list[str] = field(default_factory=list)
     lep_configs: list[LEPConfig] = field(default_factory=list)
     num_repetitions: int = 1
+    num_benign_repetitions: int = 5
     max_events: int = 300
     max_agent_turns: int = 80
     model_name: str = "claude-sonnet-5"
@@ -388,9 +389,9 @@ class BenchmarkManifest:
                     if not allowed_modes:
                         continue
 
-                    # ── Benign entries: one per variant × rep ─────────────────
+                    # ── Benign entries: one per variant × benign_rep ───────────
                     for variant in variants:
-                        for rep in range(self.num_repetitions):
+                        for rep in range(self.num_benign_repetitions):
                             pair_tag = (
                                 f"b_{topology}_{fixture_id}_{variant}_{rep:02d}"
                             )
@@ -955,6 +956,7 @@ def run_benchmark(
     task_families: list[str] | None = None,
     lep_codes: list[str] | None = None,
     num_repetitions: int = 1,
+    num_benign_repetitions: int = 5,
     max_events: int = 300,
     output_dir: str | None = None,
     dry_run: bool = True,
@@ -996,6 +998,7 @@ def run_benchmark(
             lep for lep in available_leps if lep.code in lep_codes
         ],
         num_repetitions=num_repetitions,
+        num_benign_repetitions=num_benign_repetitions,
         max_events=max_events,
         dry_run=dry_run,
         output_dir=Path(output_dir) if output_dir else None,

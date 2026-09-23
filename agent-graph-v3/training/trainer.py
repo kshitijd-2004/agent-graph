@@ -196,7 +196,21 @@ class DetectorTrainer:
                 batch_graphs = batch_graphs.to(self.device)
                 self.optimizer.zero_grad()
 
-                output = self.model(batch_graphs.x, batch_graphs.edge_index, batch_graphs.batch)
+                # A final batch (or batch_size=1) can contain a one-node
+                # snapshot. BatchNorm cannot estimate variance from one node;
+                # use its running statistics while still training this sample.
+                singleton_batch_norms = [
+                    module for module in self.model.modules()
+                    if isinstance(module, nn.BatchNorm1d) and module.training
+                    and batch_graphs.x.size(0) == 1
+                ]
+                for module in singleton_batch_norms:
+                    module.eval()
+                try:
+                    output = self.model(batch_graphs.x, batch_graphs.edge_index, batch_graphs.batch)
+                finally:
+                    for module in singleton_batch_norms:
+                        module.train()
                 logits = output.logits
                 loss = self.criterion(logits, batch_graphs.y.reshape(-1))
                 loss.backward()

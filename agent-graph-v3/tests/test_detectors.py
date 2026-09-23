@@ -957,6 +957,11 @@ class TestEvaluationUnitConsistency:
                 traces.append(trace)
         pipeline = DetectorPipeline(tmp_path, device='cpu')
         monkeypatch.setattr(pipeline, 'load_traces', lambda: (traces[::2], traces[1::2]))
+        # This test exercises training/split plumbing; production target semantics
+        # are covered by test_detector_anomaly_targets.py.
+        targets = {trace.execution_id: float(i % 2) for i, trace in enumerate(traces)}
+        monkeypatch.setattr(pipeline, 'build_anomaly_labels',
+                            lambda loaded: [targets[t.execution_id] for t in loaded])
         observed = []
         evaluated = []
         original_evaluate = DetectorTrainer.evaluate
@@ -990,7 +995,7 @@ class TestEvaluationUnitConsistency:
             assert result.test_execution_ids == static.test_execution_ids
             assert result.evaluation_unit == result.test_metrics['evaluation_unit'] == 'execution'
             assert result.test_metrics['num_predictions'] == len(result.test_execution_ids)
-            assert result.test_metrics['labels'] == [float(full[eid].labels.downstream_failure) for eid in result.test_execution_ids]
+            assert result.test_metrics['labels'] == [targets[eid] for eid in result.test_execution_ids]
         train_graphs, val_graphs = observed[0][1:]
         assert len(train_graphs) == expected_train
         assert {g.execution_id for g in val_graphs} == set(static.val_execution_ids)

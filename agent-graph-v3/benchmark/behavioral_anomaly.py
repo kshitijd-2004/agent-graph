@@ -270,7 +270,7 @@ def extract_financial_facts(trace: Trace, fixture_spec: dict) -> list[TaskFact]:
             v1_values = {c["v1_value"] for c in version_conflicts}
             output_numbers = [
                 int(n.replace(",", ""))
-                for n in re.findall(r"[\$]?([0-9,]+)", text)
+                for n in re.findall(r"[\$]?(\d[\d,]*)", text)
             ]
             for num in output_numbers:
                 if num in v1_values and num > 100000:

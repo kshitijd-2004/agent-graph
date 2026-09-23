@@ -270,6 +270,18 @@ class StageRunner:
         shared_memory_coordination_enabled = _memory_mode in (
             "ephemeral_shared", "persistent_shared"
         )
+        # In fan-in execution, every upstream worker produces findings, even
+        # when its task role (e.g. analyst/reviewer) is normally a memory reader.
+        # Apply this coordination contract to clean and perturbed runs alike.
+        from generation.role_categories import role_category
+        fan_in_memory_writer = (
+            getattr(scenario.workflow_config, "propagation_mode", "single_origin") == "many_to_one"
+            and stage.can_handoff
+            and current_role != topology.exit_stage
+            and any(rule.from_stage == current_role and rule.to_stage == topology.exit_stage
+                    for rule in topology.handoff_rules)
+        )
+        requires_memory_write = role_category(current_role) == "writer" or fan_in_memory_writer
         stage_memory_store: Optional[MemoryStore] = (
             MemoryStore() if _memory_mode == "ephemeral_private" else memory_store
         )
@@ -285,6 +297,14 @@ class StageRunner:
                 memory_addition = task_instance.get_memory_addition(current_role)
                 if memory_addition:
                     system_prompt += memory_addition
+        if shared_memory_coordination_enabled and fan_in_memory_writer:
+            system_prompt += (
+                "\n\nYou are an upstream worker whose findings will be merged. "
+                "Before handing off, store your own findings in shared memory "
+                "using write_memory with both key and value. Use a key specific "
+                "to your role so other workers' findings remain available. "
+                "Retrieving another worker's memory does not replace this write."
+            )
 
         # Inject workspace structure from the fixture manifest so the model
         # knows exactly what files/directories exist and does not hallucinate
@@ -1030,9 +1050,8 @@ class StageRunner:
                 # LEP injection targets are populated and downstream
                 # readers can retrieve them. Block the handoff and nudge
                 # the model to write first if it hasn't.
-                from generation.role_categories import role_category
                 if shared_memory_coordination_enabled \
-                        and role_category(current_role) == "writer" \
+                        and requires_memory_write \
                         and not write_memory_succeeded:
                     repair_prompt = (
                         "You must store your findings in shared memory "

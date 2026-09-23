@@ -1,34 +1,53 @@
 {
-  "total_runs": 12,
-  "successful_runs": 0,
-  "failed_runs": 12,
-  "injection_fired": 0,
-  "injection_fired_rate": 0.0,
+  "total_runs": 210,
+  "successful_runs": 209,
+  "failed_runs": 1,
+  "injection_fired": 10,
+  "injection_fired_rate": 0.048,
   "downstream_failures": 0,
   "downstream_failure_rate": 0.0,
   "recovery_rate": 0.0,
-  "consumption_hits": 0,
-  "propagation_hits": 0,
+  "consumption_hits": 5,
+  "propagation_hits": 4,
   "recovery_hits": 0,
   "task_success": 0,
   "conditions": {
-    "benign": 4,
-    "single_lep": 4,
-    "counterfactual": 4
+    "benign": 105,
+    "single_lep": 105
   },
   "per_topology": {
-    "linear_2": {
-      "total": 12,
+    "review_loop": {
+      "total": 30,
+      "injection_fired": 4,
+      "downstream_failure": 0
+    },
+    "branch_and_verify": {
+      "total": 90,
+      "injection_fired": 6,
+      "downstream_failure": 0
+    },
+    "coordinator_workers": {
+      "total": 90,
       "injection_fired": 0,
       "downstream_failure": 0
     }
   },
   "per_propagation_mode": {
     "single_origin": {
-      "total": 12,
-      "injection_fired": 0,
+      "total": 90,
+      "injection_fired": 6,
+      "downstream_failure": 0
+    },
+    "one_to_many": {
+      "total": 60,
+      "injection_fired": 2,
+      "downstream_failure": 0
+    },
+    "many_to_one": {
+      "total": 60,
+      "injection_fired": 2,
       "downstream_failure": 0
     }
   },
-  "avg_runtime_seconds": 0.0
+  "avg_runtime_seconds": 4.56
 }

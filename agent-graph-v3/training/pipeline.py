@@ -250,6 +250,64 @@ class DetectorPipeline:
         )
         return trace
 
+    def build_anomaly_labels(self, traces: List[Any]) -> List[float]:
+        """Construct supervision using the benchmark's propagation semantics.
+
+        Clean references are fixture/topology/variant specific and deduplicated
+        by repetition, as in PropagationAnalyzer. Unassessable LEP executions
+        must not silently become negative training examples.
+        """
+        from benchmark.behavioral_anomaly import MIN_CLEAN_RUNS_REQUIRED
+        from benchmark.propagation_analysis import (
+            CleanReference, PropagationAnalyzer, _select_execution_variant,
+        )
+
+        references = {}
+        for trace in traces:
+            meta = trace.metadata
+            if meta.get("condition") != "benign" and meta.get("lep_codes"):
+                continue
+            fixture = meta.get("fixture_id", "")
+            if not fixture:
+                continue
+            key = (fixture, meta.get("topology", "unknown"),
+                   meta.get("execution_variant", "standard"))
+            if key not in references:
+                references[key] = CleanReference(
+                    fixture, meta.get("task_family", "unknown"), key[1], key[2],
+                )
+            ref = references[key]
+            repetition = meta.get("repetition_index", 0)
+            if repetition not in ref.repetition_indices:
+                ref.traces.append(trace)
+                ref.repetition_indices.append(repetition)
+
+        analyzer = PropagationAnalyzer(self.output_dir)
+        labels = []
+        for trace in traces:
+            meta = trace.metadata
+            codes = meta.get("lep_codes", [])
+            if meta.get("condition") == "benign" or not codes:
+                # Benchmark semantics require propagation from an LEP origin.
+                labels.append(0.0)
+                continue
+            code = codes[0]  # Same cell identity as propagation analysis.
+            key = (meta.get("fixture_id", ""), meta.get("topology", "unknown"),
+                   _select_execution_variant(code))
+            ref = references.get(key)
+            if ref is None or ref.num_runs < MIN_CLEAN_RUNS_REQUIRED:
+                raise ValueError(
+                    f"Cannot construct behavioral anomaly target for {trace.trace_id}: "
+                    f"clean reference {key} requires {MIN_CLEAN_RUNS_REQUIRED} "
+                    "distinct repetitions"
+                )
+            result = analyzer._analyze_single_trace(
+                trace, ref, code, meta.get("propagation_mode", "single_origin"),
+                self.graph_builder, fixture_id=key[0],
+            )
+            labels.append(float(result.propagation_occurred))
+        return labels
+
     def build_snapshots(
         self,
         event_graphs: List[EventGraph],
@@ -466,14 +524,15 @@ class DetectorPipeline:
             raise ValueError("No traces found. Run the benchmark first.")
 
         all_traces = benign_traces + malignant_traces
-        # Labels from actual downstream failure, not from variant
+        # Supervision is built separately from detector-visible graph features.
+        trace_anomaly_labels = self.build_anomaly_labels(all_traces)
         # Build graphs and collect labels/group IDs together to stay aligned
         event_graphs = []
-        all_labels = []
+        anomaly_labels = []
         all_group_ids = []
 
         logger.info("Step 2: Building EventGraphs (per-trace metadata)")
-        for trace in all_traces:
+        for trace, anomaly_label in zip(all_traces, trace_anomaly_labels):
             try:
                 meta = getattr(trace, "metadata", {}) or {}
                 topo = meta.get("topology", "unknown")
@@ -483,7 +542,7 @@ class DetectorPipeline:
                 )
                 if graph.num_nodes > 0:
                     event_graphs.append(graph)
-                    all_labels.append(float(trace.labels.downstream_failure))
+                    anomaly_labels.append(anomaly_label)
                     all_group_ids.append(self._task_instance_id(trace))
             except Exception as e:
                 logger.warning("Skipping trace %s: %s", trace.trace_id, e)
@@ -494,13 +553,13 @@ class DetectorPipeline:
             )
 
         logger.info(
-            "Built %d EventGraphs, %d with downstream_failure=True",
-            len(event_graphs), sum(all_labels),
+            "Built %d EventGraphs, %d with downstream behavioral anomaly=True",
+            len(event_graphs), sum(anomaly_labels),
         )
 
         # Step 3: Encode
         logger.info("Step 3: Encoding graphs")
-        static_data, temporal_data = self.encode_graphs(event_graphs)
+        static_data, temporal_data = self.encode_graphs(event_graphs, anomaly_labels)
 
         # Execution IDs per EventGraph (needed for execution-level split)
         execution_ids: List[str] = [
@@ -514,7 +573,7 @@ class DetectorPipeline:
         logger.info("Step 4: Splitting at execution level")
         from training.dataset import split_at_execution_level
         train_eids, val_eids, test_eids = split_at_execution_level(
-            execution_ids, all_labels, group_ids=all_group_ids,
+            execution_ids, anomaly_labels, group_ids=all_group_ids,
             train_frac=train_frac, val_frac=val_frac, seed=self.seed,
         )
 
@@ -559,7 +618,7 @@ class DetectorPipeline:
             snap_metadata: List[Dict[str, Any]] = []
             snap_exec_ids: List[str] = []
 
-            for eg, lbl in zip(event_graphs, all_labels):
+            for eg, lbl in zip(event_graphs, anomaly_labels):
                 snaps = snapshot_builder.build_from_event_graph(eg)
                 for snap in snaps:
                     all_snapshots.append(snap)
@@ -637,15 +696,15 @@ class DetectorPipeline:
 
         # ── Temporal models (TGNN, Hybrid) ───────────────────────────────────
         temporal_detectors = [d for d in detector_types if d in ("tgnn", "hybrid")]
-        if temporal_detectors:
+        if temporal_detectors or use_heuristic_baselines:
             logger.info("Step 5b: Building temporal datasets (execution-level)")
             # Use execution-level split: one TemporalGraphData per execution
             train_temporal_graphs = [temporal_data[i] for i in sorted(train_indices)]
-            train_temporal_labels = [all_labels[i] for i in sorted(train_indices)]
+            train_temporal_labels = [anomaly_labels[i] for i in sorted(train_indices)]
             val_temporal_graphs   = [temporal_data[i] for i in sorted(val_indices)]
-            val_temporal_labels   = [all_labels[i] for i in sorted(val_indices)]
+            val_temporal_labels   = [anomaly_labels[i] for i in sorted(val_indices)]
             test_temporal_graphs  = [temporal_data[i] for i in sorted(test_indices)]
-            test_temporal_labels  = [all_labels[i] for i in sorted(test_indices)]
+            test_temporal_labels  = [anomaly_labels[i] for i in sorted(test_indices)]
 
             temporal_dataset = DetectorDataset(
                 train_graphs=train_temporal_graphs,
@@ -694,7 +753,8 @@ class DetectorPipeline:
         if use_heuristic_baselines and temporal_dataset is not None:
             logger.info("Evaluating heuristic baselines...")
             heuristic_results = self._evaluate_heuristics(
-                temporal_dataset, benign_traces
+                temporal_dataset, benign_traces,
+                static_graphs={g.execution_id: g for g in static_data},
             )
             results.update(heuristic_results)
 
@@ -852,7 +912,8 @@ class DetectorPipeline:
         )
 
     def _evaluate_heuristics(
-        self, dataset: DetectorDataset, benign_traces: List[Any]
+        self, dataset: DetectorDataset, benign_traces: List[Any],
+        static_graphs: Optional[Dict[str, StaticGraphData]] = None,
     ) -> Dict[str, PipelineResult]:
         """Evaluate heuristic baselines on the test set.
 
@@ -868,14 +929,20 @@ class DetectorPipeline:
             try:
                 detector = HeuristicDetector(config)
 
+                train_graphs = dataset.train_graphs
+                test_graphs = dataset.test_graphs
+                if mode_name == "degree" and static_graphs is not None:
+                    train_graphs = [static_graphs[g.execution_id] for g in train_graphs]
+                    test_graphs = [static_graphs[g.execution_id] for g in test_graphs]
+
                 # Fit on training data
                 if mode_name != "random":
-                    detector.fit(dataset.train_graphs)
+                    detector.fit(train_graphs)
 
                 # Evaluate on test set
                 test_preds = []
                 test_labels = dataset.test_labels
-                for g in dataset.test_graphs:
+                for g in test_graphs:
                     result = detector.detect(g)
                     test_preds.append(result.confidence if result.is_malignant else 1.0 - result.confidence)
 
@@ -906,6 +973,13 @@ class DetectorPipeline:
                     best_epoch=0,
                     test_metrics=metrics,
                     train_history=[],
+                    evaluation_unit="execution",
+                    train_sample_count=len(dataset.train_graphs),
+                    val_execution_count=len(dataset.val_graphs),
+                    test_execution_count=len(dataset.test_graphs),
+                    train_execution_ids=[g.execution_id for g in dataset.train_graphs],
+                    val_execution_ids=[g.execution_id for g in dataset.val_graphs],
+                    test_execution_ids=[g.execution_id for g in dataset.test_graphs],
                 )
 
                 logger.info(

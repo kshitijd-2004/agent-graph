@@ -408,6 +408,119 @@ class FinalSnapshotDataset:
         return len(self.graphs)
 
 
+def _assign_execution_groups(group_counts, fractions, rng):
+    """Balance positive, negative and total executions while keeping groups intact.
+
+    Seeded greedy placement preserves feasible class coverage. Then improve the
+    complete allocation with whole-group moves and swaps until neither reduces
+    the squared deviation from the requested proportions. Normalize each count
+    by its dataset total so minority-class balance has equal weight.
+    """
+    groups = list(group_counts)
+    totals = [sum(counts[k] for counts in group_counts.values()) for k in range(3)]
+    remaining = [0, 0, 0]  # positive-only, negative-only, mixed groups
+
+    def kind(counts):
+        return 2 if counts[0] and counts[1] else (0 if counts[0] else 1)
+
+    for counts in group_counts.values():
+        remaining[kind(counts)] += 1
+    counts = [[0, 0, 0] for _ in fractions]
+
+    def can_complete():
+        # Each still-uncovered partition needs either one mixed group or
+        # one pure group per missing class. Enumerating the eight subsets
+        # receiving mixed groups is an exact feasibility check for 3 splits.
+        for mask in range(8):
+            if mask.bit_count() > remaining[2]:
+                continue
+            needs = [sum(counts[i][k] == 0 for i in range(3)
+                         if not mask & (1 << i)) for k in range(2)]
+            if needs[0] <= remaining[0] and needs[1] <= remaining[1]:
+                return True
+        return False
+
+    if not can_complete():
+        raise ValueError(
+            "The grouped dataset cannot support the requested split: "
+            "train/val/test each require both downstream_failure classes; "
+            f"positive-only groups={remaining[0]}, negative-only groups={remaining[1]}, "
+            f"mixed groups={remaining[2]}"
+        )
+
+    # Place large/rare-class groups first; seeded shuffle breaks equal-size ties.
+    rng.shuffle(groups)
+    groups.sort(key=lambda gid: max(group_counts[gid][k] / totals[k]
+                                   for k in range(2)), reverse=True)
+    partitions = [set(), set(), set()]
+    for gid in groups:
+        group = group_counts[gid]
+        remaining[kind(group)] -= 1
+        candidates = []
+        order = list(range(3))
+        rng.shuffle(order)
+        for i in order:
+            before = counts[i]
+            counts[i] = [before[k] + group[k] for k in range(3)]
+            if can_complete():
+                # Normalize by class totals so the majority class cannot drown
+                # out the minority. Total executions also guide split sizes.
+                cost = sum(
+                    (counts[i][k] / totals[k] - fractions[i]) ** 2
+                    - (before[k] / totals[k] - fractions[i]) ** 2
+                    for k in range(3)
+                )
+                candidates.append((cost, i))
+            counts[i] = before
+        assert candidates, "A feasible grouped assignment must remain available"
+        _, chosen = min(candidates, key=lambda candidate: candidate[0])
+        partitions[chosen].add(gid)
+        counts[chosen] = [counts[chosen][k] + group[k] for k in range(3)]
+    def cost(split, values):
+        return sum((values[k] / totals[k] - fractions[split]) ** 2
+                   for k in range(3))
+
+    # Greedy placement cannot reconsider earlier decisions. Search moves and
+    # swaps together: a swap can improve class balance without changing sizes.
+    # Iterate the seeded group order, never sets, for deterministic tie-breaking.
+    owners = {gid: i for i, partition in enumerate(partitions) for gid in partition}
+    while True:
+        best_delta = -1e-12
+        best_change = None
+        costs = [cost(i, values) for i, values in enumerate(counts)]
+        for position, gid in enumerate(groups):
+            source = owners[gid]
+            group = group_counts[gid]
+            options = [(target, None) for target in range(3) if target != source]
+            options.extend((owners[other], other) for other in groups[position + 1:]
+                           if owners[other] != source)
+            for target, other in options:
+                exchange = group_counts[other] if other is not None else (0, 0, 0)
+                new_source = [counts[source][k] - group[k] + exchange[k]
+                              for k in range(3)]
+                new_target = [counts[target][k] + group[k] - exchange[k]
+                              for k in range(3)]
+                if min(new_source[:2] + new_target[:2]) <= 0:
+                    continue
+                delta = (cost(source, new_source) + cost(target, new_target)
+                         - costs[source] - costs[target])
+                if delta < best_delta:
+                    best_delta = delta
+                    best_change = (gid, other, source, target, new_source, new_target)
+        if best_change is None:
+            break
+        gid, other, source, target, new_source, new_target = best_change
+        counts[source], counts[target] = new_source, new_target
+        partitions[source].remove(gid)
+        partitions[target].add(gid)
+        owners[gid] = target
+        if other is not None:
+            partitions[target].remove(other)
+            partitions[source].add(other)
+            owners[other] = source
+    return partitions
+
+
 def split_at_execution_level(
     execution_ids: List[str],
     labels: List[float],
@@ -418,7 +531,10 @@ def split_at_execution_level(
 ) -> tuple[set, set, set]:
     """Split distinct execution IDs into train/val/test groups.
 
-    Optional group_ids keep related task-instance executions together.
+    Optional group_ids keep related task-instance executions together. Whole
+    groups target the requested fractions of positive, negative, and total
+    distinct executions. Both classes are guaranteed in each grouped split
+    whenever feasible; otherwise a ValueError is raised.
 
     This is a pure set-level split: it returns disjoint sets of
     execution IDs for each split, guaranteeing that no execution appears
@@ -430,7 +546,7 @@ def split_at_execution_level(
 
     Args:
         execution_ids: List of execution ID strings (one per graph).
-        labels:       Float labels [len(execution_ids)].
+        labels:       Binary downstream_failure labels, aligned with execution_ids.
         train_frac:   Fraction for training (default 0.7).
         val_frac:     Fraction for validation (default 0.15).
         seed:         Random seed for reproducibility.
@@ -442,8 +558,18 @@ def split_at_execution_level(
 
     rng = random.Random(seed)
 
-    # Deduplicate execution IDs
-    unique_eids = list(dict.fromkeys(execution_ids))  # preserves insertion order
+    if len(execution_ids) != len(labels):
+        raise ValueError("execution_ids and labels must have equal lengths")
+    if not (0 < train_frac < 1 and 0 < val_frac < 1 and train_frac + val_frac < 1):
+        raise ValueError("train/val fractions must leave room for all three splits")
+    eid_labels = {}
+    for eid, label in zip(execution_ids, labels):
+        if label not in (0, 1):
+            raise ValueError(f"Execution {eid!r} has non-binary downstream_failure label {label!r}")
+        if eid in eid_labels and eid_labels[eid] != label:
+            raise ValueError(f"Execution {eid!r} has inconsistent downstream_failure labels")
+        eid_labels[eid] = label
+
     if group_ids is not None:
         if len(group_ids) != len(execution_ids):
             raise ValueError("group_ids and execution_ids must have equal lengths")
@@ -452,28 +578,31 @@ def split_at_execution_level(
             if eid in eid_groups and eid_groups[eid] != gid:
                 raise ValueError("An execution cannot belong to multiple task groups")
             eid_groups[eid] = gid
-        unique_eids = list(dict.fromkeys(group_ids))
-    rng.shuffle(unique_eids)
-
-    n = len(unique_eids)
-    if len(execution_ids) != len(labels):
-        raise ValueError("execution_ids and labels must have equal lengths")
-    if not (0 < train_frac < 1 and 0 < val_frac < 1 and train_frac + val_frac < 1):
-        raise ValueError("train/val fractions must leave room for all three splits")
-    if n < 3:
-        raise ValueError("Need at least 3 executions for train/val/test splits")
-    n_train = min(max(1, int(n * train_frac)), n - 2)
-    n_val = min(max(1, int(n * val_frac)), n - n_train - 1)
-
-    train_eids = set(unique_eids[:n_train])
-    val_eids = set(unique_eids[n_train:n_train + n_val])
-    test_eids = set(unique_eids[n_train + n_val:])
-
-    if group_ids is not None:
+        group_counts = defaultdict(lambda: [0, 0, 0])
+        for eid, gid in eid_groups.items():
+            group_counts[gid][0 if eid_labels[eid] == 1 else 1] += 1
+            group_counts[gid][2] += 1
+        partitions = _assign_execution_groups(
+            group_counts, (train_frac, val_frac, 1 - train_frac - val_frac), rng
+        )
+        for i in range(3):
+            for j in range(i):
+                assert partitions[i].isdisjoint(partitions[j]), "task group overlap"
         train_eids, val_eids, test_eids = (
             {eid for eid, gid in eid_groups.items() if gid in split}
-            for split in (train_eids, val_eids, test_eids)
+            for split in partitions
         )
+    else:
+        unique_eids = list(eid_labels)
+        rng.shuffle(unique_eids)
+        n = len(unique_eids)
+        if n < 3:
+            raise ValueError("Need at least 3 executions for train/val/test splits")
+        n_train = min(max(1, int(n * train_frac)), n - 2)
+        n_val = min(max(1, int(n * val_frac)), n - n_train - 1)
+        train_eids = set(unique_eids[:n_train])
+        val_eids = set(unique_eids[n_train:n_train + n_val])
+        test_eids = set(unique_eids[n_train + n_val:])
 
     # Assert non-empty
     assert len(train_eids) > 0, "train split has no executions"
@@ -485,17 +614,12 @@ def split_at_execution_level(
     assert train_eids.isdisjoint(test_eids), "train/test execution overlap"
     assert val_eids.isdisjoint(test_eids), "val/test execution overlap"
 
-    eid_labels = {}
-    for eid, label in zip(execution_ids, labels):
-        if label not in (0, 1):
-            raise ValueError(f"Execution {eid!r} has non-binary downstream_failure label {label!r}")
-        if eid in eid_labels and eid_labels[eid] != label:
-            raise ValueError(f"Execution {eid!r} has inconsistent downstream_failure labels")
-        eid_labels[eid] = label
     for name, split in (("train", train_eids), ("val", val_eids), ("test", test_eids)):
         positives = sum(eid_labels[eid] == 1 for eid in split)
         negatives = len(split) - positives
         groups = len({eid_groups[eid] for eid in split}) if group_ids is not None else len(split)
+        logger.info("%s: total=%d positive=%d negative=%d groups=%d",
+                    name, len(split), positives, negatives, groups)
         if not positives or not negatives:
             raise ValueError(
                 f"Invalid {name} split: executions={len(split)} positive={positives} "
