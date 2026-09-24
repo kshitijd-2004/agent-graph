@@ -485,6 +485,107 @@ class DetectorPipeline:
 
         return result
 
+    def run_cross_validation(
+        self, detector_types=None, snapshot_interval=5, num_epochs=100,
+        batch_size=8, patience=10, lr=1e-4, weight_decay=1e-4,
+        cv=None, use_heuristic_baselines=True,
+    ):
+        """Nested CV; epoch budget selected by complete inner OOF AUPRC.
+
+        ``patience`` is unused: fixed epoch candidates replace split-specific
+        early stopping. Static training uses all prefixes; scoring uses only
+        the final graph of each execution.
+        """
+        import torch
+        from training.cross_validation import NestedGroupCV
+        cv = cv or NestedGroupCV(seed=self.seed)
+        if num_epochs < 1:
+            raise ValueError("num_epochs must be positive")
+        benign, malignant = self.load_traces()
+        traces = benign + malignant
+        labels = self.build_anomaly_labels(traces)
+        graphs, ys, groups = [], [], []
+        for trace, label in zip(traces, labels):
+            meta = getattr(trace, "metadata", {}) or {}
+            graph = self.graph_builder.build(
+                trace, topology_name=meta.get("topology", "unknown"),
+                task_family=meta.get("task_family", "unknown"), strict=False)
+            if graph.num_nodes == 0:
+                raise ValueError(f"Empty execution graph: {graph.execution_id}")
+            graphs.append(graph)
+            ys.append(label)
+            groups.append(self._task_instance_id(trace))
+        eids = [g.execution_id for g in graphs]
+        if len(set(eids)) != len(eids):
+            raise ValueError("Expected unique execution IDs")
+        static, temporal = self.encode_graphs(graphs, ys)
+        final_static = dict(zip(eids, static))
+        temporal_map = dict(zip(eids, temporal))
+        label_map = dict(zip(eids, ys))
+        snapshot_map = {}
+        detector_types = detector_types or ["static_gnn", "tgnn", "hybrid"]
+        if "static_gnn" in detector_types:
+            builder = TemporalSnapshotBuilder(snapshot_interval=snapshot_interval)
+            for eid, graph, label in zip(eids, graphs, ys):
+                snapshots = builder.build_from_event_graph(graph)
+                encoded, _ = self.encode_graphs(snapshots, [label] * len(snapshots))
+                snapshot_map[eid] = encoded or [final_static[eid]]
+        configurations = [{"epochs": e} for e in sorted({max(1, num_epochs//4),
+                                                         max(1, num_epochs//2), num_epochs})]
+        results = {}
+        for kind in detector_types:
+            def fit(train_ids, train_labels, pos_weight, config):
+                torch.manual_seed(self.seed)
+                np.random.seed(self.seed)
+                common = dict(node_feature_dim=OBSERVABLE_NODE_FEATURE_DIM, dropout=0.1)
+                if kind == "static_gnn":
+                    model = StaticGNN(**common, hidden_dim=64, num_layers=3)
+                elif kind == "tgnn":
+                    model = TemporalGNN(**common, memory_dim=64, time_dim=16)
+                elif kind == "hybrid":
+                    model = HybridDetector(**common, memory_dim=64, time_dim=16, fusion_dim=32)
+                else:
+                    raise ValueError(f"Unknown detector: {kind}")
+                trainer = DetectorTrainer(model, model_type="static" if kind == "static_gnn" else "temporal",
+                                          device=self.device, lr=lr, weight_decay=weight_decay)
+                trainer.criterion = torch.nn.BCEWithLogitsLoss(
+                    pos_weight=torch.tensor(pos_weight, device=trainer.device))
+                train_graphs, expanded_labels = [], []
+                for eid, label in zip(train_ids, train_labels):
+                    samples = snapshot_map[eid] if kind == "static_gnn" else [temporal_map[eid]]
+                    train_graphs.extend(samples)
+                    expanded_labels.extend([label] * len(samples))
+                for _ in range(config["epochs"]):
+                    trainer.train_epoch(train_graphs, expanded_labels, batch_size=batch_size)
+                return trainer
+
+            def predict(trainer, ids):
+                mapping = final_static if kind == "static_gnn" else temporal_map
+                # evaluate does a single inference pass; its unused loss/metrics
+                # cannot influence fitting, configuration, or calibration.
+                return trainer.evaluate([mapping[e] for e in ids],
+                                        [label_map[e] for e in ids], batch_size=batch_size)["predictions"]
+
+            results[kind] = cv.run(eids, ys, groups, fit, predict, configurations)
+            results[kind].save(self.checkpoint_dir / f"{kind}_nested_cv.json")
+        if use_heuristic_baselines:
+            for name, config in [("random", HeuristicDetector.RANDOM),
+                                 ("degree", HeuristicDetector.DEGREE_BASED),
+                                 ("temporal", HeuristicDetector.TEMPORAL)]:
+                mapping = final_static if name == "degree" else temporal_map
+                def fit_baseline(ids, labels, weight, configuration):
+                    np.random.seed(self.seed)
+                    detector = HeuristicDetector(config)
+                    if name != "random":
+                        detector.fit([mapping[e] for e in ids])
+                    return detector
+                def predict_baseline(detector, ids):
+                    predictions = [detector.detect(mapping[e]) for e in ids]
+                    return [r.confidence if r.is_malignant else 1-r.confidence for r in predictions]
+                results[name] = cv.run(eids, ys, groups, fit_baseline, predict_baseline, [{}])
+                results[name].save(self.checkpoint_dir / f"{name}_nested_cv.json")
+        return results
+
     def run(
         self,
         detector_types: List[str] = None,

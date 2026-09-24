@@ -226,3 +226,16 @@ def aggregate_metrics(metric_dicts: list[dict]) -> dict:
         result[f"{key}_max"] = float(values.max())
 
     return result
+
+
+def find_best_f1_threshold(y_true: np.ndarray, y_scores: np.ndarray) -> float:
+    """Maximize F1 over observed scores; ties prefer the highest threshold."""
+    from sklearn.metrics import precision_recall_curve
+    y_true, y_scores = np.asarray(y_true), np.asarray(y_scores, dtype=float)
+    if y_true.shape != y_scores.shape or y_true.size == 0 or not np.isfinite(y_scores).all():
+        raise ValueError("Threshold calibration needs aligned, finite, nonempty OOF predictions")
+    precision, recall, thresholds = precision_recall_curve(y_true, y_scores)
+    denominator = precision[:-1] + recall[:-1]
+    f1 = np.divide(2 * precision[:-1] * recall[:-1], denominator,
+                   out=np.zeros_like(denominator), where=denominator > 0)
+    return float(thresholds[np.flatnonzero(f1 == f1.max())[-1]])
