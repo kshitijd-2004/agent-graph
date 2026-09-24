@@ -789,7 +789,12 @@ class ScenarioRunner:
         if cache_key in self._task_evaluator_cache:
             return self._task_evaluator_cache[cache_key]
 
-        fixture_path = fixture_root / "workspace_fixtures" / fixture_id
+        # fixture_root is normally the workspace_fixtures folder itself (what the
+        # benchmark passes and what _execute_scenario uses); fall back to the old
+        # <root>/workspace_fixtures/<id> layout for callers that pass the repo root.
+        fixture_path = fixture_root / fixture_id
+        if not (fixture_path / "manifest.json").exists():
+            fixture_path = fixture_root / "workspace_fixtures" / fixture_id
         evaluator = get_evaluator(task_family, fixture_path=fixture_path)
         if evaluator is None:
             return None
