@@ -91,6 +91,14 @@ class HandoffCorruptionLEP:
         if lep_config.canonical_operator_template and not self._canonical_operator:
             self._canonical_operator = lep_config.canonical_operator_template
 
+    # ── Fixture-aware attack config ──────────────────────────────────────────
+
+    def _fixture_attack_config(self) -> Dict[str, Any]:
+        """Return fixture-specific handoff attack config, if present."""
+        manifest = getattr(self, "fixture_manifest", {}) or {}
+        attack = manifest.get("attack", {}) or {}
+        return attack.get("handoff", {}) or {}
+
     def evaluate(
         self,
         event: TraceEvent,
@@ -113,12 +121,13 @@ class HandoffCorruptionLEP:
         """Produce a corrupted version of handoff content.
 
         The corruption variant is resolved from the canonical operator
-        recorded at scenario-build time. The caller-supplied corruption_type
-        is used only as a fallback if no canonical operator is set.
+        recorded at scenario-build time. The caller-supplied
+        corruption_type is used only as a fallback if no other source
+        provides an operator.
         """
         instance_id = f"{self.config.code}_{handoff_event.event_id}"
 
-        # Resolve variant from canonical operator if available
+        # Resolve the scenario's operator.
         canonical = self._canonical_operator
         variant = self.CANONICAL_TO_VARIANT.get(canonical, corruption_type)
 
@@ -205,11 +214,10 @@ class HandoffCorruptionLEP:
 
     # ── Private helpers ─────────────────────────────────────────────────────
 
-    @staticmethod
-    def _apply_corruption(original: str, corruption_type: str) -> str:
+    def _apply_corruption(self, original: str, corruption_type: str) -> str:
         """Apply a specific corruption variant."""
         if corruption_type == "omit_key_finding":
-            return HandoffCorruptionLEP._omit_key_finding(original)
+            return HandoffCorruptionLEP._omit_key_finding(original, self._fixture_attack_config().get("critical_terms"))
         elif corruption_type == "alter_severity":
             return HandoffCorruptionLEP._alter_severity(original)
         elif corruption_type == "replace_value":
@@ -219,11 +227,11 @@ class HandoffCorruptionLEP:
         elif corruption_type == "unsupported_recommendation":
             return HandoffCorruptionLEP._add_unsupported_recommendation(original)
         elif corruption_type == "swap_attribution":
-            return HandoffCorruptionLEP._swap_attribution(original)
+            return HandoffCorruptionLEP._swap_attribution(original, self._fixture_attack_config().get("swap_pairs"))
         return original
 
     @staticmethod
-    def _omit_key_finding(text: str) -> str:
+    def _omit_key_finding(text: str, critical_terms: list[str] | None = None) -> str:
         """Remove or degrade the most critical-sounding clause/sentence.
 
         Works at the sentence/clause level so it degrades gracefully on
@@ -250,6 +258,8 @@ class HandoffCorruptionLEP:
 
         def _is_critical(clause: str) -> bool:
             lower = clause.lower()
+            if critical_terms is not None:
+                return any(term.lower() in lower for term in critical_terms)
             if any(p in lower for p in skip_patterns):
                 return True
             if any(re.search(np, clause) for np in numeric_patterns):
@@ -337,13 +347,24 @@ class HandoffCorruptionLEP:
         return text + rec
 
     @staticmethod
-    def _swap_attribution(text: str) -> str:
+    def _swap_attribution(text: str, swap_pairs: list[list[str]] | None = None) -> str:
         """Swap source attribution between documents.
 
         For research_synthesis: swap Paper A and Paper B attributions.
         For financial_analysis: downgrade authoritative sources to preliminary.
         """
         import re
+
+        if swap_pairs is not None:
+            swaps = {a: b for a, b in swap_pairs}
+            swaps.update({b: a for a, b in swap_pairs})
+            if not swaps:
+                return text
+            pattern = "|".join(
+                (r"(?<!\w)" if key[0].isalnum() else "") + re.escape(key)
+                + (r"(?!\w)" if key[-1].isalnum() else "")
+                for key in sorted(swaps, key=len, reverse=True))
+            return re.sub(pattern, lambda match: swaps[match.group(0)], text)
 
         # ── Research synthesis: swap Paper A ↔ Paper B ─────────────────
         if "Paper A" in text or "Paper B" in text or "Chen" in text or "Okafor" in text:

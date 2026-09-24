@@ -130,6 +130,28 @@ class ToolResultCorruptionLEP:
             )
         )
 
+    def _fixture_attack_config(self) -> Dict[str, Any]:
+        """Return fixture-specific tool-result attack config, if present."""
+        manifest = getattr(self, "fixture_manifest", {}) or {}
+        attack = manifest.get("attack", {}) or {}
+        return attack.get("tool_result", {}) or {}
+
+    def _target_file(self) -> str | None:
+        """Resolve fixture target first, then legacy task-family fallback."""
+        attack = self._fixture_attack_config()
+        manifest = getattr(self, "fixture_manifest", {}) or {}
+        if attack.get("target_file") and attack["target_file"] not in manifest.get("required_files", []):
+            raise ValueError("attack.tool_result.target_file must be a required file")
+        return (
+            attack.get("target_file")
+            or self.TARGET_FILES.get(self.task_family)
+        )
+
+    def _operator(self) -> str:
+        """Resolve fixture operator first, then configured/legacy fallback."""
+        attack = self._fixture_attack_config()
+        return attack.get("operator") or self._canonical_operator
+
     def evaluate(
         self,
         event: TraceEvent,
@@ -167,7 +189,7 @@ class ToolResultCorruptionLEP:
                 reason=f"Ineligible tool: {event.tool_name}",
             )
     
-        target_file = self.TARGET_FILES.get(self.task_family)
+        target_file = self._target_file()
     
         if not target_file:
             return TriggerDecision(
@@ -221,14 +243,20 @@ class ToolResultCorruptionLEP:
         ``variant`` remains accepted for backwards compatibility.
         """
 
-        operator = variant or self._canonical_operator
+        operator = variant or self._operator()
 
         instance_id = f"{self.config.code}_{event.event_id}"
 
-        perturbed = self._apply_corruption(
-            original_result,
-            operator,
-        )
+        attack = self._fixture_attack_config()
+        if operator == "source_swap" and "alt_conclusion" in attack:
+            perturbed = self._swap_conclusion(original_result,
+                attack.get("conclusion_marker", "## Conclusion"), attack["alt_conclusion"])
+        elif operator == "partial_omission" and getattr(self, "fixture_manifest", {}).get("task_prompt"):
+            functions = tuple(issue["function"].split(".")[-1]
+                for issue in self.fixture_manifest.get("required_issues", []) if issue.get("function"))
+            perturbed = self._fixture_omission(original_result, functions)
+        else:
+            perturbed = self._apply_corruption(original_result, operator)
 
         changed = perturbed != original_result
 
@@ -257,7 +285,7 @@ class ToolResultCorruptionLEP:
             self.config.code,
             event.event_id,
             self.task_family,
-            self.TARGET_FILES.get(self.task_family),
+            self._target_file(),
             operator,
             changed,
         )
@@ -310,6 +338,26 @@ class ToolResultCorruptionLEP:
         self.matcher.reset()
 
     # ── Private helpers ──────────────────────────────────────────────
+
+    @staticmethod
+    def _fixture_omission(original: str, functions: tuple[str, ...]) -> str:
+        """Omit a manifest-named definition, including methods and classes."""
+        import ast
+        try:
+            tree = ast.parse(original)
+        except SyntaxError:
+            return ToolResultCorruptionLEP._partial_omission(original)
+        lines = original.splitlines(keepends=True)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.name in functions:
+                start = min([node.lineno] + [d.lineno for d in node.decorator_list]) - 1
+                candidate = "".join(lines[:start] + lines[node.end_lineno:])
+                try:
+                    ast.parse(candidate)
+                except SyntaxError:
+                    continue
+                return candidate
+        return ToolResultCorruptionLEP._partial_omission(original)
 
     @staticmethod
     def _apply_corruption(

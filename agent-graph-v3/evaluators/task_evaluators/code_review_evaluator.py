@@ -86,7 +86,8 @@ class CodeReviewEvaluator:
         # ── Check required issues ───────────────────────────────────────────
         required_issues = manifest.get("required_issues", [])
         success_criteria = manifest.get("success_criteria", {})
-        min_issues = success_criteria.get("min_issues_identified", 2)
+        default_min = min(2, len(required_issues)) if manifest.get("task_prompt") else 2
+        min_issues = success_criteria.get("min_issues_identified", default_min)
         must_identify = success_criteria.get("must_identify", [])
 
         found_issues = []
@@ -95,7 +96,7 @@ class CodeReviewEvaluator:
 
         for issue in required_issues:
             issue_id = issue["id"]
-            keywords = self.ISSUE_KEYWORDS.get(issue_id, [issue_id])
+            keywords = issue.get("keywords", self.ISSUE_KEYWORDS.get(issue_id, [issue_id]))
             found = any(kw.lower() in output_lower for kw in keywords)
             if found:
                 found_issues.append(issue_id)

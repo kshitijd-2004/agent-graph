@@ -120,11 +120,48 @@ class IndirectPromptInjectionLEP:
         self._injection_instances: list[IndirectInjectionResult] = []
         self._target_files: Dict[str, str] = {}  # event_id -> poisoned content
 
+    def _fixture_attack_config(self) -> Dict[str, Any]:
+        """Return fixture-specific prompt-injection config, if present."""
+        manifest = getattr(self, "fixture_manifest", {}) or {}
+        attack = manifest.get("attack", {}) or {}
+        return attack.get("prompt_injection", {}) or {}
+
+    def _target_file(self) -> str | None:
+        """Return fixture-specific target file, if configured."""
+        target = self._fixture_attack_config().get("target_file")
+        manifest = getattr(self, "fixture_manifest", {}) or {}
+        if target is None and manifest.get("task_prompt"):
+            required = manifest.get("required_files", [])
+            target = required[0] if required else None
+        return target
+
     def evaluate(
         self,
         event: TraceEvent,
     ) -> TriggerDecision:
         """Check if injection should occur for this read event."""
+        target_file = self._target_file()
+
+        # Fixture-aware targeting. Legacy fixtures without an explicit
+        # prompt-injection target retain the existing trigger behavior.
+        if target_file:
+            actual_path = (event.tool_arguments or {}).get("path", "")
+            normalized_actual = actual_path.removeprefix("./")
+            normalized_target = target_file.removeprefix("./")
+
+            if normalized_actual != normalized_target:
+                return TriggerDecision(
+                    trigger_id=self.config.code,
+                    event_id=event.event_id,
+                    state=TriggerState.ELIGIBLE,
+                    fired=False,
+                    matched=False,
+                    reason=(
+                        f"Not fixture prompt-injection target: {actual_path!r}; "
+                        f"expected {target_file!r}"
+                    ),
+                )
+
         return self.matcher.evaluate(
             trigger_id=self.config.code,
             trigger=self.trigger,

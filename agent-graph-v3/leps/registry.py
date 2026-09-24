@@ -97,7 +97,14 @@ class LEPOrchestrator:
     - Resetting state between runs
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        fixture_id: Optional[str] = None,
+        fixture_manifest: Optional[Dict[str, Any]] = None,
+    ):
+        self.fixture_id = fixture_id
+        self.fixture_manifest = fixture_manifest or {}
+
         self._active_leps: Dict[str, Any] = {}  # lep_code -> LEP instance
         self._trigger_results: list = []
         # Per-LEP firing state: tracks origins, targets, and occurrence counts
@@ -125,6 +132,11 @@ class LEPOrchestrator:
 
         lep_class = LEP_REGISTRY[code]
         instance = lep_class(lep_config)
+
+        # Attach fixture-specific context without changing LEP constructors.
+        instance.fixture_id = self.fixture_id
+        instance.fixture_manifest = self.fixture_manifest
+
         self._active_leps[code] = instance
         # Invalidate any previous topology binding so register_leps followed
         # by set_topology() always re-resolves from the new config.

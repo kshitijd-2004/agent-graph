@@ -111,8 +111,13 @@ def test_all_families_share_targets_and_grouped_splits(examples, monkeypatch, fa
                 mapping[graph.execution_id] = label
             splits.append(mapping)
         received[name] = splits
-        return PipelineResult(name, 0., 0,
-            {"labels": list(splits[2].values()), "predictions": list(splits[2].values())}, [])
+        return PipelineResult(
+            detector_type=name, best_val_auprc=0., best_val_auroc=0.,
+            best_val_f1=0., best_epoch=0, best_threshold=0.5,
+            test_metrics={"labels": list(splits[2].values()),
+                          "predictions": list(splits[2].values())},
+            train_history=[],
+        )
     monkeypatch.setattr(pipeline, "_train_static_gnn",
                         lambda dataset, *args, **kwargs: capture("static_gnn", dataset))
     monkeypatch.setattr(pipeline, "_train_temporal_detector",

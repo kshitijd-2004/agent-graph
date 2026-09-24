@@ -38,8 +38,13 @@ class BaseTask(ABC):
     BENIGN_PROMPTS: Dict[str, str] = {}
     TASK_PROMPTS: List[str] = []
 
-    def __init__(self, workspace_base: Path = None):
+    def __init__(self, workspace_base: Path = None, fixture_manifest: Dict[str, Any] = None):
         self.workspace_base = Path(workspace_base) if workspace_base else Path("/tmp")
+        self.fixture_manifest = fixture_manifest or {}
+        if "required_files" in self.fixture_manifest:
+            self.REQUIRED_DOCUMENTS = list(self.fixture_manifest["required_files"])
+        if self.fixture_manifest.get("task_prompt"):
+            self.TASK_PROMPTS = [self.fixture_manifest["task_prompt"]]
 
     @abstractmethod
     def get_lep_configs(self) -> Dict[str, LEPConfig]:
@@ -53,6 +58,9 @@ class BaseTask(ABC):
 
     def get_prompt(self, agent: str) -> str:
         """Get the natural-language prompt for an agent."""
+        if self.fixture_manifest.get("task_prompt"):
+            files = "\n".join(self.fixture_manifest.get("required_files", []))
+            return f"You are {agent}.\n{self.fixture_manifest['task_prompt']}\nRequired files:\n{files}"
         return self.BENIGN_PROMPTS.get(agent, f"You are {agent}. Complete the task.")
 
     def get_memory_addition(self, agent: str) -> str:

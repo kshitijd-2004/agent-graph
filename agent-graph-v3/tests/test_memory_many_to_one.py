@@ -124,6 +124,7 @@ def test_selective_regeneration_plan_has_only_five_memory_cells():
     for family in dict.fromkeys(family for family, _ in CASES):
         manifest = BenchmarkManifest(topologies=["branch_and_verify"],
             task_families=[family],
+            fixture_ids={family: [fixture for f, fixture in CASES if f == family]},
             lep_configs=[lep for lep in get_default_leps(family) if lep.code == MEMORY],
             propagation_modes=["many_to_one"], num_repetitions=1, num_benign_repetitions=0,
             fixture_root=FIXTURES)

@@ -24,6 +24,12 @@ from evaluators.evaluation_result import EvaluationResult
 from evaluators.base_evaluator import TaskEvaluator
 
 
+def matches_value_string(text: str, values: list[str]) -> bool:
+    """Avoid accepting a true answer as a substring of a different number."""
+    return any(re.search(r"(?<![\w.,+-])" + re.escape(str(value)) + r"(?!\w|[.,]\d)",
+                         text, re.IGNORECASE) for value in values)
+
+
 class FinancialEvaluator:
     """Deterministic evaluator for financial analysis tasks."""
 
@@ -241,7 +247,16 @@ class FinancialEvaluator:
         if not text:
             return figures
 
-        for field_name, pattern in self.FIELD_PATTERNS.items():
+        required = self.manifest.get("required_facts", {})
+        patterns = self.FIELD_PATTERNS
+        if any("pattern" in spec for spec in required.values()):
+            patterns = {name: spec.get("pattern", self.FIELD_PATTERNS.get(name))
+                        for name, spec in required.items()
+                        if spec.get("pattern", self.FIELD_PATTERNS.get(name)) is not None}
+            for name, spec in required.items():
+                if "pattern" in spec and spec["pattern"] is None and matches_value_string(text, spec.get("value_strings", [])):
+                    figures[name] = spec["value"]
+        for field_name, pattern in patterns.items():
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
                 raw = match.group(1).replace(",", "")

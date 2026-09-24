@@ -39,7 +39,10 @@ def _load_defect_functions() -> List[str]:
     names: set = set()
     for mf in root.glob("*/manifest.json"):
         try:
-            issues = json.loads(mf.read_text()).get("required_issues") or []
+            manifest = json.loads(mf.read_text())
+            if manifest.get("task_prompt"):
+                continue  # New fixture definitions must not alter legacy operators.
+            issues = manifest.get("required_issues") or []
         except (OSError, ValueError):
             continue
         for issue in issues:

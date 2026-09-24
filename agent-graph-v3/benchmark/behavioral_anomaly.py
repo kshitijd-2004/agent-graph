@@ -224,6 +224,11 @@ def _fact_text(event: TraceEvent) -> str:
                 return "\n".join(content_strings(v) for v in value)
             return str(value)
         return content_strings(event.tool_arguments)
+    if event.event_type == TraceEventType.TOPOLOGY_TRANSITION:
+        return event.observable.get("handoff_summary", "")
+    # Active behavior is the emitted content, never the incoming prompt.
+    if event.event_type in ACTIVE_EVENT_TYPES:
+        return event.output_text or ""
     return event.output_text or event.tool_result or event.input_text or ""
 
 
@@ -247,6 +252,10 @@ def extract_financial_facts(trace: Trace, fixture_spec: dict) -> list[TaskFact]:
     }
 
     required_facts = fixture_spec.get("required_facts", {})
+    if any("pattern" in spec for spec in required_facts.values()):
+        field_patterns = {name: spec.get("pattern", field_patterns.get(name))
+                          for name, spec in required_facts.items()
+                          if spec.get("pattern", field_patterns.get(name)) is not None}
     version_conflicts = fixture_spec.get("version_conflicts", [])
 
     for event in trace.events:
@@ -254,6 +263,12 @@ def extract_financial_facts(trace: Trace, fixture_spec: dict) -> list[TaskFact]:
         if not text:
             continue
         text_lower = text.lower()
+
+        for name, spec in required_facts.items():
+            if "pattern" in spec and spec["pattern"] is None:
+                from evaluators.task_evaluators.financial_evaluator import matches_value_string
+                if matches_value_string(text, spec.get("value_strings", [])):
+                    facts.append(TaskFact(key=name, value=spec["value"], provenance_event_id=event.event_id))
 
         for field_name, pattern in field_patterns.items():
             match = re.search(pattern, text, re.IGNORECASE)
@@ -316,7 +331,7 @@ def extract_code_review_issue_presence(trace: Trace, fixture_spec: dict) -> list
 
         for issue_spec in required_issues:
             issue_id = issue_spec.get("id", "")
-            keywords = issue_keywords.get(issue_id, [issue_id])
+            keywords = issue_spec.get("keywords", issue_keywords.get(issue_id, [issue_id]))
 
             # Check for positive presence
             present = any(kw.lower() in text_lower for kw in keywords)
@@ -526,15 +541,15 @@ def _event_uses_or_forwards_perturbed(event: TraceEvent, trace_context: dict) ->
     """Check if event actively uses, stores, forwards, or asserts information."""
     if event.event_type not in ACTIVE_EVENT_TYPES:
         return False
-    labels = event.event_labels
-    if labels and (labels.consumes_perturbed_info or labels.transforms_perturbed_info
-                   or labels.stores_perturbed_info):
-        return True
     facts = trace_context.get("event_facts", {}).get(event.event_id)
     if facts is None:
         facts = _event_facts(event, trace_context.get("fixture_spec", {}), trace_context.get("task_family", ""))
-    return any(f.key in trace_context.get("deviation_fact_keys", set())
-               and (f.key, f.value) in trace_context.get("perturbed_facts", set()) for f in facts)
+    actual = {f.key: f.value for f in facts}
+    # Evidence is scoped to a causally upstream delivery boundary. Missing
+    # numeric facts have no extracted value, so absence must be explicit here.
+    return any(actual.get(key) == value
+               for key, value in trace_context.get("perturbed_facts", set())
+               if key in trace_context.get("deviation_fact_keys", set()))
 
 
 def _tool_result_corruption_consistent(event: TraceEvent, deviation: BehaviorComparison, trace_context: dict) -> bool:
@@ -720,10 +735,16 @@ def _aggregate_slot_profiles(
         data = {}
         for event in trace.events:
             slot = slots[event.event_id]
-            entry = data.setdefault(slot, {"parents": set(), "ancestors": set(),
+            entry = data.setdefault(slot, {"parents": set(), "ancestors": None,
                                            "successors": set(), "facts": defaultdict(set)})
             entry["parents"].update(slots[p] for p in parents[event.event_id])
-            entry["ancestors"].update(slots[p] for p in _ancestors(event.event_id, parents))
+            ancestors = {slots[p] for p in _ancestors(event.event_id, parents)}
+            # A slot can recur before and after a dependency. Only dependencies
+            # shared by EVERY occurrence may constrain an arbitrary match.
+            if entry["ancestors"] is None:
+                entry["ancestors"] = ancestors
+            else:
+                entry["ancestors"].intersection_update(ancestors)
             for fact in _event_facts(event, fixture_spec or {}, trace.metadata.get("task_family", "unknown")):
                 entry["facts"][fact.key].add(fact.value)
         for event in trace.events:
@@ -883,7 +904,7 @@ def detect_omissions(
     ancestors = _ancestors(event.event_index, parents)
     actual_slots = {slots[i] for i in ancestors}
     for required, count in profile.required_ancestor_slots.items():
-        if count / profile.total_runs < STABLE_SUPPORT_THRESHOLD or required in actual_slots:
+        if count != profile.run_support or required in actual_slots:
             continue
         # Attribute a missing dependency to the first affected action on each DAG branch.
         origins = {n.event_index for n in graph.nodes if n.is_injection_origin}
@@ -892,7 +913,7 @@ def detect_omissions(
             and (eligible_indices is None or i in eligible_indices)
             and slots[i].event_type in ACTIVE_EVENT_TYPES
             and (prior := clean_ref.slot_profiles.get(slots[i])) is not None
-            and prior.required_ancestor_slots.get(required, 0) / prior.total_runs >= STABLE_SUPPORT_THRESHOLD
+            and prior.required_ancestor_slots.get(required, 0) == prior.run_support
             and required not in {slots[j] for j in _ancestors(i, parents)}
             for i in ancestors
         )
@@ -937,12 +958,31 @@ def detect_behavioral_anomalies(
 
     origin_indices = {n.event_index for n in origin_nodes}
     reachable = _reachable_from_origins(graph, origin_nodes)
-    trace_context["perturbed_facts"] = {
-        (f.key, f.value) for e in trace.events if e.event_index in origin_indices
-        for f in event_facts[e.event_id]
-        if not any(f.key == clean.key and f.value == clean.value
-                   for clean in getattr(clean_ref.slot_profiles.get(semantic_slot(e)), "structured_facts", []))
-    }
+    # Sender AGENT_HANDOFF output may be the pre-delivery summary. The
+    # transition records the actual delivered summary (including merged
+    # handoffs); compare that observable boundary to its own clean slot.
+    origin_ids = {e.event_id for e in trace.events if e.event_index in origin_indices}
+    deliveries = {e.event_index: set(e.depends_on) & origin_ids for e in trace.events
+                  if e.event_type == TraceEventType.TOPOLOGY_TRANSITION
+                  and set(e.depends_on) & origin_ids}
+    boundary_changes = {}
+    for source in trace.events:
+        if (source.event_index not in origin_indices
+                and source.event_index not in deliveries):
+            continue
+        profile = clean_ref.slot_profiles.get(semantic_slot(source))
+        actual = {f.key: f.value for f in event_facts[source.event_id]}
+        expected = {f.key: f.value for f in profile.structured_facts} if profile else {}
+        changes = {(key, actual.get(key)) for key, value in expected.items()
+                   if actual.get(key) != value}
+        # Novel observed values remain evidence even when the source slot has
+        # no stable clean value. No hidden intervention data is consulted.
+        changes.update((key, value) for key, value in actual.items()
+                       if key not in expected and value is not False)
+        boundary_changes[source.event_index] = changes
+    graph_parents = defaultdict(set)
+    for src, tgt in graph.edges:
+        graph_parents[tgt].add(src)
     trace_context["fixture_spec"] = fixture_spec
     event_slots = {e.event_index: semantic_slot(e) for e in trace.events}
 
@@ -989,6 +1029,13 @@ def detect_behavioral_anomalies(
             reason.split(":", 1)[1] for reason in all_reasons
             if reason.startswith("structured_fact_mismatch:")
         }
+        ancestors = _ancestors(event.event_index, graph_parents)
+        delivered_origin_ids = set().union(
+            *(ids for index, ids in deliveries.items() if index in ancestors))
+        superseded = {e.event_index for e in trace.events if e.event_id in delivered_origin_ids}
+        trace_context["perturbed_facts"] = set().union(
+            *(changes for index, changes in boundary_changes.items()
+              if index in ancestors and index not in superseded))
         # Stage 4: LEP-consistent manifestation
         if not is_lep_consistent_manifestation(event, comparison, lep_code, trace_context):
             continue

@@ -419,7 +419,7 @@ class DryRunBackend:
 
     def set_context(self, lep_code: str, task_family: str,
                     lep_corrupted_values: Dict[str, Any] = None,
-                    memory_store=None) -> None:
+                    memory_store=None, target_file: str | None = None) -> None:
         """Set the scenario context for LEP-specific trajectory generation.
 
         Preserves any per-role trajectory registered via set_role_trajectory().
@@ -439,7 +439,7 @@ class DryRunBackend:
             "research_synthesis": "documents/paper_a.md",
             "competitive_intelligence": "documents/pricing_data.md",
         }
-        target_file = TARGET_FILES.get(task_family, "documents/primary_source.md")
+        target_file = target_file or TARGET_FILES.get(task_family, "documents/primary_source.md")
 
         # If a per-role trajectory was registered for the *current* agent, keep it.
         if self._agent_name in self._per_role_trajectories:
@@ -821,7 +821,11 @@ class ScenarioRunner:
 
         # Strip ground truth from agent-visible manifest and write evaluator-only copy
         manifest_path = fixture_dir / "manifest.json"
+        fixture_manifest: Dict[str, Any] = {}
         if manifest_path.exists():
+            with open(manifest_path) as f:
+                fixture_manifest = json.load(f)
+
             agent_manifest = self._strip_ground_truth_from_manifest(manifest_path)
             with open(ws_path / "manifest.json", "w") as f:
                 json.dump(agent_manifest, f, indent=2)
@@ -837,7 +841,10 @@ class ScenarioRunner:
 
         # Initialize LEP orchestrator
         from leps.registry import LEPOrchestrator
-        orchestrator = LEPOrchestrator()
+        orchestrator = LEPOrchestrator(
+            fixture_id=scenario.fixture_id,
+            fixture_manifest=fixture_manifest,
+        )
         lep_corrupted_values: Dict[str, Any] = {}
         if not scenario.is_benign() and scenario.lep_configs:
             for lep in scenario.lep_configs:
@@ -870,10 +877,16 @@ class ScenarioRunner:
 
         # Configure dry-run backend with LEP-specific trajectory
         if isinstance(self.llm, DryRunBackend):
+            mock_target = None
+            if fixture_manifest.get("task_prompt") and fixture_manifest.get("required_files"):
+                block = "prompt_injection" if lep_code == "LEP_INDIRECT_PROMPT_INJECTION" else "tool_result"
+                mock_target = fixture_manifest.get("attack", {}).get(block, {}).get("target_file")
+                mock_target = mock_target or fixture_manifest["required_files"][0]
             self.llm.set_context(
                 lep_code=lep_code,
                 task_family=scenario.task_family,
                 lep_corrupted_values=lep_corrupted_values,
+                target_file=mock_target,
             )
 
         # ── Single global event counter ─────────────────────────────────────
@@ -1774,6 +1787,28 @@ class ScenarioRunner:
 
     def _setup_workspace(self, ws_path: Path, fixture_dir: Path) -> None:
         """Copy fixture files into workspace."""
+        manifest_path = fixture_dir / "manifest.json"
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text())
+            if manifest.get("task_prompt"):
+                # New fixtures expose only declared task data. Oracle patches,
+                # validation reports and other metadata stay outside the workspace.
+                for key in ("required_files", "optional_files", "distractor_files", "sensitive_files"):
+                    for name in manifest.get(key) or []:
+                        relative = Path(name)
+                        source = fixture_dir / relative
+                        if relative.is_absolute() or ".." in relative.parts or any(
+                                part in self.WORKSPACE_EXCLUDE or part == "manifest.json"
+                                for part in relative.parts):
+                            raise ValueError(f"Invalid agent-visible fixture path: {name}")
+                        if not source.resolve().is_relative_to(fixture_dir.resolve()):
+                            raise ValueError(f"Fixture path escapes root: {name}")
+                        if not source.is_file():
+                            raise ValueError(f"Declared fixture file missing: {name}")
+                        dest = ws_path / relative
+                        dest.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(source, dest)
+                return
         if fixture_dir.exists():
             for item in fixture_dir.iterdir():
                 if item.name in self.WORKSPACE_EXCLUDE:
@@ -1782,7 +1817,7 @@ class ScenarioRunner:
                 if item.is_dir():
                     if dest.exists():
                         shutil.rmtree(dest)
-                    shutil.copytree(item, dest)
+                    shutil.copytree(item, dest, ignore=shutil.ignore_patterns(*self.WORKSPACE_EXCLUDE))
                 else:
                     shutil.copy2(item, dest)
 
@@ -1792,20 +1827,22 @@ class ScenarioRunner:
         if manifest_path.exists():
             with open(manifest_path) as f:
                 manifest = json.load(f)
-            desc = manifest.get("description", "")
-            if desc:
-                return desc
+            task_prompt = manifest.get("task_prompt") or manifest.get("description", "")
+            if task_prompt:
+                if manifest.get("task_prompt") and manifest.get("required_files"):
+                    task_prompt += "\n\nRequired files:\n" + "\n".join(manifest["required_files"])
+                return task_prompt
         return f"Task: {scenario.task_family} ({scenario.task_variant})\n" \
                f"Fixture: {scenario.fixture_id}\n" \
                f"Complete the assigned task using available tools."
 
     AGENT_VISIBLE_MANIFEST_KEYS = (
         "fixture_id", "task_family", "task_variant", "difficulty",
-        "description", "required_files",
+        "description", "task_prompt", "required_files",
     )  # distractor/sensitive labels would tell the agent which files to skip
     # Fixture entries that hold answers. They are evaluator inputs and must
     # never be copied into the agent's workspace.
-    WORKSPACE_EXCLUDE = {"ground_truth.json", "expected_outputs"}
+    WORKSPACE_EXCLUDE = {"ground_truth.json", "expected_outputs", ".ipynb_checkpoints", ".git"}
 
     def _strip_ground_truth_from_manifest(self, manifest_path: Path) -> dict:
         """Remove evaluator ground truth from agent-visible manifest.
