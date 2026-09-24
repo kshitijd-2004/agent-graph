@@ -15,7 +15,7 @@ What it does:
 The gold solution patch is NEVER applied to the workspace.
 """
 
-import argparse, json, os, re, shutil, subprocess, sys
+import argparse, ast, hashlib, json, math, os, re, shutil, subprocess, sys
 from pathlib import Path
 import tempfile
 
@@ -24,8 +24,8 @@ sys.path.insert(0, str(ROOT))
 from scripts.validate_fixture import validate_and_write
 from scripts.swebench_materializer.migrate_manifests import migrate
 
-def run(cmd, cwd=None, check=True):
-    p = subprocess.run(cmd, cwd=cwd, text=True, stdout=subprocess.PIPE,
+def run(cmd, cwd=None, check=True, text=True):
+    p = subprocess.run(cmd, cwd=cwd, text=text, stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE)
     if check and p.returncode != 0:
         raise RuntimeError(f"command failed ({p.returncode}): {' '.join(cmd)}\n{p.stderr}")
@@ -54,10 +54,236 @@ def ensure_commit(repo_dir: Path, commit: str):
         run(["git", "fetch", "origin", commit, "--depth=1"], cwd=repo_dir)
 
 def read_at_commit(repo_dir: Path, commit: str, relpath: str):
-    p = run(["git", "show", f"{commit}:{relpath}"], cwd=repo_dir, check=False)
+    # Avoid universal-newline translation: small fixtures retain blob bytes.
+    p = run(["git", "show", f"{commit}:{relpath}"], cwd=repo_dir, check=False, text=False)
     if p.returncode != 0:
         return None
-    return p.stdout
+    return p.stdout.decode("utf-8")
+
+
+CONTEXT_LINES = 20
+TOKEN_BUDGET = 8000
+DEFINITIONS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+
+
+def estimate_fixture_tokens(fixture_dir: Path, manifest: dict) -> int:
+    """Same bytes/4 estimate and exclusions as check_fixture; no gate changes."""
+    clean = {key: value for key, value in manifest.items() if key != "validation"}
+    size = len(json.dumps(clean, ensure_ascii=False).encode())
+    size += sum(path.stat().st_size for path in fixture_dir.rglob("*")
+                if path.is_file() and path.name != "manifest.json")
+    return math.ceil(size / 4)
+
+
+def merge_ranges(ranges):
+    """Merge overlapping/adjacent 1-based inclusive original-source ranges."""
+    merged = []
+    for start, end in sorted(ranges):
+        if start > end:
+            continue
+        if merged and start <= merged[-1][1] + 1:
+            merged[-1][1] = max(end, merged[-1][1])
+        else:
+            merged.append([start, end])
+    return merged
+
+
+def _start(node):
+    return min([node.lineno] + [d.lineno for d in getattr(node, "decorator_list", [])])
+
+
+def _small_docstring(body, lines):
+    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) and isinstance(body[0].value.value, str):
+        node = body[0]
+        if node.end_lineno - node.lineno < CONTEXT_LINES and len("".join(lines[node.lineno - 1:node.end_lineno]).encode()) <= 2000:
+            return [(node.lineno, node.end_lineno)]
+    return []
+
+
+def _ast_context(tree, nodes, lines, parents):
+    """Retain complete statements near anchors and headers of their scopes.
+
+    A neighbor extending outside the fixed 20-line window is omitted entirely.
+    Enclosing functions/classes contribute headers, not their entire bodies.
+    Other compound ancestors (if/try/etc.) stay whole to preserve their suites.
+    """
+    ranges = _small_docstring(tree.body, lines)
+
+    def module_imports(node):
+        if isinstance(node, DEFINITIONS):
+            return False
+        return isinstance(node, (ast.Import, ast.ImportFrom)) or any(
+            module_imports(child) for child in ast.iter_child_nodes(node))
+
+    for statement in tree.body:
+        if module_imports(statement):
+            ranges.append((_start(statement), statement.end_lineno))
+
+    for node in nodes:
+        # Whole compound ancestors avoid orphaned else/except clauses.
+        anchor = node
+        ancestor = parents.get(node)
+        while ancestor is not None and not isinstance(ancestor, ast.Module):
+            if not isinstance(ancestor, DEFINITIONS):
+                anchor = ancestor
+            ancestor = parents.get(ancestor)
+        scope = parents[anchor]
+        start, end = _start(anchor), anchor.end_lineno
+        lo, hi = max(1, start - CONTEXT_LINES), min(len(lines), end + CONTEXT_LINES)
+        body = scope.body
+        lo = max(lo, _start(body[0]))
+        if not isinstance(scope, ast.Module):
+            hi = min(hi, scope.end_lineno)
+        for sibling in body:
+            first, last = _start(sibling), sibling.end_lineno
+            if first < lo <= last:
+                lo = last + 1
+            if first <= hi < last:
+                hi = first - 1
+        ranges.append((min(lo, start), max(hi, end)))
+        while not isinstance(scope, ast.Module):
+            # Header includes multiline declarations and decorators, unchanged.
+            first_body = _start(scope.body[0])
+            ranges.append((_start(scope), max(scope.lineno, first_body - 1)))
+            ranges.extend(_small_docstring(scope.body, lines))
+            scope = parents[scope]
+    return ranges
+
+
+def _patch_hunks(source, relpath, patch):
+    """Verify each relevant hunk's old lines against the exact pre-fix source."""
+    original = source.splitlines()
+    patch_lines = patch.splitlines()
+    current_file = None
+    hunks = []
+    for index, line in enumerate(patch_lines):
+        if line.startswith("--- "):
+            current_file = line[6:] if line.startswith("--- a/") else None
+        if current_file != relpath or not line.startswith("@@ "):
+            continue
+        match = re.match(r"@@ -(\d+)(?:,(\d+))? \+\d+(?:,\d+)? @@", line)
+        if not match:
+            return []
+        start, count = int(match[1]), int(match[2] or 1)
+        old = []
+        for body_line in patch_lines[index + 1:]:
+            if body_line.startswith(("@@ ", "diff --git ", "--- ")):
+                break
+            if body_line.startswith((" ", "-")):
+                old.append(body_line[1:])
+            elif not body_line.startswith(("+", "\\")):
+                break
+        if len(old) != count or start < (1 if count else 0) or start + count - 1 > len(original):
+            return []
+        if count and original[start - 1:start + count - 1] != old:
+            return []
+        if not count and start > len(original):
+            return []
+        hunks.append({"start": start, "count": count})
+    return hunks
+
+
+def extract_python_context(source: str, relpath: str, symbols: list[str], patch: str):
+    """One deterministic extraction attempt; unsafe results retain full source."""
+    lines = source.splitlines(keepends=True)
+    symbols = sorted(set(symbol.strip().removesuffix("()") for symbol in symbols))
+    nodes = []
+    missing = []
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        tree = None
+    parents = {child: parent for parent in ast.walk(tree) for child in ast.iter_child_nodes(parent)} if tree else {}
+    if tree:
+        for symbol in symbols:
+            matches = []
+            for node in ast.walk(tree):
+                if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                names, parent = [node.name], parents.get(node)
+                while parent is not None:
+                    if isinstance(parent, DEFINITIONS):
+                        names.insert(0, parent.name)
+                    parent = parents.get(parent)
+                if symbol == (".".join(names) if "." in symbol else node.name):
+                    matches.append(node)
+            nodes.extend(matches)
+            if not matches:
+                missing.append(symbol)
+
+    strategy = "required_function"
+    reason = None
+    hunks = []
+    if tree is None or not symbols or missing:
+        strategy = "patch_window"
+        reason = "ast_parse_failed" if tree is None else "missing_required_symbol" if missing else "no_required_symbols"
+        hunks = _patch_hunks(source, relpath, patch)
+        if not hunks:
+            return source, {"strategy": "full_file", "reason": reason + ":no_verified_patch_hunks"}
+        ranges = []
+        for hunk in hunks:
+            start = max(1, hunk["start"])
+            end = max(start, hunk["start"] + hunk["count"] - 1)
+            if tree:
+                # Align a patch window to the enclosing method/statement, so
+                # a method's indentation or body is never arbitrarily cut.
+                def anchors(body):
+                    for stmt in body:
+                        if _start(stmt) <= end and stmt.end_lineno >= start:
+                            if isinstance(stmt, ast.ClassDef) and start >= _start(stmt.body[0]):
+                                yield from anchors(stmt.body)
+                            else:
+                                yield stmt
+                located = list(anchors(tree.body))
+                nodes.extend(located)
+                ranges.append((start, end))
+                if located:
+                    continue
+            ranges.append((max(1, start - CONTEXT_LINES), min(len(lines), end + CONTEXT_LINES)))
+        if tree and nodes:
+            ranges.extend(_ast_context(tree, nodes, lines, parents))
+    else:
+        ranges = _ast_context(tree, nodes, lines, parents)
+
+    included = merge_ranges(ranges)
+    extracted = "".join("".join(lines[start - 1:end]) for start, end in included)
+    try:
+        ast.parse(extracted)
+    except (SyntaxError, ValueError):
+        return source, {"strategy": "full_file", "reason": "unsafe_extracted_syntax", "attempted_strategy": strategy}
+    if not extracted.strip() or len(extracted.encode()) >= len(source.encode()):
+        return source, {"strategy": "full_file", "reason": "no_source_reduction", "attempted_strategy": strategy}
+    context = {"strategy": strategy, "symbols": symbols, "original_line_count": len(lines),
+               "included_ranges": included, "context_lines": CONTEXT_LINES, "extractor_version": 1,
+               "original_sha256": hashlib.sha256(source.encode()).hexdigest(),
+               "extracted_sha256": hashlib.sha256(extracted.encode()).hexdigest()}
+    if reason:
+        context.update(fallback_reason=reason, patch_hunks=hunks)
+    return extracted, context
+
+
+def apply_source_context(fixture_dir: Path, manifest: dict, gold_patch: str):
+    """Preserve small fixtures; extract oversized code_review sources once.
+
+    Return gate-compatible before/after estimates, including provenance. Size
+    results live in the materializer report, avoiding self-referential counts.
+    """
+    context = {name: {"strategy": "full_file"} for name in manifest["required_files"]}
+    manifest["materialization"]["source_context"] = context
+    before = estimate_fixture_tokens(fixture_dir, manifest)
+    if before > TOKEN_BUDGET and manifest.get("task_family") == "code_review":
+        for name in context:
+            path = fixture_dir / name
+            if path.suffix != ".py" or not path.is_file():
+                continue
+            symbols = [issue["function"] for issue in manifest.get("required_issues", [])
+                       if re.sub(r":\d+(?:-\d+)?$", "", issue.get("location", "")) == name
+                       and issue.get("function")]
+            source = path.read_bytes().decode("utf-8")
+            extracted, context[name] = extract_python_context(source, name, symbols, gold_patch)
+            if extracted != source:
+                path.write_bytes(extracted.encode("utf-8"))
+    return before, estimate_fixture_tokens(fixture_dir, manifest)
 
 def patch_applies(repo_dir: Path, commit: str, patch_text: str, temp_root: Path):
     # Use a temporary detached worktree so `git apply --check` is evaluated
@@ -81,6 +307,8 @@ def main():
     ap.add_argument("--temp", default=".cache/agentprop-swebench-worktrees")
     ap.add_argument("--limit", type=int, default=1,
                     help="Materialize only first N fixtures for a smoke test")
+    ap.add_argument("--instance-id", action="append", default=[],
+                    help="Select a frozen instance ID (repeatable); --limit applies after selection")
     args = ap.parse_args()
     if args.limit < 1:
         ap.error("--limit must be positive")
@@ -89,7 +317,10 @@ def main():
     ids = [entry["instance_id"] for entry in selection["fixtures"]]
     if len(ids) != len(set(ids)):
         raise ValueError("Selection contains duplicate source.instance_id values")
-    chosen = selection["fixtures"][:args.limit] if args.limit else selection["fixtures"]
+    if set(args.instance_id) - set(ids):
+        ap.error("Requested instance ID is not in the frozen selection")
+    chosen = [entry for entry in selection["fixtures"]
+              if not args.instance_id or entry["instance_id"] in args.instance_id][:args.limit]
     official = load_verified()
 
     out_root, cache_root, temp_root = map(
@@ -151,7 +382,7 @@ def main():
                     continue
                 target = workspace / rel
                 target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_text(content)
+                target.write_bytes(content.encode("utf-8"))
 
             gold_patch = row.get("patch") or manifest["oracle"].get("gold_patch", "")
             applies, apply_err = patch_applies(repo_dir, base, gold_patch, temp_root)
@@ -170,6 +401,15 @@ def main():
                 "absent_at_base_commit": missing,
                 "gold_patch_applies_cleanly": applies,
             }
+            before, after = apply_source_context(dest, manifest, gold_patch)
+            item["estimated_tokens_before"] = before
+            item["estimated_tokens_after"] = after
+            item["source_context"] = manifest["materialization"]["source_context"]
+            # oracle is construction-only (gold_patch drove extraction above;
+            # fail_to_pass/pass_to_pass are SWE-bench metadata, never read at
+            # runtime by the benchmark engine, evaluators, LEPs, or anomaly
+            # detection).  Strip it to save tokens in the workspace manifest.
+            manifest.pop("oracle", None)
             (dest / "manifest.json").write_text(json.dumps(manifest, indent=2))
 
             # Required attack targets must exist at base commit.
