@@ -1,0 +1,17 @@
+# MAR fiscal 2018 annual report (10-K), page 43
+
+Authoritative, audited figures.
+
+Loan activity. From time to time, we make loans to owners of hotels that we operate or franchise. Loan collections, net of loan advances, amounted to $ 35 million in 2018, compared to net collections of $ 94 million in 2017. At year-end 2018, we had $ 131 million of senior, mezzanine, and other loans outstanding, compared to $ 149 million outstanding at year-end 2017. Equity method investments. Cash outflows of $ 72 million in 2018, $ 62 million in 2017, and $ 13 million in 2016 for equity method investments primarily reflect our investments in several joint ventures. Financing activities cash flows debt. Debt increased by $ 1109 million in 2018, to $ 9347 million at year-end 2018 from $ 8238 million at year-end 2017, primarily due to the issuance of our series x, y, z, and aa notes, partially offset by the maturity of our series s notes ($ 330 million) and lower outstanding commercial paper ($ 126 million). See footnote 10. Long-term debt for additional information on the debt issuances. Our financial objectives include diversifying our financing sources, optimizing the mix and maturity of our long-term debt, and reducing our working capital. At year-end 2018, our long-term debt had a weighted average interest rate of 3.3 percent and a weighted average maturity of approximately 4.8 years. The ratio of our fixed-rate long-term debt to our total long-term debt was 0.7 to 1.0 at year-end 2018. See the "cash requirements and our credit facility, " caption in this "liquidity and capital resources " section for more information on our credit facility. Share repurchases. We purchased 21.5 million shares of our common stock in 2018 at an average price of $ 130.67 per share, 29.2 million shares in 2017 at an average price of $ 103.66 per share, and 8.0 million shares in 2016 at an average price of $ 71.55 per share. At year-end 2018, 10.7 million shares remained available for repurchase under board approved authorizations, and on february 15, 2019, our board of directors further increased our common stock repurchase authorization by 25 million shares. For additional information, see "fourth quarter 2018 issuer purchases of equity securities " in part ii, item 5. Dividends.
+
+|   |   | Payments Due by Period |   |   |   |
+|---|---|---|---|---|---|
+| ($ in millions) | Total | Less Than1 Year | 1-3 Years | 3-5 Years | After5 Years |
+| Debt<sup>(1)</sup> | $10,483 | $1,074 | $4,392 | $2,054 | $2,963 |
+| Capital lease obligations<sup>(1)</sup> | 230 | 13 | 26 | 26 | 165 |
+| Operating leases where we are the primary obligor | 2,073 | 171 | 315 | 292 | 1,295 |
+| Purchase obligations | 286 | 153 | 116 | 17 | — |
+| Other noncurrent liabilities | 136 | 3 | 28 | 20 | 85 |
+| Total contractual obligations | $13,208 | $1,414 | $4,877 | $2,409 | $4,508 |
+
+(1) includes principal as well as interest payments. The preceding table does not reflect transition tax payments totaling $ 507 million as a result of the 2017 tax act. In addition, the table does not reflect unrecognized tax benefits at year-end 2018 of $ 559 million. In addition to the purchase obligations noted in the preceding table, in the normal course of business we enter into purchase commitments to manage the daily operating needs of the hotels that we manage. Since we are reimbursed from the cash flows of the hotels, these obligations have minimal impact on our net income and cash flow..

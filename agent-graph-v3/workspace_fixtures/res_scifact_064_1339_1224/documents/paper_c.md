@@ -1,0 +1,11 @@
+# Paper C: Viral interleukin-10 expressed by human cytomegalovirus during the latent phase of infection modulates latently infected myeloid cell differentiation.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 26873988).
+
+## Abstract
+
+The human cytomegalovirus UL111A gene is expressed during latent and productive infections, and it codes for homologs of interleukin-10 (IL-10). We examined whether viral IL-10 expressed during latency altered differentiation of latently infected myeloid progenitors. In comparison to infection with parental virus or mock infection, latent infection with a virus in which the gene encoding viral IL-10 has been deleted upregulated cytokines associated with dendritic cell (DC) formation and increased the proportion of myeloid DCs.
+
+## Conclusion
+
+These data demonstrate that viral IL-10 restricts the ability of latently infected myeloid progenitors to differentiate into DCs and identifies an immunomodulatory role for viral IL-10 which may limit the host's ability to clear latent virus.

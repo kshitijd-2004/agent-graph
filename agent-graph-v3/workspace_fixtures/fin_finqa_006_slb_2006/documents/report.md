@@ -1,0 +1,14 @@
+# SLB fiscal 2006 annual report (10-K), page 45
+
+Authoritative, audited figures.
+
+Part ii, item 7 in 2006, cash provided by financing activities was $ 291 million which was primarily due to the proceeds from employee stock plans ($ 442 million) and an increase in debt of $ 1.5 billion partially offset by the repurchase of 17.99 million shares of schlumberger stock ($ 1.07 billion) and the payment of dividends to shareholders ($ 568 million). Schlumberger believes that at december 31, 2006, cash and short-term investments of $ 3.0 billion and available and unused credit facilities of $ 2.2 billion are sufficient to meet future business requirements for at least the next twelve months. Summary of major contractual commitments (stated in millions).
+
+|   |   | Payment Period |   |   |   |
+|---|---|---|---|---|---|
+| Contractual Commitments | Total | 2007 | 2008 - 2009 | 2010 - 2011 | After 2011 |
+| Debt<sup>1</sup> | $5,986 | $1,322 | $2,055 | $1,961 | $648 |
+| Operating Leases | $691 | $191 | $205 | $106 | $189 |
+| Purchase Obligations<sup>2</sup> | $1,526 | $1,490 | $36 | $– | $– |
+
+Purchase obligations 2 $ 1526 $ 1490 $ 36 $ - $ - 1. Excludes future payments for interest. Includes amounts relating to the $ 1425 million of convertible debentures which are described in note 11 of the consolidated financial statements. 2. Represents an estimate of contractual obligations in the ordinary course of business. Although these contractual obligations are considered enforceable and legally binding, the terms generally allow schlumberger the option to reschedule and adjust their requirements based on business needs prior to the delivery of goods. Refer to note 4 of the consolidated financial statements for details regarding potential commitments associated with schlumberger 's prior business acquisitions. Refer to note 20 of the consolidated financial statements for details regarding schlumberger 's pension and other postretirement benefit obligations. Schlumberger has outstanding letters of credit/guarantees which relate to business performance bonds, custom/excise tax commitments, facility lease/rental obligations, etc. These were entered into in the ordinary course of business and are customary practices in the various countries where schlumberger operates. Critical accounting policies and estimates the preparation of financial statements and related disclosures in conformity with accounting principles generally accepted in the united states requires schlumberger to make estimates and assumptions that affect the reported amounts of assets and liabilities, the disclosure of contingent assets and liabilities and the reported amounts of revenue and expenses. The following accounting policies involve "critical accounting estimates " because they are particularly dependent on estimates and assumptions made by schlumberger about matters that are inherently uncertain.

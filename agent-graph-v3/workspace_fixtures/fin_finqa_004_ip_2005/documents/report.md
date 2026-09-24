@@ -1,0 +1,19 @@
+# IP fiscal 2005 annual report (10-K), page 32
+
+Authoritative, audited figures.
+
+Management believes it is important for interna- tional paper to maintain an investment-grade credit rat- ing to facilitate access to capital markets on favorable terms. At december 31, 2005, the company held long- term credit ratings of bbb (negative outlook) and baa3 (stable outlook) from standard & poor 's and moody 's investor services, respectively. Cash provided by operations cash provided by continuing operations totaled $ 1.5 billion for 2005, compared with $ 2.1 billion in 2004 and $ 1.5 billion in 2003. The major components of cash provided by continuing operations are earnings from continuing operations adjusted for non-cash in- come and expense items and changes in working capital. Earnings from continuing operations adjusted for non-cash items declined by $ 83 million in 2005 versus 2004. This compared with an increase of $ 612 million for 2004 over 2003. Working capital, representing international paper 's investments in accounts receivable and inventory less accounts payable and accrued liabilities, was $ 2.6 billion at december 31, 2005. Cash used for working capital components increased by $ 591 million in 2005, com- pared with a $ 86 million increase in 2004 and an $ 11 million increase in 2003. The increase in 2005 was principally due to a decline in accrued liabilities at de- cember 31, 2005. Investment activities capital spending from continuing operations was $ 1.2 billion in 2005, or 84% (84%) of depreciation and amor- tization, comparable to the $ 1.2 billion, or 87% (87%) of depreciation and amortization in 2004, and $ 1.0 billion, or 74% (74%) of depreciation and amortization in 2003. The following table presents capital spending from continuing operations by each of our business segments for the years ended december 31, 2005, 2004 and 2003. In millions 2005 2004 2003.
+
+| <i>In millions</i> | 2005 | 2004 | 2003 |
+|---|---|---|---|
+| Printing Papers | $658 | $590 | $482 |
+| Industrial Packaging | 187 | 179 | 165 |
+| Consumer Packaging | 131 | 205 | 128 |
+| Distribution | 9 | 5 | 12 |
+| Forest Products | 121 | 126 | 121 |
+| Specialty Businesses and Other | 31 | 39 | 31 |
+| Subtotal | 1,137 | 1,144 | 939 |
+| Corporate and other | 18 | 32 | 54 |
+| Total from continuing operations | $1,155 | $1,176 | $993 |
+
+We expect capital expenditures in 2006 to be about $ 1.2 billion, or about 80% (80%) of depreciation and amor- tization. We will continue to focus our future capital spending on improving our key platform businesses in north america and on investments in geographic areas with strong growth opportunities. Acquisitions in october 2005, international paper acquired ap- proximately 65% (65%) of compagnie marocaine des cartons et des papiers (cmcp), a leading moroccan corrugated packaging company, for approximately $ 80 million in cash plus assumed debt of approximately $ 40 million. In august 2005, pursuant to an existing agreement, international paper purchased a 50% (50%) third-party interest in ippm (subsequently renamed international paper distribution limited) for $ 46 million to facilitate possi- ble further growth in asian markets. In 2001, interna- tional paper had acquired a 25% (25%) interest in this business. The accompanying consolidated balance sheet as of december 31, 2005 includes preliminary estimates of the fair values of the assets and liabilities acquired, including approximately $ 50 million of goodwill. In july 2004, international paper acquired box usa holdings, inc. (box usa) for approximately $ 400 million, including the assumption of approximately $ 197 million of debt, of which approximately $ 193 mil- lion was repaid by july 31, 2004. Each of the above acquisitions was accounted for using the purchase method. The operating results of these acquisitions have been included in the con- solidated statement of operations from the dates of ac- quisition.

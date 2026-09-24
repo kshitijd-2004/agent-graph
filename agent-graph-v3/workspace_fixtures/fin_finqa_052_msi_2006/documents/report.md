@@ -1,0 +1,15 @@
+# MSI fiscal 2006 annual report (10-K), page 61
+
+Authoritative, audited figures.
+
+53management's discussion and analysis of financial condition and results of operations in order to borrow funds under the 5-year credit facility, the company must be in compliance with various conditions, covenants and representations contained in the agreements. The company was in compliance with the terms of the 5-year credit facility at december 31, 2006. The company has never borrowed under its domestic revolving credit facilities. Utilization of the non-u.s. Credit facilities may also be dependent on the company's ability to meet certain conditions at the time a borrowing is requested. Contractual obligations, guarantees, and other purchase commitments contractual obligations summarized in the table below are the company's obligations and commitments to make future payments under debt obligations (assuming earliest possible exercise of put rights by holders), lease payment obligations, and purchase obligations as of december 31, 2006. Payments due by period (1) (in millions) total 2007 2008 2009 2010 2011 thereafter.
+
+|   | Payments Due by Period<sup>(1)</sup> |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|---|
+| <i>(in millions)</i> | Total | 2007 | 2008 | 2009 | 2010 | 2011 | Thereafter |
+| Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451 |
+| Lease Obligations | 2,328 | 351 | 281 | 209 | 178 | 158 | 1,151 |
+| Purchase Obligations | 1,035 | 326 | 120 | 26 | 12 | 12 | 539 |
+| Total Contractual Obligations | $7,497 | $2,017 | $599 | $239 | $724 | $777 | $3,141 |
+
+(1) amounts included represent firm, non-cancelable commitments. Debt obligations: at december 31, 2006, the company's long-term debt obligations, including current maturities and unamortized discount and issue costs, totaled $ 4.1 billion, as compared to $ 4.0 billion at december 31, 2005. A table of all outstanding long-term debt securities can be found in note 4, ""debt and credit facilities'' to the company's consolidated financial statements. Lease obligations: the company owns most of its major facilities, but does lease certain office, factory and warehouse space, land, and information technology and other equipment under principally non-cancelable operating leases. At december 31, 2006, future minimum lease obligations, net of minimum sublease rentals, totaled $ 2.3 billion. Rental expense, net of sublease income, was $ 241 million in 2006, $ 250 million in 2005 and $ 205 million in 2004. Purchase obligations: the company has entered into agreements for the purchase of inventory, license of software, promotional agreements, and research and development agreements which are firm commitments and are not cancelable. The longest of these agreements extends through 2015. Total payments expected to be made under these agreements total $ 1.0 billion. Commitments under other long-term agreements: the company has entered into certain long-term agreements to purchase software, components, supplies and materials from suppliers. Most of the agreements extend for periods of one to three years (three to five years for software).

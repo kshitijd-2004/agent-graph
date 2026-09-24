@@ -251,6 +251,8 @@ class ToolResultCorruptionLEP:
         if operator == "source_swap" and "alt_conclusion" in attack:
             perturbed = self._swap_conclusion(original_result,
                 attack.get("conclusion_marker", "## Conclusion"), attack["alt_conclusion"])
+        elif operator == "numeric_corruption" and attack.get("replacements"):
+            perturbed = self._fixture_replacements(original_result, attack["replacements"])
         elif operator == "partial_omission" and getattr(self, "fixture_manifest", {}).get("task_prompt"):
             functions = tuple(issue["function"].split(".")[-1]
                 for issue in self.fixture_manifest.get("required_issues", []) if issue.get("function"))
@@ -338,6 +340,19 @@ class ToolResultCorruptionLEP:
         self.matcher.reset()
 
     # ── Private helpers ──────────────────────────────────────────────
+
+    @staticmethod
+    def _fixture_replacements(original: str, replacements: list[dict]) -> str:
+        """Replace the manifest's exact figures (each standalone number, never inside a
+        longer one) in a single pass. Falls back to the $-amount operator if nothing matched."""
+        import re
+        table = {r["from"]: r["to"] for r in replacements if r.get("from")}
+        if not table:
+            return ToolResultCorruptionLEP._numeric_corruption(original)
+        alt = "|".join(re.escape(k) for k in sorted(table, key=len, reverse=True))
+        altered = re.sub(r"(?<![\d.,])(" + alt + r")(?![\d]|[.,]\d)",
+                         lambda m: table[m.group(1)], original)
+        return altered if altered != original else ToolResultCorruptionLEP._numeric_corruption(original)
 
     @staticmethod
     def _fixture_omission(original: str, functions: tuple[str, ...]) -> str:

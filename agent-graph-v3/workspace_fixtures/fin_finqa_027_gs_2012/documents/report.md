@@ -1,0 +1,18 @@
+# GS fiscal 2012 annual report (10-K), page 189
+
+Authoritative, audited figures.
+
+Notes to consolidated financial statements bank subsidiaries gs bank usa, an fdic-insured, new york state-chartered bank and a member of the federal reserve system, is supervised and regulated by the federal reserve board, the fdic, the new york state department of financial services and the consumer financial protection bureau, and is subject to minimum capital requirements (described below) that are calculated in a manner similar to those applicable to bank holding companies. Gs bank usa computes its capital ratios in accordance with the regulatory capital requirements currently applicable to state member banks, which are based on basel 1 as implemented by the federal reserve board, for purposes of assessing the adequacy of its capital. Under the regulatory framework for prompt corrective action that is applicable to gs bank usa, in order to be considered a "well-capitalized " depository institution, gs bank usa must maintain a tier 1 capital ratio of at least 6% (6%), a total capital ratio of at least 10% (10%) and a tier 1 leverage ratio of at least 5% (5%). Gs bank usa has agreed with the federal reserve board to maintain minimum capital ratios in excess of these "well- capitalized " levels. Accordingly, for a period of time, gs bank usa is expected to maintain a tier 1 capital ratio of at least 8% (8%), a total capital ratio of at least 11% (11%) and a tier 1 leverage ratio of at least 6% (6%). As noted in the table below, gs bank usa was in compliance with these minimum capital requirements as of december 2012 and december 2011. The table below presents information regarding gs bank usa 's regulatory capital ratios under basel 1 as implemented by the federal reserve board..
+
+|   | As of December |   |
+|---|---|---|
+| <i>$ in millions</i> | 2012 | 2011 |
+| Tier 1 capital | $ 20,704 | $ 19,251 |
+| Tier 2 capital | $ 39 | $ 6 |
+| Total capital | $ 20,743 | $ 19,257 |
+| Risk-weighted assets | $109,669 | $112,824 |
+| Tier 1 capital ratio | 18.9% | 17.1% |
+| Total capital ratio | 18.9% | 17.1% |
+| Tier 1 leverage ratio | 17.6% | 18.5% |
+
+Effective january 1, -, gs bank usa implemented the revised market risk regulatory framework outlined above. These changes resulted in increased regulatory capital requirements for market risk, and will be reflected in all of gs bank usa 's basel-based capital ratios for periods beginning on or after january 1, -. Gs bank usa is also currently working to implement the basel 2 framework, as implemented by the federal reserve board. Gs bank usa will adopt basel 2 once approved to do so by regulators. In addition, the capital requirements for gs bank usa are expected to be impacted by the june 2012 proposed modifications to the agencies' capital adequacy regulations outlined above, including the requirements of a floor to the advanced risk-based capital ratios. If enacted as proposed, these proposals would also change the regulatory framework for prompt corrective action that is applicable to gs bank usa by, among other things, introducing a common equity tier 1 ratio requirement, increasing the minimum tier 1 capital ratio requirement and introducing a supplementary leverage ratio as a component of the prompt corrective action analysis. Gs bank usa will also be impacted by aspects of the dodd-frank act, including new stress tests. The deposits of gs bank usa are insured by the fdic to the extent provided by law. The federal reserve board requires depository institutions to maintain cash reserves with a federal reserve bank.

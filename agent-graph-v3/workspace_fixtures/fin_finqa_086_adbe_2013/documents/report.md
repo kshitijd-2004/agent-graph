@@ -1,0 +1,15 @@
+# ADBE fiscal 2013 annual report (10-K), page 89
+
+Authoritative, audited figures.
+
+Adobe systems incorporated notes to consolidated financial statements (continued) in the first quarter of fiscal 2013, the executive compensation committee certified the actual performance achievement of participants in the 2012 performance share program (the "2012 program "). Based upon the achievement of specific and/or market- based performance goals outlined in the 2012 program, participants had the ability to receive up to 150% (150%) of the target number of shares originally granted. Actual performance resulted in participants achieving 116% (116%) of target or approximately 1.3 million shares for the 2012 program. One third of the shares under the 2012 program vested in the first quarter of fiscal 2013 and the remaining two thirds vest evenly on the following two anniversaries of the grant, contingent upon the recipient's continued service to adobe. In the first quarter of fiscal 2012, the executive compensation committee certified the actual performance achievement of participants in the 2011 performance share program (the "2011 program "). Based upon the achievement of goals outlined in the 2011 program, participants had the ability to receive up to 150% (150%) of the target number of shares originally granted. Actual performance resulted in participants achieving 130% (130%) of target or approximately 0.5 million shares for the 2011 program. One third of the shares under the 2011 program vested in the first quarter of fiscal 2012 and the remaining two thirds vest evenly on the following two annual anniversary dates of the grant, contingent upon the recipient's continued service to adobe. In the first quarter of fiscal 2011, the executive compensation committee certified the actual performance achievement of participants in the 2010 performance share program (the "2010 program "). Based upon the achievement of goals outlined in the 2010 program, participants had the ability to receive up to 150% (150%) of the target number of shares originally granted. Actual performance resulted in participants achieving 135% (135%) of target or approximately 0.3 million shares for the 2010 program. One third of the shares under the 2011 program vested in the first quarter of fiscal 2012 and the remaining two thirds vest evenly on the following two annual anniversary dates of the grant, contingent upon the recipient's continued service to adobe. The following table sets forth the summary of performance share activity under our 2010, 2011 and 2012 programs, based upon share awards actually achieved, for the fiscal years ended november 29, 2013, november 30, 2012 and december 2, 2011 (in thousands):.
+
+|   | 2013 | 2012 | 2011 |
+|---|---|---|---|
+| Beginning outstanding balance | 388 | 405 | 557 |
+| Achieved | 1,279 | 492 | 337 |
+| Released | (665) | (464) | (436) |
+| Forfeited | (141) | (45) | (53) |
+| Ending outstanding balance | 861 | 388 | 405 |
+
+The total fair value of performance awards vested during fiscal 2013, 2012 and 2011 was $ 25.4 million, $ 14.4 million and $ 14.8 million, respectively..

@@ -1,0 +1,11 @@
+# Paper A: Microarrays for the study of viral gene expression during human cytomegalovirus latent infection.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 21932050).
+
+## Abstract
+
+Human cytomegalovirus (HCMV) is one of the largest known DNA viruses. It is ubiquitous, and following resolution of primary productive infection, it persists in the human host by establishing a lifelong latent infection in myeloid lineage cells such as monocytes and their progenitors. Most adults with HCMV infection are healthy but it can cause neurologic deficits in infants, and remains an important cause of morbidity and mortality in the immunosuppressed patient. Microarray-based studies of HCMV have provided useful information about genes that are transcriptionally active during both productive and latent phases of infection.
+
+## Conclusion
+
+This chapter describes how to study genes in HCMV using microarrays and two cell types (productively infected human foreskin fibroblasts, and latently infected primary human myeloid progenitor cells).

@@ -1,0 +1,11 @@
+# Paper B: MHC Haplotype Matching for Unrelated Hematopoietic Cell Transplantation
+
+Source: peer-reviewed abstract (SciFact corpus, doc 11527199).
+
+## Abstract
+
+Background  Current criteria for the selection of unrelated donors for hematopoietic cell transplantation (HCT) include matching for the alleles of each human leukocyte antigen (HLA) locus within the major histocompatibility complex (MHC). Graft-versus-host disease (GVHD), however, remains a significant and potentially life-threatening complication even after HLA-identical unrelated HCT. The MHC harbors more than 400 genes, but the total number of transplantation antigens is unknown.
+
+## Conclusion
+
+Genes that influence transplantation outcome could be identified by using linkage disequilibrium (LD)-mapping approaches, if the extended MHC haplotypes of the unrelated donor and recipient could be defined.
