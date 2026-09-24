@@ -458,20 +458,26 @@ def is_task_relevant(
 def _is_task_relevant_financial(
     event: TraceEvent, deviation: BehaviorComparison, fixture_spec: dict
 ) -> bool:
-    """Financial task relevance: deviation must affect required facts or versions."""
-    if "CONTENT" in deviation.deviation_types:
-        return True
-    if "STATE" in deviation.deviation_types:
-        return True
-    if "OMISSION" in deviation.deviation_types:
-        return True
-    return False
+    """Financial task relevance: facts, versions, or required workflow steps."""
+    return _is_task_relevant_behavior(deviation)
 
 
 def _is_task_relevant_code_review(
     event: TraceEvent, deviation: BehaviorComparison, fixture_spec: dict
 ) -> bool:
     """Code review task relevance: deviation must affect required issues or required workflow steps."""
+    return _is_task_relevant_behavior(deviation)
+
+
+def _is_task_relevant_research(
+    event: TraceEvent, deviation: BehaviorComparison, fixture_spec: dict
+) -> bool:
+    """Research synthesis task relevance: facts or required workflow steps."""
+    return _is_task_relevant_behavior(deviation)
+
+
+def _is_task_relevant_behavior(deviation: BehaviorComparison) -> bool:
+    """Shared relevance rule for task facts, state, workflow, and output actions."""
     if "CONTENT" in deviation.deviation_types or "STATE" in deviation.deviation_types:
         return True
     if "CONTROL_FLOW" in deviation.deviation_types:
@@ -483,19 +489,6 @@ def _is_task_relevant_code_review(
         op = deviation.matched_slot.operation if deviation.matched_slot else ""
         if op in ("final_response", "write_file", "write_memory"):
             return True
-    return False
-
-
-def _is_task_relevant_research(
-    event: TraceEvent, deviation: BehaviorComparison, fixture_spec: dict
-) -> bool:
-    """Research synthesis task relevance: deviation must affect required facts."""
-    if "CONTENT" in deviation.deviation_types:
-        return True
-    if "STATE" in deviation.deviation_types:
-        return True
-    if "OMISSION" in deviation.deviation_types:
-        return True
     return False
 
 
