@@ -1,0 +1,18 @@
+# ETR fiscal 2004 annual report (10-K), page 125
+
+Authoritative, audited figures.
+
+Part i item 1 entergy corporation, domestic utility companies, and system energy entergy louisiana holds non-exclusive franchises to provide electric service in approximately 116 incorporated louisiana municipalities. Most of these franchises have 25-year terms, although six of these municipalities have granted 60-year franchises. Entergy louisiana also supplies electric service in approximately 353 unincorporated communities, all of which are located in louisiana parishes in which it holds non-exclusive franchises. Entergy mississippi has received from the mpsc certificates of public convenience and necessity to provide electric service to areas within 45 counties, including a number of municipalities, in western mississippi. Under mississippi statutory law, such certificates are exclusive. Entergy mississippi may continue to serve in such municipalities upon payment of a statutory franchise fee, regardless of whether an original municipal franchise is still in existence. Entergy new orleans provides electric and gas service in the city of new orleans pursuant to city ordinances (except electric service in algiers, which is provided by entergy louisiana). These ordinances contain a continuing option for the city of new orleans to purchase entergy new orleans' electric and gas utility properties. The business of system energy is limited to wholesale power sales. It has no distribution franchises. Property and other generation resources generating stations the total capability of the generating stations owned and leased by the domestic utility companies and system energy as of december 31, 2004, is indicated below:.
+
+|   | Owned and Leased Capability MW(1) |   |   |   |   |
+|---|---|---|---|---|---|
+| Company | Total | Gas/Oil | Nuclear | Coal | Hydro |
+| Entergy Arkansas | 4,709 | 1,613 | 1,837 | 1,189 | 70 |
+| Entergy Gulf States | 6,485 | 4,890 | 968 | 627 | - |
+| Entergy Louisiana | 5,363 | 4,276 | 1,087 | - | - |
+| Entergy Mississippi | 2,898 | 2,490 | - | 408 | - |
+| Entergy New Orleans | 915 | 915 | - | - | - |
+| System Energy | 1,143 | - | 1,143 | - | - |
+| Total | 21,513 | 14,184 | 5,035 | 2,224 | 70 |
+
+(1) "owned and leased capability" is the dependable load carrying capability as demonstrated under actual operating conditions based on the primary fuel (assuming no curtailments) that each station was designed to utilize. Entergy's load and capacity projections are reviewed periodically to assess the need and timing for additional generating capacity and interconnections. These reviews consider existing and projected demand, the availability and price of power, the location of new loads, and economy. Peak load in the u.s. Utility service territory is typically around 21000 mw, with minimum load typically around 9000 mw. Allowing for an adequate reserve margin, entergy has been short approximately 3000 mw during the summer peak load period. In addition to its net short position at summer peak, entergy considers its generation in three categories: (1) baseload (e.g. Coal and nuclear); (2) load-following (e.g. Combined cycle gas-fired); and (3) peaking. The relative supply and demand for these categories of generation vary by region of the entergy system. For example, the north end of its system has more baseload coal and nuclear generation than regional demand requires, but is short load-following or intermediate generation. In the south end of the entergy system, load would be more effectively served if gas- fired intermediate resources already in place were supplemented with additional solid fuel baseload generation..

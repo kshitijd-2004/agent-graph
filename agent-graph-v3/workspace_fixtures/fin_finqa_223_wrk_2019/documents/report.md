@@ -1,0 +1,19 @@
+# WRK fiscal 2019 annual report (10-K), page 103
+
+Authoritative, audited figures.
+
+Westrock company notes to consolidated financial statements 2014 (continued) consistent with prior years, we consider a portion of our earnings from certain foreign subsidiaries as subject to repatriation and we provide for taxes accordingly. However, we consider the unremitted earnings and all other outside basis differences from all other foreign subsidiaries to be indefinitely reinvested. Accordingly, we have not provided for any taxes that would be due. As of september 30, 2019, we estimate our outside basis difference in foreign subsidiaries that are considered indefinitely reinvested to be approximately $ 1.6 billion. The components of the outside basis difference are comprised of purchase accounting adjustments, undistributed earnings, and equity components. Except for the portion of our earnings from certain foreign subsidiaries where we provided for taxes, we have not provided for any taxes that would be due upon the reversal of the outside basis differences. However, in the event of a distribution in the form of dividends or dispositions of the subsidiaries, we may be subject to incremental u.s. Income taxes, subject to an adjustment for foreign tax credits, and withholding taxes or income taxes payable to the foreign jurisdictions. As of september 30, 2019, the determination of the amount of unrecognized deferred tax liability related to any remaining undistributed foreign earnings not subject to the transition tax and additional outside basis differences is not practicable. A reconciliation of the beginning and ending amount of gross unrecognized tax benefits is as follows (in millions):.
+
+|   | 2019 | 2018 | 2017 |
+|---|---|---|---|
+| Balance at beginning of fiscal year | $127.1 | $148.9 | $166.8 |
+| Additions related to purchase accounting<sup>(1)</sup> | 1.0 | 3.4 | 7.7 |
+| Additions for tax positions taken in current year<sup>(2)</sup> | 103.8 | 3.1 | 5.0 |
+| Additions for tax positions taken in prior fiscal years | 1.8 | 18.0 | 15.2 |
+| Reductions for tax positions taken in prior fiscal years | ( 0.5) | ( 5.3) | ( 25.6) |
+| Reductions due to settlement<sup>(3)</sup> | ( 4.0) | ( 29.4) | ( 14.1) |
+| (Reductions) additions for currency translation adjustments | (1.7) | (9.6) | 2.0 |
+| Reductions as a result of a lapse of the applicable statute oflimitations | ( 3.2) | ( 2.0) | ( 8.1) |
+| Balance at end of fiscal year | $224.3 | $127.1 | $148.9 |
+
+(1) amounts in fiscal 2019 relate to the kapstone acquisition. Amounts in fiscal 2018 and 2017 relate to the mps acquisition. (2) additions for tax positions taken in current fiscal year includes primarily positions taken related to foreign subsidiaries. (3) amounts in fiscal 2019 relate to the settlements of state and foreign audit examinations. Amounts in fiscal 2018 relate to the settlement of state audit examinations and federal and state amended returns filed related to affirmative adjustments for which there was a reserve. Amounts in fiscal 2017 relate to the settlement of federal and state audit examinations with taxing authorities. As of september 30, 2019 and 2018, the total amount of unrecognized tax benefits was approximately $ 224.3 million and $ 127.1 million, respectively, exclusive of interest and penalties. Of these balances, as of september 30, 2019 and 2018, if we were to prevail on all unrecognized tax benefits recorded, approximately $ 207.5 million and $ 108.7 million, respectively, would benefit the effective tax rate. We regularly evaluate, assess and adjust the related liabilities in light of changing facts and circumstances, which could cause the effective tax rate to fluctuate from period to period. Resolution of the uncertain tax positions could have a material adverse effect on our cash flows or materially benefit our results of operations in future periods depending upon their ultimate resolution. See "note 18.

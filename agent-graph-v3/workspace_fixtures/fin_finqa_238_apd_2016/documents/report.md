@@ -1,0 +1,17 @@
+# APD fiscal 2016 annual report (10-K), page 52
+
+Authoritative, audited figures.
+
+Investing activities for the year ended 30 september 2016, cash used for investing activities was $ 972.0, driven by capital expenditures for plant and equipment of $ 1055.8. Proceeds from the sale of assets and investments of $ 85.5 was primarily driven by the receipt of $ 30.0 for our rights to a corporate aircraft that was under construction, $ 15.9 for the sale of our 20% (20%) equity investment in daido air products electronics, inc., and $ 14.9 for the sale of a wholly owned subsidiary located in wuhu, china. For the year ended 30 september 2015, cash used for investing activities was $ 1250.5, primarily capital expenditures for plant and equipment. On 30 december 2014, we acquired our partner 's equity ownership interest in a liquefied atmospheric industrial gases production joint venture in north america which increased our ownership from 50% (50%) to 100% (100%). Refer to note 6, business combination, to the consolidated financial statements for additional information. For the year ended 30 september 2014, cash used for investing activities was $ 1316.5, primarily capital expenditures for plant and equipment. Refer to the capital expenditures section below for additional detail. Capital expenditures capital expenditures are detailed in the following table:.
+
+|   | 2016 | 2015 | 2014 |
+|---|---|---|---|
+| Additions to plant and equipment | $1,055.8 | $1,265.6 | $1,362.7 |
+| Acquisitions, less cash acquired | — | 34.5 | — |
+| Investments in and advances to unconsolidated affiliates | — | 4.3 | (2.0) |
+| Capital Expenditures on a GAAP Basis | $1,055.8 | $1,304.4 | $1,360.7 |
+| Capital lease expenditures<sup>(A)</sup> | 27.2 | 95.6 | 202.4 |
+| Purchase of noncontrolling interests in a subsidiary<sup>(A)</sup> | — | 278.4 | .5 |
+| Capital Expenditures on a Non-GAAP Basis | $1,083.0 | $1,678.4 | $1,563.6 |
+
+(a) we utilize a non-gaap measure in the computation of capital expenditures and include spending associated with facilities accounted for as capital leases and purchases of noncontrolling interests. Certain contracts associated with facilities that are built to provide product to a specific customer are required to be accounted for as leases, and such spending is reflected as a use of cash within cash provided by operating activities, if the arrangement qualifies as a capital lease. Additionally, the purchase of subsidiary shares from noncontrolling interests is accounted for as a financing activity in the statement of cash flows. The presentation of this non-gaap measure is intended to enhance the usefulness of information by providing a measure that our management uses internally to evaluate and manage our expenditures. Capital expenditures on a gaap basis in 2016 totaled $ 1055.8, compared to $ 1265.6 in 2015. The decrease of $ 209.8 was primarily due to the completion of major projects in 2016 and 2015. Additions to plant and equipment also included support capital of a routine, ongoing nature, including expenditures for distribution equipment and facility improvements. Spending in 2016 and 2015 included plant and equipment constructed to provide oxygen for coal gasification in china, hydrogen to the global market, oxygen to the steel industry, nitrogen to the electronic semiconductor industry, and capacity expansion for the materials technologies segment. Capital expenditures on a non-gaap basis in 2016 totaled $ 1083.0 compared to $ 1678.4 in 2015.

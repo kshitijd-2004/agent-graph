@@ -1,0 +1,17 @@
+# HII fiscal 2011 annual report (10-K), page 90
+
+Authoritative, audited figures.
+
+Hii expects to incur higher costs to complete ships currently under construction in avondale due to anticipated reductions in productivity. As a result, in the second quarter of 2010, the company increased the estimates to complete lpd-23 and lpd-25 by approximately $ 210 million. The company recognized a $ 113 million pre-tax charge to operating income for these contracts in the second quarter of 2010. Hii is exploring alternative uses of the avondale facility, including alternative opportunities for the workforce. In connection with and as a result of the decision to wind down shipbuilding operations at the avondale, louisiana facility, the company began incurring and paying related employee severance and incentive compensation liabilities and expenditures, asset retirement obligation liabilities that became reasonably estimable, and amounts owed for not meeting certain requirements under its cooperative endeavor agreement with the state of louisiana. The company anticipates that it will incur substantial other restructuring and facilities shutdown related costs, including, but not limited to, severance expense, relocation expense, and asset write-downs related to the avondale facilities. These costs are expected to be allowable expenses under government accounting standards and thus should be recoverable in future years' overhead costs. These future costs could approximate $ 271 million, based on management 's current estimate. Such costs should be recoverable under existing flexibly priced contracts or future negotiated contracts in accordance with federal acquisition regulation ("far ") provisions relating to the treatment of restructuring and shutdown related costs. The company is currently in discussions with the u.s. Navy regarding its cost submission to support the recoverability of these costs under the far and applicable contracts, and this submission is subject to review and acceptance by the u.s. Navy. The defense contract audit agency ("dcaa "), a dod agency, prepared an initial audit report on the company 's cost proposal for restructuring and shutdown related costs of $ 310 million, which stated that the proposal was not adequately supported for the dcaa to reach a conclusion and questioned approximately $ 25 million, or 8% (8%), of the costs submitted by the company. Accordingly, the dcaa did not accept the proposal as submitted. The company has submitted a revised proposal to address the concerns of the dcaa and to reflect a revised estimated total cost of $ 271 million. Should the company 's revised proposal be challenged by the u.s. Navy, the company would likely pursue prescribed dispute resolution alternatives to resolve the challenge. That process, however, would create uncertainty as to the timing and eventual allowability of the costs related to the wind down of the avondale facility. Ultimately, the company anticipates these discussions with the u.s.
+
+| ($ in millions) | Employee Compensation | Other Accruals | Total |
+|---|---|---|---|
+| Balance at January 1, 2010 | $0 | $0 | $0 |
+| Accrual established | 27 | 39 | 66 |
+| Payments | 0 | 0 | 0 |
+| Adjustments | 0 | 0 | 0 |
+| Balance at December 31, 2010 | $27 | $39 | $66 |
+| Accrual established | 0 | 0 | 0 |
+| Payments | (24) | (36) | (60) |
+| Adjustments | 47 | (3) | 44 |
+| Balance at December 31, 2011 | $50 | $0 | $50 |

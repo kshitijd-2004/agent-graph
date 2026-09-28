@@ -1,0 +1,16 @@
+# MAS fiscal 2010 annual report (10-K), page 86
+
+Authoritative, audited figures.
+
+M. Employee retirement plans - (continued) of equities and fixed-income investments, and would be less liquid than financial instruments that trade on public markets. Potential events or circumstances that could have a negative effect on estimated fair value include the risks of inadequate diversification and other operating risks. To mitigate these risks, investments are diversified across and within asset classes in support of investment objectives. Policies and practices to address operating risks include ongoing manager oversight, plan and asset class investment guidelines and instructions that are communicated to managers, and periodic compliance and audit reviews to ensure adherence to these policies. In addition, the company periodically seeks the input of its independent advisor to ensure the investment policy is appropriate. The company sponsors certain post-retirement benefit plans that provide medical, dental and life insurance coverage for eligible retirees and dependents in the united states based upon age and length of service. The aggregate present value of the unfunded accumulated post-retirement benefit obligation was $ 13 million at both december 31, 2010 and 2009. Cash flows at december 31, 2010, the company expected to contribute approximately $ 30 million to $ 35 million to its qualified defined-benefit pension plans to meet erisa requirements in 2011. The company also expected to pay benefits of $ 3 million and $ 10 million to participants of its unfunded foreign and non-qualified (domestic) defined-benefit pension plans, respectively, in 2011. At december 31, 2010, the benefits expected to be paid in each of the next five years, and in aggregate for the five years thereafter, relating to the company 's defined-benefit pension plans, were as follows, in millions: qualified non-qualified.
+
+|   | Qualified   Plans | Non-Qualified   Plans |
+|---|---|---|
+| 2011 | $38 | $10 |
+| 2012 | $40 | $11 |
+| 2013 | $41 | $11 |
+| 2014 | $41 | $12 |
+| 2015 | $43 | $12 |
+| 2016-2020 | $235 | $59 |
+
+N. Shareholders' equity in july 2007, the company 's board of directors authorized the repurchase for retirement of up to 50 million shares of the company 's common stock in open-market transactions or otherwise. At december 31, 2010, the company had remaining authorization to repurchase up to 27 million shares. During 2010, the company repurchased and retired three million shares of company common stock, for cash aggregating $ 45 million to offset the dilutive impact of the 2010 grant of three million shares of long-term stock awards. The company repurchased and retired two million common shares in 2009 and nine million common shares in 2008 for cash aggregating $ 11 million and $ 160 million in 2009 and 2008, respectively. On the basis of amounts paid (declared), cash dividends per common share were $.30 ($.30) in 2010, $.46 ($.30) in 2009 and $.925 ($.93) in 2008, respectively. In 2009, the company decreased its quarterly cash dividend to $.075 per common share from $.235 per common share. Masco corporation notes to consolidated financial statements - (continued).

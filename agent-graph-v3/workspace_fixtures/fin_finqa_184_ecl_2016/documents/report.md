@@ -1,0 +1,15 @@
+# ECL fiscal 2016 annual report (10-K), page 64
+
+Authoritative, audited figures.
+
+Cash and cash equivalents cash equivalents include highly-liquid investments with a maturity of three months or less when purchased. Accounts receivable and allowance for doubtful accounts accounts receivable are carried at the invoiced amounts, less an allowance for doubtful accounts, and generally do not bear interest. The company estimates the balance of allowance for doubtful accounts by analyzing accounts receivable balances by age and applying historical write-off and collection trend rates. The company 's estimates include separately providing for customer receivables based on specific circumstances and credit conditions, and when it is deemed probable that the balance is uncollectible. Account balances are charged off against the allowance when it is determined the receivable will not be recovered. The company 's allowance for doubtful accounts balance also includes an allowance for the expected return of products shipped and credits related to pricing or quantities shipped of $ 14 million, $ 15 million and $ 14 million as of december 31, 2016, 2015, and 2014, respectively. Returns and credit activity is recorded directly to sales as a reduction. The following table summarizes the activity in the allowance for doubtful accounts:.
+
+| (millions) | 2016 | 2015 | 2014 |
+|---|---|---|---|
+| Beginning balance | $75 | $77 | $81 |
+| Bad debt expense | 20 | 26 | 23 |
+| Write-offs | (25) | (22) | (20) |
+| Other (a) | (2) | (6) | (7) |
+| Ending balance | $68 | $75 | $77 |
+
+(a) other amounts are primarily the effects of changes in currency translations and the impact of allowance for returns and credits. Inventory valuations inventories are valued at the lower of cost or market. Certain u.s. Inventory costs are determined on a last-in, first-out ("lifo ") basis. Lifo inventories represented 40% (40%) and 39% (39%) of consolidated inventories as of december 31, 2016 and 2015, respectively. Lifo inventories include certain legacy nalco u.s. Inventory acquired at fair value as part of the nalco merger. All other inventory costs are determined using either the average cost or first-in, first-out ("fifo ") methods. Inventory values at fifo, as shown in note 5, approximate replacement cost. During 2015, the company improved and standardized estimates related to its inventory reserves and product costing, resulting in a net pre-tax charge of approximately $ 6 million. Separately, the actions resulted in a charge of $ 20.6 million related to inventory reserve calculations, partially offset by a gain of $ 14.5 million related to the capitalization of certain cost components into inventory. During 2016, the company took additional actions to improve and standardize estimates related to the capitalization of certain cost components into inventory, which resulted in a gain of $ 6.2 million. These items are reflected within special (gains) and charges, as discussed in note 3. Property, plant and equipment property, plant and equipment assets are stated at cost.

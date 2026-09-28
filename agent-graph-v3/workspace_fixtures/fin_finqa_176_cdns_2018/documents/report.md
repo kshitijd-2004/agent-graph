@@ -1,0 +1,18 @@
+# CDNS fiscal 2018 annual report (10-K), page 66
+
+Authoritative, audited figures.
+
+Entity transfers of inventory, the income tax effects will continue to be deferred until the inventory has been sold to a third party. Cadence adopted the new standard on the first day of fiscal 2018 using the modified retrospective transition approach and recorded a cumulative-effect adjustment to decrease retained earnings in the amount of $ 8.3 million. The cumulative-effect adjustment includes the write-off of income tax consequences deferred from prior intra-entity transfers involving assets other than inventory and new deferred tax assets for amounts not recognized under u.s. Gaap. We anticipate the potential for increased volatility in future effective tax rates from the adoption of this guidance. Stock-based compensation in may 2017, the fasb issued asu 2017-09, "compensation 2014stock compensation (topic 718): scope of modification accounting, " that provides guidance about which changes to the terms or conditions of a share-based payment award require an entity to apply modification accounting. Cadence adopted the standard on the first day of fiscal 2018. The adoption of this standard did not impact cadence 's consolidated financial statements or the related disclosures. Cumulative effect adjustments to retained earnings the following table presents the cumulative effect adjustments, net of income tax effects, to beginning retained earnings for new accounting standards adopted by cadence on the first day of fiscal 2018: retained earnings (in thousands).
+
+|   | Retained Earnings (In thousands) |
+|---|---|
+| Balance, December 30, 2017, as previously reported | $341,003 |
+| Cumulative effect adjustment from the adoption of new accounting standards: |  |
+| Revenue from Contracts with Customers (Topic 606)* | 91,640 |
+| Financial Instruments—Overall (Subtopic 825-10): Recognition and Measurement of Financial Assets and Financial Liabilities | 2,638 |
+| Income taxes (Topic 740): Intra-entity Transfers of Assets Other Than Inventory | (8,349) |
+| Balance, December 30, 2017, as adjusted | 426,932 |
+| Net Income | 345,777 |
+| Balance, December 29, 2018 | $772,709 |
+
+* the cumulative effect adjustment from the adoption of revenue from contracts with customers (topic 606) is presented net of the related income tax effect of $ 17.5 million. New accounting standards not yet adopted leases in february 2016, the fasb issued asu 2016-02, "leases (topic 842), " requiring, among other things, the recognition of lease liabilities and corresponding right-of-use assets on the balance sheet by lessees for all leases with a term longer than 12 months. The new standard is effective for cadence in the first quarter of fiscal 2019. A modified retrospective approach is required, applying the new standard to leases existing as of the date of initial application. An entity may choose to apply the standard as of either its effective date or the beginning of the earliest comparative period presented in the financial statements. Cadence adopted the new standard on december 30, 2018, the first day of fiscal 2019, and used the effective date as the date of initial application. Consequently, financial information will not be updated and the disclosures required under the new standard will not be provided for dates and periods prior to the first quarter of fiscal 2019. Cadence elected certain practical expedients permitted under the transition guidance within the new standard, which among other things, allowed cadence to carry forward its prior conclusions about lease identification and classification..

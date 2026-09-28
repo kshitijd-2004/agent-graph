@@ -1,0 +1,14 @@
+# SNPS fiscal 2006 annual report (10-K), page 68
+
+Authoritative, audited figures.
+
+Fair value of the tangible assets and identifiable intangible assets acquired, was $ 17.7 million. Goodwill resulted primarily from the company 's expectation of synergies from the integration of sigma-c 's technology with the company 's technology and operations. Virtio corporation, inc. (virtio) the company acquired virtio on may 15, 2006 in an all-cash transaction. Reasons for the acquisition. The company believes that its acquisition of virtio will expand its presence in electronic system level design. The company expects the combination of the company 's system studio solution with virtio 's virtual prototyping technology will help accelerate systems to market by giving software developers the ability to begin code development earlier than with prevailing methods. Purchase price. The company paid $ 9.1 million in cash for the outstanding shares of virtio, of which $ 0.9 million was deposited with an escrow agent and which will be paid to the former stockholders of virtio pursuant to the terms of an escrow agreement. In addition, the company had a prior investment in virtio of approximately $ 1.7 million. The total purchase consideration consisted of:.
+
+|   | (in thousands) |
+|---|---|
+| Cash paid | $9,076 |
+| Prior investment in Virtio | 1,664 |
+| Acquisition-related costs | 713 |
+| Total purchase price | $11,453 |
+
+Acquisition-related costs of $ 0.7 million consist primarily of legal, tax and accounting fees, estimated facilities closure costs and employee termination costs. As of october 31, 2006, the company had paid $ 0.3 million of the acquisition-related costs. The $ 0.4 million balance remaining at october 31, 2006 primarily consists of professional and tax-related service fees and facilities closure costs. Under the agreement with virtio, the company has also agreed to pay up to $ 4.3 million over three years to the former stockholders based upon achievement of certain sales milestones. This contingent consideration is considered to be additional purchase price and will be an adjustment to goodwill when and if payment is made. Additionally, the company has also agreed to pay $ 0.9 million in employee retention bonuses which will be recognized as compensation expense over the service period of the applicable employees. Assets acquired. The company has performed a preliminary valuation and allocated the total purchase consideration to the assets and liabilities acquired, including identifiable intangible assets based on their respective fair values on the acquisition date. The company acquired $ 2.5 million of intangible assets consisting of $ 1.9 million in existing technology, $ 0.4 million in customer relationships and $ 0.2 million in non-compete agreements to be amortized over five to seven years. Additionally, the company acquired tangible assets of $ 5.5 million and assumed liabilities of $ 3.2 million.

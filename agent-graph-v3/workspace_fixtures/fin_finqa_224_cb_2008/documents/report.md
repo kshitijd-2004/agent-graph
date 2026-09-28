@@ -1,0 +1,13 @@
+# CB fiscal 2008 annual report (10-K), page 144
+
+Authoritative, audited figures.
+
+Foreign currency exchange rate risk many of our non-u.s. Companies maintain both assets and liabilities in local currencies. Therefore, foreign exchange rate risk is generally limited to net assets denominated in those foreign currencies. Foreign exchange rate risk is reviewed as part of our risk management process. Locally required capital levels are invested in home currencies in order to satisfy regulatory require- ments and to support local insurance operations regardless of currency fluctuations. The principal currencies creating foreign exchange risk for us are the british pound sterling, the euro, and the canadian dollar. The following table provides more information on our exposure to foreign exchange rate risk at december 31, 2008 and 2007..
+
+| (in millions of U.S. dollars) | 2008 | 2007 |
+|---|---|---|
+| Fair value of net assets denominated in foreign currencies | $1,127 | $1,651 |
+| Percentage of fair value of total net assets | 7.8% | 9.9% |
+| Pre-tax impact on equity of hypothetical 10 percent strengthening of the U.S. dollar | $84 | $150 |
+
+Reinsurance of gmdb and gmib guarantees our net income is directly impacted by changes in the reserves calculated in connection with the reinsurance of variable annuity guarantees, primarily gmdb and gmib. These reserves are calculated in accordance with sop 03-1 (sop reserves) and changes in these reserves are reflected as life and annuity benefit expense, which is included in life underwriting income. In addition, our net income is directly impacted by the change in the fair value of the gmib liability (fvl), which is classified as a derivative according to fas 133. The fair value liability established for a gmib reinsurance contract represents the differ- ence between the fair value of the contract and the sop 03-1 reserves. Changes in the fair value of the gmib liability, net of associated changes in the calculated sop 03-1 reserve, are reflected as realized gains or losses. Ace views our variable annuity reinsurance business as having a similar risk profile to that of catastrophe reinsurance, with the probability of long-term economic loss relatively small at the time of pricing. Adverse changes in market factors and policyholder behavior will have an impact on both life underwriting income and net income. When evaluating these risks, we expect to be compensated for taking both the risk of a cumulative long-term economic net loss, as well as the short-term accounting variations caused by these market movements. Therefore, we evaluate this business in terms of its long-term eco- nomic risk and reward.

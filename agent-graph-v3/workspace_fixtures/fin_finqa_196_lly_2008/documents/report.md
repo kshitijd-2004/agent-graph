@@ -1,0 +1,20 @@
+# LLY fiscal 2008 annual report (10-K), page 43
+
+Authoritative, audited figures.
+
+For marketing. There are several methods that can be used to determine the estimated fair value of the ipr&d acquired in a business combination. We utilized the "income method, " which applies a probability weighting to the estimated future net cash fl ows that are derived from projected sales revenues and estimated costs. These projec- tions are based on factors such as relevant market size, patent protection, historical pricing of similar products, and expected industry trends. The estimated future net cash fl ows are then discounted to the present value using an appropriate discount rate. This analysis is performed for each project independently. In accordance with fin 4, applicability of fasb statement no. 2 to business combinations accounted for by the purchase method, these acquired ipr&d intangible assets totaling $ 4.71 billion and $ 340.5 million in 2008 and 2007, respectively, were expensed immediately subsequent to the acquisition because the products had no alternative future use. The ongoing activities with respect to each of these products in development are not material to our research and development expenses. In addition to the acquisitions of businesses, we also acquired several products in development. The acquired ipr&d related to these products of $ 122.0 million and $ 405.1 million in 2008 and 2007, respectively, was also writ- ten off by a charge to income immediately upon acquisition because the products had no alternative future use. Imclone acquisition on november 24, 2008, we acquired all of the outstanding shares of imclone systems inc. (imclone), a biopharma- ceutical company focused on advancing oncology care, for a total purchase price of approximately $ 6.5 billion, which was fi nanced through borrowings. This strategic combination will offer both targeted therapies and oncolytic agents along with a pipeline spanning all phases of clinical development. The combination also expands our bio- technology capabilities. The acquisition has been accounted for as a business combination under the purchase method of accounting, resulting in goodwill of $ 419.5 million. No portion of this goodwill is expected to be deductible for tax purposes. Allocation of purchase price we are currently determining the fair values of a signifi cant portion of these net assets. The purchase price has been preliminarily allocated based on an estimate of the fair value of assets acquired and liabilities assumed as of the date of acquisition. The fi nal determination of these fair values will be completed as soon as possible but no later than one year from the acquisition date.
+
+| Cash and short-term investments | $982.9 |
+|---|---|
+| Inventories | 136.2 |
+| Developed product technology (Erbitux)<sup>1</sup> | 1,057.9 |
+| Goodwill | 419.5 |
+| Property and equipment | 339.8 |
+| Debt assumed | (600.0) |
+| Deferred taxes | (315.0) |
+| Deferred income | (127.7) |
+| Other assets and liabilities — net | (72.1) |
+| Acquired in-process research and development | 4,685.4 |
+| Total purchase price | $6,506.9 |
+
+1this intangible asset will be amortized on a straight-line basis through 2023 in the u.s. And 2018 in the rest of the world. All of the estimated fair value of the acquired ipr&d is attributable to oncology-related products in develop- ment, including $ 1.33 billion to line extensions for erbitux. A signifi cant portion (81 percent) of the remaining value of acquired ipr&d is attributable to two compounds in phase iii clinical testing and one compound in phase ii clini- cal testing, all targeted to treat various forms of cancers. The discount rate we used in valuing the acquired ipr&d projects was 13.5 percent, and the charge for acquired ipr&d of $ 4.69 billion recorded in the fourth quarter of 2008, was not deductible for tax purposes. Pro forma financial information the following unaudited pro forma fi nancial information presents the combined results of our operations with.

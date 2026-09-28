@@ -1,0 +1,17 @@
+# HOLX fiscal 2006 annual report (10-K), page 100
+
+Authoritative, audited figures.
+
+Hologic, inc. Notes to consolidated financial statements (continued) (in thousands, except per share data) company 's consolidated financial statements from the date of acquisition as part of its other business segment. The company has concluded that the acquisition of aeg does not represent a material business combination and therefore no pro forma financial information has been provided herein. Aeg specializes in the manufacture of photoconductor materials for use in a variety of electro photographic applications including for the coating of the company 's digital detectors. The acquisition of aeg allows the company to have control over a critical step in its detector manufacturing process - to efficiently manage its supply chain and improve manufacturing margins. The combination of the companies should also facilitate further manufacturing efficiencies and accelerate research and development of new detector products. Aeg was a privately held group of companies headquartered in warstein, germany, with manufacturing operations in germany, china and the united states. The aggregate purchase price for aeg was approximately $ 31300 (subject to adjustment) consisting of eur $ 24100 in cash and 110 shares of hologic common stock valued at $ 5300, and approximately $ 1900 for acquisition related fees and expenses. The company determined the fair value of the shares issued in connection with the acquisition in accordance with eitf issue no. 99-12, determination of the measurement date for the market price of acquirer securities issued in a purchase business combination. These 110 shares are subject to contingent put options pursuant to which the holders have the option to resell the shares to the company during a period of one year following the completion of the acquisition if the closing price of the company 's stock falls and remains below a threshold price. The repurchase price would be the closing price of the company 's common stock on the date of exercise. The company 's maximum aggregate obligation under these put options would be approximately $ 4100 if the put option were exercised for all the shares covered by those options and the closing price of our common stock on the date of exercise equaled the maximum threshold price permitting the exercise of the option. No shares were subject to the put option as of september 30, 2006 as the company 's stock price was in excess of the minimum value. The acquisition also provides for a one-year earn out of eur 1700 (approximately $ 2000 usd) which will be payable in cash if aeg calendar year 2006 earnings, as defined, exceeds a pre-determined amount. The company has considered the provision of eitf issue no.
+
+| Net tangible assets acquired as of May 2, 2006 | $23,700 |
+|---|---|
+| In-process research and development | 600 |
+| Developed technology and know how | 1,900 |
+| Customer relationship | 800 |
+| Trade name | 400 |
+| Deferred income taxes | (3,000) |
+| Goodwill | 6,900 |
+| Estimated Purchase Price | $31,300 |
+
+The purchase price allocation above has been revised from that included in the company 's form 10-q for the period ended june 24, 2006, to decrease the net tangible asset acquired and increased the deferred income tax liability with a corresponding increase to goodwill for both. The decrease to the net tangible assets primarily.

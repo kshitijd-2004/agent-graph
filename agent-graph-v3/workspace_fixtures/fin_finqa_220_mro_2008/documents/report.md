@@ -1,0 +1,18 @@
+# MRO fiscal 2008 annual report (10-K), page 135
+
+Authoritative, audited figures.
+
+Marathon oil corporation notes to consolidated financial statements (f) this sale-leaseback financing arrangement relates to a lease of a slab caster at united states steel 's fairfield works facility in alabama. We are the primary obligor under this lease. Under the financial matters agreement, united states steel has assumed responsibility for all obligations under this lease. This lease is an amortizing financing with a final maturity of 2012, subject to additional extensions. (g) this obligation relates to a lease of equipment at united states steel 's clairton works cokemaking facility in pennsylvania. We are the primary obligor under this lease. Under the financial matters agreement, united states steel has assumed responsibility for all obligations under this lease. This lease is an amortizing financing with a final maturity of 2012. (h) marathon oil canada corporation had an 805 million canadian dollar revolving term credit facility which was secured by substantially all of marathon oil canada corporation 's assets and included certain financial covenants, including leverage and interest coverage ratios. In february 2008, the outstanding balance was repaid and the facility was terminated. (i) these notes are senior secured notes of marathon oil canada corporation. The notes were secured by substantially all of marathon oil canada corporation 's assets. In january 2008, we provided a full and unconditional guarantee covering the payment of all principal and interest due under the senior notes. (j) these obligations as of december 31, 2008 include $ 126 million related to assets under construction at that date for which capital leases or sale-leaseback financings will commence upon completion of construction. The amounts currently reported are based upon the percent of construction completed as of december 31, 2008 and therefore do not reflect future minimum lease obligations of $ 209 million. (k) payments of long-term debt for the years 2009 - - are $ 99 million, $ 98 million, $ 257 million, $ 1487 million and $ 279 million. Of these amounts, payments assumed by united states steel are $ 15 million, $ 17 million, $ 161 million, $ 19 million and zero. (l) in the event of a change in control, as defined in the related agreements, debt obligations totaling $ 669 million at december 31, 2008, may be declared immediately due and payable. (m) see note 17 for information on interest rate swaps. On february 17, 2009, we issued $ 700 million aggregate principal amount of senior notes bearing interest at 6.5 percent with a maturity date of february 15, - and $ 800 million aggregate principal amount of senior notes bearing interest at 7.5 percent with a maturity date of february 15, 2019. Interest on both issues is payable semi- annually beginning august 15, 2009.
+
+| <i>(In millions)</i> | 2008 | 2007 |
+|---|---|---|
+| Asset retirement obligations as of January 1 | $1,134 | $1,044 |
+| Liabilities incurred, including acquisitions | 30 | 60 |
+| Liabilities settled | (94) | (10) |
+| Accretion expense (included in depreciation, depletion and amortization) | 66 | 61 |
+| Revisions to previous estimates | 24 | (17) |
+| Held for sale<sup>(a)</sup> | (195) | – |
+| Deconsolidation of EGHoldings | – | (4) |
+| Asset retirement obligations as of December 31<sup>(b)</sup> | $965 | $1,134 |
+
+Asset retirement obligations as of december 31 (b) $ 965 $ 1134 (a) see note 7 for information related to our assets held for sale. (b) includes asset retirement obligation of $ 2 and $ 3 million classified as short-term at december 31, 2008, and 2007..
