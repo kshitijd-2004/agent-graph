@@ -1,0 +1,11 @@
+# Paper C: Mycobacterium tuberculosis phagosome maturation arrest: selective targeting of PI3P-dependent membrane trafficking.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 35079452).
+
+## Abstract
+
+The ability of Mycobacterium tuberculosis to enter host macrophages, and reside in a phagosome, which does not mature into a phagolysosome, is central to the spread of tuberculosis and the associated pandemic involving billions of people worldwide. Tuberculosis can be viewed as a disease with a significant intracellular trafficking and organellar biogenesis component. Current understanding of the block in M. tuberculosis phagosome maturation also sheds light on fundamental aspects of phagolysosome biogenesis. The maturation block involves interference with the recruitment and function of rabs, rab effectors (phosphatidylinositol 3-kinases and tethering molecules such as EEA1), SNAREs (Syntaxin 6 and cellubrevin) and Ca2+/calmodulin signaling.
+
+## Conclusion
+
+M. tuberculosis analogs of mammalian phosphatidylinositols interfere with these systems and associated processes.

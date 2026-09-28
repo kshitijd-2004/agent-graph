@@ -1,0 +1,11 @@
+# Paper C: Stroke and migraine--the spectrum of cause and effect.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 14566771).
+
+## Abstract
+
+The relationship of migraine and stroke is complex. Stroke may be coincidental with migraine but migraine may confer an increased risk of stroke in women under 45 years of age and possibly in men who have migraine with aura. Stroke may mimic migraine but migraine syndromes may be symptomatic of underlying cerebrovascular disorders. True migraine-induced stroke is rare.
+
+## Conclusion
+
+The mechanisms of stroke induced during a migraine attack remain to be determined but probably involve an interaction between the dynamic shifts in cerebral blood flow and stroke risk factors.

@@ -1,0 +1,11 @@
+# Paper A: Specific deficit of the ON response in visual transmission by targeted disruption of the mGIuR6 gene
+
+Source: peer-reviewed abstract (SciFact corpus, doc 17081238).
+
+## Abstract
+
+Taking advantage of the restricted expression of metabotropic glutamate receptor subtype 6 (mGluR6) in retinal ON bipolar cells, we generated knockout mice lacking mGluR6 expression. The homozygous mutant mice showed a loss of ON responses but unchanged OFF responses to light. The mutant mice displayed no obvious changes in retinal cell organization nor in the projection of optic fibers to the brain. Furthermore, the mGluR6-deficient mice showed visual behavioral responses to light stimulation as examined by shuttle box avoidance behavior experiments using light exposure as a conditioned stimulus.
+
+## Conclusion
+
+The results demonstrate that mGluR6 is essential in synaptic transmission to the ON bipolar cell and that the OFF response provides an important means for transmitting visual information.

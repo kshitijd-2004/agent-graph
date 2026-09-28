@@ -1,0 +1,11 @@
+# Paper C: Brown and white adipose tissues: intrinsic differences in gene expression and response to cold exposure in mice
+
+Source: peer-reviewed abstract (SciFact corpus, doc 29381091).
+
+## Abstract
+
+Brown adipocytes dissipate energy, whereas white adipocytes are an energy storage site. We explored the plasticity of different white adipose tissue depots in acquiring a brown phenotype by cold exposure. By comparing cold-induced genes in white fat to those enriched in brown compared with white fat, at thermoneutrality we defined a "brite" transcription signature. We identified the genes, pathways, and promoter regulatory motifs associated with "browning," as these represent novel targets for understanding this process. For example, neuregulin 4 was more highly expressed in brown adipose tissue and upregulated in white fat upon cold exposure, and cell studies showed that it is a neurite outgrowth-promoting adipokine, indicative of a role in increasing adipose tissue innervation in response to cold. A cell culture system that allows us to reproduce the differential properties of the discrete adipose depots was developed to study depot-specific differences at an in vitro level.
+
+## Conclusion
+
+The key transcriptional events underpinning white adipose tissue to brown transition are important, as they represent an attractive proposition to overcome the detrimental effects associated with metabolic disorders, including obesity and type 2 diabetes.

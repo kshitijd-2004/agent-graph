@@ -1,11 +1,11 @@
-# Paper C: Broad neutralization coverage of HIV by multiple highly potent antibodies
+# Paper C: Neutralizing antibody responses in acute human immunodeficiency virus type 1 subtype C infection.
 
-Source: peer-reviewed abstract (SciFact corpus, doc 4373433).
+Source: peer-reviewed abstract (SciFact corpus, doc 23915841).
 
 ## Abstract
 
-Broadly neutralizing antibodies against highly variable viral pathogens are much sought after to treat or protect against global circulating viruses. Here we probed the neutralizing antibody repertoires of four human immunodeficiency virus (HIV)-infected donors with remarkably broad and potent neutralizing responses and rescued 17 new monoclonal antibodies that neutralize broadly across clades. Many of the new monoclonal antibodies are almost tenfold more potent than the recently described PG9, PG16 and VRC01 broadly neutralizing monoclonal antibodies and 100-fold more potent than the original prototype HIV broadly neutralizing monoclonal antibodies. The monoclonal antibodies largely recapitulate the neutralization breadth found in the corresponding donor serum and many recognize novel epitopes on envelope (Env) glycoprotein gp120, illuminating new targets for vaccine design. Analysis of neutralization by the full complement of anti-HIV broadly neutralizing monoclonal antibodies now available reveals that certain combinations of antibodies should offer markedly more favourable coverage of the enormous diversity of global circulating viruses than others and these combinations might be sought in active or passive immunization regimes.
+The study of the evolution and specificities of neutralizing antibodies during the course of human immunodeficiency virus type 1 (HIV-1) infection may be important in the discovery of possible targets for vaccine design. In this study, we assessed the autologous and heterologous neutralization responses of 14 HIV-1 subtype C-infected individuals, using envelope clones obtained within the first 2 months postinfection. Our data show that potent but relatively strain-specific neutralizing antibodies develop within 3 to 12 months of HIV-1 infection. The magnitude of this response was associated with shorter V1-to-V5 envelope lengths and fewer glycosylation sites, particularly in the V1-V2 region. Anti-MPER antibodies were detected in 4 of 14 individuals within a year of infection, while antibodies to CD4-induced (CD4i) epitopes developed to high titers in 12 participants, in most cases before the development of autologous neutralizing antibodies. However, neither anti-MPER nor anti-CD4i antibody specificity conferred neutralization breadth.
 
 ## Conclusion
 
-Overall, the isolation of multiple HIV broadly neutralizing monoclonal antibodies from several donors that, in aggregate, provide broad coverage at low concentrations is a highly positive indicator for the eventual design of an effective antibody-based HIV vaccine.
+These data provide insights into the kinetics, potency, breadth, and epitope specificity of neutralizing antibody responses in acute HIV-1 subtype C infection.

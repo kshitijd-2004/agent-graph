@@ -1,0 +1,11 @@
+# Paper B: Functional role of high-affinity anandamide transport, as revealed by selective inhibition.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 40476126).
+
+## Abstract
+
+Anandamide, an endogenous ligand for central cannabinoid receptors, is released from neurons on depolarization and rapidly inactivated. Anandamide inactivation is not completely understood, but it may occur by transport into cells or by enzymatic hydrolysis. The compound N-(4-hydroxyphenyl)arachidonylamide (AM404) was shown to inhibit high-affinity anandamide accumulation in rat neurons and astrocytes in vitro, an indication that this accumulation resulted from carrier-mediated transport. Although AM404 did not activate cannabinoid receptors or inhibit anandamide hydrolysis, it enhanced receptor-mediated anandamide responses in vitro and in vivo.
+
+## Conclusion
+
+The data indicate that carrier-mediated transport may be essential for termination of the biological effects of anandamide, and may represent a potential drug target.

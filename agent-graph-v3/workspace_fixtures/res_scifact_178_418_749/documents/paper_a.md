@@ -1,0 +1,11 @@
+# Paper A: Sprouty1 Regulates Reversible Quiescence of a Self-Renewing Adult Muscle Stem Cell Pool during Regeneration
+
+Source: peer-reviewed abstract (SciFact corpus, doc 16660256).
+
+## Abstract
+
+Satellite cells are skeletal muscle stem cells capable of self-renewal and differentiation after transplantation, but whether they contribute to endogenous muscle fiber repair has been unclear. The transcription factor Pax7 marks satellite cells and is critical for establishing the adult satellite cell pool. By using a lineage tracing approach, we show that after injury, quiescent adult Pax7(+) cells enter the cell cycle; a subpopulation returns to quiescence to replenish the satellite cell compartment, while others contribute to muscle fiber formation. We demonstrate that Sprouty1 (Spry1), a receptor tyrosine kinase signaling inhibitor, is expressed in quiescent Pax7(+) satellite cells in uninjured muscle, downregulated in proliferating myogenic cells after injury, and reinduced as Pax7(+) cells re-enter quiescence. We show that Spry1 is required for the return to quiescence and homeostasis of the satellite cell pool during repair.
+
+## Conclusion
+
+Our results therefore define a role for Spry1 in adult muscle stem cell biology and tissue repair.

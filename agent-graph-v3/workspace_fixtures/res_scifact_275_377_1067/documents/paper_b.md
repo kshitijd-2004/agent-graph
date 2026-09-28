@@ -1,0 +1,11 @@
+# Paper B: Pif1 family helicases suppress genome instability at G-quadruplex motifs
+
+Source: peer-reviewed abstract (SciFact corpus, doc 4429668).
+
+## Abstract
+
+The Saccharomyces cerevisiae Pif1 helicase is the prototypical member of the Pif1 DNA helicase family, which is conserved from bacteria to humans. Here we show that exceptionally potent G-quadruplex unwinding is conserved among Pif1 helicases. Moreover, Pif1 helicases from organisms separated by more than 3 billion years of evolution suppressed DNA damage at G-quadruplex motifs in yeast. The G-quadruplex-induced damage generated in the absence of Pif1 helicases led to new genetic and epigenetic changes.
+
+## Conclusion
+
+Furthermore, when expressed in yeast, human PIF1 suppressed both G-quadruplex-associated DNA damage and telomere lengthening.

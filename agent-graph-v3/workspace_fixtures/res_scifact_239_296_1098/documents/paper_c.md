@@ -1,0 +1,11 @@
+# Paper C: Increased CDK1 activity determines the timing of kinetochore-microtubule attachments in meiosis I
+
+Source: peer-reviewed abstract (SciFact corpus, doc 6472746).
+
+## Abstract
+
+Chromosome segregation during cell division depends on stable attachment of kinetochores to spindle microtubules. Mitotic spindle formation and kinetochore-microtubule (K-MT) capture typically occur within minutes of nuclear envelope breakdown. In contrast, during meiosis I in mouse oocytes, formation of the acentrosomal bipolar spindle takes 3-4 h, and stabilization of K-MT attachments is delayed an additional 3-4 h. The mechanism responsible for this delay, which likely prevents stabilization of erroneous attachments during spindle formation, is unknown.
+
+## Conclusion
+
+Here we show that during meiosis I, attachments are regulated by CDK1 activity, which gradually increases through prometaphase and metaphase I. Partial reduction of CDK1 activity delayed formation of stable attachments, whereas a premature increase in CDK1 activity led to precocious formation of stable attachments and eventually lagging chromosomes at anaphase I. These results indicate that the slow increase in CDK1 activity in meiosis I acts as a timing mechanism to allow stable K-MT attachments only after bipolar spindle formation, thus preventing attachment errors.

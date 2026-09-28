@@ -1,0 +1,11 @@
+# Paper A: A framework for understanding and targeting residual disease in oncogene-driven solid cancers
+
+Source: peer-reviewed abstract (SciFact corpus, doc 26231129).
+
+## Abstract
+
+Molecular targeted therapy has the potential to dramatically improve survival in patients with cancer. However, complete and durable responses to targeted therapy are rare in individuals with advanced-stage solid cancers. Even the most effective targeted therapies generally do not induce a complete tumor response, resulting in residual disease and tumor progression that limits patient survival. We discuss the emerging need to more fully understand the molecular basis of residual disease as a prelude to designing therapeutic strategies to minimize or eliminate residual disease so that we can move from temporary to chronic control of disease, or a cure, for patients with advanced-stage solid cancers.
+
+## Conclusion
+
+Ultimately, we propose a shift from the current reactive paradigm of analyzing and treating acquired drug resistance to a pre-emptive paradigm of defining the mechanisms that result in residual disease, to target and limit this disease reservoir.

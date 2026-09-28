@@ -1,0 +1,11 @@
+# Paper B: Senescent Cells, Tumor Suppression, and Organismal Aging: Good Citizens, Bad Neighbors
+
+Source: peer-reviewed abstract (SciFact corpus, doc 9559146).
+
+## Abstract
+
+Cells from organisms with renewable tissues can permanently withdraw from the cell cycle in response to diverse stress, including dysfunctional telomeres, DNA damage, strong mitogenic signals, and disrupted chromatin. This response, termed cellular senescence, is controlled by the p53 and RB tumor suppressor proteins and constitutes a potent anticancer mechanism. Nonetheless, senescent cells acquire phenotypic changes that may contribute to aging and certain age-related diseases, including late-life cancer.
+
+## Conclusion
+
+Thus, the senescence response may be antagonistically pleiotropic, promoting early-life survival by curtailing the development of cancer but eventually limiting longevity as dysfunctional senescent cells accumulate.

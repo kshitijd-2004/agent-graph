@@ -10,13 +10,13 @@
     "doc_ids": {
       "Paper B": 4421578,
       "Paper A": 24922825,
-      "Paper C": 4373433
+      "Paper C": 23915841
     },
     "claim_similarity": 0.165,
     "url": "https://github.com/allenai/scifact"
   },
   "description": "Verify two scientific claims against real abstracts: one is supported, one is contradicted, and one paper is unrelated. Cite the evidence for each verdict.",
-  "task_prompt": "Two claims are under review.\nClaim 1: Nonhuman primates are incapable of producing neutralizing antibodies in reponse to the Eilat virus (EILV) produced in mosquitos.\nClaim 2: Broadly HIV-1 Neutralizing Antibodies (bnAb) 10EB have no affinity for phospholipids.\nUsing the papers in documents/, decide for each claim whether the evidence supports or contradicts it. Write each verdict on its own line as 'Claim N: SUPPORTED' or 'Claim N: CONTRADICTED'. For each verdict, cite the paper and the specific result behind it.",
+  "task_prompt": "Two claims are under review.\nClaim 1: Nonhuman primates are incapable of producing neutralizing antibodies in reponse to the Eilat virus (EILV) produced in mosquitos.\nClaim 2: Broadly HIV-1 Neutralizing Antibodies (bnAb) 10EB have no affinity for phospholipids.\nUsing the papers in documents/, decide for each claim whether the evidence supports it, contradicts it, or does not give enough information to decide. Write each verdict on its own line as 'Claim N: SUPPORTED', 'Claim N: CONTRADICTED' or 'Claim N: NOT ENOUGH INFO'. For each verdict, cite the paper and the specific result behind it.",
   "required_files": [
     "documents/paper_a.md",
     "documents/paper_b.md"

@@ -1,0 +1,11 @@
+# Paper A: New opportunities: the use of nanotechnologies to manipulate and track stem cells.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 31715818).
+
+## Abstract
+
+Nanotechnologies are emerging platforms that could be useful in measuring, understanding, and manipulating stem cells. Examples include magnetic nanoparticles and quantum dots for stem cell labeling and in vivo tracking; nanoparticles, carbon nanotubes, and polyplexes for the intracellular delivery of genes/oligonucleotides and protein/peptides; and engineered nanometer-scale scaffolds for stem cell differentiation and transplantation. This review examines the use of nanotechnologies for stem cell tracking, differentiation, and transplantation.
+
+## Conclusion
+
+We further discuss their utility and the potential concerns regarding their cytotoxicity.

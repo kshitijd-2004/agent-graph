@@ -1,0 +1,11 @@
+# Paper B: The Utilization of Extracellular Proteins as Nutrients Is Suppressed by mTORC1
+
+Source: peer-reviewed abstract (SciFact corpus, doc 8460275).
+
+## Abstract
+
+Despite being surrounded by diverse nutrients, mammalian cells preferentially metabolize glucose and free amino acids. Recently, Ras-induced macropinocytosis of extracellular proteins was shown to reduce a transformed cell's dependence on extracellular glutamine. Here, we demonstrate that protein macropinocytosis can also serve as an essential amino acid source. Lysosomal degradation of extracellular proteins can sustain cell survival and induce activation of mTORC1 but fails to elicit significant cell accumulation. Unlike its growth-promoting activity under amino-acid-replete conditions, we discovered that mTORC1 activation suppresses proliferation when cells rely on extracellular proteins as an amino acid source. Inhibiting mTORC1 results in increased catabolism of endocytosed proteins and enhances cell proliferation during nutrient-depleted conditions in vitro and within vascularly compromised tumors in vivo. Thus, by preventing nutritional consumption of extracellular proteins, mTORC1 couples growth to availability of free amino acids.
+
+## Conclusion
+
+These results may have important implications for the use of mTOR inhibitors as therapeutics.

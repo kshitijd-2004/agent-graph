@@ -1,0 +1,11 @@
+# Paper B: Kinetics and Fidelity of the Repair of Cas9-Induced Double-Strand DNA Breaks
+
+Source: peer-reviewed abstract (SciFact corpus, doc 44172171).
+
+## Abstract
+
+The RNA-guided DNA endonuclease Cas9 is a powerful tool for genome editing. Little is known about the kinetics and fidelity of the double-strand break (DSB) repair process that follows a Cas9 cutting event in living cells. Here, we developed a strategy to measure the kinetics of DSB repair for single loci in human cells. Quantitative modeling of repaired DNA in time series after Cas9 activation reveals variable and often slow repair rates, with half-life times up to ∼10 hr. Furthermore, repair of the DSBs tends to be error prone. Both classical and microhomology-mediated end joining pathways contribute to the erroneous repair. Estimation of their individual rate constants indicates that the balance between these two pathways changes over time and can be altered by additional ionizing radiation.
+
+## Conclusion
+
+Our approach provides quantitative insights into DSB repair kinetics and fidelity in single loci and indicates that Cas9-induced DSBs are repaired in an unusual manner.

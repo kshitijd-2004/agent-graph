@@ -1,0 +1,11 @@
+# Paper A: Role for insulin signaling in catecholaminergic neurons in control of energy homeostasis.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 15535511).
+
+## Abstract
+
+Dopaminergic midbrain neurons integrate signals on food palatability and food-associated reward into the complex control of energy homeostasis. To define the role of insulin receptor (IR) signaling in this circuitry, we inactivated IR signaling in tyrosine hydroxylase (Th)-expressing cells of mice (IR(ΔTh)). IR inactivation in Th-expressing cells of mice resulted in increased body weight, increased fat mass, and hyperphagia. While insulin acutely stimulated firing frequency in 50% of dopaminergic VTA/SN neurons, this response was abolished in IR(ΔTh) mice. Moreover, these mice exhibited an altered response to cocaine under food-restricted conditions.
+
+## Conclusion
+
+Taken together, these data provide in vivo evidence for a critical role of insulin signaling in catecholaminergic neurons to control food intake and energy homeostasis.

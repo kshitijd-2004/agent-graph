@@ -1,0 +1,11 @@
+# Paper C: Experimental and theoretical study of mitotic spindle orientation
+
+Source: peer-reviewed abstract (SciFact corpus, doc 4391685).
+
+## Abstract
+
+The architecture and adhesiveness of a cell microenvironment is a critical factor for the regulation of spindle orientation in vivo. Using a combination of theory and experiments, we have investigated spindle orientation in HeLa (human) cells. Here we show that spindle orientation can be understood as the result of the action of cortical force generators, which interact with spindle microtubules and are activated by cortical cues. We develop a simple physical description of this spindle mechanics, which allows us to calculate angular profiles of the torque acting on the spindle, as well as the angular distribution of spindle orientations. Our model accounts for the preferred spindle orientation and the shape of the full angular distribution of spindle orientations observed in a large variety of different cellular microenvironment geometries. It also correctly describes asymmetric spindle orientations, which are observed for certain distributions of cortical cues.
+
+## Conclusion
+
+We conclude that, on the basis of a few simple assumptions, we can provide a quantitative description of the spindle orientation of adherent cells.

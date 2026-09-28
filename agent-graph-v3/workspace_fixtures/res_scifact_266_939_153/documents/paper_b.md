@@ -1,0 +1,11 @@
+# Paper B: An integrin β3–KRAS–RalB complex drives tumour stemness and resistance to EGFR inhibition
+
+Source: peer-reviewed abstract (SciFact corpus, doc 4702639).
+
+## Abstract
+
+Tumour cells, with stem-like properties, are highly aggressive and often show drug resistance. Here, we reveal that integrin αvβ3 serves as a marker of breast, lung and pancreatic carcinomas with stem-like properties that are highly resistant to receptor tyrosine kinase inhibitors such as erlotinib. This was observed in vitro and in mice bearing patient-derived tumour xenografts or in clinical specimens from lung cancer patients who had progressed on erlotinib. Mechanistically, αvβ3, in the unliganded state, recruits KRAS and RalB to the tumour cell plasma membrane, leading to the activation of TBK1 and NF-κB. In fact, αvβ3 expression and the resulting KRAS–RalB–NF-κB pathway were both necessary and sufficient for tumour initiation, anchorage independence, self-renewal and erlotinib resistance. Pharmacological targeting of this pathway with bortezomib reversed both tumour stemness and erlotinib resistance.
+
+## Conclusion
+
+These findings not only identify αvβ3 as a marker/driver of carcinoma stemness but also reveal a therapeutic strategy to sensitize such tumours to RTK inhibition.

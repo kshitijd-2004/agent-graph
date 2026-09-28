@@ -1,11 +1,11 @@
-# Paper C: Phosphate and R2D2 restrict the substrate specificity of Dicer-2, an ATP-driven ribonuclease.
+# Paper C: Stress-induced apoptosis associated with null mutation of ADAR1 RNA editing deaminase gene.
 
-Source: peer-reviewed abstract (SciFact corpus, doc 5702790).
+Source: peer-reviewed abstract (SciFact corpus, doc 7029990).
 
 ## Abstract
 
-Drosophila Dicer-2 generates small interfering RNAs (siRNAs) from long double-stranded RNA (dsRNA), whereas Dicer-1 produces microRNAs (miRNAs) from pre-miRNA. What makes the two Dicers specific for their biological substrates? We find that purified Dicer-2 can efficiently cleave pre-miRNA, but that inorganic phosphate and the Dicer-2 partner protein R2D2 inhibit pre-miRNA cleavage. Dicer-2 contains C-terminal RNase III domains that mediate RNA cleavage and an N-terminal helicase motif, whose function is unclear. We show that Dicer-2 is a dsRNA-stimulated ATPase that hydrolyzes ATP to ADP; ATP hydrolysis is required for Dicer-2 to process long dsRNA, but not pre-miRNA. Wild-type Dicer-2, but not a mutant defective in ATP hydrolysis, can generate siRNAs faster than it can dissociate from a long dsRNA substrate.
+One type of RNA editing involves the conversion of adenosine residues into inosine in double-stranded RNA through the action of adenosine deaminases acting on RNA (ADAR). A-to-I RNA editing of the coding sequence could result in synthesis of proteins not directly encoded in the genome. ADAR edits also non-coding sequences of target RNAs, such as introns and 3'-untranslated regions, which may affect splicing, translation, and mRNA stability. Three mammalian ADAR gene family members (ADAR1-3) have been identified. Here we investigated phenotypes of mice homozygous for ADAR1 null mutation. Although live ADAR1-/- embryos with normal gross appearance could be recovered up to E11.5, widespread apoptosis was detected in many tissues. Fibroblasts derived from ADAR1-/- embryos were also prone to apoptosis induced by serum deprivation.
 
 ## Conclusion
 
-We propose that the Dicer-2 helicase domain uses ATP to generate many siRNAs from a single molecule of dsRNA before dissociating from its substrate.
+Our results demonstrate an essential requirement for ADAR1 in embryogenesis and suggest that it functions to promote survival of numerous tissues by editing one or more double-stranded RNAs required for protection against stress-induced apoptosis.

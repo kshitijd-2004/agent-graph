@@ -1,0 +1,11 @@
+# Paper A: Enhancer Evolution across 20 Mammalian Species
+
+Source: peer-reviewed abstract (SciFact corpus, doc 14658685).
+
+## Abstract
+
+The mammalian radiation has corresponded with rapid changes in noncoding regions of the genome, but we lack a comprehensive understanding of regulatory evolution in mammals. Here, we track the evolution of promoters and enhancers active in liver across 20 mammalian species from six diverse orders by profiling genomic enrichment of H3K27 acetylation and H3K4 trimethylation. We report that rapid evolution of enhancers is a universal feature of mammalian genomes. Most of the recently evolved enhancers arise from ancestral DNA exaptation, rather than lineage-specific expansions of repeat elements. In contrast, almost all liver promoters are partially or fully conserved across these species. Our data further reveal that recently evolved enhancers can be associated with genes under positive selection, demonstrating the power of this approach for annotating regulatory adaptations in genomic sequences.
+
+## Conclusion
+
+These results provide important insight into the functional genetics underpinning mammalian regulatory evolution.

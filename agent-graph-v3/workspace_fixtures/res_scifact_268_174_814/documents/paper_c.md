@@ -1,0 +1,11 @@
+# Paper C: Beta-band oscillations--signalling the status quo?
+
+Source: peer-reviewed abstract (SciFact corpus, doc 79336156).
+
+## Abstract
+
+In this review, we consider the potential functional role of beta-band oscillations, which at present is not yet well understood. We discuss evidence from recent studies on top-down mechanisms involved in cognitive processing, on the motor system and on the pathophysiology of movement disorders that suggest a unifying hypothesis: beta-band activity seems related to the maintenance of the current sensorimotor or cognitive state. We hypothesize that beta oscillations and/or coupling in the beta-band are expressed more strongly if the maintenance of the status quo is intended or predicted, than if a change is expected.
+
+## Conclusion
+
+Moreover, we suggest that pathological enhancement of beta-band activity is likely to result in an abnormal persistence of the status quo and a deterioration of flexible behavioural and cognitive control.

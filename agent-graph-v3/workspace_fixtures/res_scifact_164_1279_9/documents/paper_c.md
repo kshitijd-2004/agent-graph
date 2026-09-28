@@ -1,0 +1,11 @@
+# Paper C: Linkage with methadone treatment upon release from incarceration: a promising opportunity.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 24700152).
+
+## Abstract
+
+Injection drug users (IDUs) are at increased risk for HIV, viral hepatitis, and tuberculosis, and making up more than a quarter of the incarcerated population in the United States. Methadone maintenance treatment of opiate addiction is highly effective at reducing drug use, drug-related criminal activity, and risk of HIV transmission. Recently released inmates are at particularly high risk for overdose and disease transmission.
+
+## Conclusion
+
+Linkage to methadone treatment immediately upon release from incarceration is a promising opportunity to combat disease transmission, facilitate reentry into the community, and reduce recidivism.

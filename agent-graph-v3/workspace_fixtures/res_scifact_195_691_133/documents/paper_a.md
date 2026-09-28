@@ -1,0 +1,11 @@
+# Paper A: The Rho GEFs LARG and GEF-H1 regulate the mechanical response to force on integrins
+
+Source: peer-reviewed abstract (SciFact corpus, doc 10991183).
+
+## Abstract
+
+How individual cells respond to mechanical forces is of considerable interest to biologists as force affects many aspects of cell behaviour. The application of force on integrins triggers cytoskeletal rearrangements and growth of the associated adhesion complex, resulting in increased cellular stiffness, also known as reinforcement. Although RhoA has been shown to play a role during reinforcement, the molecular mechanisms that regulate its activity are unknown. By combining biochemical and biophysical approaches, we identified two guanine nucleotide exchange factors (GEFs), LARG and GEF-H1, as key molecules that regulate the cellular adaptation to force. We show that stimulation of integrins with tensional force triggers activation of these two GEFs and their recruitment to adhesion complexes. Surprisingly, activation of LARG and GEF-H1 involves distinct signalling pathways.
+
+## Conclusion
+
+Our results reveal that LARG is activated by the Src family tyrosine kinase Fyn, whereas GEF-H1 catalytic activity is enhanced by ERK downstream of a signalling cascade that includes FAK and Ras.

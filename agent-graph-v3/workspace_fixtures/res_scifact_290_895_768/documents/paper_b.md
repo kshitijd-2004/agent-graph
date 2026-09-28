@@ -1,0 +1,11 @@
+# Paper B: Activating mutations in the NT5C2 nucleotidase gene drive chemotherapy resistance in relapsed ALL
+
+Source: peer-reviewed abstract (SciFact corpus, doc 6421792).
+
+## Abstract
+
+Acute lymphoblastic leukemia (ALL) is an aggressive hematological tumor resulting from the malignant transformation of lymphoid progenitors. Despite intensive chemotherapy, 20% of pediatric patients and over 50% of adult patients with ALL do not achieve a complete remission or relapse after intensified chemotherapy, making disease relapse and resistance to therapy the most substantial challenge in the treatment of this disease. Using whole-exome sequencing, we identify mutations in the cytosolic 5'-nucleotidase II gene (NT5C2), which encodes a 5'-nucleotidase enzyme that is responsible for the inactivation of nucleoside-analog chemotherapy drugs, in 20/103 (19%) relapse T cell ALLs and 1/35 (3%) relapse B-precursor ALLs. NT5C2 mutant proteins show increased nucleotidase activity in vitro and conferred resistance to chemotherapy with 6-mercaptopurine and 6-thioguanine when expressed in ALL lymphoblasts.
+
+## Conclusion
+
+These results support a prominent role for activating mutations in NT5C2 and increased nucleoside-analog metabolism in disease progression and chemotherapy resistance in ALL.

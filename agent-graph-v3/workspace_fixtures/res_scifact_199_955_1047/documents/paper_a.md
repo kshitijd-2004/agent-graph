@@ -1,0 +1,11 @@
+# Paper A: Gamma-Secretase Represents a Therapeutic Target for the Treatment of Invasive Glioma Mediated by the p75 Neurotrophin Receptor
+
+Source: peer-reviewed abstract (SciFact corpus, doc 14706752).
+
+## Abstract
+
+The multifunctional signaling protein p75 neurotrophin receptor (p75(NTR)) is a central regulator and major contributor to the highly invasive nature of malignant gliomas. Here, we show that neurotrophin-dependent regulated intramembrane proteolysis (RIP) of p75(NTR) is required for p75(NTR)-mediated glioma invasion, and identify a previously unnamed process for targeted glioma therapy. Expression of cleavage-resistant chimeras of p75(NTR) or treatment of animals bearing p75(NTR)-positive intracranial tumors with clinically applicable gamma-secretase inhibitors resulted in dramatically decreased glioma invasion and prolonged survival. Importantly, proteolytic processing of p75(NTR) was observed in p75(NTR)-positive patient tumor specimens and brain tumor initiating cells.
+
+## Conclusion
+
+This work highlights the importance of p75(NTR) as a therapeutic target, suggesting that gamma-secretase inhibitors may have direct clinical application for the treatment of malignant glioma.

@@ -10,13 +10,13 @@
     "doc_ids": {
       "Paper A": 11705328,
       "Paper B": 24088502,
-      "Paper C": 8595678
+      "Paper C": 18557974
     },
     "claim_similarity": 0.29,
     "url": "https://github.com/allenai/scifact"
   },
   "description": "Verify two scientific claims against real abstracts: one is supported, one is contradicted, and one paper is unrelated. Cite the evidence for each verdict.",
-  "task_prompt": "Two claims are under review.\nClaim 1: A deficiency of folate increases blood levels of homocysteine.\nClaim 2: Leuko-increased blood increases infectious complications in red blood cell transfusion.\nUsing the papers in documents/, decide for each claim whether the evidence supports or contradicts it. Write each verdict on its own line as 'Claim N: SUPPORTED' or 'Claim N: CONTRADICTED'. For each verdict, cite the paper and the specific result behind it.",
+  "task_prompt": "Two claims are under review.\nClaim 1: A deficiency of folate increases blood levels of homocysteine.\nClaim 2: Leuko-increased blood increases infectious complications in red blood cell transfusion.\nUsing the papers in documents/, decide for each claim whether the evidence supports it, contradicts it, or does not give enough information to decide. Write each verdict on its own line as 'Claim N: SUPPORTED', 'Claim N: CONTRADICTED' or 'Claim N: NOT ENOUGH INFO'. For each verdict, cite the paper and the specific result behind it.",
   "required_files": [
     "documents/paper_a.md",
     "documents/paper_b.md"

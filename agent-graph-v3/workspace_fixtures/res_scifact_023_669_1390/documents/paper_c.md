@@ -1,11 +1,11 @@
-# Paper C: Decoding Mammalian Ribosome-mRNA States by Translational GTPase Complexes
+# Paper C: A conserved modified wobble nucleoside (mcm5s2U) in lysyl-tRNA is required for viability in yeast.
 
-Source: peer-reviewed abstract (SciFact corpus, doc 13552682).
+Source: peer-reviewed abstract (SciFact corpus, doc 34498325).
 
 ## Abstract
 
-In eukaryotes, accurate protein synthesis relies on a family of translational GTPases that pair with specific decoding factors to decipher the mRNA code on ribosomes. We present structures of the mammalian ribosome engaged with decoding factor⋅GTPase complexes representing intermediates of translation elongation (aminoacyl-tRNA⋅eEF1A), termination (eRF1⋅eRF3), and ribosome rescue (Pelota⋅Hbs1l). Comparative analyses reveal that each decoding factor exploits the plasticity of the ribosomal decoding center to differentially remodel ribosomal proteins and rRNA. This leads to varying degrees of large-scale ribosome movements and implies distinct mechanisms for communicating information from the decoding center to each GTPase. Additional structural snapshots of the translation termination pathway reveal the conformational changes that choreograph the accommodation of decoding factors into the peptidyl transferase center.
+Transfer RNAs specific for Gln, Lys, and Glu from all organisms (except Mycoplasma) and organelles have a 2-thiouridine derivative (xm(5)s(2)U) as wobble nucleoside. These tRNAs read the A- and G-ending codons in the split codon boxes His/Gln, Asn/Lys, and Asp/Glu. In eukaryotic cytoplasmic tRNAs the conserved constituent (xm(5)-) in position 5 of uridine is 5-methoxycarbonylmethyl (mcm(5)). A protein (Tuc1p) from yeast resembling the bacterial protein TtcA, which is required for the synthesis of 2-thiocytidine in position 32 of the tRNA, was shown instead to be required for the synthesis of 2-thiouridine in the wobble position (position 34). Apparently, an ancient member of the TtcA family has evolved to thiolate U34 in tRNAs of organisms from the domains Eukarya and Archaea. Deletion of the TUC1 gene together with a deletion of the ELP3 gene, which results in the lack of the mcm(5) side chain, removes all modifications from the wobble uridine derivatives of the cytoplasmic tRNAs specific for Gln, Lys, and Glu, and is lethal to the cell. Since excess of the unmodified form of these three tRNAs rescued the double mutant elp3 tuc1, the primary function of mcm(5)s(2)U34 seems to be to improve the efficiency to read the cognate codons rather than to prevent mis-sense errors.
 
 ## Conclusion
 
-Our results provide a structural framework for how different states of the mammalian ribosome are selectively recognized by the appropriate decoding factor⋅GTPase complex to ensure translational fidelity.
+Surprisingly, overexpression of the mcm(5)s(2)U-lacking tRNA(Lys) alone was sufficient to restore viability of the double mutant.

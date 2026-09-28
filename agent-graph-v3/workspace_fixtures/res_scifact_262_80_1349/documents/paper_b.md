@@ -1,0 +1,11 @@
+# Paper B: Long-Term ERK Inhibition in KRAS-Mutant Pancreatic Cancer Is Associated with MYC Degradation and Senescence-like Growth Suppression.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 4920376).
+
+## Abstract
+
+Induction of compensatory mechanisms and ERK reactivation has limited the effectiveness of Raf and MEK inhibitors in RAS-mutant cancers. We determined that direct pharmacologic inhibition of ERK suppressed the growth of a subset of KRAS-mutant pancreatic cancer cell lines and that concurrent phosphatidylinositol 3-kinase (PI3K) inhibition caused synergistic cell death. Additional combinations that enhanced ERK inhibitor action were also identified. Unexpectedly, long-term treatment of sensitive cell lines caused senescence, mediated in part by MYC degradation and p16 reactivation. Enhanced basal PI3K-AKT-mTOR signaling was associated with de novo resistance to ERK inhibitor, as were other protein kinases identified by kinome-wide siRNA screening and a genetic gain-of-function screen.
+
+## Conclusion
+
+Our findings reveal distinct consequences of inhibiting this kinase cascade at the level of ERK.

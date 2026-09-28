@@ -1,0 +1,11 @@
+# Paper A: Aptamer-functionalized lipid nanoparticles targeting osteoblasts as a novel RNA interference–based bone anabolic strategy
+
+Source: peer-reviewed abstract (SciFact corpus, doc 1469751).
+
+## Abstract
+
+Currently, major concerns about the safety and efficacy of RNA interference (RNAi)-based bone anabolic strategies still exist because of the lack of direct osteoblast-specific delivery systems for osteogenic siRNAs. Here we screened the aptamer CH6 by cell-SELEX, specifically targeting both rat and human osteoblasts, and then we developed CH6 aptamer–functionalized lipid nanoparticles (LNPs) encapsulating osteogenic pleckstrin homology domain-containing family O member 1 (Plekho1) siRNA (CH6-LNPs-siRNA). Our results showed that CH6 facilitated in vitro osteoblast-selective uptake of Plekho1 siRNA, mainly via macropinocytosis, and boosted in vivo osteoblast-specific Plekho1 gene silencing, which promoted bone formation, improved bone microarchitecture, increased bone mass and enhanced mechanical properties in both osteopenic and healthy rodents.
+
+## Conclusion
+
+These results indicate that osteoblast-specific aptamer-functionalized LNPs could act as a new RNAi-based bone anabolic strategy, advancing the targeted delivery selectivity of osteogenic siRNAs from the tissue level to the cellular level.

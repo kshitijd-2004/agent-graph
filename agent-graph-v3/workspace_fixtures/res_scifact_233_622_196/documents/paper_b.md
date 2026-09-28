@@ -1,0 +1,11 @@
+# Paper B: Structural basis of allosteric and synergistic activation of AMPK by furan-2-phosphonic derivative C2 binding.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 19313533).
+
+## Abstract
+
+The metabolic stress-sensing enzyme AMP-activated protein kinase (AMPK) is responsible for regulating metabolism in response to energy supply and demand. Drugs that activate AMPK may be useful in the treatment of metabolic diseases including type 2 diabetes. We have determined the crystal structure of AMPK in complex with its activator 5-(5-hydroxyl-isoxazol-3-yl)-furan-2-phosphonic acid (C2), revealing two C2-binding sites in the γ-subunit distinct from nucleotide sites. C2 acts synergistically with the drug A769662 to activate AMPK α1-containing complexes independent of upstream kinases.
+
+## Conclusion
+
+Our results show that dual drug therapies could be effective AMPK-targeting strategies to treat metabolic diseases.

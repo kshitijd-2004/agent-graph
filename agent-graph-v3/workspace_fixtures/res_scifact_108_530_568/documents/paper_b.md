@@ -1,0 +1,11 @@
+# Paper B: Evidence of a pluripotent human embryonic stem cell line derived from a cloned blastocyst.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 10546779).
+
+## Abstract
+
+Somatic cell nuclear transfer (SCNT) technology has recently been used to generate animals with a common genetic composition. In this study, we report the derivation of a pluripotent embryonic stem (ES) cell line (SCNT-hES-1) from a cloned human blastocyst. The SCNT-hES-1 cells displayed typical ES cell morphology and cell surface markers and were capable of differentiating into embryoid bodies in vitro and of forming teratomas in vivo containing cell derivatives from all three embryonic germ layers in severe combined immunodeficient mice. After continuous proliferation for more than 70 passages, SCNT-hES-1 cells maintained normal karyotypes and were genetically identical to the somatic nuclear donor cells.
+
+## Conclusion
+
+Although we cannot completely exclude the possibility that the cells had a parthenogenetic origin, imprinting analyses support a SCNT origin of the derived human ES cells.

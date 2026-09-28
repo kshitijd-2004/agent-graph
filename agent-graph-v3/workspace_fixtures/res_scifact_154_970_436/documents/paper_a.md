@@ -1,0 +1,11 @@
+# Paper A: hPrimpol1/CCDC111 is a human DNA primase-polymerase required for the maintenance of genome integrity.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 19356271).
+
+## Abstract
+
+Prim-pol is a recently identified DNA primase-polymerase belonging to the archaeao-eukaryotic primase (AEP) superfamily. Here, we characterize a previously unrecognized prim-pol in human cells, which we designate hPrimpol1 (human primase-polymerase 1). hPrimpol1 possesses primase and DNA polymerase activities in vitro, interacts directly with RPA1 and is recruited to sites of DNA damage and stalled replication forks in an RPA1-dependent manner. Cells depleted of hPrimpol1 display increased spontaneous DNA damage and defects in the restart of stalled replication forks. Both RPA1 binding and the primase activity of hPrimpol1 are required for its cellular function during DNA replication.
+
+## Conclusion
+
+Our results indicate that hPrimpol1 is a novel factor involved in the response to DNA replication stress.

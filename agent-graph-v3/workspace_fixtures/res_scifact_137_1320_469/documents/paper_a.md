@@ -1,0 +1,11 @@
+# Paper A: Forebrain engraftment by human glial progenitor cells enhances synaptic plasticity and learning in adult mice.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 16284655).
+
+## Abstract
+
+Human astrocytes are larger and more complex than those of infraprimate mammals, suggesting that their role in neural processing has expanded with evolution. To assess the cell-autonomous and species-selective properties of human glia, we engrafted human glial progenitor cells (GPCs) into neonatal immunodeficient mice. Upon maturation, the recipient brains exhibited large numbers and high proportions of both human glial progenitors and astrocytes. The engrafted human glia were gap-junction-coupled to host astroglia, yet retained the size and pleomorphism of hominid astroglia, and propagated Ca2+ signals 3-fold faster than their hosts. Long-term potentiation (LTP) was sharply enhanced in the human glial chimeric mice, as was their learning, as assessed by Barnes maze navigation, object-location memory, and both contextual and tone fear conditioning. Mice allografted with murine GPCs showed no enhancement of either LTP or learning.
+
+## Conclusion
+
+These findings indicate that human glia differentially enhance both activity-dependent plasticity and learning in mice.

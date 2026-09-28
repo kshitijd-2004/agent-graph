@@ -1,0 +1,11 @@
+# Paper C: Guide to yeast genetics and molecular biology
+
+Source: peer-reviewed abstract (SciFact corpus, doc 84580585).
+
+## Abstract
+
+This volume and its companion, Volume 350, are specifically designed to meet the needs of graduate students and postdoctoral students as well as researchers, by providing all the up-to-date methods necessary to study genes in yeast. Procedures are included that enable newcomers to set up a yeast laboratory and to master basic manipulations. Relevant background and reference information given for procedures can be used as a guide to developing protocols in a number of disciplines.
+
+## Conclusion
+
+Specific topics addressed in this book include cytology, biochemistry, cell fractionation, and cell biology.

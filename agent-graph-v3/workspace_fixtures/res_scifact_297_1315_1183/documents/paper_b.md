@@ -1,0 +1,11 @@
+# Paper B: Distinction and relationship between elongation rate and processivity of RNA polymerase II in vivo.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 13072112).
+
+## Abstract
+
+A number of proteins and drugs have been implicated in the process of transcriptional elongation by RNA polymerase (Pol) II, but the factors that govern the elongation rate (nucleotide additions per min) and processivity (nucleotide additions per initiation event) in vivo are poorly understood. Here, we show that a mutation in the Rpb2 subunit of Pol II reduces both the elongation rate and processivity in vivo. In contrast, none of the putative elongation factors tested affect the elongation rate, although mutations in the THO complex and in Spt4 significantly reduce processivity. The drugs 6-azauracil and mycophenolic acid reduce both the elongation rate and processivity, and this processivity defect is aggravated by mutations in Spt4, TFIIS, and CTDK-1.
+
+## Conclusion
+
+Our results suggest that, in vivo, a reduced rate of Pol II elongation leads to premature dissociation along the chromatin template and that Pol II processivity can be uncoupled from elongation rate.

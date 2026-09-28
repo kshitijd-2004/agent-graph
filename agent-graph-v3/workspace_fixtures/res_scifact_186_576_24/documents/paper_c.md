@@ -1,0 +1,11 @@
+# Paper C: Beyond melanoma: inhibiting the PD-1/PD-L1 pathway in solid tumors.
+
+Source: peer-reviewed abstract (SciFact corpus, doc 1900152).
+
+## Abstract
+
+Immune checkpoint inhibitors have been identified as breakthrough treatment in melanoma given its dramatic response to PD-1/PD-L1 blockade. This is likely to extend to many other cancers as hundreds of clinical trials are being conducted or proposed using this exciting modality of therapy in a variety of malignancies. While immune checkpoint inhibitors have been extensively studied in melanoma and more recently in lung cancer, little is known regarding immune checkpoint blockade in other cancers.
+
+## Conclusion
+
+This review will focus on the tumor immune microenvironment, the expression of PD-1/PD-L1 and the effect of immune modulation using PD-1 or PD-L1 inhibitors in patients with head and neck, prostate, urothelial, renal, breast, gastrointestinal and lung cancers.

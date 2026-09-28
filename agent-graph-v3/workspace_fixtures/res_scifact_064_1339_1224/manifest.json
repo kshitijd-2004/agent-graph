@@ -16,7 +16,7 @@
     "url": "https://github.com/allenai/scifact"
   },
   "description": "Verify two scientific claims against real abstracts: one is supported, one is contradicted, and one paper is unrelated. Cite the evidence for each verdict.",
-  "task_prompt": "Two claims are under review.\nClaim 1: The latent infection of myeloid cells with human cytomegalovirus induces a number of changes in gene expression.\nClaim 2: Ultrasound guidance significantly raises the number of traumatic procedures when attempting needle insertion.\nUsing the papers in documents/, decide for each claim whether the evidence supports or contradicts it. Write each verdict on its own line as 'Claim N: SUPPORTED' or 'Claim N: CONTRADICTED'. For each verdict, cite the paper and the specific result behind it.",
+  "task_prompt": "Two claims are under review.\nClaim 1: The latent infection of myeloid cells with human cytomegalovirus induces a number of changes in gene expression.\nClaim 2: Ultrasound guidance significantly raises the number of traumatic procedures when attempting needle insertion.\nUsing the papers in documents/, decide for each claim whether the evidence supports it, contradicts it, or does not give enough information to decide. Write each verdict on its own line as 'Claim N: SUPPORTED', 'Claim N: CONTRADICTED' or 'Claim N: NOT ENOUGH INFO'. For each verdict, cite the paper and the specific result behind it.",
   "required_files": [
     "documents/paper_a.md",
     "documents/paper_b.md"

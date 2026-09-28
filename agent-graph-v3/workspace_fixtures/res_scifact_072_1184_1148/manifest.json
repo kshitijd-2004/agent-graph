@@ -16,7 +16,7 @@
     "url": "https://github.com/allenai/scifact"
   },
   "description": "Verify two scientific claims against real abstracts: one is supported, one is contradicted, and one paper is unrelated. Cite the evidence for each verdict.",
-  "task_prompt": "Two claims are under review.\nClaim 1: The US health care system can save up to $5 billion if 7% of patients waiting for kidney transplants participate in the optimized national kidney paired donation program.\nClaim 2: Ten percent (10%) of kidney cancers in the UK are attributable to excess weight.\nUsing the papers in documents/, decide for each claim whether the evidence supports or contradicts it. Write each verdict on its own line as 'Claim N: SUPPORTED' or 'Claim N: CONTRADICTED'. For each verdict, cite the paper and the specific result behind it.",
+  "task_prompt": "Two claims are under review.\nClaim 1: The US health care system can save up to $5 billion if 7% of patients waiting for kidney transplants participate in the optimized national kidney paired donation program.\nClaim 2: Ten percent (10%) of kidney cancers in the UK are attributable to excess weight.\nUsing the papers in documents/, decide for each claim whether the evidence supports it, contradicts it, or does not give enough information to decide. Write each verdict on its own line as 'Claim N: SUPPORTED', 'Claim N: CONTRADICTED' or 'Claim N: NOT ENOUGH INFO'. For each verdict, cite the paper and the specific result behind it.",
   "required_files": [
     "documents/paper_a.md",
     "documents/paper_b.md"

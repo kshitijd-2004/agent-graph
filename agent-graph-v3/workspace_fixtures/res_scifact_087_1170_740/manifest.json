@@ -16,7 +16,7 @@
     "url": "https://github.com/allenai/scifact"
   },
   "description": "Verify two scientific claims against real abstracts: one is supported, one is contradicted, and one paper is unrelated. Cite the evidence for each verdict.",
-  "task_prompt": "Two claims are under review.\nClaim 1: MUC1-C activates the NF-\u03baB p65 signaling pathway by interacting with I\u03baB kinase \u00df.\nClaim 2: The NF-\u03baB essential modulator gene induces intestinal inflammation by promoting receptor-interacting protein (RIP) kinase 1 kinase activity-mediated epithelial cell death.\nUsing the papers in documents/, decide for each claim whether the evidence supports or contradicts it. Write each verdict on its own line as 'Claim N: SUPPORTED' or 'Claim N: CONTRADICTED'. For each verdict, cite the paper and the specific result behind it.",
+  "task_prompt": "Two claims are under review.\nClaim 1: MUC1-C activates the NF-\u03baB p65 signaling pathway by interacting with I\u03baB kinase \u00df.\nClaim 2: The NF-\u03baB essential modulator gene induces intestinal inflammation by promoting receptor-interacting protein (RIP) kinase 1 kinase activity-mediated epithelial cell death.\nUsing the papers in documents/, decide for each claim whether the evidence supports it, contradicts it, or does not give enough information to decide. Write each verdict on its own line as 'Claim N: SUPPORTED', 'Claim N: CONTRADICTED' or 'Claim N: NOT ENOUGH INFO'. For each verdict, cite the paper and the specific result behind it.",
   "required_files": [
     "documents/paper_a.md",
     "documents/paper_b.md"
