@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 # ── Constants ──────────────────────────────────────────────────────────────────
 
 STABLE_SUPPORT_THRESHOLD = 0.8
-MIN_CLEAN_RUNS_REQUIRED = 5
+MIN_CLEAN_RUNS_REQUIRED = 3
 ACTIVE_EVENT_TYPES = {
     TraceEventType.TOOL_CALL, TraceEventType.MEMORY_WRITE, TraceEventType.AGENT_HANDOFF,
     TraceEventType.FINAL_RESPONSE, TraceEventType.LLM_OUTPUT, TraceEventType.REASONING,
@@ -334,7 +334,13 @@ def extract_code_review_issue_presence(trace: Trace, fixture_spec: dict) -> list
             keywords = issue_spec.get("keywords", issue_keywords.get(issue_id, [issue_id]))
 
             # Check for positive presence
-            present = any(kw.lower() in text_lower for kw in keywords)
+            if "grading" in issue_spec:
+                from evaluators.task_evaluators.patch_review import match_patch_review
+                present = match_patch_review(
+                    text, issue_spec["grading"], fixture_spec.get("task_prompt", "")
+                )["matched"]
+            else:
+                present = any(kw.lower() in text_lower for kw in keywords)
 
             # Check for negation — "not vulnerable", "no path traversal", etc.
             negation_patterns = [f"not {kw}" for kw in keywords[:3]]

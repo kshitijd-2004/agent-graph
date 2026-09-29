@@ -61,9 +61,26 @@
       "location": "astropy/units/decorators.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "units.quantity_input decorator fails for constructors with type hinted return value -> None"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "11f006a6ea5c6b90a0dfd5687f096bf7263c1c6adc9fe3c15874733983f3bc8a",
+        "source_instance_id": "astropy__astropy-7336",
+        "changed_files": [
+          "astropy/units/decorators.py"
+        ],
+        "location_any": [
+          "astropy/units/decorators.py",
+          "quantity_input",
+          "return_annotation",
+          "decorators.py"
+        ],
+        "all_of": [
+          "none",
+          "(skip|bypass|avoid|exclude).{0,60}(conver|unit)|(?:conver|unit).{0,60}(skip|bypass|avoid)|like.{0,30}(missing|empty)"
+        ],
+        "reject_any": [],
+        "explanation": "The quantity_input wrapper treats a None return annotation as a unit and invokes .to on the result. Treat None like an empty annotation and skip return-unit conversion."
+      }
     }
   ],
   "success_criteria": {
@@ -128,8 +145,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2145,
-    "content_sha256": "70242e9aaccbe18cc234b9a5f48ff1c98d38b63fa7d80ddc16bdca81ccba4801",
+    "estimated_tokens": 2288,
+    "content_sha256": "ab905a721041585bdc18ed8bfd22fe87c273703029eb68e8be7e61329e6bb884",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

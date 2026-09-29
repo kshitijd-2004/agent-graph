@@ -61,9 +61,25 @@
       "location": "django/utils/timesince.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "timesince() raises TypeError with USE_TZ=True and >1 month interval."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "2e868e782c287a4e430f143fa41afa8c033b2e05992ca773009f4b0d5bc2780f",
+        "source_instance_id": "django__django-16429",
+        "changed_files": [
+          "django/utils/timesince.py"
+        ],
+        "location_any": [
+          "django/utils/timesince.py",
+          "timesince",
+          "timesince.py"
+        ],
+        "all_of": [
+          "pivot|intermediate.{0,20}(date|time)",
+          "tzinfo|time.?zone|aware|naive"
+        ],
+        "reject_any": [],
+        "explanation": "timesince constructs a naive pivot datetime while the input is timezone-aware. Pass the input tzinfo to the pivot constructor so the subtraction uses compatible datetimes."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2116,
-    "content_sha256": "d375ee5b1213bd0e900b825c9e5f383467bf457048d8f1377766cefbf4852ef8",
+    "estimated_tokens": 2244,
+    "content_sha256": "82f93aface97c01ab261c52254393852a5b38de6b8e1d00782022e6be45a5b87",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

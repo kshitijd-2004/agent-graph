@@ -61,9 +61,26 @@
       "location": "sympy/matrices/common.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Matrix.col_insert() no longer seems to work correctly."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "7ad953b9784cbd87a0f59281f614cb94e8ff7c37d3d0ddb09827b0431ed811c0",
+        "source_instance_id": "sympy__sympy-13647",
+        "changed_files": [
+          "sympy/matrices/common.py"
+        ],
+        "location_any": [
+          "sympy/matrices/common.py",
+          "_eval_col_insert",
+          "col_insert",
+          "common.py"
+        ],
+        "all_of": [
+          "index|offset|column",
+          "subtract.{0,40}(only|twice|pos)|only.{0,40}(width|cols|column)|pos.{0,40}(twice|extra|again)|j.{0,12}other.cols"
+        ],
+        "reject_any": [],
+        "explanation": "_eval_col_insert subtracts both pos and other.cols when reading trailing original columns. Subtract only the inserted width: the original column index is j - other.cols."
+      }
     }
   ],
   "success_criteria": {
@@ -208,8 +225,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2580,
-    "content_sha256": "e3687799684760ddf3d2caf7b69d24ff4dc176fdf227932ca34d01f0532a3fe2",
+    "estimated_tokens": 2730,
+    "content_sha256": "8f424ac45ba48b778693c0f91f4e19bc4fd57f27dd7653b83cb260ddcee3d6aa",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

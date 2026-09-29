@@ -21,6 +21,7 @@ from schemas.trace import Trace, TraceEventType
 from schemas.scenario import ScenarioSpec
 from evaluators.evaluation_result import EvaluationResult
 from evaluators.base_evaluator import TaskEvaluator
+from evaluators.task_evaluators.patch_review import match_patch_review
 
 
 class CodeReviewEvaluator:
@@ -94,10 +95,16 @@ class CodeReviewEvaluator:
         missing_required = []
         issue_scores: Dict[str, float] = {}
 
+        grading_details = {}
         for issue in required_issues:
             issue_id = issue["id"]
             keywords = issue.get("keywords", self.ISSUE_KEYWORDS.get(issue_id, [issue_id]))
-            found = any(kw.lower() in output_lower for kw in keywords)
+            if "grading" in issue:
+                detail = match_patch_review(output_text, issue["grading"], manifest.get("task_prompt", ""))
+                grading_details[issue_id] = detail
+                found = detail["matched"]
+            else:
+                found = any(kw.lower() in output_lower for kw in keywords)
             if found:
                 found_issues.append(issue_id)
                 issue_scores[issue_id] = 1.0
@@ -176,6 +183,7 @@ class CodeReviewEvaluator:
             ],
             metadata={
                 "fixture_id": fixture_id,
+                "grading_details": grading_details,
                 "found_issues": found_issues,
                 "missing_issues": missing_required,
                 "false_positives": false_positives,

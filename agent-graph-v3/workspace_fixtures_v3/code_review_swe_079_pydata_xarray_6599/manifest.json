@@ -62,9 +62,26 @@
       "location": "xarray/core/computation.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "`polyval` with timedelta64 coordinates produces wrong results"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "e0e07b260b2c110dee0e67d86f9009906cdf21a2dbbd6e2b8871052881695464",
+        "source_instance_id": "pydata__xarray-6599",
+        "changed_files": [
+          "xarray/core/computation.py"
+        ],
+        "location_any": [
+          "xarray/core/computation.py",
+          "_ensure_numeric",
+          "to_floatable",
+          "computation.py"
+        ],
+        "all_of": [
+          "timedelta|duration",
+          "cast|astype|float|offset|datetime"
+        ],
+        "reject_any": [],
+        "explanation": "_ensure_numeric converts timedeltas using the datetime path with an absolute-time offset. Split the dtype cases and cast timedeltas directly to float while keeping datetime conversion for timestamps."
+      }
     },
     {
       "id": "issue_2",
@@ -72,9 +89,26 @@
       "location": "xarray/core/computation.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "`polyval` with timedelta64 coordinates produces wrong results"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "e0e07b260b2c110dee0e67d86f9009906cdf21a2dbbd6e2b8871052881695464",
+        "source_instance_id": "pydata__xarray-6599",
+        "changed_files": [
+          "xarray/core/computation.py"
+        ],
+        "location_any": [
+          "xarray/core/computation.py",
+          "_ensure_numeric",
+          "to_floatable",
+          "computation.py"
+        ],
+        "all_of": [
+          "timedelta|duration",
+          "cast|astype|float|offset|datetime"
+        ],
+        "reject_any": [],
+        "explanation": "_ensure_numeric converts timedeltas using the datetime path with an absolute-time offset. Split the dtype cases and cast timedeltas directly to float while keeping datetime conversion for timestamps."
+      }
     }
   ],
   "success_criteria": {
@@ -148,8 +182,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2451,
-    "content_sha256": "1dca63c28c7e02212070e608289e5b8427389112bbeccd928bbf31ff4d6f93d0",
+    "estimated_tokens": 2729,
+    "content_sha256": "043d718abac721ce553fc80ee250e1e7fd7f364d35a27065a9bfd7bf7c308814",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

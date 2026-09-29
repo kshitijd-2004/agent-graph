@@ -61,9 +61,26 @@
       "location": "sympy/functions/elementary/hyperbolic.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        ".subs on coth(log(tan(x))) errors for certain integral values"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "41082dc7d7056649551b032017765a96f3ed2c46811c320637843292f2460cf5",
+        "source_instance_id": "sympy__sympy-13480",
+        "changed_files": [
+          "sympy/functions/elementary/hyperbolic.py"
+        ],
+        "location_any": [
+          "sympy/functions/elementary/hyperbolic.py",
+          "coth.eval",
+          "coth",
+          "hyperbolic.py"
+        ],
+        "all_of": [
+          "cotm|cothm|misspell|wrong variable|undefined.{0,20}(name|variable)",
+          "cothm|correct.{0,30}(name|variable)|rename|typo"
+        ],
+        "reject_any": [],
+        "explanation": "coth.eval computes cothm but tests the misspelled cotm against ComplexInfinity. Use cothm in that branch to inspect the value actually computed."
+      }
     }
   ],
   "success_criteria": {
@@ -180,8 +197,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 7040,
-    "content_sha256": "4b726c02429898ea5d02da57968de697dbf1263f6a59f39b35616cf7a1a9a1ce",
+    "estimated_tokens": 7184,
+    "content_sha256": "63fab69b85e65bf7fb431a89697d89101024fc6c8b91e2e48436874ee805a50b",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

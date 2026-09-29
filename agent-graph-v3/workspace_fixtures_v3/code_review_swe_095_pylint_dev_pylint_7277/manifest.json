@@ -61,9 +61,24 @@
       "location": "pylint/__init__.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "`pylint` removes first item from `sys.path` when running from `runpy`."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "50a6e08256232f773d7066b57477ca5e9ac08bf71a1310b392fdcd22427c7abe",
+        "source_instance_id": "pylint-dev__pylint-7277",
+        "changed_files": [
+          "pylint/__init__.py"
+        ],
+        "location_any": [
+          "pylint/__init__.py",
+          "modify_sys_path"
+        ],
+        "all_of": [
+          "current.directory|\\bcwd\\b|empty.string|working.directory",
+          "guard|only|check|conditional|match"
+        ],
+        "reject_any": [],
+        "explanation": "modify_sys_path unconditionally pops sys.path[0], which can be a legitimate import path under runpy. Remove it only when it represents the current directory: empty string, dot, or cwd."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +117,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1801,
-    "content_sha256": "b65e01223984827ed8943562d64bee11795a9fccd3067933be8a9775b836aa4a",
+    "estimated_tokens": 1933,
+    "content_sha256": "a163616d67ebce9ab5f2cea248369ff2e78d3ad7c055af1906c338c25bc910f8",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

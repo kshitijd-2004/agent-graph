@@ -61,9 +61,26 @@
       "location": "lib/matplotlib/axes/_axes.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "hist() no longer respects range=... when density=True"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "5dad24f240b3dcf838594bdf137e8a3c056882444366d6443359111016acbcad",
+        "source_instance_id": "matplotlib__matplotlib-13989",
+        "changed_files": [
+          "lib/matplotlib/axes/_axes.py"
+        ],
+        "location_any": [
+          "lib/matplotlib/axes/_axes.py",
+          "Axes.hist",
+          "hist_kwargs",
+          "_axes.py"
+        ],
+        "all_of": [
+          "hist.kwargs|keyword.{0,25}(dict|mapping)|existing.{0,25}(option|argument|range)|range",
+          "preserv|updat|overwrit|replac|discard|retain"
+        ],
+        "reject_any": [],
+        "explanation": "Axes.hist replaces hist_kwargs with a new density-only dictionary, discarding the range. Update the existing mapping with density instead of replacing it."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +153,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 7410,
-    "content_sha256": "8d59b5178b087cdb2e7b55e7784e4fb7ae6701c8cd31abea6b0c71a60091e484",
+    "estimated_tokens": 7560,
+    "content_sha256": "39018623a7f1fa3eed967e5304e6adbd06fa2e8f553f1de13671e8e5f5a87d33",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

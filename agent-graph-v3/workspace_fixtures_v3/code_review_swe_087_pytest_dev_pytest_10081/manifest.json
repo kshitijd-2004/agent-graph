@@ -61,9 +61,29 @@
       "location": "src/_pytest/unittest.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "unittest.TestCase.tearDown executed for classes marked with `unittest.skip` when running --pdb"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "30b7bbcd61e92e71c186f5c36c622301a6d5dde818e67c97535fa30d7897af93",
+        "source_instance_id": "pytest-dev__pytest-10081",
+        "changed_files": [
+          "src/_pytest/unittest.py"
+        ],
+        "location_any": [
+          "src/_pytest/unittest.py",
+          "TestCaseFunction.runtest",
+          "runtest",
+          "unittest.py"
+        ],
+        "all_of": [
+          "class|parent.obj|parent",
+          "skip|skipped",
+          "(?:check|consider|guard|prevent|before|both).{0,100}(?:skip|teardown|class|parent)|(?:class|parent).{0,60}(?:check|consider|guard|prevent)"
+        ],
+        "reject_any": [
+          "always execute teardown|execute teardown.{0,45}(?:even when|despite).{0,35}skip"
+        ],
+        "explanation": "TestCaseFunction.runtest checks method-level skipping but misses a skipped parent class before deferring tearDown for pdb. Check both class and method skip status before installing the delayed teardown."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +122,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 5085,
-    "content_sha256": "f917c5a9c847de8d4ff6abe414a0b21e481a00beb512f2ef0fe28a52ece3da8c",
+    "estimated_tokens": 5269,
+    "content_sha256": "11a82d2b282dd487bd24b76ce4db8b6c49a8d7ee3e12950e5ad0eefd4ddebdea",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

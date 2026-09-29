@@ -61,9 +61,26 @@
       "location": "lib/matplotlib/figure.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "[Bug]: DPI of a figure is doubled after unpickling on M1 Mac"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "0d25d0202773e4f51f9b66bd1264428152e9c3e8ef71cb953ce0440eed7dcc60",
+        "source_instance_id": "matplotlib__matplotlib-23476",
+        "changed_files": [
+          "lib/matplotlib/figure.py"
+        ],
+        "location_any": [
+          "lib/matplotlib/figure.py",
+          "Figure.__getstate__",
+          "__getstate__",
+          "figure.py"
+        ],
+        "all_of": [
+          "original.dpi|unscaled|logical.{0,15}dpi|base.{0,15}dpi",
+          "serializ|state|pickl|save|stor"
+        ],
+        "reject_any": [],
+        "explanation": "Figure.__getstate__ stores DPI already scaled for the device pixel ratio. Serialize the original unscaled DPI so restoring the figure does not apply the ratio twice."
+      }
     }
   ],
   "success_criteria": {
@@ -140,8 +157,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2465,
-    "content_sha256": "1e39f7c24e4eb606f1e8bb523b6242cb6936ef7e5a59e095b380e0348613be86",
+    "estimated_tokens": 2606,
+    "content_sha256": "f344ee779ffb464a9ec76b0ca5ba14ab440962d5558591977586e718405c76d1",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

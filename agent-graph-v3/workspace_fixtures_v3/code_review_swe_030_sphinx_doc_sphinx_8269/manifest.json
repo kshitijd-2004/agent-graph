@@ -61,9 +61,25 @@
       "location": "sphinx/builders/linkcheck.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Linkcheck should report HTTP errors instead of Anchor not found"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "65ed4542a120eb90c294b2709396047669ef36734d3d9bfed68707bc612a4051",
+        "source_instance_id": "sphinx-doc__sphinx-8269",
+        "changed_files": [
+          "sphinx/builders/linkcheck.py"
+        ],
+        "location_any": [
+          "sphinx/builders/linkcheck.py",
+          "check_uri",
+          "linkcheck.py"
+        ],
+        "all_of": [
+          "raise.for.status|http.{0,30}status|status.{0,30}(check|error)|response.{0,30}status",
+          "before.{0,60}(anchor|pars)|anchor.{0,70}(before|status)|error.{0,35}(page|body)"
+        ],
+        "reject_any": [],
+        "explanation": "check_uri searches an HTTP error page for an anchor without checking the response status. Call raise_for_status before anchor parsing so the actual HTTP failure is reported."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 4690,
-    "content_sha256": "306da038a6cf18211c60d5ed817720c3fd8afa1b1c3c75a12e6ad977e6f2d95a",
+    "estimated_tokens": 4846,
+    "content_sha256": "b056cc6837cd89ffc22088e7fb8298d1f8d9b54f5a2e636347434850a3c5e1b8",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

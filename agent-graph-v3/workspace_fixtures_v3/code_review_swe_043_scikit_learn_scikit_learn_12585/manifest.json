@@ -61,9 +61,25 @@
       "location": "sklearn/base.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "clone fails for parameters that are estimator types"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "6df99caf109075b4b328954c8255ee286785662dc51231607e6b8e2e1b2f1933",
+        "source_instance_id": "scikit-learn__scikit-learn-12585",
+        "changed_files": [
+          "sklearn/base.py"
+        ],
+        "location_any": [
+          "sklearn/base.py",
+          "clone",
+          "base.py"
+        ],
+        "all_of": [
+          "class|\\btype\\b|uninstantiated",
+          "instance|deepcopy|deep.copy|safe|reject"
+        ],
+        "reject_any": [],
+        "explanation": "clone sees get_params on an estimator class and incorrectly treats the class as an instance. Detect type objects and use the non-estimator path, which deep-copies when safe=False and rejects when safe=True."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 5793,
-    "content_sha256": "aef9229f066d481393181b76b6214426b97c27b8d99aea2237390739af0c7060",
+    "estimated_tokens": 5931,
+    "content_sha256": "19f533004e20430a8e16ded1da3655ec1d243ac07a1781e1db9eca3cde00f132",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

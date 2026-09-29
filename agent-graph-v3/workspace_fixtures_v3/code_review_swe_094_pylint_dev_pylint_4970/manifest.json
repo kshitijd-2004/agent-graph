@@ -61,9 +61,25 @@
       "location": "pylint/checkers/similar.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Setting `min-similarity-lines` to `0` should stop pylint from checking duplicate code"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "7eb3a09727133387bf81fa3a1596746a2dcca2c0c9eba95caaa69b65d619dccd",
+        "source_instance_id": "pylint-dev__pylint-4970",
+        "changed_files": [
+          "pylint/checkers/similar.py"
+        ],
+        "location_any": [
+          "pylint/checkers/similar.py",
+          "Similar.run",
+          "similar.py"
+        ],
+        "all_of": [
+          "min.lines|threshold|minimum.{0,20}line",
+          "early.return|short.circuit|before.{0,40}(comput|scan)|skip.{0,40}(comput|scan)|return"
+        ],
+        "reject_any": [],
+        "explanation": "Similar.run still computes similarities when min_lines is zero. Short-circuit before _compute_sims and display so zero acts as a disabled-check sentinel."
+      }
     }
   ],
   "success_criteria": {
@@ -128,8 +144,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1770,
-    "content_sha256": "e20f53a9849ff55d537bdc1cb39da9433a408d1ac31f5026c9a97e5ce3a05024",
+    "estimated_tokens": 1904,
+    "content_sha256": "949946438e2c6be9ac8afd760932bee8adda293afb842e26b508a26f4a82e569",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

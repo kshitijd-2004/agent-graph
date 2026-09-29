@@ -61,9 +61,27 @@
       "location": "src/_pytest/capture.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "_pytest.capture.EncodedFile mode should not include `b` (binary)"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "2dbcd95f7a4bf52ae721d6289d1d4ee68dbb08ada5082e98784a7138fc126428",
+        "source_instance_id": "pytest-dev__pytest-5262",
+        "changed_files": [
+          "src/_pytest/capture.py"
+        ],
+        "location_any": [
+          "src/_pytest/capture.py",
+          "EncodedFile.mode",
+          "EncodedFile",
+          "capture.py"
+        ],
+        "all_of": [
+          "buffer|underlying|delegat|property",
+          "mode|binary|\\bb\\b",
+          "(?:remov|strip|text.mode|text mode|binary flag)"
+        ],
+        "reject_any": [],
+        "explanation": "EncodedFile delegates mode to its binary buffer, even though the wrapper exposes text. Add a mode property that removes b from the underlying mode string."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +150,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2307,
-    "content_sha256": "4e9b09fcf1e903fdca05c1eee8ae0ea98e3d0536fbfc7551e3f5fc921628ef97",
+    "estimated_tokens": 2445,
+    "content_sha256": "812d813a7890fdb68e564ce3f3d9e4c0b0fbbab553d6ab333514ea84f298de94",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

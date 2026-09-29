@@ -61,9 +61,25 @@
       "location": "xarray/core/variable.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Variable.__setitem__ coercing types on objects with a values property"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "4bf05606ff37d427b5d1eff27a61b41489785d022c234933fbc8879cad5fd762",
+        "source_instance_id": "pydata__xarray-2905",
+        "changed_files": [
+          "xarray/core/variable.py"
+        ],
+        "location_any": [
+          "xarray/core/variable.py",
+          "as_compatible_data",
+          "variable.py"
+        ],
+        "all_of": [
+          "pandas|pd.series|pd.index|pd.dataframe",
+          "values|unwrap|extract"
+        ],
+        "reject_any": [],
+        "explanation": "as_compatible_data unwraps any object with a values attribute, which destroys unrelated array-like objects. Restrict values extraction to pandas Series, Index, and DataFrame inputs."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2332,
-    "content_sha256": "6b0500579238bc944f1470537d2fcbc6995ae0ada6419b18fedb5cc8e38c88ad",
+    "estimated_tokens": 2461,
+    "content_sha256": "7713f0265d6944f4f5797b439520cb811f1586cfb3b73f0b219359997f190c37",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

@@ -61,9 +61,25 @@
       "location": "sklearn/feature_extraction/text.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "strip_accents_unicode fails to strip accents from strings that are already in NFKD form"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "2a1360e91f6c9c9e895358e137a5088a1daf3c98eb0b6d5b3028d3960aaaffba",
+        "source_instance_id": "scikit-learn__scikit-learn-15100",
+        "changed_files": [
+          "sklearn/feature_extraction/text.py"
+        ],
+        "location_any": [
+          "sklearn/feature_extraction/text.py",
+          "strip_accents_unicode",
+          "text.py"
+        ],
+        "all_of": [
+          "combin|decompos|nfkd",
+          "ascii|early.return|fast.path|unchanged|equal"
+        ],
+        "reject_any": [],
+        "explanation": "strip_accents_unicode returns early when NFKD normalization leaves the string unchanged, even if combining marks remain. Use an ASCII-only fast path and filter combining characters for all other strings."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1882,
-    "content_sha256": "9dc14f0880d4418ebe230433692550980ec62091c315501373b9f0a68408e22a",
+    "estimated_tokens": 2022,
+    "content_sha256": "6b97247c5c97810c299a45e55d5b27121956f094c18b1bda647c7f8e826e4ed2",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

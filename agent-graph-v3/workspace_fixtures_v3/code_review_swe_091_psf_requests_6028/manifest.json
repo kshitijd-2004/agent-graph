@@ -61,9 +61,25 @@
       "location": "requests/utils.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Proxy authentication bug"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "9cd3e2a2c10cc8b9555156f0e9cda00c67aa4e08f40ebd125f417bbeb41b2fb3",
+        "source_instance_id": "psf__requests-6028",
+        "changed_files": [
+          "requests/utils.py"
+        ],
+        "location_any": [
+          "requests/utils.py",
+          "prepend_scheme_if_needed",
+          "utils.py"
+        ],
+        "all_of": [
+          "auth|credential|userinfo",
+          "netloc|authority|reassembl|reconstruct|reattach|restore"
+        ],
+        "reject_any": [],
+        "explanation": "prepend_scheme_if_needed rebuilds the URL from netloc but parse_url stores auth separately. Reattach auth to the authority before reconstruction so proxy credentials are preserved."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1677,
-    "content_sha256": "96d327f7007b06f1b4a774309c42d740b334452115e5e03b5994b729442e9020",
+    "estimated_tokens": 1820,
+    "content_sha256": "0d8329d33c87e8d6c814a8347a1549db7676ee1a9a8ac6ba8c8893fabbd2cc72",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

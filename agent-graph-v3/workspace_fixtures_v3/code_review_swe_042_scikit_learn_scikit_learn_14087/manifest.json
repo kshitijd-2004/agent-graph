@@ -61,9 +61,26 @@
       "location": "sklearn/linear_model/logistic.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "IndexError thrown with LogisticRegressionCV and refit=False"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "819cd93cf36a6010195b74dc7106b268d9af01516be29821358c06ea5fa7600f",
+        "source_instance_id": "scikit-learn__scikit-learn-14087",
+        "changed_files": [
+          "sklearn/linear_model/logistic.py"
+        ],
+        "location_any": [
+          "sklearn/linear_model/logistic.py",
+          "LogisticRegressionCV.fit",
+          "LogisticRegressionCV",
+          "logistic.py"
+        ],
+        "all_of": [
+          "resolved|effective|local.{0,20}multi.class|multi.class.{0,30}(local|resolved)|auto",
+          "elasticnet|elastic.net|l1.ratio"
+        ],
+        "reject_any": [],
+        "explanation": "LogisticRegressionCV.fit uses self.multi_class rather than the resolved local mode to index coefficient paths with refit disabled. Use the effective mode, and only calculate l1_ratio_ for elasticnet; other penalties need None."
+      }
     }
   ],
   "success_criteria": {
@@ -144,8 +161,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 6467,
-    "content_sha256": "da0314a52e892463862e903f7d47d7718bac96dcd94c1fa2f2cfa8c836f8ec9e",
+    "estimated_tokens": 6639,
+    "content_sha256": "75c6674cbf17168fc3d06d8b668b3e6444d22f4c933bb587fec862a8a5c4f459",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

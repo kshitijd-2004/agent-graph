@@ -61,9 +61,25 @@
       "location": "src/_pytest/pathlib.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Symlinked directories not collected since pytest 6.1.0"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "76762ad86ffeec79de2f946c2dd097c003a9dd6097b8c9e7829d71338056222f",
+        "source_instance_id": "pytest-dev__pytest-7982",
+        "changed_files": [
+          "src/_pytest/pathlib.py"
+        ],
+        "location_any": [
+          "src/_pytest/pathlib.py",
+          "visit",
+          "pathlib.py"
+        ],
+        "all_of": [
+          "is.dir|directory.{0,25}check|direntry",
+          "follow.symlink|follow.{0,25}(link|symbolic)|symlink.{0,30}(true|follow)|default"
+        ],
+        "reject_any": [],
+        "explanation": "visit explicitly calls entry.is_dir with follow_symlinks=False, excluding linked directories from recursion. Use the symlink-following directory check before applying the recurse predicate."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 5815,
-    "content_sha256": "dba5dd76adbdf04c68c65f8f75add85b269f5debfe9b0a7d7f91a89e8e7fa0ca",
+    "estimated_tokens": 5962,
+    "content_sha256": "34f809ffb9f35974733606c84eacc058323b1bb87d345e74e77c723e94bbe28c",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

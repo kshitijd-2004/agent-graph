@@ -49,3 +49,11 @@ To revalidate an existing fixture from the repository root:
 ```bash
 python -m scripts.validate_fixture workspace_fixtures/code_review_swe_001_django_django_11179
 ```
+
+## Reviewed grading for the frozen 100
+
+The materializer now installs the patch-grounded evaluator rubrics documented in
+[grading/README.md](grading/README.md). Existing grading was migrated only in
+`workspace_fixtures_v3`; other roots remain unchanged. Unknown instances and
+changed gold patches require reviewed rubrics before materialization. Do not
+expand the selection to 300 until the current methodology is accepted.

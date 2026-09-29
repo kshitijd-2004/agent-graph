@@ -61,9 +61,25 @@
       "location": "xarray/core/dataarray.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "to_unstacked_dataset broken for single-dim variables"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "79eac1b06943072daa994e5fb5e7fc9e5eef5e6c34ea151cb550aa09f2da2b3a",
+        "source_instance_id": "pydata__xarray-4094",
+        "changed_files": [
+          "xarray/core/dataarray.py"
+        ],
+        "location_any": [
+          "xarray/core/dataarray.py",
+          "to_unstacked_dataset",
+          "dataarray.py"
+        ],
+        "all_of": [
+          "sel\\b|selection|selecting",
+          "drop.{0,45}(coordinate|variable|scalar)|drop.?=.?true|scalar.{0,40}(remov|drop)"
+        ],
+        "reject_any": [],
+        "explanation": "to_unstacked_dataset selects each variable but retains its scalar stacking coordinate. Use drop=True during sel, not only during squeeze, so reconstructed variables do not carry conflicting coordinates."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +152,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2227,
-    "content_sha256": "75f8f4b345a7fb41188e23d9a3267578727c1e84ac47c4e8e58bbe84bde1bb3f",
+    "estimated_tokens": 2378,
+    "content_sha256": "c36ead15e8d170c7a028074a32c53dd360fe3e2b312f8b2497e0647f6a503c8b",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

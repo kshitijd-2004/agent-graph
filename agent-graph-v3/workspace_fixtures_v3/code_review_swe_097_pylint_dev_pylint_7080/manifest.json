@@ -61,9 +61,25 @@
       "location": "pylint/lint/expand_modules.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "`--recursive=y` ignores `ignore-paths`"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "f908ad1f6d4b8df3755a634c6741abf8ae613bc59278a54c16560c16d255580f",
+        "source_instance_id": "pylint-dev__pylint-7080",
+        "changed_files": [
+          "pylint/lint/expand_modules.py"
+        ],
+        "location_any": [
+          "pylint/lint/expand_modules.py",
+          "_is_ignored_file",
+          "expand_modules.py"
+        ],
+        "all_of": [
+          "normaliz|normpath|canonical",
+          "path|element|separator|match"
+        ],
+        "reject_any": [],
+        "explanation": "_is_ignored_file matches unnormalized paths, so recursive traversal forms can miss ignore expressions. Normalize element with os.path.normpath before basename and path-regex checks."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 7414,
-    "content_sha256": "f9dbaed7dbe532d3cf9e690eda73b3f7085b8193737c152d29b83ac8588c9a77",
+    "estimated_tokens": 7555,
+    "content_sha256": "077855471e3bab1abf62961ecbcef70f8da0abbfaeae260d9a8b6b18970a2eb5",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

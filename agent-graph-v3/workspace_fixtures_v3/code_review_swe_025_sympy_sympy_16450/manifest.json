@@ -61,9 +61,25 @@
       "location": "sympy/simplify/simplify.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Posify ignores is_finite assmptions"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "e834529a4291ff20c9fc8f3c3d6d9f50168ab1425c5a6475a8a5df7e3077b301",
+        "source_instance_id": "sympy__sympy-16450",
+        "changed_files": [
+          "sympy/simplify/simplify.py"
+        ],
+        "location_any": [
+          "sympy/simplify/simplify.py",
+          "posify",
+          "simplify.py"
+        ],
+        "all_of": [
+          "assumption|assumptions0",
+          "preserv|cop(y|ies|ied)|propagat|carry|retain|forward"
+        ],
+        "reject_any": [],
+        "explanation": "posify constructs positive Dummy symbols without the original assumptions. Forward assumptions0 when creating each replacement so finiteness and other known properties are retained."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2023,
-    "content_sha256": "1c1cfdf906ec3b4c54c3c5e22b3e96c0fc47c56f0e49dc1da3981ba86cf8d690",
+    "estimated_tokens": 2163,
+    "content_sha256": "2c2f5da9259a598bd3efbcba47c1d02faf2127964adf032cca036dfc65959cb8",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

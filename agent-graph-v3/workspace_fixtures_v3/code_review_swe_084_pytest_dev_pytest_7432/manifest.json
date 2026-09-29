@@ -61,9 +61,25 @@
       "location": "src/_pytest/skipping.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "skipping: --runxfail breaks pytest.mark.skip location reporting"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "fe1bcec846085b964928724c5e75591b1e0280ef37dd9cdb7faf31a89cfcf062",
+        "source_instance_id": "pytest-dev__pytest-7432",
+        "changed_files": [
+          "src/_pytest/skipping.py"
+        ],
+        "location_any": [
+          "src/_pytest/skipping.py",
+          "pytest_runtest_makereport",
+          "skipping.py"
+        ],
+        "all_of": [
+          "independent|separate|elif|unconditional|outside",
+          "skip|location|xfail|branch"
+        ],
+        "reject_any": [],
+        "explanation": "pytest_runtest_makereport puts skip-location correction in an elif tied to xfail handling. Make it an independent if so runxfail does not bypass location adjustment for skipped tests."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3578,
-    "content_sha256": "311e6ec87e1307320909f00089235854bca30020bd97e1a67498224291946023",
+    "estimated_tokens": 3715,
+    "content_sha256": "06de684445917f08ff92f71c3b0990f96642edcc7ec39151b813f86e6b877d9c",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

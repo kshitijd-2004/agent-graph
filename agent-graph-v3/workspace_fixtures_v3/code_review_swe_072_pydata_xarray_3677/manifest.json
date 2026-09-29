@@ -61,9 +61,26 @@
       "location": "xarray/core/dataset.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Merging dataArray into dataset using dataset method fails"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "eb6bc3dcb4a4406f23abc17190cffd828ee58e1948e5621cc75abbd9fae142cd",
+        "source_instance_id": "pydata__xarray-3677",
+        "changed_files": [
+          "xarray/core/dataset.py"
+        ],
+        "location_any": [
+          "xarray/core/dataset.py",
+          "Dataset.merge",
+          "dataset_merge_method",
+          "dataset.py"
+        ],
+        "all_of": [
+          "dataarray|data.array",
+          "to.dataset|convert.{0,50}dataset|wrap.{0,50}dataset|normaliz.{0,50}dataset"
+        ],
+        "reject_any": [],
+        "explanation": "Dataset.merge forwards a DataArray to the internal merge routine without converting it. Normalize a DataArray input with to_dataset before calling dataset_merge_method."
+      }
     }
   ],
   "success_criteria": {
@@ -140,8 +157,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2625,
-    "content_sha256": "a9b6366a2fd93c64a2cde1d76bc5048653da4f6495611347e7d4cd3e8d969204",
+    "estimated_tokens": 2767,
+    "content_sha256": "c0be9226db4578551f038178bee20ba15b44147f12eccf4eb1c7395341774b6b",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

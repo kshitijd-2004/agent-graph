@@ -61,9 +61,25 @@
       "location": "requests/models.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "requests.get is ALWAYS sending content length"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "c25c1f930edaf8514d3a5f2bc5631a8e8080ecb2511c789ec171f37d14e627a6",
+        "source_instance_id": "psf__requests-1142",
+        "changed_files": [
+          "requests/models.py"
+        ],
+        "location_any": [
+          "requests/models.py",
+          "prepare_content_length",
+          "models.py"
+        ],
+        "all_of": [
+          "get|head",
+          "empty.body|bodyless|no.body|body.{0,20}none|zero.{0,20}(header|length)|length.{0,20}(zero|0)|unconditional"
+        ],
+        "reject_any": [],
+        "explanation": "prepare_content_length initializes Content-Length to zero unconditionally, including bodyless GET and HEAD. Set a zero length only for other methods when the body is None; keep real body lengths as before."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 5946,
-    "content_sha256": "79b63b1d7b42bac13e8d2924233ad0c29c4d843b54795ce0019d98b1d1a0e66a",
+    "estimated_tokens": 6098,
+    "content_sha256": "e506098c7cdea0e42b0e8e483ea4d2b0c7cb3148e81c8052533e46bcb93de58a",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

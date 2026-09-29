@@ -61,9 +61,26 @@
       "location": "django/apps/registry.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Apps.clear_cache() does not clear get_swappable_settings_name cache."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "1916518d5d8acdeee8de34f6922f0e6b14a3f0e6c6b6b901a821cbd19ac6a867",
+        "source_instance_id": "django__django-17029",
+        "changed_files": [
+          "django/apps/registry.py"
+        ],
+        "location_any": [
+          "django/apps/registry.py",
+          "Apps.clear_cache",
+          "get_swappable_settings_name",
+          "registry.py"
+        ],
+        "all_of": [
+          "get.swappable.settings.name|swappable.{0,40}(cache|memo)|(?:cache|memo).{0,40}swappable",
+          "invalidat|clear|stale|evict|reset"
+        ],
+        "reject_any": [],
+        "explanation": "Apps.clear_cache invalidates model caches but omits the memoized get_swappable_settings_name results. Clear that cache too when the app registry is reset to avoid stale settings-name resolution."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +119,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 5311,
-    "content_sha256": "6daae78a6621e16b3f2a1d42ef6b774000105d32ea2db8efe803d16dc9e5b3e5",
+    "estimated_tokens": 5466,
+    "content_sha256": "8d93b97c9891fec9f679f6b6f132084489f36de24cfb7c8a49b2a0d9cf5757f6",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

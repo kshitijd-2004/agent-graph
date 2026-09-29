@@ -61,9 +61,26 @@
       "location": "django/contrib/contenttypes/management/__init__.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "RenameContentType._rename() doesn't save the content type on the correct database"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "ee3b84ed76d44a90804ae0af1440ddc0edeedfcfcdd3a991df3be3cdcdd65848",
+        "source_instance_id": "django__django-11066",
+        "changed_files": [
+          "django/contrib/contenttypes/management/__init__.py"
+        ],
+        "location_any": [
+          "django/contrib/contenttypes/management/__init__.py",
+          "RenameContentType._rename",
+          "_rename",
+          "contenttypes management"
+        ],
+        "all_of": [
+          "save|persist|writ",
+          "using.?=.?db|database alias|same database|selected database|schema.editor|using argument"
+        ],
+        "reject_any": [],
+        "explanation": "RenameContentType._rename selects a database and opens a transaction there, but save omits using=db. Pass the same database alias to save so the renamed content type is persisted on the selected database."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +119,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2419,
-    "content_sha256": "c07804c465f1099e359d4c15a9c58c590bd69a1d0631f8b4ff13f22d6122e49d",
+    "estimated_tokens": 2584,
+    "content_sha256": "0fcd28bb8048f3dee8195fc1fb8bd560ce9b0302bead7a9e768774119378b7df",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

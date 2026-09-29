@@ -61,9 +61,26 @@
       "location": "sympy/core/add.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "is_zero is incorrect on complex integer"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "19cccea449ce5f295cdc31aa50f5b72ed56a9d0c0baac92d109e01c1d77a5578",
+        "source_instance_id": "sympy__sympy-15875",
+        "changed_files": [
+          "sympy/core/add.py"
+        ],
+        "location_any": [
+          "sympy/core/add.py",
+          "Add._eval_is_zero",
+          "_eval_is_zero",
+          "add.py"
+        ],
+        "all_of": [
+          "\\bnz\\b|nonzero.{0,25}(list|term)|non.zero.{0,25}(list|term)|empty.{0,25}(term|list)",
+          "empty|zero.length|len.{0,12}0|return.{0,20}(none|unknown)|undecid"
+        ],
+        "reject_any": [],
+        "explanation": "Add._eval_is_zero reconstructs an empty nz list as zero and draws an invalid conclusion for complex terms. Treat an empty nonzero-term list as undecidable and return None."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +153,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1416,
-    "content_sha256": "dee3f50981414196ef0f37ed311516808709469d715010f96cdcd94dd8eb4671",
+    "estimated_tokens": 1573,
+    "content_sha256": "5a2933a8e1360a8898b7e74eb3a51ff94c2a999eaa2506e8d35e272e99963c30",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

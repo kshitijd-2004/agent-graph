@@ -61,9 +61,25 @@
       "location": "django/contrib/staticfiles/storage.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "ManifestStaticFilesStorage crashes with max_post_process_passes = 0."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "15196a6edc5af1d24c62f2eed9d9bc1ece7c390e488e6b69ed340691efbc1abb",
+        "source_instance_id": "django__django-14493",
+        "changed_files": [
+          "django/contrib/staticfiles/storage.py"
+        ],
+        "location_any": [
+          "django/contrib/staticfiles/storage.py",
+          "post_process",
+          "storage.py"
+        ],
+        "all_of": [
+          "substitutions|substitution flag",
+          "initializ|unbound|undefined|before.{0,40}loop|outside.{0,40}loop"
+        ],
+        "reject_any": [],
+        "explanation": "post_process only initializes substitutions inside the loop. Initialize it to False before the loop so zero iterations cannot leave the variable unbound."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 5827,
-    "content_sha256": "33a2de70b9e2f92a1449658fd16c9e38567eaedad24401981227ae0f9417557b",
+    "estimated_tokens": 5964,
+    "content_sha256": "0562891f44ec17bedf7df2c3ac27ad8e4d5cacd711533e6154b3fcd549c11581",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

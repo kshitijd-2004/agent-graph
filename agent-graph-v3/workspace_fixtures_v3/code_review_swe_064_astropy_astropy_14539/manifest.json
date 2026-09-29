@@ -61,9 +61,26 @@
       "location": "astropy/io/fits/diff.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "`io.fits.FITSDiff` may sometimes report differences between identical files"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "6df2a31458ccb6444253ea103006830eeb96f9a89eb9db2959f46060a28fe691",
+        "source_instance_id": "astropy__astropy-14539",
+        "changed_files": [
+          "astropy/io/fits/diff.py"
+        ],
+        "location_any": [
+          "astropy/io/fits/diff.py",
+          "TableDataDiff._diff",
+          "_diff",
+          "diff.py"
+        ],
+        "all_of": [
+          "\\bq\\b|64.bit.{0,25}descriptor",
+          "variable.length|elementwise|element.wise|\\bp\\b|allclose"
+        ],
+        "reject_any": [],
+        "explanation": "TableDataDiff._diff handles variable-length P columns specially but not Q columns. Include Q descriptors in the elementwise variable-length-array comparison branch."
+      }
     }
   ],
   "success_criteria": {
@@ -188,8 +205,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 6063,
-    "content_sha256": "53e8acd813d8d3c6730c1527155579324071d9e13cffa1d465dcd492e086c958",
+    "estimated_tokens": 6196,
+    "content_sha256": "ebd8a45e4405d5db07031bd054c76851c8c95136a84277618042a32b38b5aa7b",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

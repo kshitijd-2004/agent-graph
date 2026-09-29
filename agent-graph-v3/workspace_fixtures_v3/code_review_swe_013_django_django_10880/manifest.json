@@ -61,9 +61,26 @@
       "location": "django/db/models/aggregates.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Query syntax error with condition and distinct combination"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "368159ac79ebf4e6772a128199ec8d64b4e5db571d99bce2d0dec42733974e31",
+        "source_instance_id": "django__django-10880",
+        "changed_files": [
+          "django/db/models/aggregates.py"
+        ],
+        "location_any": [
+          "django/db/models/aggregates.py",
+          "Aggregate.as_sql",
+          "as_sql",
+          "aggregates.py"
+        ],
+        "all_of": [
+          "distinct",
+          "space|whitespace|separator|concatenat|token"
+        ],
+        "reject_any": [],
+        "explanation": "Aggregate.as_sql supplies DISTINCT without a trailing space. Add a separator before the argument expression so the filtered aggregate template cannot concatenate SQL tokens."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +119,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2226,
-    "content_sha256": "831b113716a4a3be0e0cd85b0edc7f232a04ff94a8836462e98085d4b8e05df3",
+    "estimated_tokens": 2361,
+    "content_sha256": "e67b1f804694ab82dc915d0774b75f06e5b43103a5128ddab83f56e675be6eaa",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

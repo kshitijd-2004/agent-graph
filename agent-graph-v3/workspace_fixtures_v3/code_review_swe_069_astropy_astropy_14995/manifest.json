@@ -61,9 +61,25 @@
       "location": "astropy/nddata/mixins/ndarithmetic.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "In v5.3, NDDataRef mask propagation fails when one of the operand does not have a mask"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "370b3ff97b3a0627c29b74cf0b60bae46fe75edcd35a8d121c2dbe0f0421899a",
+        "source_instance_id": "astropy__astropy-14995",
+        "changed_files": [
+          "astropy/nddata/mixins/ndarithmetic.py"
+        ],
+        "location_any": [
+          "astropy/nddata/mixins/ndarithmetic.py",
+          "_arithmetic_mask",
+          "ndarithmetic.py"
+        ],
+        "all_of": [
+          "operand.mask|operand.{0,35}(mask|unmasked)|other.{0,35}mask",
+          "none|missing|absent|copy|deepcopy"
+        ],
+        "reject_any": [],
+        "explanation": "_arithmetic_mask tests whether the operand itself is None instead of whether operand.mask is None. When the other mask is absent, copy self.mask rather than calling the mask combiner with None."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1946,
-    "content_sha256": "1336313b3a5e6edc672c020ebff5df0356a9e011f340972332363b3580a63234",
+    "estimated_tokens": 2090,
+    "content_sha256": "8b5067456de772e0376e875c1b2fcf52ff34f40f209199573efd42c3ded48057",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

@@ -70,13 +70,26 @@
       "location": "django/db/models/deletion.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "primary key is not cleared",
-        "pk is not reset",
-        "doesn't clear PKs",
-        "fast-delete early return",
-        "missing primary-key reset"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "a1896338de07ff4fa040d7e692a1c954e44f3cac29f6db8bd7f15820a123b45f",
+        "source_instance_id": "django__django-11179",
+        "changed_files": [
+          "django/db/models/deletion.py"
+        ],
+        "location_any": [
+          "django/db/models/deletion.py",
+          "Collector.delete",
+          "can_fast_delete",
+          "deletion.py"
+        ],
+        "all_of": [
+          "fast.?delet|early return|single.instance",
+          "(clear|reset|set|assign).{0,65}(primary key|\\bpk\\b)|(?:primary key|\\bpk\\b).{0,65}(clear|reset|none|null)"
+        ],
+        "reject_any": [],
+        "explanation": "Collector.delete takes the single-instance fast-delete branch and returns before normal cleanup. Reset the instance primary key to None before this early return."
+      }
     }
   ],
   "success_criteria": {
@@ -115,8 +128,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 4288,
-    "content_sha256": "fc7f055e6b518a8bf77227f2903787a53d568f2f6b5f0419cfa3dd6d2ffc00f5",
+    "estimated_tokens": 4428,
+    "content_sha256": "31bd9681f16f3437f46ac77a551df49412ba11dd2e10102166fd8713e4108cd0",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

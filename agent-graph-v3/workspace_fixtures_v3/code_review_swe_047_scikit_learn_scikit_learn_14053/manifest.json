@@ -61,9 +61,26 @@
       "location": "sklearn/tree/export.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "IndexError: list index out of range in export_text when the tree only has one feature"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "c15f2cddfd5ec4b3d372389bd64b2453a27595b3f5e2dd2d1cbaa5363db257d3",
+        "source_instance_id": "scikit-learn__scikit-learn-14053",
+        "changed_files": [
+          "sklearn/tree/export.py"
+        ],
+        "location_any": [
+          "sklearn/tree/export.py",
+          "export_text",
+          "TREE_UNDEFINED",
+          "export.py"
+        ],
+        "all_of": [
+          "leaf|leaves|tree.undefined|sentinel|negative.{0,20}index",
+          "skip|guard|none|avoid|exclude|check"
+        ],
+        "reject_any": [],
+        "explanation": "export_text indexes feature_names with the TREE_UNDEFINED sentinel from leaf nodes. Guard that sentinel and use None for leaves instead of indexing the names list."
+      }
     }
   ],
   "success_criteria": {
@@ -140,8 +157,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3322,
-    "content_sha256": "ad074938f62d8772de4a87df5882d14e887ce8021809547f542d6d75c4b7064b",
+    "estimated_tokens": 3455,
+    "content_sha256": "cf9e1233a98af45e1fc5902fdf06ed9602a42fae8e7dc0f609d698ea9e469e0e",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

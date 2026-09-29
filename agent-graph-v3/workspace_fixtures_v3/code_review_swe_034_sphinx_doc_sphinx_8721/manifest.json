@@ -61,9 +61,25 @@
       "location": "sphinx/ext/viewcode.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "viewcode creates pages for epub even if `viewcode_enable_epub=False` on `make html epub`"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "b280454dbde68b9fd743d03c4d07172306c61477330f337287c48af6e8fced04",
+        "source_instance_id": "sphinx-doc__sphinx-8721",
+        "changed_files": [
+          "sphinx/ext/viewcode.py"
+        ],
+        "location_any": [
+          "sphinx/ext/viewcode.py",
+          "collect_pages",
+          "viewcode.py"
+        ],
+        "all_of": [
+          "collect.pages|page.{0,25}(generat|collect)|generat.{0,20}page",
+          "guard|skip|return|check|respect|disable"
+        ],
+        "reject_any": [],
+        "explanation": "collect_pages generates source pages from cached viewcode modules without checking the current builder. Skip singlehtml and disabled EPUB output in this page-generation hook."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3715,
-    "content_sha256": "f06476673d463d477b2e3ae21d4c4bd848e531481f720294cdb46f0fd335fb91",
+    "estimated_tokens": 3848,
+    "content_sha256": "a910c19451442dfa28c99950cc85aef2c2f6570ed2767cf1b6418062150b759f",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

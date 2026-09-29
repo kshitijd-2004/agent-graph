@@ -61,9 +61,25 @@
       "location": "sympy/core/function.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "evalf does not call _imp_ recursively"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "b5eaffb5e3953d415a156911f68c9c74d4e91f8e5931036f8e2cd06e0088a8f6",
+        "source_instance_id": "sympy__sympy-12096",
+        "changed_files": [
+          "sympy/core/function.py"
+        ],
+        "location_any": [
+          "sympy/core/function.py",
+          "_eval_evalf",
+          "function.py"
+        ],
+        "all_of": [
+          "argument|self.args",
+          "evalf|numeric.{0,30}(evaluat|convert)|evaluat.{0,40}(numeric|before|recurs)|recurs.{0,40}evaluat"
+        ],
+        "reject_any": [],
+        "explanation": "_eval_evalf passes symbolic arguments directly to _imp_. Evaluate each argument numerically at the requested precision before invoking the implementation."
+      }
     }
   ],
   "success_criteria": {
@@ -148,8 +164,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1860,
-    "content_sha256": "82d614406f84b5e5bd192b9b1c3ff6982d4be55e0277348d6d8c9ff862380e1d",
+    "estimated_tokens": 2002,
+    "content_sha256": "1d52d9d2a653adebcdf7194d540eecc55d28f8858d5ae92c5422822ff13e4d54",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

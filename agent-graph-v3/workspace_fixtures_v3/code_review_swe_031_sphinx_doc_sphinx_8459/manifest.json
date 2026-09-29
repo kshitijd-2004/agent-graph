@@ -61,9 +61,25 @@
       "location": "sphinx/ext/autodoc/typehints.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "autodoc_type_aliases doesn't work when autodoc_typehints is set to \"description\""
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "8bf406df3ba81a273c45b95b9c14c70ba7e4ae7c0a5e387c5544d0d608d4900d",
+        "source_instance_id": "sphinx-doc__sphinx-8459",
+        "changed_files": [
+          "sphinx/ext/autodoc/typehints.py"
+        ],
+        "location_any": [
+          "sphinx/ext/autodoc/typehints.py",
+          "record_typehints",
+          "typehints.py"
+        ],
+        "all_of": [
+          "signature",
+          "type.alias|alias.{0,30}(mapping|config)|configured.{0,20}alias"
+        ],
+        "reject_any": [],
+        "explanation": "record_typehints calls inspect.signature without the configured type aliases. Pass autodoc_type_aliases as type_aliases so description-mode annotations resolve through the alias mapping."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2289,
-    "content_sha256": "ab87d87ad5d87981697d55bb6f5431e1c96857c8c8b23f95cc7aa29b511215ce",
+    "estimated_tokens": 2424,
+    "content_sha256": "d0387bcad209623ab68498b240895011bff751670a42dbe0d7504dae80d5d86f",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

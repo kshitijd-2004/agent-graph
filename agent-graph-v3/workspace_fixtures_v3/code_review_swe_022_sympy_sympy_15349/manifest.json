@@ -61,9 +61,27 @@
       "location": "sympy/algebras/quaternion.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Incorrect result with Quaterniont.to_rotation_matrix()"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "14d79be0430f201c1938906118c86d18fd0b2103a4510afd9f957c14876361e4",
+        "source_instance_id": "sympy__sympy-15349",
+        "changed_files": [
+          "sympy/algebras/quaternion.py"
+        ],
+        "location_any": [
+          "sympy/algebras/quaternion.py",
+          "Quaternion.to_rotation_matrix",
+          "to_rotation_matrix",
+          "m12",
+          "quaternion.py"
+        ],
+        "all_of": [
+          "m12|row.{0,10}(1|one|second).{0,30}(2|two|third)|second.row.{0,25}third",
+          "minus|subtract|negative|sign"
+        ],
+        "reject_any": [],
+        "explanation": "Quaternion.to_rotation_matrix has the wrong sign in m12, the second-row third-column entry. Subtract b*a from c*d rather than adding it."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +120,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 5108,
-    "content_sha256": "6d2c2478a09ef466b7c57db637b5e888e9c0b756aa898cb39efb874767c1953c",
+    "estimated_tokens": 5253,
+    "content_sha256": "4a013c98f10e57a3127f5b325c36652d3cbd5c850bb4dac641e50ddcbf837fe0",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

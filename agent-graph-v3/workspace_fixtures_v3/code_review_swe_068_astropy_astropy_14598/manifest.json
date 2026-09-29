@@ -62,9 +62,27 @@
       "location": "astropy/io/fits/card.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Inconsistency in double single-quote ('') management in FITS Card"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "867bc2472fb6f36b4bb180ae83d94b99533948f51c0f16f1e666dd87c9d4c396",
+        "source_instance_id": "astropy__astropy-14598",
+        "changed_files": [
+          "astropy/io/fits/card.py"
+        ],
+        "location_any": [
+          "astropy/io/fits/card.py",
+          "Card._split",
+          "_strg_comment_RE",
+          "Card parsing",
+          "card.py"
+        ],
+        "all_of": [
+          "anchor|end.of.(?:the.)?string|full.{0,15}(match|field)|complete.{0,15}(match|field)",
+          "unescap|double.{0,20}(quote|decod)|quote.{0,25}(twice|once|preserv)|preserv.{0,25}(escap|quote)"
+        ],
+        "reject_any": [],
+        "explanation": "Card parsing permits a partial string/comment match and unescapes doubled quotes again while splitting continued values. Anchor the regex to the end and preserve escaped quotes during _split so they are decoded only once."
+      }
     },
     {
       "id": "issue_2",
@@ -72,9 +90,27 @@
       "location": "astropy/io/fits/card.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Inconsistency in double single-quote ('') management in FITS Card"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "867bc2472fb6f36b4bb180ae83d94b99533948f51c0f16f1e666dd87c9d4c396",
+        "source_instance_id": "astropy__astropy-14598",
+        "changed_files": [
+          "astropy/io/fits/card.py"
+        ],
+        "location_any": [
+          "astropy/io/fits/card.py",
+          "Card._split",
+          "_strg_comment_RE",
+          "Card parsing",
+          "card.py"
+        ],
+        "all_of": [
+          "anchor|end.of.(?:the.)?string|full.{0,15}(match|field)|complete.{0,15}(match|field)",
+          "unescap|double.{0,20}(quote|decod)|quote.{0,25}(twice|once|preserv)|preserv.{0,25}(escap|quote)"
+        ],
+        "reject_any": [],
+        "explanation": "Card parsing permits a partial string/comment match and unescapes doubled quotes again while splitting continued values. Anchor the regex to the end and preserve escaped quotes during _split so they are decoded only once."
+      }
     }
   ],
   "success_criteria": {
@@ -163,8 +199,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2835,
-    "content_sha256": "ce3a0258b8960b4d492cdf19f63039a31ab6f5561fb3d806f60e70b7e798fe38",
+    "estimated_tokens": 3189,
+    "content_sha256": "873385385c227277e42db24ced7ab789d11269e608ac0193db915faf6a10a4a0",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

@@ -62,9 +62,26 @@
       "location": "sklearn/model_selection/_split.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "RepeatedKFold and RepeatedStratifiedKFold do not show correct __repr__ string"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "9a17eca77986b88c0f8d8b428ca5a3ec8fb6ac367ab4f0c3fe6257082645e749",
+        "source_instance_id": "scikit-learn__scikit-learn-14983",
+        "changed_files": [
+          "sklearn/model_selection/_split.py"
+        ],
+        "location_any": [
+          "sklearn/model_selection/_split.py",
+          "_RepeatedSplits",
+          "_build_repr",
+          "_split.py"
+        ],
+        "all_of": [
+          "repr|representation",
+          "cvargs|stored.{0,20}(argument|parameter)|cross.validation.{0,25}(argument|parameter)"
+        ],
+        "reject_any": [],
+        "explanation": "_RepeatedSplits lacks __repr__, and _build_repr misses parameters stored in cvargs. Delegate repr to the shared builder and read missing attributes from cvargs."
+      }
     },
     {
       "id": "issue_2",
@@ -72,9 +89,26 @@
       "location": "sklearn/model_selection/_split.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "RepeatedKFold and RepeatedStratifiedKFold do not show correct __repr__ string"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "9a17eca77986b88c0f8d8b428ca5a3ec8fb6ac367ab4f0c3fe6257082645e749",
+        "source_instance_id": "scikit-learn__scikit-learn-14983",
+        "changed_files": [
+          "sklearn/model_selection/_split.py"
+        ],
+        "location_any": [
+          "sklearn/model_selection/_split.py",
+          "_RepeatedSplits",
+          "_build_repr",
+          "_split.py"
+        ],
+        "all_of": [
+          "repr|representation",
+          "cvargs|stored.{0,20}(argument|parameter)|cross.validation.{0,25}(argument|parameter)"
+        ],
+        "reject_any": [],
+        "explanation": "_RepeatedSplits lacks __repr__, and _build_repr misses parameters stored in cvargs. Delegate repr to the shared builder and read missing attributes from cvargs."
+      }
     }
   ],
   "success_criteria": {
@@ -220,8 +254,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 4649,
-    "content_sha256": "08be13acf4eec9fcebb925d3dbf0da5e3b0da9a6a9572bec7bd1c3a5c1742226",
+    "estimated_tokens": 4936,
+    "content_sha256": "e320bbfe7160516e854348af23c778b868463c027ab4238fee20e97e1ebbd2e7",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

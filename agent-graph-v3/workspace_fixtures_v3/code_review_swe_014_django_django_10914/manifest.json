@@ -61,9 +61,25 @@
       "location": "django/conf/global_settings.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Set default FILE_UPLOAD_PERMISSION to 0o644."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "00d87c8dceb745fb6e4d5b9a7ed128cfc97054d46eb4ba23e82f0d9768eae56f",
+        "source_instance_id": "django__django-10914",
+        "changed_files": [
+          "django/conf/global_settings.py"
+        ],
+        "location_any": [
+          "django/conf/global_settings.py",
+          "FILE_UPLOAD_PERMISSIONS",
+          "global_settings.py"
+        ],
+        "all_of": [
+          "none|unset|umask|temporary|handler|system.dependent",
+          "0o644|0644|\\b644\\b|owner.{0,35}(write|read).{0,50}(other|group)"
+        ],
+        "reject_any": [],
+        "explanation": "FILE_UPLOAD_PERMISSIONS is None in global_settings.py, leaving the resulting mode dependent on upload handler and OS defaults. Set the default to 0o644 for consistent owner-writable, publicly readable uploads."
+      }
     }
   ],
   "success_criteria": {
@@ -116,8 +132,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1227,
-    "content_sha256": "162e1f521c465ab9fe55e4aba89a9e710a29abdbcdd5517414444e8727cae824",
+    "estimated_tokens": 1391,
+    "content_sha256": "2270075a0a539a228738a6c00683870ba26d6740bba00e9db1129430d6d45ec7",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

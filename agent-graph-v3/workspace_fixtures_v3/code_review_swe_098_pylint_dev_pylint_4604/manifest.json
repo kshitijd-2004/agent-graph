@@ -62,9 +62,28 @@
       "location": "pylint/checkers/variables.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "unused-import false positive for a module used in a type comment"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "b50bd937b95d0b58008208d4e7cd122bb869602d0c84319bbae3ebf0f024887c",
+        "source_instance_id": "pylint-dev__pylint-4604",
+        "changed_files": [
+          "pylint/checkers/variables.py",
+          "pylint/constants.py"
+        ],
+        "location_any": [
+          "pylint/checkers/variables.py",
+          "pylint/constants.py",
+          "_store_type_annotation_node",
+          "variables.py",
+          "constants.py"
+        ],
+        "all_of": [
+          "attribute|qualified|dotted",
+          "recurs|travers|base.{0,20}(name|expression)|\\.expr|receiver"
+        ],
+        "reject_any": [],
+        "explanation": "_store_type_annotation_node skips astroid.Attribute nodes in type comments. Recurse into the attribute base expression so the imported module name is recorded as used."
+      }
     }
   ],
   "success_criteria": {
@@ -161,8 +180,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1970,
-    "content_sha256": "94e6bdbe3f371061d3a033af3ab2bfe307f124a4f1a083f8c2b972753fa282f2",
+    "estimated_tokens": 2126,
+    "content_sha256": "c513c6776c34dde8ba5d7a6c172083c6cefbbbf92219ddbadecf7de499265c37",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

@@ -61,9 +61,26 @@
       "location": "sphinx/domains/python.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "An index entry with parens was registered for `py:method` directive with `:property:` option"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "9e5f742f4b369b8998d7ae36fde7926cec5cbf73121408346bd09695fc956219",
+        "source_instance_id": "sphinx-doc__sphinx-9698",
+        "changed_files": [
+          "sphinx/domains/python.py"
+        ],
+        "location_any": [
+          "sphinx/domains/python.py",
+          "PyMethod.get_index_text",
+          "get_index_text",
+          "python.py"
+        ],
+        "all_of": [
+          "property|properties",
+          "(remov|omit|without|drop).{0,40}(parenthes|parens|\\(\\))|(?:parenthes|parens).{0,40}(remov|omit|drop)"
+        ],
+        "reject_any": [],
+        "explanation": "PyMethod.get_index_text uses a callable-style name with parentheses in its property branch. Omit those parentheses for property index entries while retaining normal method formatting."
+      }
     }
   ],
   "success_criteria": {
@@ -180,8 +197,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3001,
-    "content_sha256": "39b15dd7cd9262a31806aa4a10e685314b032cbc3b6b0c1962ae20ce557f68e3",
+    "estimated_tokens": 3147,
+    "content_sha256": "cebf0678b5b2c9fcbb907812e94f3990f76b2e3f995243c3c23ede2108af84e4",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

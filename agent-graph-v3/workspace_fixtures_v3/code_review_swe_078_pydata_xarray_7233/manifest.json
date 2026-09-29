@@ -61,9 +61,26 @@
       "location": "xarray/core/rolling.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "ds.Coarsen.construct demotes non-dimensional coordinates to variables"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "11c8be55c64eca1e57e450dd2850c0a331806b2e6f0cfa5f7c345047cc41d9b0",
+        "source_instance_id": "pydata__xarray-7233",
+        "changed_files": [
+          "xarray/core/rolling.py"
+        ],
+        "location_any": [
+          "xarray/core/rolling.py",
+          "Coarsen.construct",
+          "should_be_coords",
+          "rolling.py"
+        ],
+        "all_of": [
+          "original.{0,20}coord|all.{0,20}coord|self.obj.coords|non.dimension|existing.{0,20}coord",
+          "preserv|retain|union|includ|set.coords|restor"
+        ],
+        "reject_any": [],
+        "explanation": "Coarsen.construct restores only coordinates present in window_dim. Include all original coordinate names in the set passed to set_coords so auxiliary coordinates are not demoted."
+      }
     }
   ],
   "success_criteria": {
@@ -160,8 +177,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 4210,
-    "content_sha256": "876974a40e4576909d7365de89e324e260aebe6d88c3f175aa9ebd838d6ad35e",
+    "estimated_tokens": 4361,
+    "content_sha256": "b94b6b74ab9dcbaa68da283d261c6a1427fb2a1d50eaf8590f18c023a29f40fb",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

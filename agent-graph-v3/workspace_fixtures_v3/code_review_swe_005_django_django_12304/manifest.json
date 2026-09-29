@@ -61,9 +61,26 @@
       "location": "django/db/models/enums.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Enumeration Types are not usable in templates."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "d0de5e22f6c38c314279df50abe9c37ce6901ded00e7155d7958e753d4d624f9",
+        "source_instance_id": "django__django-12304",
+        "changed_files": [
+          "django/db/models/enums.py"
+        ],
+        "location_any": [
+          "django/db/models/enums.py",
+          "ChoicesMeta",
+          "do_not_call_in_templates",
+          "enums.py"
+        ],
+        "all_of": [
+          "call|invok",
+          "do.not.call.in.templates|mark.{0,60}(non.callable|not.call|no.call)|prevent.{0,60}(call|invok)|disable.{0,60}(call|invok)"
+        ],
+        "reject_any": [],
+        "explanation": "The enum metaclass in enums.py leaves choices classes callable to template resolution. Set do_not_call_in_templates on the created class to prevent automatic invocation."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +119,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1483,
-    "content_sha256": "1bf49826a71d167e3c5f583c71e6b1a66b39c47072e0998669f5385ce4c27287",
+    "estimated_tokens": 1639,
+    "content_sha256": "c361777771d06e9affaa303c959b2c270a58ccce0843c1ba83c233d986fbc2ec",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

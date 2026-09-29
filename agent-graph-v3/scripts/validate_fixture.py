@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 
 from scripts.fixture_mock import mock_fixture
+from evaluators.task_evaluators.patch_review import rubric_errors
 
 MEMORY_KEYS = {
     'code_review': {'security_issues', 'bug_findings', 'performance_concerns'},
@@ -103,7 +104,9 @@ def check_fixture(fixture_dir, *, fixture_roots=(), run_mock=True):
                 names = set()
             if issue.get('function') not in names:
                 errors.append(f'Ungrounded issue function: {iid} / {issue.get("function")} in {location}')
-            if not issue.get('keywords') or not all(isinstance(k, str) and k.strip() for k in issue['keywords']):
+            if 'grading' in issue:
+                errors.extend(f'{iid}: {error}' for error in rubric_errors(issue['grading']))
+            elif not issue.get('keywords') or not all(isinstance(k, str) and k.strip() for k in issue['keywords']):
                 errors.append(f'Missing issue keywords: {iid}')
             if issue.get('category') not in {'security', 'correctness', 'performance'} or not issue.get('severity'):
                 errors.append(f'Missing/invalid issue category or severity: {iid}')

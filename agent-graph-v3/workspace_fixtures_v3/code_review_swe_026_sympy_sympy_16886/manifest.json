@@ -61,9 +61,25 @@
       "location": "sympy/crypto/crypto.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Morse encoding for \"1\" is not correct"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "e311e8bba944d634a2621fd8370236ea2d2affec4db65765bef09d5356882bc4",
+        "source_instance_id": "sympy__sympy-16886",
+        "changed_files": [
+          "sympy/crypto/crypto.py"
+        ],
+        "location_any": [
+          "sympy/crypto/crypto.py",
+          "morse",
+          "crypto.py"
+        ],
+        "all_of": [
+          "\\bone\\b|digit.{0,8}1|[\"\\x27]1[\"\\x27]",
+          "dot.{0,30}four.{0,10}dash|\\.----|leading.{0,15}dot"
+        ],
+        "reject_any": [],
+        "explanation": "The Morse lookup in crypto.py maps digit 1 to four dashes without the initial dot. Use dot followed by four dashes so encoding and decoding one agree with Morse."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1344,
-    "content_sha256": "a3db0bd987180a46f243057ed9e5de3d0414cbf399f7954888ebf684af5558fa",
+    "estimated_tokens": 1480,
+    "content_sha256": "8fdee2deb0374f364057ac6ae87f9082139f21cfeae5a4920be5f9eada73b200",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

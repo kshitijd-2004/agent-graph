@@ -61,9 +61,25 @@
       "location": "django/db/models/sql/query.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "QuerySet.only() after select_related() crash on proxy models."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "9ddef266c78908826b1873abc696b10a6da5b0b14c97ec1071b5edfeb8495ee7",
+        "source_instance_id": "django__django-15814",
+        "changed_files": [
+          "django/db/models/sql/query.py"
+        ],
+        "location_any": [
+          "django/db/models/sql/query.py",
+          "deferred_to_data",
+          "query.py"
+        ],
+        "all_of": [
+          "concrete.{0,30}model|underlying.{0,30}model",
+          "resolv|normaliz|use|follow|switch|travers|metadata"
+        ],
+        "reject_any": [],
+        "explanation": "deferred_to_data follows a relation to a proxy and uses the proxy metadata. Normalize cur_model to its concrete_model before retrieving opts and collecting required fields."
+      }
     }
   ],
   "success_criteria": {
@@ -128,8 +144,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2956,
-    "content_sha256": "4821990a0af742e1c8b1a33ab9f3d2acd97bf1c96ca196c0ee239e2788e836a9",
+    "estimated_tokens": 3096,
+    "content_sha256": "8c94af2dfa665d63f953cbff2707e64ed08aeb071fcdb48e3fce822f06f47153",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

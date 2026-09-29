@@ -61,9 +61,25 @@
       "location": "lib/matplotlib/__init__.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "[Bug]: get_backend() clears figures from Gcf.figs if they were created under rc_context"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "b15079ba0b887c4386893f5beb03cc077d9ff65b167d1910de6bfbc8151cfb2e",
+        "source_instance_id": "matplotlib__matplotlib-23299",
+        "changed_files": [
+          "lib/matplotlib/__init__.py"
+        ],
+        "location_any": [
+          "lib/matplotlib/__init__.py",
+          "rc_context",
+          "matplotlib/__init__.py"
+        ],
+        "all_of": [
+          "backend",
+          "(exclud|omit|remov|skip).{0,65}(restor|snapshot|saved|state|copy)|(?:restor|snapshot|saved|state|copy).{0,65}(exclud|omit|remov|skip)"
+        ],
+        "reject_any": [],
+        "explanation": "rc_context saves and restores the backend setting, potentially restoring the unresolved sentinel and triggering backend switching later. Exclude backend from the saved configuration restored on exit."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1738,
-    "content_sha256": "51f926c6c5eb27f1f25499a644a3006147c8104ce5d3f09ed3fabaf9938d08ce",
+    "estimated_tokens": 1892,
+    "content_sha256": "75ef36b0a808fef79cf749a9497fa9f5c7bd37d0209c900c21ab1034c914f5d4",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

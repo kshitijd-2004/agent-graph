@@ -62,9 +62,26 @@
       "location": "astropy/wcs/wcsapi/wrappers/sliced_wcs.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Inconsistent behavior of `world_to_pixel` in `SlicedLowLevelWCS`"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "3b039e1e3ea35e64bb09b0b59d7b46d6190d2196972a8e9fe7383957f299d068",
+        "source_instance_id": "astropy__astropy-13579",
+        "changed_files": [
+          "astropy/wcs/wcsapi/wrappers/sliced_wcs.py"
+        ],
+        "location_any": [
+          "astropy/wcs/wcsapi/wrappers/sliced_wcs.py",
+          "world_to_pixel_values",
+          "SlicedLowLevelWCS",
+          "sliced_wcs.py"
+        ],
+        "all_of": [
+          "sliced.out|dropped|removed.{0,20}(world|dimension)|missing.{0,20}(world|coordinate)",
+          "pixel.to.world|forward.{0,25}(transform|conversion)|slice.{0,20}(position|value)|constant.{0,10}(one|1)|hard.cod"
+        ],
+        "reject_any": [],
+        "explanation": "world_to_pixel_values substitutes 1 for sliced-out world coordinates. Obtain their actual values from the forward pixel-to-world transform at the slice position instead of using that arbitrary constant."
+      }
     },
     {
       "id": "issue_2",
@@ -72,9 +89,26 @@
       "location": "astropy/wcs/wcsapi/wrappers/sliced_wcs.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Inconsistent behavior of `world_to_pixel` in `SlicedLowLevelWCS`"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "3b039e1e3ea35e64bb09b0b59d7b46d6190d2196972a8e9fe7383957f299d068",
+        "source_instance_id": "astropy__astropy-13579",
+        "changed_files": [
+          "astropy/wcs/wcsapi/wrappers/sliced_wcs.py"
+        ],
+        "location_any": [
+          "astropy/wcs/wcsapi/wrappers/sliced_wcs.py",
+          "world_to_pixel_values",
+          "SlicedLowLevelWCS",
+          "sliced_wcs.py"
+        ],
+        "all_of": [
+          "sliced.out|dropped|removed.{0,20}(world|dimension)|missing.{0,20}(world|coordinate)",
+          "pixel.to.world|forward.{0,25}(transform|conversion)|slice.{0,20}(position|value)|constant.{0,10}(one|1)|hard.cod"
+        ],
+        "reject_any": [],
+        "explanation": "world_to_pixel_values substitutes 1 for sliced-out world coordinates. Obtain their actual values from the forward pixel-to-world transform at the slice position instead of using that arbitrary constant."
+      }
     }
   ],
   "success_criteria": {
@@ -113,8 +147,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 4934,
-    "content_sha256": "3cc554e5ea280149ea1ef3d6d1241a57006a10556e987616111ba939ac34eca5",
+    "estimated_tokens": 5306,
+    "content_sha256": "a6322b304b8d1feff000805afaff1454f37fb725aa4c784a3a4b844925c12e33",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

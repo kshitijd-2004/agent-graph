@@ -62,9 +62,28 @@
       "location": "astropy/io/ascii/qdp.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "ascii.qdp Table format assumes QDP commands are upper case"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "42420ff7003feddd01ddde186a66486ab686dc91af2a3155970dea6ca4df63c3",
+        "source_instance_id": "astropy__astropy-14365",
+        "changed_files": [
+          "astropy/io/ascii/qdp.py"
+        ],
+        "location_any": [
+          "astropy/io/ascii/qdp.py",
+          "_line_type",
+          "_get_tables_from_qdp_file",
+          "QDP regex",
+          "QDP parser",
+          "qdp.py"
+        ],
+        "all_of": [
+          "ignorecase|case.insensitive|case.fold|upper\\(\\)|normaliz.{0,20}case",
+          "\\bno\\b|mask|missing.value"
+        ],
+        "reject_any": [],
+        "explanation": "The QDP regex is case-sensitive and missing values are tested only against uppercase NO. Compile the parser case-insensitively and normalize NO tokens before masking."
+      }
     },
     {
       "id": "issue_2",
@@ -72,9 +91,28 @@
       "location": "astropy/io/ascii/qdp.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "ascii.qdp Table format assumes QDP commands are upper case"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "42420ff7003feddd01ddde186a66486ab686dc91af2a3155970dea6ca4df63c3",
+        "source_instance_id": "astropy__astropy-14365",
+        "changed_files": [
+          "astropy/io/ascii/qdp.py"
+        ],
+        "location_any": [
+          "astropy/io/ascii/qdp.py",
+          "_line_type",
+          "_get_tables_from_qdp_file",
+          "QDP regex",
+          "QDP parser",
+          "qdp.py"
+        ],
+        "all_of": [
+          "ignorecase|case.insensitive|case.fold|upper\\(\\)|normaliz.{0,20}case",
+          "\\bno\\b|mask|missing.value"
+        ],
+        "reject_any": [],
+        "explanation": "The QDP regex is case-sensitive and missing values are tested only against uppercase NO. Compile the parser case-insensitively and normalize NO tokens before masking."
+      }
     }
   ],
   "success_criteria": {
@@ -113,8 +151,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 6165,
-    "content_sha256": "4205946f3b00812e5dd4fd02c46d532d8a470985623bafb5017204cf4cb0be84",
+    "estimated_tokens": 6463,
+    "content_sha256": "455b7c17e29d27e54407c39a47c7be799b371f3280b48c64494b2437929880d6",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

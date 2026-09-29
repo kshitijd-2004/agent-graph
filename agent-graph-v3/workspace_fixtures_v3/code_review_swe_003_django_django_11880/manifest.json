@@ -61,9 +61,28 @@
       "location": "django/forms/fields.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Form Field\u2019s __deepcopy__ does not (deep)copy the error messages."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "8c47d5fdef900230cb6fd10f627d6b0efeb792d704526a476d0ffe6c0e2dd3e9",
+        "source_instance_id": "django__django-11880",
+        "changed_files": [
+          "django/forms/fields.py"
+        ],
+        "location_any": [
+          "django/forms/fields.py",
+          "Field.__deepcopy__",
+          "__deepcopy__",
+          "fields.py"
+        ],
+        "all_of": [
+          "error.messages|message dictionary|message mapping",
+          "(?:cop(?:y|ies|ied)|independent|separate|alias|shar).{0,55}(?:error.messages|message mapping|message dictionary)|(?:error.messages|message mapping|message dictionary).{0,55}(?:copied|aliased|shared)"
+        ],
+        "reject_any": [
+          "(?:message mapping|error.messages|message dictionary).{0,25}already independent"
+        ],
+        "explanation": "Field.__deepcopy__ shallow-copies the field but shares error_messages. Copy the error message dictionary so editing one field does not modify another."
+      }
     }
   ],
   "success_criteria": {
@@ -140,8 +159,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2112,
-    "content_sha256": "8e9b5779e9b3a6c6539affbd1edc11b35c690568b060a779e47409ba3e85a3cf",
+    "estimated_tokens": 2304,
+    "content_sha256": "a6dd5bccede3afefe1caf529f5bdd9420792af2feada20d8ad82595d21994341",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

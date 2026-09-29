@@ -31,6 +31,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from backend.errors import BackendError, classify_backend_error
+
 from backend.api_backend import ToolCall, ModelTurn
 
 
@@ -165,17 +167,18 @@ class HFBackend:
             method="POST",
         )
 
-        try:
-            resp = urllib.request.urlopen(req, timeout=120)
+        with urllib.request.urlopen(req, timeout=120) as resp:
             raw_resp = resp.read().decode("utf-8")
-        except urllib.error.HTTPError as e:
-            body = e.read().decode("utf-8", errors="replace")
-            raise ValueError(f"HTTP {e.code}: {body[:500]}")
 
         try:
-            return json.loads(raw_resp)
-        except json.JSONDecodeError:
-            raise ValueError(f"Non-JSON response: {raw_resp[:500]}")
+            data = json.loads(raw_resp)
+        except json.JSONDecodeError as error:
+            raise BackendError(f"Non-JSON backend response: {raw_resp[:500]}",
+                               "backend_response_error", True) from error
+        if not isinstance(data, dict) or data.get("error"):
+            raise BackendError(f"Invalid backend response: {str(data)[:500]}",
+                               "backend_response_error")
+        return data
 
     # ── Response extraction ───────────────────────────────────────────────────
 
@@ -282,9 +285,10 @@ class HFBackend:
                     })
 
                 return turn
+            except BackendError:
+                raise
             except Exception as e:
-                print(f"  [ERROR] vLLM call failed: {e}")
-                return ModelTurn(text=f"[ERROR] {e}")
+                raise classify_backend_error(e) from e
 
     generate = _generate
 

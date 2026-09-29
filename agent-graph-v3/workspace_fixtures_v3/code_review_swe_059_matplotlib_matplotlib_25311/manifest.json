@@ -61,9 +61,25 @@
       "location": "lib/matplotlib/offsetbox.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "[Bug]: Unable to pickle figure with draggable legend"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "ee3099538e208594133db33016f7487f7bc92b7ee702b17b815bb98874714a72",
+        "source_instance_id": "matplotlib__matplotlib-25311",
+        "changed_files": [
+          "lib/matplotlib/offsetbox.py"
+        ],
+        "location_any": [
+          "lib/matplotlib/offsetbox.py",
+          "DraggableBase",
+          "offsetbox.py"
+        ],
+        "all_of": [
+          "canvas",
+          "property|deriv|dynamic|on.demand|avoid.{0,35}(stor|attribute)|instead.{0,30}(stor|attribute)"
+        ],
+        "reject_any": [],
+        "explanation": "DraggableBase stores canvas as an instance attribute, pulling an unpicklable object into figure state. Expose canvas as a property derived from ref_artist.figure.canvas instead."
+      }
     }
   ],
   "success_criteria": {
@@ -180,8 +196,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 7099,
-    "content_sha256": "80dd23b7a7d8c64ac09cbac5c4463e751a747567f072a64594077559cf9c271f",
+    "estimated_tokens": 7244,
+    "content_sha256": "b3b63f0f311829d6eca4bac6d9edf4377b4e96e2748bb5f42e35770078d0cec2",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

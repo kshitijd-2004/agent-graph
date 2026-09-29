@@ -61,9 +61,25 @@
       "location": "sympy/physics/vector/vector.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "vector add 0 error"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "603fc55c24e66a70d67dac2cb8661fdb9be0c08333133151cfd7a72fbe9881eb",
+        "source_instance_id": "sympy__sympy-14711",
+        "changed_files": [
+          "sympy/physics/vector/vector.py"
+        ],
+        "location_any": [
+          "sympy/physics/vector/vector.py",
+          "Vector.__add__",
+          "vector.py"
+        ],
+        "all_of": [
+          "zero|\\b0\\b",
+          "return.{0,30}(self|original|unchanged)|identity|before.{0,40}(check|validat)"
+        ],
+        "reject_any": [],
+        "explanation": "Vector.__add__ sends zero into _check_vector, which rejects a scalar. Handle the additive identity first by returning self when other == 0."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 6947,
-    "content_sha256": "ef17ae1bd596c7420e6e1820030af528c3da831cc5d58d3f060597f9d392f885",
+    "estimated_tokens": 7088,
+    "content_sha256": "c5c7ad5268102cda24e58d8bdfc5a4dfc9acd8147ae5ecc88e3fd2f40a3e4430",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

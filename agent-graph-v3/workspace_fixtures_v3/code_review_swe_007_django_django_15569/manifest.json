@@ -61,9 +61,26 @@
       "location": "django/db/models/query_utils.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "RegisterLookupMixin._unregister_lookup() should clear the lookup cache."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "541931ea346593d3b8d0f80724b337efb409c53b3587070ae0ef2b4b72868ff6",
+        "source_instance_id": "django__django-15569",
+        "changed_files": [
+          "django/db/models/query_utils.py"
+        ],
+        "location_any": [
+          "django/db/models/query_utils.py",
+          "_unregister_lookup",
+          "RegisterLookupMixin",
+          "query_utils.py"
+        ],
+        "all_of": [
+          "class.lookups|stale|cached.{0,40}(lookup|registration)|subclass",
+          "invalidat|clear|evict|refresh"
+        ],
+        "reject_any": [],
+        "explanation": "_unregister_lookup deletes from class_lookups but leaves cached registrations usable. Call the cache invalidation helper after deletion so subsequent lookup resolution sees the removal."
+      }
     }
   ],
   "success_criteria": {
@@ -128,8 +145,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1274,
-    "content_sha256": "7d4abf7bb0a1081f125d1972af7470d0a033840f57246a275b331aec000f6c16",
+    "estimated_tokens": 1423,
+    "content_sha256": "120eb85e36b9647e1e38f5fc5aa89d71bf7c6a7276641698e6fc4729fb26aaa1",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

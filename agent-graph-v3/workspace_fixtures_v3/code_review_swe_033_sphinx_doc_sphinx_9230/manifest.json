@@ -61,9 +61,25 @@
       "location": "sphinx/util/docfields.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Doc rendering is incorrect when :param has datatype dict(str,str)"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "e6cc08c8b1858c3d41964c220e396638c15e601f88fa9cb6493938e5fdd814c6",
+        "source_instance_id": "sphinx-doc__sphinx-9230",
+        "changed_files": [
+          "sphinx/util/docfields.py"
+        ],
+        "location_any": [
+          "sphinx/util/docfields.py",
+          "DocFieldTransformer.transform",
+          "docfields.py"
+        ],
+        "all_of": [
+          "rsplit|right.{0,20}split|split.{0,30}(right|last)|last.{0,20}whitespace",
+          "type|argument|parameter|name"
+        ],
+        "reject_any": [],
+        "explanation": "DocFieldTransformer.transform splits the typed parameter at the first whitespace, cutting apart types with spaces. Split from the right once to separate the parameter name from the complete type."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 4669,
-    "content_sha256": "c6c51e64fa81579ea132115c0c559caa121d53e366e90fdd6f65fd0e57f93842",
+    "estimated_tokens": 4817,
+    "content_sha256": "d6723070bf74838097c91fad0ec524f3416cbcba897f290a66f640fb8c6536f5",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

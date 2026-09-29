@@ -61,9 +61,26 @@
       "location": "sklearn/ensemble/voting.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Voting estimator will fail at fit if weights are passed and an estimator is None"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "6faf85c3ffaaebff5458d13c730b28c4d6acfded07cc733b80278df6d2166cb4",
+        "source_instance_id": "scikit-learn__scikit-learn-13779",
+        "changed_files": [
+          "sklearn/ensemble/voting.py"
+        ],
+        "location_any": [
+          "sklearn/ensemble/voting.py",
+          "_BaseVoting.fit",
+          "VotingClassifier",
+          "voting.py"
+        ],
+        "all_of": [
+          "none|disabled|dropped",
+          "skip|ignore|before.{0,40}(check|validat)|exclude"
+        ],
+        "reject_any": [],
+        "explanation": "_BaseVoting.fit checks sample_weight support on disabled estimators that are None. Skip those entries before inspecting fit parameters, as they are not fitted."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +119,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 5249,
-    "content_sha256": "75da305a6cd23b5f52ac07d24540b36ec50a950c928d93b5be30ac1e0bc7aefc",
+    "estimated_tokens": 5381,
+    "content_sha256": "0fdc4c2c8a10a41a4cb816e58211d6e4440a227be6808c45044de827a55d5ae0",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

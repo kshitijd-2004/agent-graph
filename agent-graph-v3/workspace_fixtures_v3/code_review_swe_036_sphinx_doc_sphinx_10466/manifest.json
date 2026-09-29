@@ -61,9 +61,25 @@
       "location": "sphinx/builders/gettext.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Message.locations duplicate unnecessary"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "22dcf920cefa9d231e88032a81ba21641de55211c5417845fe94e996304dd4d9",
+        "source_instance_id": "sphinx-doc__sphinx-10466",
+        "changed_files": [
+          "sphinx/builders/gettext.py"
+        ],
+        "location_any": [
+          "sphinx/builders/gettext.py",
+          "Catalog.__iter__",
+          "gettext.py"
+        ],
+        "all_of": [
+          "\\bset\\b|deduplicat|unique",
+          "source|line|position|location"
+        ],
+        "reject_any": [],
+        "explanation": "Catalog.__iter__ emits duplicate source-line positions from metadata records with different UUIDs. Deduplicate the source/line pairs and sort them before constructing each Message."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 4323,
-    "content_sha256": "8ba66fcd74fa77541270bb841db49c29daacfc6a23671f5a222ca1e0ab7bb442",
+    "estimated_tokens": 4460,
+    "content_sha256": "cd2f17f33cca239afd7eb95b8358ffa85f484b349e3efcb430acc6ff393d1549",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

@@ -150,3 +150,17 @@ research_synthesis, from SciFact (two claims: one paper supports one claim, anot
 Notes: the tool-result and prompt-injection target is always the contradicting paper. The `*_result` facts are optional (only when the evidence has a citable number), so `min_required_facts_met` is 2 or 3. `seeds` is new: it is read by the semantic (NLI) measure, not by the evaluator.
 
 The example values are illustrative. Real fixtures take them from the source instance.
+
+## SWE-bench patch concept grading
+
+The reviewed 100 SWE-bench fixtures in `workspace_fixtures_v3` use an optional
+`required_issues[].grading` object instead of `keywords`. Its version is
+`patch-concepts-v1`; `location_any` supplies accepted location aliases, and every
+regex in `all_of` must match the causal/change explanation. Optional
+`reject_any` patterns reject known contradictions. `explanation`,
+`source_instance_id`, `changed_files`, and `gold_patch_sha256` document the
+patch-grounded provenance. All these fields are evaluator-only.
+
+See [the grading report](../scripts/swebench_materializer/grading/README.md) for
+scoring details, reproduction commands, validation counts, and limitations.
+Fixtures without `grading` retain the legacy keyword behavior.

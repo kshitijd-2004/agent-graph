@@ -61,9 +61,26 @@
       "location": "requests/models.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Getting http://.example.com raises UnicodeError"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "41e9433ac5e2cdb17a3972bec818a1118ea4a3f2b7485cd11fff7e27f6f3f680",
+        "source_instance_id": "psf__requests-5414",
+        "changed_files": [
+          "requests/models.py"
+        ],
+        "location_any": [
+          "requests/models.py",
+          "PreparedRequest.prepare_url",
+          "prepare_url",
+          "models.py"
+        ],
+        "all_of": [
+          "leading.{0,20}(dot|period)|start.{0,20}(dot|period)|empty.{0,20}(label|host)|host.startswith",
+          "invalidurl|reject|validat"
+        ],
+        "reject_any": [],
+        "explanation": "PreparedRequest.prepare_url rejects a leading wildcard but not a leading dot in an ASCII host. Reject that empty first label with InvalidURL before IDNA handling can raise UnicodeError."
+      }
     }
   ],
   "success_criteria": {
@@ -144,8 +161,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2663,
-    "content_sha256": "ea78e25de60ddb7a18d58f8f6420b2cc3729c14b7c7d897e6df66d4152af1fe9",
+    "estimated_tokens": 2816,
+    "content_sha256": "8a189a1803af8a21f099bcd61556d8d440cb4274c27374d155d383d1044a7810",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

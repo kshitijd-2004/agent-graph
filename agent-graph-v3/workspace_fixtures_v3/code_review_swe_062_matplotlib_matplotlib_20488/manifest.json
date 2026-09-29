@@ -61,9 +61,26 @@
       "location": "lib/matplotlib/image.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "test_huge_range_log is failing..."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "d4a54cfb2e82e869c697c33a5051f5f00753f12ad7aa5a79530e9ebe98954736",
+        "source_instance_id": "matplotlib__matplotlib-20488",
+        "changed_files": [
+          "lib/matplotlib/image.py"
+        ],
+        "location_any": [
+          "lib/matplotlib/image.py",
+          "_make_image",
+          "LogNorm",
+          "image.py"
+        ],
+        "all_of": [
+          "zero|nonpositive|non.positive|<=.?0|less.{0,15}equal",
+          "epsilon|\\beps\\b|positive.{0,25}(minimum|bound|value)|clamp"
+        ],
+        "reject_any": [],
+        "explanation": "_make_image clamps negative LogNorm minima but permits zero. Clamp any nonpositive scaled vmin to the floating-point epsilon before passing it to LogNorm."
+      }
     }
   ],
   "success_criteria": {
@@ -144,8 +161,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 5235,
-    "content_sha256": "5c236ee9ea1d36a90aa533f3ead4b4bab4c6bb92a73a55b17f4ca652805ef309",
+    "estimated_tokens": 5382,
+    "content_sha256": "67cbc189118f6ed75f80e44068a9c82c01c081c22a12792510a8e098fac6ae6e",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

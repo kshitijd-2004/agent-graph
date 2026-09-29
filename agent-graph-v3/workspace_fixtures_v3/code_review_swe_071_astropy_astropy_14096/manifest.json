@@ -61,9 +61,25 @@
       "location": "astropy/coordinates/sky_coordinate.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Subclassed SkyCoord gives misleading attribute access message"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "57a810467af331eba7c3238bbcd78268a47e96ad75eed3e2aa8b908da99104bc",
+        "source_instance_id": "astropy__astropy-14096",
+        "changed_files": [
+          "astropy/coordinates/sky_coordinate.py"
+        ],
+        "location_any": [
+          "astropy/coordinates/sky_coordinate.py",
+          "SkyCoord.__getattr__",
+          "sky_coordinate.py"
+        ],
+        "all_of": [
+          "getattribute|original.{0,25}(exception|error)|underlying.{0,25}(exception|error)|descriptor",
+          "delegat|call|preserv|propagat|mask"
+        ],
+        "reject_any": [],
+        "explanation": "SkyCoord.__getattr__ replaces an AttributeError from a subclass property with a generic missing-attribute message. Delegate to __getattribute__ to preserve the original descriptor exception."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +152,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1711,
-    "content_sha256": "44cc9c4f5c5a14164f34ac49986eada965786c59b827747f5e4314f46f1d0f91",
+    "estimated_tokens": 1871,
+    "content_sha256": "dc5cfc537c15fb1071dbe753b437097d12a05dbf2e5a3738d69a583824bc563f",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

@@ -61,9 +61,27 @@
       "location": "xarray/core/dataarray.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Naming a dimension \"method\" throws error when calling \".loc\""
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "c8f80ca2ab218e0728eb1b216f6d2c3c84588164291aa57387159a8e56c9901c",
+        "source_instance_id": "pydata__xarray-4695",
+        "changed_files": [
+          "xarray/core/dataarray.py"
+        ],
+        "location_any": [
+          "xarray/core/dataarray.py",
+          "_LocIndexer.__getitem__",
+          "_LocIndexer",
+          "dataarray.py"
+        ],
+        "all_of": [
+          "keyword|\\*\\*|unpack|reserved",
+          "dict|mapping|positional|indexer",
+          "(?:pass|send|supply|provide).{0,100}(?:dict|mapping|indexer)|positional"
+        ],
+        "reject_any": [],
+        "explanation": "_LocIndexer.__getitem__ expands dimension labels as keyword arguments to sel, colliding with reserved parameters such as method. Pass the indexer dictionary positionally instead of unpacking it."
+      }
     }
   ],
   "success_criteria": {
@@ -140,8 +158,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2785,
-    "content_sha256": "21206b2f1f6a4684e5ed903812c85fec70e100994bebeb8bb693a4fd779f05ae",
+    "estimated_tokens": 2944,
+    "content_sha256": "d3c84a6767b8ecf838f54dd482300ff9571b6da41bd50dfa7d9f323ffecf7508",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

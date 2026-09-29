@@ -61,9 +61,25 @@
       "location": "django/db/models/base.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Change in behaviour when saving a model instance with an explcit pk value if the pk field has a default"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "8b6faac051cb276f5af3fb2d7babb7816f160ff5882e71d00311f53c3ff376f9",
+        "source_instance_id": "django__django-12209",
+        "changed_files": [
+          "django/db/models/base.py"
+        ],
+        "location_any": [
+          "django/db/models/base.py",
+          "_save_table",
+          "base.py"
+        ],
+        "all_of": [
+          "raw|fixture.load|deserializ",
+          "(skip|exclud|disable|guard|bypass|not).{0,80}(insert|optimization)|(?:insert|optimization).{0,80}(raw|guard|exclud|disabl)"
+        ],
+        "reject_any": [],
+        "explanation": "_save_table forces an INSERT for a new object with a default primary key even during raw fixture loading. Guard that optimization with not raw so deserialization can update an existing row."
+      }
     }
   ],
   "success_criteria": {
@@ -128,8 +144,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2236,
-    "content_sha256": "4e20b172a8a7241330eb044bce81d1db6516cd3985a593f904eac1dab1fcf4d5",
+    "estimated_tokens": 2379,
+    "content_sha256": "a6abc69f6fda2253fd0d4247980f67cda83bf4f5b5a645739b17b442fdc4f9a7",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

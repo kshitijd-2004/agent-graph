@@ -61,9 +61,26 @@
       "location": "sphinx/domains/python.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Cross-references don't work in property's type annotations"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "e523d5057b448cc62524c765353f192caa38db7dcfcdeac0ee7238d519de25f0",
+        "source_instance_id": "sphinx-doc__sphinx-9591",
+        "changed_files": [
+          "sphinx/domains/python.py"
+        ],
+        "location_any": [
+          "sphinx/domains/python.py",
+          "PyProperty.handle_signature",
+          "handle_signature",
+          "python.py"
+        ],
+        "all_of": [
+          "pars|cross.reference|xref|reference.node",
+          "annotation|type"
+        ],
+        "reject_any": [],
+        "explanation": "PyProperty.handle_signature inserts the type as plain text instead of parsing its annotation. Use _parse_annotation and insert the resulting nodes so cross references can be resolved."
+      }
     }
   ],
   "success_criteria": {
@@ -160,8 +177,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3974,
-    "content_sha256": "5450f5195b1d253d541666a47a7ce94eb89a2954b5fd32bf5ac0620684edc503",
+    "estimated_tokens": 4114,
+    "content_sha256": "d0032f0d4a858fac2e2c3cbbbf35ceea35bbfab5ef60e76c1c3e6d15089a6dd8",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

@@ -61,9 +61,25 @@
       "location": "xarray/core/indexing.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "stack casts int32 dtype coordinate to int64"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "c39f78a4cc572103cb731d89d95c33742854a9645cdd0cf039906d39e06d81d5",
+        "source_instance_id": "pydata__xarray-7393",
+        "changed_files": [
+          "xarray/core/indexing.py"
+        ],
+        "location_any": [
+          "xarray/core/indexing.py",
+          "PandasMultiIndexingAdapter.__array__",
+          "indexing.py"
+        ],
+        "all_of": [
+          "dtype|data.type",
+          "self.dtype|stored|original|requested|cast|asarray"
+        ],
+        "reject_any": [],
+        "explanation": "PandasMultiIndexingAdapter.__array__ returns pandas level values without applying the adapter dtype. Default to self.dtype and pass that dtype to np.asarray for level extraction."
+      }
     }
   ],
   "success_criteria": {
@@ -192,8 +208,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 5358,
-    "content_sha256": "6301daf9bdc0eacc7e335ff0d89f5db7a142fe70e377cbceb97018f242f218b3",
+    "estimated_tokens": 5498,
+    "content_sha256": "81f3207afbaa43b345cdcd3f1c5ff962e5923aec72c3f1f2fc462e58b64f9461",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

@@ -61,9 +61,25 @@
       "location": "lib/mpl_toolkits/mplot3d/axes3d.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "[Bug]: set_visible() not working for 3d projection"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "b6d8952d0d9b8851d9ddd2a7f97980a3cee631902f1b92f9965ac62159d58fc4",
+        "source_instance_id": "matplotlib__matplotlib-23314",
+        "changed_files": [
+          "lib/mpl_toolkits/mplot3d/axes3d.py"
+        ],
+        "location_any": [
+          "lib/mpl_toolkits/mplot3d/axes3d.py",
+          "Axes3D.draw",
+          "axes3d.py"
+        ],
+        "all_of": [
+          "get.visible|visib|hidden",
+          "early.return|return|skip|guard|before|bypass"
+        ],
+        "reject_any": [],
+        "explanation": "Axes3D.draw does not check visibility before rendering. Add an early return when get_visible is false, before updating limits or drawing the background."
+      }
     }
   ],
   "success_criteria": {
@@ -140,8 +156,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1574,
-    "content_sha256": "115b8d150605e7e6c731088673735cc05c19c651b83184d89e3fca76d7dffb71",
+    "estimated_tokens": 1709,
+    "content_sha256": "70da6dec2b77e2f04bf1c634dd34a3c15af05da4163bd2ada6be325d5e547ad4",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

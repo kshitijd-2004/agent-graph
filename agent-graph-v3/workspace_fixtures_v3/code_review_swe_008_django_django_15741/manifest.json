@@ -61,9 +61,25 @@
       "location": "django/utils/formats.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "django.utils.formats.get_format should allow lazy parameter"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "ab8a4ba2835ccbb1080f3b2a9dbb3d9206df300989b2090ec23d617549842550",
+        "source_instance_id": "django__django-15741",
+        "changed_files": [
+          "django/utils/formats.py"
+        ],
+        "location_any": [
+          "django/utils/formats.py",
+          "get_format",
+          "formats.py"
+        ],
+        "all_of": [
+          "format.type|format name|format identifier|lazy.{0,30}(parameter|argument|object|value)",
+          "str\\b|string|coerc|conver"
+        ],
+        "reject_any": [],
+        "explanation": "get_format uses a potentially lazy format_type as a settings attribute name. Convert the format identifier to str before lookup and cache-key construction."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3383,
-    "content_sha256": "d27542aa8f49ba5d0b338b9af9004961925ff95860dc6eca7717af20e9ce1338",
+    "estimated_tokens": 3519,
+    "content_sha256": "d6de3db83b8bfd8d85f80c23f74fc792569bf9655112048b698cced424edec98",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

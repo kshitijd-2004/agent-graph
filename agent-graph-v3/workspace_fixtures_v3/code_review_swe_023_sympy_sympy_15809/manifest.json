@@ -61,9 +61,26 @@
       "location": "sympy/functions/elementary/miscellaneous.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Zero-argument Min() and Max()"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "721408a9d86c5c95e2a1f6d495ba550be573a072e016f5ad14e2d36dce8ccda1",
+        "source_instance_id": "sympy__sympy-15809",
+        "changed_files": [
+          "sympy/functions/elementary/miscellaneous.py"
+        ],
+        "location_any": [
+          "sympy/functions/elementary/miscellaneous.py",
+          "MinMaxBase.__new__",
+          "MinMaxBase",
+          "miscellaneous.py"
+        ],
+        "all_of": [
+          "empty|no.argument|zero.argument",
+          "identity|infinit|remove.{0,30}(raise|guard|exception)|allow|accept"
+        ],
+        "reject_any": [],
+        "explanation": "MinMaxBase.__new__ rejects empty arguments before the lattice logic can return an identity. Remove that guard so zero-argument Min and Max evaluate to their respective infinite identities."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +119,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 7241,
-    "content_sha256": "e88cb8086815e713ead231f4cb95170e5dbb0b2de2057a151112ea1821764909",
+    "estimated_tokens": 7406,
+    "content_sha256": "fc52dd44c47409dd0c7b2f03fb0d2e7e5515958cfa4bc4fde62d0629103cfe9b",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

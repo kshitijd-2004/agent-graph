@@ -61,9 +61,25 @@
       "location": "sklearn/cluster/k_means_.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "KMeans gives slightly different result for n_jobs=1 vs. n_jobs > 1"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "0063c03e4ca196c867ee776c7508768dd6131077ddcb0136d10260b653a2af28",
+        "source_instance_id": "scikit-learn__scikit-learn-9288",
+        "changed_files": [
+          "sklearn/cluster/k_means_.py"
+        ],
+        "location_any": [
+          "sklearn/cluster/k_means_.py",
+          "k_means",
+          "k_means_.py"
+        ],
+        "all_of": [
+          "seed|random.state",
+          "same|both|shared|pre.?generat|before.{0,40}(branch|serial|parallel)|consistent|identical"
+        ],
+        "reject_any": [],
+        "explanation": "k_means generates independent run seeds only in the parallel branch; the serial branch consumes the shared random state differently. Pre-generate seeds and use the same per-run seeds in both branches."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 4535,
-    "content_sha256": "fb86e0d50d91d64d33df3758755e29c845c729d310c04a67be0c89862078bf38",
+    "estimated_tokens": 4683,
+    "content_sha256": "cee963d9af96003db927c202912b04f580b2805dd287af3f6988972180c1b924",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

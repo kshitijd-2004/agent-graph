@@ -62,9 +62,26 @@
       "location": "requests/models.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Request with binary payload fails due to calling to_native_string"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "5b5a77408b00928b0380cd6a40ccb53f0cf77b16f040e1743e313883aad104db",
+        "source_instance_id": "psf__requests-2931",
+        "changed_files": [
+          "requests/models.py"
+        ],
+        "location_any": [
+          "requests/models.py",
+          "_encode_params",
+          "prepare_url",
+          "models.py"
+        ],
+        "all_of": [
+          "bytes|binary|payload",
+          "unchanged|preserv|raw|decod|native.string"
+        ],
+        "reject_any": [],
+        "explanation": "_encode_params converts byte payloads to native strings and can fail decoding binary bodies. Return string/bytes bodies unchanged and restrict native-string conversion to URL query parameters in prepare_url."
+      }
     },
     {
       "id": "issue_2",
@@ -72,9 +89,26 @@
       "location": "requests/models.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Request with binary payload fails due to calling to_native_string"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "5b5a77408b00928b0380cd6a40ccb53f0cf77b16f040e1743e313883aad104db",
+        "source_instance_id": "psf__requests-2931",
+        "changed_files": [
+          "requests/models.py"
+        ],
+        "location_any": [
+          "requests/models.py",
+          "_encode_params",
+          "prepare_url",
+          "models.py"
+        ],
+        "all_of": [
+          "bytes|binary|payload",
+          "unchanged|preserv|raw|decod|native.string"
+        ],
+        "reject_any": [],
+        "explanation": "_encode_params converts byte payloads to native strings and can fail decoding binary bodies. Return string/bytes bodies unchanged and restrict native-string conversion to URL query parameters in prepare_url."
+      }
     }
   ],
   "success_criteria": {
@@ -156,8 +190,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2479,
-    "content_sha256": "1e46db667880080555f9f0b7856e63d9c8e0a0f44f325b8241ce1bb0e887591a",
+    "estimated_tokens": 2753,
+    "content_sha256": "78aa6e8b4a160b40391ed7516c947ec4a1fe3a24920cfdf8700e495da96da38f",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

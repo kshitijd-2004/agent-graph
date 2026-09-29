@@ -61,9 +61,26 @@
       "location": "xarray/core/computation.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "xr.where with scalar as second argument fails with keep_attrs=True"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "f4043eceaf8852c1c3027b5beafe65e7ca86d1d65a90a16e3d33df5acc6c98c6",
+        "source_instance_id": "pydata__xarray-6461",
+        "changed_files": [
+          "xarray/core/computation.py"
+        ],
+        "location_any": [
+          "xarray/core/computation.py",
+          "where",
+          "keep_attrs",
+          "computation.py"
+        ],
+        "all_of": [
+          "getattr|fallback|empty.{0,20}(dict|mapping|attribute)|\\{\\}",
+          "\\bx\\b|second.{0,20}(argument|operand|input)|attrs"
+        ],
+        "reject_any": [],
+        "explanation": "where assumes the collected attrs list has an entry for its second argument. Retrieve x.attrs with an empty-dict fallback instead, since a scalar x has no attributes."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +153,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2054,
-    "content_sha256": "6fb409a5ac26e08e895d73474e26ae2d7a909d332afa9e6b7a6e447cd8f49bf2",
+    "estimated_tokens": 2195,
+    "content_sha256": "3f4ff96101c00bb4eceeae761c8baf5ad4a296978c28408f3109f0d6c39deec9",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

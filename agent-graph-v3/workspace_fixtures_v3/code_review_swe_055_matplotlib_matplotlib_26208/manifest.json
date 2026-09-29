@@ -62,9 +62,26 @@
       "location": "lib/matplotlib/axes/_base.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "[Bug]: dataLims get replaced by inf for charts with twinx if ax1 is a stackplot"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "ce99d347634d280271961a99beee41efbfb83e75ce1c0eaed189485afbb27846",
+        "source_instance_id": "matplotlib__matplotlib-26208",
+        "changed_files": [
+          "lib/matplotlib/axes/_base.py"
+        ],
+        "location_any": [
+          "lib/matplotlib/axes/_base.py",
+          "twinx",
+          "twiny",
+          "_base.py"
+        ],
+        "all_of": [
+          "unit",
+          "cop(y|ies|ied)|inherit|propagat|share|assign|transfer"
+        ],
+        "reject_any": [],
+        "explanation": "twinx and twiny do not transfer units to the shared axis of the new twin. Copy the original x units for twinx and y units for twiny so unit conversion does not corrupt the limits."
+      }
     },
     {
       "id": "issue_2",
@@ -72,9 +89,26 @@
       "location": "lib/matplotlib/axes/_base.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "[Bug]: dataLims get replaced by inf for charts with twinx if ax1 is a stackplot"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "ce99d347634d280271961a99beee41efbfb83e75ce1c0eaed189485afbb27846",
+        "source_instance_id": "matplotlib__matplotlib-26208",
+        "changed_files": [
+          "lib/matplotlib/axes/_base.py"
+        ],
+        "location_any": [
+          "lib/matplotlib/axes/_base.py",
+          "twinx",
+          "twiny",
+          "_base.py"
+        ],
+        "all_of": [
+          "unit",
+          "cop(y|ies|ied)|inherit|propagat|share|assign|transfer"
+        ],
+        "reject_any": [],
+        "explanation": "twinx and twiny do not transfer units to the shared axis of the new twin. Copy the original x units for twinx and y units for twiny so unit conversion does not corrupt the limits."
+      }
     }
   ],
   "success_criteria": {
@@ -144,8 +178,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2594,
-    "content_sha256": "c9732c467755c74a407e1b99fd2fdb2b89b9302bdc53ad200fe91d961a4eb2f3",
+    "estimated_tokens": 2851,
+    "content_sha256": "7888c8f67b6e908b7c87d7dd496f52a22db0b0b74f2181e45aeab002e648cd8e",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

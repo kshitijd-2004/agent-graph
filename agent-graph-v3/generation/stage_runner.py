@@ -20,10 +20,13 @@ import hashlib
 import json
 import logging
 import re
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from backend.errors import BackendError, classify_backend_error
 
 from schemas import (
     LEPConfig, Trace, TraceEvent, TraceEventType, TraceVariant,
@@ -115,8 +118,33 @@ class StageRunner:
         "Do not describe or print the call."
     )
 
+    def _generate_with_retry(self, prompt, tool_choice):
+        """Retry only the current request, before any workflow state advances."""
+        for attempt in range(3):
+            try:
+                return self.llm.generate(prompt, tool_choice=tool_choice)
+            except Exception as error:
+                failure = classify_backend_error(error)
+                if failure.reason == "backend_error" and not isinstance(error, BackendError):
+                    raise  # Preserve handling of programming errors in custom backends.
+                self.backend_diagnostics.update(
+                    backend_error_type=failure.reason,
+                    backend_error_message=str(failure),
+                )
+                if not failure.retryable or attempt == 2:
+                    logger.error("Backend request failed: %s: %s", failure.reason, failure)
+                    if failure is error:
+                        raise
+                    raise failure from error
+                delay = 2 ** (attempt + 1)
+                self.backend_diagnostics["backend_retry_count"] += 1
+                logger.warning("Backend retry %d/2 in %ds: %s: %s",
+                               attempt + 1, delay, failure.reason, failure)
+                time.sleep(delay)
+
     def __init__(self, llm_backend):
         self.llm = llm_backend
+        self.backend_diagnostics = {"backend_retry_count": 0}
 
     def run_stage(
         self,
@@ -518,52 +546,60 @@ class StageRunner:
             # Force tool selection — works for both native and text-mode backends.
             tool_choice = "any"
 
-            # ── First API call ───────────────────────────────────────────────
-            model_turn = self.llm.generate(prompt, tool_choice=tool_choice)
+            try:
+                # ── First API call ───────────────────────────────────────────────
+                model_turn = self._generate_with_retry(prompt, tool_choice=tool_choice)
 
-            # ── Retry on text-only or max_tokens ─────────────────────────────
-            if not model_turn.tool_call or model_turn.stop_reason == "max_tokens":
-                retry_reason = "text_only" if not model_turn.tool_call else "max_tokens"
-                logger.info(
-                    "StageRunner retry: stage=%s turn=%d reason=%s",
-                    stage.stage_id, turn, retry_reason,
-                )
-                # Retry once with explicit nudge
-                model_turn = self.llm.generate(
-                    self.TOOL_CALL_NUDGE,
-                    tool_choice=tool_choice,
-                )
+                # ── Retry on text-only or max_tokens ─────────────────────────────
+                if not model_turn.tool_call or model_turn.stop_reason == "max_tokens":
+                    retry_reason = "text_only" if not model_turn.tool_call else "max_tokens"
+                    logger.info(
+                        "StageRunner retry: stage=%s turn=%d reason=%s",
+                        stage.stage_id, turn, retry_reason,
+                    )
+                    # Retry once with explicit nudge
+                    model_turn = self._generate_with_retry(
+                        self.TOOL_CALL_NUDGE,
+                        tool_choice=tool_choice,
+                    )
 
-                if not model_turn.tool_call:
-                    # Retry also failed — protocol violation (terminal)
-                    protocol_evt = make_evt(
-                        TraceEventType.PROTOCOL_VIOLATION, agent_id, "user",
-                        role=current_role,
-                        output_text="Terminated: protocol violation — "
-                                    "model returned non-tool text after retry.",
-                        observable={
-                            "protocol_violation": True,
-                            "raw_model_text": model_turn.text,
-                            "raw_model_stop_reason": model_turn.stop_reason,
-                            "retry_attempted": True,
-                            "retry_result": None,
-                            "retry_reason": retry_reason,
-                        },
-                    )
-                    events.append(protocol_evt)
-                    return StageResult(
-                        stage_id=stage.stage_id,
-                        events=events,
-                        termination_reason="protocol_violation",
-                        final_agent_role=current_role,
-                        step_count=turn,
-                        protocol_violation_data={
-                            "raw_text": model_turn.text,
-                            "stop_reason": model_turn.stop_reason,
-                            "turn": turn,
-                            "retry_reason": retry_reason,
-                        },
-                    )
+                    if not model_turn.tool_call:
+                        # Retry also failed — protocol violation (terminal)
+                        protocol_evt = make_evt(
+                            TraceEventType.PROTOCOL_VIOLATION, agent_id, "user",
+                            role=current_role,
+                            output_text="Terminated: protocol violation — "
+                                        "model returned non-tool text after retry.",
+                            observable={
+                                "protocol_violation": True,
+                                "raw_model_text": model_turn.text,
+                                "raw_model_stop_reason": model_turn.stop_reason,
+                                "retry_attempted": True,
+                                "retry_result": None,
+                                "retry_reason": retry_reason,
+                            },
+                        )
+                        events.append(protocol_evt)
+                        return StageResult(
+                            stage_id=stage.stage_id,
+                            events=events,
+                            termination_reason="protocol_violation",
+                            final_agent_role=current_role,
+                            step_count=turn,
+                            protocol_violation_data={
+                                "raw_text": model_turn.text,
+                                "stop_reason": model_turn.stop_reason,
+                                "turn": turn,
+                                "retry_reason": retry_reason,
+                            },
+                        )
+
+            except BackendError as error:
+                return StageResult(
+                    stage_id=stage.stage_id, events=events,
+                    termination_reason=error.reason,
+                    final_agent_role=current_role, step_count=turn - 1,
+                )
 
             # ── Extract action from tool_use block ───────────────────────────
             tc = model_turn.tool_call

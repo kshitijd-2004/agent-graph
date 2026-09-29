@@ -61,9 +61,26 @@
       "location": "src/flask/blueprints.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Require a non-empty name for Blueprints"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "087d51d66413bfa35111ac0eca31f1db1636572702cfd967c428049b453f451d",
+        "source_instance_id": "pallets__flask-5014",
+        "changed_files": [
+          "src/flask/blueprints.py"
+        ],
+        "location_any": [
+          "src/flask/blueprints.py",
+          "Blueprint.__init__",
+          "Blueprint",
+          "blueprints.py"
+        ],
+        "all_of": [
+          "empty|falsy|falsey|not.name",
+          "valueerror|raise|reject|validat|guard"
+        ],
+        "reject_any": [],
+        "explanation": "Blueprint.__init__ rejects dots in names but accepts an empty string. Add an empty-name guard that raises ValueError during construction before registration can create ambiguous endpoint names."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +153,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1926,
-    "content_sha256": "97a207c2b157ffdc400bdf3a43863b1856964cfc275e4c77fe6eea63261a48c2",
+    "estimated_tokens": 2071,
+    "content_sha256": "4f35dd03fb6b6940ae20b8a56d51d7e622446cd38415ddb2c4ee6b3defceb395",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

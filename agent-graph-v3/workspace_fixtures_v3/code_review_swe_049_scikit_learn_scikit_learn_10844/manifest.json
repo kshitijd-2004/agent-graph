@@ -61,9 +61,25 @@
       "location": "sklearn/metrics/cluster/supervised.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "fowlkes_mallows_score returns RuntimeWarning when variables get too big"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "6b23af07d11343fd59602be794f7e7b6dba69127d5898f87d8e5760b6a531271",
+        "source_instance_id": "scikit-learn__scikit-learn-10844",
+        "changed_files": [
+          "sklearn/metrics/cluster/supervised.py"
+        ],
+        "location_any": [
+          "sklearn/metrics/cluster/supervised.py",
+          "fowlkes_mallows_score",
+          "supervised.py"
+        ],
+        "all_of": [
+          "int64|64.bit|widen|integer.{0,25}overflow",
+          "ratio|separate.{0,25}(root|sqrt)|sqrt.{0,35}sqrt|avoid.{0,30}product"
+        ],
+        "reject_any": [],
+        "explanation": "fowlkes_mallows_score overflows integer contingency calculations and the pk*qk product. Widen counts to int64 and multiply square roots of the two ratios instead of forming the large product."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +152,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2348,
-    "content_sha256": "2d85ac7cd5489495978eac5ad0c6063bb38ccf603c6726494eedc1f7a03561af",
+    "estimated_tokens": 2503,
+    "content_sha256": "4ba2a4478a32ce5bebe3e2a05961e225e2d429a48ee832df0f13b3160d4ba6e0",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

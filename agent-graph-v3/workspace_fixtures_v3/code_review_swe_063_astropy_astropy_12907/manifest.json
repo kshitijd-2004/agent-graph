@@ -61,9 +61,25 @@
       "location": "astropy/modeling/separable.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Modeling's `separability_matrix` does not compute separability correctly for nested CompoundModels"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "0f3e44432ed8540e9526edff4f83793948a2f139fc3971b67c30043c1eb7964a",
+        "source_instance_id": "astropy__astropy-12907",
+        "changed_files": [
+          "astropy/modeling/separable.py"
+        ],
+        "location_any": [
+          "astropy/modeling/separable.py",
+          "_cstack",
+          "separable.py"
+        ],
+        "all_of": [
+          "right|submatrix|dependency.matrix",
+          "ones|\\b1\\b|preserv|cop(y|ies|ied)|actual"
+        ],
+        "reject_any": [],
+        "explanation": "_cstack fills the right block with ones instead of the supplied dependency matrix. Copy the actual right submatrix into that slice to preserve nested separability."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3511,
-    "content_sha256": "c92e262af607b36756198c2547800c58b21912eb039b304eb097e4634a70d59a",
+    "estimated_tokens": 3634,
+    "content_sha256": "5fe201cead680ea175b34e7507c04ed6ec85a27b141599ab74388a1b7cc21141",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

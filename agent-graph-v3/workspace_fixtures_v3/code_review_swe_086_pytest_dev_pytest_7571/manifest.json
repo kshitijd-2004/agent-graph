@@ -63,9 +63,27 @@
       "location": "src/_pytest/logging.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "caplog fixture doesn't restore log level after test"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "37e8f7df78a7ad5ab31b32b2785a8009b5d9ebf99c1762e999e6e1cc3384ec24",
+        "source_instance_id": "pytest-dev__pytest-7571",
+        "changed_files": [
+          "src/_pytest/logging.py"
+        ],
+        "location_any": [
+          "src/_pytest/logging.py",
+          "LogCaptureFixture",
+          "_finalize",
+          "set_level",
+          "logging.py"
+        ],
+        "all_of": [
+          "handler.{0,25}level|level.{0,25}handler",
+          "(sav|remember|record|initial|original).{0,160}(restor|teardown|finaliz)|(?:restor|teardown|finaliz).{0,160}(sav|remember|record|initial|original)"
+        ],
+        "reject_any": [],
+        "explanation": "LogCaptureFixture restores logger levels but not the capture handler level changed by set_level. Save the handler level before changing it and restore it during _finalize."
+      }
     },
     {
       "id": "issue_2",
@@ -73,9 +91,27 @@
       "location": "src/_pytest/logging.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "caplog fixture doesn't restore log level after test"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "37e8f7df78a7ad5ab31b32b2785a8009b5d9ebf99c1762e999e6e1cc3384ec24",
+        "source_instance_id": "pytest-dev__pytest-7571",
+        "changed_files": [
+          "src/_pytest/logging.py"
+        ],
+        "location_any": [
+          "src/_pytest/logging.py",
+          "LogCaptureFixture",
+          "_finalize",
+          "set_level",
+          "logging.py"
+        ],
+        "all_of": [
+          "handler.{0,25}level|level.{0,25}handler",
+          "(sav|remember|record|initial|original).{0,160}(restor|teardown|finaliz)|(?:restor|teardown|finaliz).{0,160}(sav|remember|record|initial|original)"
+        ],
+        "reject_any": [],
+        "explanation": "LogCaptureFixture restores logger levels but not the capture handler level changed by set_level. Save the handler level before changing it and restore it during _finalize."
+      }
     },
     {
       "id": "issue_3",
@@ -83,9 +119,27 @@
       "location": "src/_pytest/logging.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "caplog fixture doesn't restore log level after test"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "37e8f7df78a7ad5ab31b32b2785a8009b5d9ebf99c1762e999e6e1cc3384ec24",
+        "source_instance_id": "pytest-dev__pytest-7571",
+        "changed_files": [
+          "src/_pytest/logging.py"
+        ],
+        "location_any": [
+          "src/_pytest/logging.py",
+          "LogCaptureFixture",
+          "_finalize",
+          "set_level",
+          "logging.py"
+        ],
+        "all_of": [
+          "handler.{0,25}level|level.{0,25}handler",
+          "(sav|remember|record|initial|original).{0,160}(restor|teardown|finaliz)|(?:restor|teardown|finaliz).{0,160}(sav|remember|record|initial|original)"
+        ],
+        "reject_any": [],
+        "explanation": "LogCaptureFixture restores logger levels but not the capture handler level changed by set_level. Save the handler level before changing it and restore it during _finalize."
+      }
     }
   ],
   "success_criteria": {
@@ -176,8 +230,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 4196,
-    "content_sha256": "7abe7929dd634b09432c72525fb16ab8ca2b5a4254427cf362ac2f42de33e526",
+    "estimated_tokens": 4703,
+    "content_sha256": "eac86786cb3f612c08b621c37976fcfe4c6550dd9d61dbf6fe900debeb23599b",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

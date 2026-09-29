@@ -61,9 +61,26 @@
       "location": "sklearn/compose/_column_transformer.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "`ColumnTransformer.set_output` ignores the `remainder` if it's an estimator"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "a3f339619e90ad5029b1444eaaead5289c97ec9bd0a1c51f2d3635eab39f104f",
+        "source_instance_id": "scikit-learn__scikit-learn-26323",
+        "changed_files": [
+          "sklearn/compose/_column_transformer.py"
+        ],
+        "location_any": [
+          "sklearn/compose/_column_transformer.py",
+          "ColumnTransformer.set_output",
+          "_safe_set_output",
+          "_column_transformer.py"
+        ],
+        "all_of": [
+          "remainder",
+          "safe.set.output|forward|propagat|configur|apply|call"
+        ],
+        "reject_any": [],
+        "explanation": "ColumnTransformer.set_output configures named transformers but omits the remainder estimator. Forward the output configuration to that estimator too, excluding the drop and passthrough string sentinels."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +153,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2354,
-    "content_sha256": "2cdfc4e4bd5081dcd08f28068a86e8605be3821abad40cfbd137c6eb5fb4ccf5",
+    "estimated_tokens": 2509,
+    "content_sha256": "82098dc7a2c9fa6bab1cdd9dc4c4a162c6bcbd15b5cb0cf2b3e662a4d7e5dfcb",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

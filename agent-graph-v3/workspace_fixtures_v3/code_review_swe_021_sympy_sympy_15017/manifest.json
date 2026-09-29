@@ -61,9 +61,27 @@
       "location": "sympy/tensor/array/dense_ndim_array.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "`len` of rank-0 arrays returns 0"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "f8b0916e273409afd7da38c1837d5584fade5abbe74f107cc06d52c9b7f9f37d",
+        "source_instance_id": "sympy__sympy-15017",
+        "changed_files": [
+          "sympy/tensor/array/dense_ndim_array.py"
+        ],
+        "location_any": [
+          "sympy/tensor/array/dense_ndim_array.py",
+          "DenseNDimArray._new",
+          "_new",
+          "_loop_size",
+          "dense_ndim_array.py"
+        ],
+        "all_of": [
+          "empty.{0,30}(shape|product)|rank.?0|rank.zero|zero.dimensional",
+          "identity|initial.{0,30}(one|1)|product.{0,30}(one|1)|size.{0,30}(one|1)"
+        ],
+        "reject_any": [],
+        "explanation": "DenseNDimArray._new sets the loop size to zero for an empty shape. Use a product initialized to one so a rank-zero array contains one scalar element."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +120,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2446,
-    "content_sha256": "24c55449aa8867ad875e6585e9fb1417da2a73e6a8ddef64140b31a72a446422",
+    "estimated_tokens": 2610,
+    "content_sha256": "dfc5fce4e5a33398408719fda7a4a413b533934daead9a8fe24a3183c49a1f2a",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

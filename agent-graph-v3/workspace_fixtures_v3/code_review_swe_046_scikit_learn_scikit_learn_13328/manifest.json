@@ -61,9 +61,26 @@
       "location": "sklearn/linear_model/huber.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "TypeError when supplying a boolean X to HuberRegressor fit"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "4d43cadc3e1bd7101beadddb99609e524b44d28394286e7bca67692cd4a14d68",
+        "source_instance_id": "scikit-learn__scikit-learn-13328",
+        "changed_files": [
+          "sklearn/linear_model/huber.py"
+        ],
+        "location_any": [
+          "sklearn/linear_model/huber.py",
+          "HuberRegressor.fit",
+          "check_X_y",
+          "huber.py"
+        ],
+        "all_of": [
+          "float|floating",
+          "dtype|cast|coerc|convert|validat"
+        ],
+        "reject_any": [],
+        "explanation": "HuberRegressor.fit leaves boolean X unchanged during validation, so downstream numeric operations fail. Request float64 or float32 dtype in check_X_y."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +119,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 4690,
-    "content_sha256": "8a0bbb0196c654ea1b6c437137a0a58166cc8198110a946b6f07520efdeb60c1",
+    "estimated_tokens": 4819,
+    "content_sha256": "177fb764943ca5e777ae418bb2525d906db5f4e5ef61949fac0fca50799c5ca9",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

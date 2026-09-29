@@ -61,9 +61,25 @@
       "location": "django/db/models/sql/compiler.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Composed queries cannot change the list of columns with values()/values_list()."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "0852350a723751f2b8009bafa4998709c3f7c4f2173c220c7dc041259a61defc",
+        "source_instance_id": "django__django-11490",
+        "changed_files": [
+          "django/db/models/sql/compiler.py"
+        ],
+        "location_any": [
+          "django/db/models/sql/compiler.py",
+          "get_combinator_sql",
+          "compiler.py"
+        ],
+        "all_of": [
+          "clon|cop(y|ies|ied)|mutat|shared",
+          "quer(y|ies).{0,90}(select|column|values)|(?:select|column|values).{0,90}quer"
+        ],
+        "reject_any": [],
+        "explanation": "get_combinator_sql mutates a shared component query with set_values. Clone that query before changing its selected columns so later compilations do not inherit the selection."
+      }
     }
   ],
   "success_criteria": {
@@ -128,8 +144,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1949,
-    "content_sha256": "65c7d835b06e1f43a3e76c33c2c11976fe8615f616c7294b63b2a4336614b978",
+    "estimated_tokens": 2091,
+    "content_sha256": "55c9a7e5f1482d0bb825f1931ce08d27f2d545578f4590d4d608324e0aa223ce",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

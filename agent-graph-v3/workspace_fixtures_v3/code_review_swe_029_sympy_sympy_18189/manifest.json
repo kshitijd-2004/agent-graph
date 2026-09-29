@@ -61,9 +61,25 @@
       "location": "sympy/solvers/diophantine.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "diophantine: incomplete results depending on syms order with permute=True"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "60f7aaf491bf8f154fbd61b94c5ce812540bed577750965a49c79a3e64666e62",
+        "source_instance_id": "sympy__sympy-18189",
+        "changed_files": [
+          "sympy/solvers/diophantine.py"
+        ],
+        "location_any": [
+          "sympy/solvers/diophantine.py",
+          "diophantine",
+          "diophantine.py"
+        ],
+        "all_of": [
+          "recurs|reorder|symbol.order",
+          "(pass|forward|propagat|preserv|carry).{0,65}permut|permut.{0,65}(pass|forward|propagat|preserv|lost|omit)"
+        ],
+        "reject_any": [],
+        "explanation": "diophantine recursively solves again when reordering symbols but drops permute. Forward permute=permute into that recursive call so all requested solutions survive reordering."
+      }
     }
   ],
   "success_criteria": {
@@ -124,8 +140,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3808,
-    "content_sha256": "57675b9f9f0c87b58a0e9c2fea4395fac14118232995eb7f2f285b8e781f7f59",
+    "estimated_tokens": 3955,
+    "content_sha256": "9b0f4ad3175a2cab1f1ab8a823f924378c5050f569344622d57ef22b5883955e",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

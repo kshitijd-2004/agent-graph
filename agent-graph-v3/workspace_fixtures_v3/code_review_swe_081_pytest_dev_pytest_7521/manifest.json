@@ -61,9 +61,27 @@
       "location": "src/_pytest/capture.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "pytest 6.0.0rc1: capfd.readouterr() converts \\r to \\n"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "e1f62165b6ecc14c60b08bb71a59b927adba0c3b9a8393394481cc6a4f0f8f0e",
+        "source_instance_id": "pytest-dev__pytest-7521",
+        "changed_files": [
+          "src/_pytest/capture.py"
+        ],
+        "location_any": [
+          "src/_pytest/capture.py",
+          "FDCapture",
+          "TextIOWrapper",
+          "capture.py",
+          "capture text wrapper"
+        ],
+        "all_of": [
+          "newline|universal.{0,20}(line|translat)|line.ending",
+          "empty|disable|preserv|translat|normaliz"
+        ],
+        "reject_any": [],
+        "explanation": "The capture text wrapper uses default newline translation, changing carriage returns. Set newline to the empty string to preserve original line endings in captured output."
+      }
     }
   ],
   "success_criteria": {
@@ -152,8 +170,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3766,
-    "content_sha256": "197d1a8618f4ed8d6a48e159a21664105efdd572916f28ae1d6e361bc568658f",
+    "estimated_tokens": 3912,
+    "content_sha256": "6a4ee6bd9a8fef2a633eb524775adeb3164287c2ca0340eba60696203b3e4ed3",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

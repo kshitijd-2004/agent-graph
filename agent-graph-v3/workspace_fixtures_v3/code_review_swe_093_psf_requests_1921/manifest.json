@@ -61,9 +61,26 @@
       "location": "requests/sessions.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Removing a default header of a session"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "33fc461de67706a7d3c91008799489d6d1e6b521bfc0131dd22c4959d00b9f08",
+        "source_instance_id": "psf__requests-1921",
+        "changed_files": [
+          "requests/sessions.py"
+        ],
+        "location_any": [
+          "requests/sessions.py",
+          "merge_setting",
+          "sessions.py"
+        ],
+        "all_of": [
+          "none|null",
+          "merged|session|combined|all.{0,20}(entry|entries|value|setting)",
+          "(?:filter|drop|remov|discard|exclude).{0,60}(?:none|null)|(?:none|null).{0,40}(?:value|entries).{0,40}(?:filter|drop|remov)"
+        ],
+        "reject_any": [],
+        "explanation": "merge_setting removes None entries only from request overrides, leaving None values inherited from the session. Filter all None values from the merged mapping before returning it."
+      }
     }
   ],
   "success_criteria": {
@@ -116,8 +133,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1514,
-    "content_sha256": "50c412948c44753ab2ffb1da7ee9f590a56675283b1a352b9db8ef5f841b6b3e",
+    "estimated_tokens": 1682,
+    "content_sha256": "8ac0499eeaf512e33f2cb0cb16513be62d4991d1593f7f8117754db42be164c3",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

@@ -61,9 +61,25 @@
       "location": "astropy/io/fits/connect.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "IndexError: tuple index out of range in identify_format (io.registry)"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "26e70ac624185594670bdc18cb5e9f3cf38089eaefeb29044d9b76672e2c1b3e",
+        "source_instance_id": "astropy__astropy-14309",
+        "changed_files": [
+          "astropy/io/fits/connect.py"
+        ],
+        "location_any": [
+          "astropy/io/fits/connect.py",
+          "is_fits",
+          "connect.py"
+        ],
+        "all_of": [
+          "filepath|extension|suffix",
+          "false|fall.?through|args\\[0\\]|empty.{0,20}(arg|tuple)|return.{0,25}(test|result)"
+        ],
+        "reject_any": [],
+        "explanation": "is_fits falls through to args[0] when a supplied path has a non-FITS extension. Return the suffix test result, including False, directly from the filepath branch."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2517,
-    "content_sha256": "8bc8c6dc693822e2522303ed7faeff03c4ac8db5a31a06b5195edc26a8e64b60",
+    "estimated_tokens": 2652,
+    "content_sha256": "0a035cc2116970cf7415e02fcc3d8e24b8cb919d4c469dc6380d72b81dfa0418",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

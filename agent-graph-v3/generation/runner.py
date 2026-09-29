@@ -617,8 +617,10 @@ class ScenarioRunner:
         if execution_id is None:
             execution_id = _generate_execution_id()
 
+        self._backend_diagnostics = {"backend_retry_count": 0}
         try:
             trace = self._execute_scenario(scenario, fixture_root, execution_id)
+            trace.metadata.update(self._backend_diagnostics)
             runtime = (datetime.now(timezone.utc) - t0).total_seconds()
 
             # Evaluate the trace (two-tier: propagation + task correctness)
@@ -1080,6 +1082,7 @@ class ScenarioRunner:
 
         from generation.stage_runner import StageRunner
         stage_runner = StageRunner(llm_backend=self.llm)
+        self._backend_diagnostics = stage_runner.backend_diagnostics
 
         final_result = None
         handoff_payloads: List[HandoffPayload] = []
@@ -1659,7 +1662,7 @@ class ScenarioRunner:
                 self.propagation_evaluator.reset()
                 return trace
 
-            elif reason == "protocol_violation":
+            elif reason == "protocol_violation" or reason.startswith("backend_"):
                 pv_data = getattr(stage_result, 'protocol_violation_data', None)
                 meta = {
                     "scenario_id": scenario_id,
@@ -1672,7 +1675,7 @@ class ScenarioRunner:
                     "repetition_index": scenario.repetition_index,
                     "propagation_mode": wcfg.propagation_mode,
                     "dry_run": self.dry_run,
-                    "termination_reason": "protocol_violation",
+                    "termination_reason": reason,
                 }
                 if pv_data:
                     meta["protocol_violation"] = pv_data

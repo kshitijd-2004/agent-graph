@@ -61,9 +61,25 @@
       "location": "pylint/lint/run.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Running pylint in Kubernetes Pod with --jobs=0 fails"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "4b0aa53db6637dcaab2ff2373a8ebf3495df12181640b7dd38e5bb19c0e9fbcd",
+        "source_instance_id": "pylint-dev__pylint-6903",
+        "changed_files": [
+          "pylint/lint/run.py"
+        ],
+        "location_any": [
+          "pylint/lint/run.py",
+          "_query_cpu",
+          "run.py"
+        ],
+        "all_of": [
+          "fraction|round|truncat|zero|\\b0\\b",
+          "clamp|at.least.one|minimum.{0,15}(one|1)|one.{0,15}(cpu|worker|process)|return.{0,10}1"
+        ],
+        "reject_any": [],
+        "explanation": "_query_cpu truncates fractional CPU shares to zero, yielding an invalid process count. Clamp the computed availability to at least one worker for sub-core allocations."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3419,
-    "content_sha256": "5125684bda79b2377c239cc87082a583f1b41f9c83eb18a9bd179fd686639ef1",
+    "estimated_tokens": 3560,
+    "content_sha256": "53bd1cfc2dc723ed4c355788179f3e9d52c8f191a53404236d8ac34d4d9ffddd",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

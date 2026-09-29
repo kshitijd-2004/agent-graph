@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.validate_fixture import validate_and_write
 from scripts.swebench_materializer.migrate_manifests import migrate
+from scripts.swebench_materializer.grading.build import with_grading, patch_digest
 
 def run(cmd, cwd=None, check=True, text=True):
     p = subprocess.run(cmd, cwd=cwd, text=text, stdout=subprocess.PIPE,
@@ -334,6 +335,7 @@ def main():
     draft_by_instance = {}
     for mp in Path(args.draft_manifests).glob("*/manifest.json"):
         m = migrate(json.loads(mp.read_text()))
+        m = with_grading(m, m)
         if m["source"]["instance_id"] in draft_by_instance and not m.get("variant_of"):
             raise ValueError("Draft manifests contain duplicate source.instance_id values")
         draft_by_instance[m["source"]["instance_id"]] = (mp.parent, m)
@@ -385,6 +387,8 @@ def main():
                 target.write_bytes(content.encode("utf-8"))
 
             gold_patch = row.get("patch") or manifest["oracle"].get("gold_patch", "")
+            if patch_digest(gold_patch) != manifest["required_issues"][0]["grading"]["gold_patch_sha256"]:
+                raise ValueError("Official gold patch differs from the reviewed grading source")
             applies, apply_err = patch_applies(repo_dir, base, gold_patch, temp_root)
 
             manifest["source"]["base_commit"] = base

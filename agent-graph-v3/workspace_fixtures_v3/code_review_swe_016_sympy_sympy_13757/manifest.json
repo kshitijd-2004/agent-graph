@@ -61,9 +61,25 @@
       "location": "sympy/polys/polytools.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Multiplying an expression by a Poly does not evaluate when the expression is on the left side of the multiplication"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "ea1cbba6a78129e625ebff04d6177743d48c91924a52f9d48d6c261cc05ce521",
+        "source_instance_id": "sympy__sympy-13757",
+        "changed_files": [
+          "sympy/polys/polytools.py"
+        ],
+        "location_any": [
+          "sympy/polys/polytools.py",
+          "Poly",
+          "polytools.py"
+        ],
+        "all_of": [
+          "priorit|dispatch|reflected|reverse.{0,20}multipli",
+          "higher|raise|increase|prefer|before|10\\.001"
+        ],
+        "reject_any": [],
+        "explanation": "Poly lacks a higher operation priority, so Expr multiplication handles a left expression before polynomial dispatch. Raise Poly._op_priority above Expr to prefer its reflected arithmetic."
+      }
     }
   ],
   "success_criteria": {
@@ -183,8 +199,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1683,
-    "content_sha256": "575e4c1fd4bf72f4e519156e4479ebe4e71fffddac7f9099f2ee7852294f14fa",
+    "estimated_tokens": 1808,
+    "content_sha256": "e1c70bf114f648b3ccd3216dc2c96d65852a74132a9e00db9c2021582ccbc653",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

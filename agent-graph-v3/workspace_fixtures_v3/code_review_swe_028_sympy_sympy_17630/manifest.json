@@ -61,9 +61,25 @@
       "location": "sympy/matrices/expressions/matexpr.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Exception when multiplying BlockMatrix containing ZeroMatrix blocks"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "d3bca3e20c8056ddd3473d79daaacd83a6bf0a7ede68a2dd2718e159a3207e9b",
+        "source_instance_id": "sympy__sympy-17630",
+        "changed_files": [
+          "sympy/matrices/expressions/matexpr.py"
+        ],
+        "location_any": [
+          "sympy/matrices/expressions/matexpr.py",
+          "_postprocessor",
+          "matexpr.py"
+        ],
+        "all_of": [
+          "matadd|matrix addition|additive|matrix sum",
+          "scalar.{0,25}zero|zero.{0,25}scalar|matrices.only|only.{0,25}matri|preserv.{0,35}(shape|matrix)"
+        ],
+        "reject_any": [],
+        "explanation": "The matrix postprocessor rebuilds MatAdd with a scalar zero from the empty nonmatrix arguments. For matrix addition, combine only the matrices so zero results retain their matrix shape."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2261,
-    "content_sha256": "44fe16fbadb9c6a81ecf395801ca3806534f09e1d07cd707524880b034403553",
+    "estimated_tokens": 2417,
+    "content_sha256": "08663f60394f18a5c3173105889fa03e2e360e7a68c453be494a19a67f457a7a",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

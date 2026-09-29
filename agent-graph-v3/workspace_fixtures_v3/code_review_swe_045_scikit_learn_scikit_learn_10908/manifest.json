@@ -61,9 +61,26 @@
       "location": "sklearn/feature_extraction/text.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "CountVectorizer's get_feature_names raise not NotFittedError when the vocabulary parameter is provided"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "eb73df0dcb9bcb8749a7832d29fad9d2d10d2dacf2e9f6026d53eb8e39f32070",
+        "source_instance_id": "scikit-learn__scikit-learn-10908",
+        "changed_files": [
+          "sklearn/feature_extraction/text.py"
+        ],
+        "location_any": [
+          "sklearn/feature_extraction/text.py",
+          "CountVectorizer.get_feature_names",
+          "get_feature_names",
+          "text.py"
+        ],
+        "all_of": [
+          "validat|initializ",
+          "vocabulary.|supplied.{0,25}vocabulary|fixed.{0,25}vocabulary"
+        ],
+        "reject_any": [],
+        "explanation": "CountVectorizer.get_feature_names checks vocabulary_ before it has been initialized from a supplied vocabulary. Validate the configured vocabulary when vocabulary_ is absent, then perform the normal check."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +153,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1857,
-    "content_sha256": "51e18fde2b8b2219c371a3fda370010f061fa6421ec71016d96d8933667a8432",
+    "estimated_tokens": 2005,
+    "content_sha256": "7dceea4806cd2ea17123c736d79fd341a4124956f6141a8d8fae6794da830349",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

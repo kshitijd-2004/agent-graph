@@ -61,9 +61,25 @@
       "location": "src/_pytest/python.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "'.['  replaced with '[' in the headline shown of the test report"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "1ad8e233a57c0c3176d18b4de6631176270f1f16fbdd1a33e8ee0181dc02f37a",
+        "source_instance_id": "pytest-dev__pytest-6202",
+        "changed_files": [
+          "src/_pytest/python.py"
+        ],
+        "location_any": [
+          "src/_pytest/python.py",
+          "getmodpath",
+          "python.py"
+        ],
+        "all_of": [
+          "replace|substitut|rewrit",
+          "\\.\\[|parameter|bracket|literal|identifier"
+        ],
+        "reject_any": [],
+        "explanation": "getmodpath globally replaces .[ with [, which also rewrites literal parameter identifiers. Remove that replacement and return the joined module-path parts unchanged."
+      }
     }
   ],
   "success_criteria": {
@@ -132,8 +148,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2150,
-    "content_sha256": "1bdaa9b4b47d972e4b00fd9b4dae5da92f97db69848641f17215a63c66334727",
+    "estimated_tokens": 2276,
+    "content_sha256": "e0a7436351db63ab097ce70986ba718a2d5836b7054d5a6709819cae85ecf0cf",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

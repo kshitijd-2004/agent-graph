@@ -61,9 +61,25 @@
       "location": "src/_pytest/pastebin.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Lexer \"python3\" in --pastebin feature causes HTTP errors"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "61efb9f46d91358079c84a64a3bed46abf0f1616952b41cbcb9efcd6956e57db",
+        "source_instance_id": "pytest-dev__pytest-5809",
+        "changed_files": [
+          "src/_pytest/pastebin.py"
+        ],
+        "location_any": [
+          "src/_pytest/pastebin.py",
+          "create_new_paste",
+          "pastebin.py"
+        ],
+        "all_of": [
+          "lexer|syntax.{0,20}(mode|highlight)",
+          "plain.text|\\btext\\b|version.independent|supported"
+        ],
+        "reject_any": [],
+        "explanation": "create_new_paste chooses a version-specific Python lexer the paste service rejects. Send the supported text lexer instead so report uploads do not depend on Python-version highlighting names."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +118,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1858,
-    "content_sha256": "2b1e90882948a6dad669553e24a020ef9b0d3b66d6be3a5e01ff688d883a9f7a",
+    "estimated_tokens": 2000,
+    "content_sha256": "803c76b9807f21dbd39cee506396744852929ea060c2125ad899cc747ea31176",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

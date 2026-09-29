@@ -62,9 +62,26 @@
       "location": "seaborn/_core/plot.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Nominal scale should be drawn the same way as categorical scales"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "f209d3f9733c3c4bdcafb48f8601948c53ee16451e7775b33186439ccac7096c",
+        "source_instance_id": "mwaskom__seaborn-3069",
+        "changed_files": [
+          "seaborn/_core/plot.py"
+        ],
+        "location_any": [
+          "seaborn/_core/plot.py",
+          "_finalize_figure",
+          "Nominal",
+          "plot.py"
+        ],
+        "all_of": [
+          "grid",
+          "half|0\\.5|\\.5|invert|revers|categor.{0,20}(bound|limit)|tick.{0,20}limit"
+        ],
+        "reject_any": [],
+        "explanation": "_finalize_figure treats nominal axes like numeric ones. Disable their grids and use half-step category bounds when no explicit limits were given, reversing the y bounds for categorical order."
+      }
     },
     {
       "id": "issue_2",
@@ -72,9 +89,26 @@
       "location": "seaborn/_core/plot.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Nominal scale should be drawn the same way as categorical scales"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "f209d3f9733c3c4bdcafb48f8601948c53ee16451e7775b33186439ccac7096c",
+        "source_instance_id": "mwaskom__seaborn-3069",
+        "changed_files": [
+          "seaborn/_core/plot.py"
+        ],
+        "location_any": [
+          "seaborn/_core/plot.py",
+          "_finalize_figure",
+          "Nominal",
+          "plot.py"
+        ],
+        "all_of": [
+          "grid",
+          "half|0\\.5|\\.5|invert|revers|categor.{0,20}(bound|limit)|tick.{0,20}limit"
+        ],
+        "reject_any": [],
+        "explanation": "_finalize_figure treats nominal axes like numeric ones. Disable their grids and use half-step category bounds when no explicit limits were given, reversing the y bounds for categorical order."
+      }
     }
   ],
   "success_criteria": {
@@ -160,8 +194,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 3253,
-    "content_sha256": "1aed39f7c89e1500a1e940d43ce325b8ea6d721d865d6ff8c4b225fbf57d0776",
+    "estimated_tokens": 3530,
+    "content_sha256": "22d115267b28b6c3ce0403855ad8cc7312299f156989fd0023e1c8d48d3e79e0",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

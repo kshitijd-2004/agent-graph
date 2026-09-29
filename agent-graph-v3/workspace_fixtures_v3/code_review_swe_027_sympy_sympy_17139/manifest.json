@@ -61,9 +61,27 @@
       "location": "sympy/simplify/fu.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "simplify(cos(x)**I): Invalid comparison of complex I (fu.py)"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "8d075ec2ca5d69a25b188b01bcc94733358cd360ebb782e6626edc89bc563e5e",
+        "source_instance_id": "sympy__sympy-17139",
+        "changed_files": [
+          "sympy/simplify/fu.py"
+        ],
+        "location_any": [
+          "sympy/simplify/fu.py",
+          "TR6",
+          "_TR56",
+          "fu.py"
+        ],
+        "all_of": [
+          "exponent|rv.exp",
+          "real|order|compar",
+          "(?:guard|check|unless|only|skip|leave).{0,100}(?:real|comparison|rewrite|transformation|powers)|realness check"
+        ],
+        "reject_any": [],
+        "explanation": "The trigonometric power rewrite in fu.py compares an exponent to zero without knowing it is real. Skip the rewrite unless the exponent is real before performing ordered comparisons."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +154,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1773,
-    "content_sha256": "5b694b64cd96e2e8226f79da612225a6052a6291fb73a4a9e2240145f0dbb526",
+    "estimated_tokens": 1922,
+    "content_sha256": "c5b2c66dc09d928b95060daef92096301656571cc90a3397c328720e11d6c919",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

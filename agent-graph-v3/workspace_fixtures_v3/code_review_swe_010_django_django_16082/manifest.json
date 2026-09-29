@@ -61,9 +61,27 @@
       "location": "django/db/models/expressions.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Resolve output_field when combining numeric expressions with MOD operator."
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "ee0a1ef29dd7866b8cc54bf216472358262a9532e41ef2c9c4fe37b16a674e8a",
+        "source_instance_id": "django__django-16082",
+        "changed_files": [
+          "django/db/models/expressions.py"
+        ],
+        "location_any": [
+          "django/db/models/expressions.py",
+          "Combinable",
+          "_connector_combinations",
+          "_connector_combinators",
+          "expressions.py"
+        ],
+        "all_of": [
+          "mod|modulo|remainder",
+          "(add|includ|register|missing|omit|extend).{0,100}(operator|type|combin|table|rule)|(?:operator|type|combin|table|rule).{0,100}(add|includ|missing|omit)"
+        ],
+        "reject_any": [],
+        "explanation": "The numeric type-combination table in expressions.py omits MOD from the arithmetic operators. Include modulo in these promotion rules so mixed numeric operands resolve an output type."
+      }
     }
   ],
   "success_criteria": {
@@ -136,8 +154,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 1323,
-    "content_sha256": "0fa6dd1ad69ddd6ab540c521de93b0669386fd0b346f62d4a9eb5d5ad57c3ee2",
+    "estimated_tokens": 1495,
+    "content_sha256": "00028b2abef6dc4ed1ee3f4d9eba2024416c624ef017b4b93e62f13f33c1c020",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

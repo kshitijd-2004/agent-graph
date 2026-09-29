@@ -62,9 +62,28 @@
       "location": "sphinx/domains/std.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "glossary duplicate term with a different case"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "b5ab77d37fb636b574c8e08f13495ee2d02e82c06a2b94dc92d3f3480593beb5",
+        "source_instance_id": "sphinx-doc__sphinx-7440",
+        "changed_files": [
+          "sphinx/domains/std.py"
+        ],
+        "location_any": [
+          "sphinx/domains/std.py",
+          "make_glossary_term",
+          "StandardDomain",
+          "TokenXRefRole",
+          "glossary registration",
+          "std.py"
+        ],
+        "all_of": [
+          "lowercas|case.fold|case.sensitive|preserv.{0,25}case",
+          "register|registration|lookup|reference|xref|note.object"
+        ],
+        "reject_any": [],
+        "explanation": "Glossary registration lowercases term names and the term XRefRole lowercases lookups too. Preserve case in both registration and cross-reference resolution so differently cased terms stay distinct."
+      }
     },
     {
       "id": "issue_2",
@@ -72,9 +91,28 @@
       "location": "sphinx/domains/std.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "glossary duplicate term with a different case"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "b5ab77d37fb636b574c8e08f13495ee2d02e82c06a2b94dc92d3f3480593beb5",
+        "source_instance_id": "sphinx-doc__sphinx-7440",
+        "changed_files": [
+          "sphinx/domains/std.py"
+        ],
+        "location_any": [
+          "sphinx/domains/std.py",
+          "make_glossary_term",
+          "StandardDomain",
+          "TokenXRefRole",
+          "glossary registration",
+          "std.py"
+        ],
+        "all_of": [
+          "lowercas|case.fold|case.sensitive|preserv.{0,25}case",
+          "register|registration|lookup|reference|xref|note.object"
+        ],
+        "reject_any": [],
+        "explanation": "Glossary registration lowercases term names and the term XRefRole lowercases lookups too. Preserve case in both registration and cross-reference resolution so differently cased terms stay distinct."
+      }
     }
   ],
   "success_criteria": {
@@ -167,8 +205,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 2624,
-    "content_sha256": "69598ae319a7df614ea3beef1972f20b1cccae6f8f35a04b4c2941bd31163b21",
+    "estimated_tokens": 2954,
+    "content_sha256": "fd4ed4f1e959e6059b541dec2afffbbbf916dd66901a95a55299c75b8acc38e0",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,

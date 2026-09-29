@@ -61,9 +61,26 @@
       "location": "sphinx/directives/code.py",
       "severity": "medium",
       "category": "correctness",
-      "keywords": [
-        "Use of literalinclude prepend results in incorrect indent formatting for code eamples"
-      ]
+      "grading": {
+        "version": "patch-concepts-v1",
+        "gold_patch_sha256": "c5ca13567dea50fa6203dd33dbb0e89bf85d8e0854ade535fae80a530815f024",
+        "source_instance_id": "sphinx-doc__sphinx-10323",
+        "changed_files": [
+          "sphinx/directives/code.py"
+        ],
+        "location_any": [
+          "sphinx/directives/code.py",
+          "LiteralIncludeReader.read",
+          "dedent_filter",
+          "code.py"
+        ],
+        "all_of": [
+          "dedent|indentation",
+          "before.{0,55}(prepend|append)|(?:prepend|append).{0,55}(after|before.*dedent)|order|before.{0,25}(?:both )?insertion"
+        ],
+        "reject_any": [],
+        "explanation": "LiteralIncludeReader.read applies dedent after prepend and append, so inserted lines affect indentation removal. Move dedent before both insertion filters."
+      }
     }
   ],
   "success_criteria": {
@@ -102,8 +119,8 @@
       "all_five_leps_fire_with_expected_counts": true
     },
     "errors": [],
-    "estimated_tokens": 6077,
-    "content_sha256": "3d149be584da23a44304f58a0015a63fbb69863ac537ce9839a46cee6c8935b5",
+    "estimated_tokens": 6222,
+    "content_sha256": "aac1231d287ad32fd2042900ae60b2a6cf2116c1ccaa7fa59ead102b56e324c1",
     "mock_runs": {
       "single_origin/LEP_TOOL_RESULT_CORRUPTION": {
         "expected": 1,
