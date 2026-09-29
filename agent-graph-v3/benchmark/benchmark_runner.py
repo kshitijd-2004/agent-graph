@@ -155,6 +155,7 @@ class BenchmarkRecord:
     trace_path: str = ""
     # Pairing
     pair_tag: str = ""
+    review_cap_forced_final: bool = False
     is_baseline: bool = False
 
     def to_dict(self) -> dict[str, Any]:
@@ -197,6 +198,7 @@ class BenchmarkRecord:
             "timestamp": self.timestamp,
             "trace_path": self.trace_path,
             "pair_tag": self.pair_tag,
+            "review_cap_forced_final": self.review_cap_forced_final,
             "is_baseline": self.is_baseline,
         }
 
@@ -592,6 +594,7 @@ class BenchmarkRunner:
             record.success = result.runner_success
             record.dataset_eligible = result.dataset_eligible
             record.termination_reason = result.termination_reason
+            record.review_cap_forced_final = bool(result.trace.metadata.get("review_cap_forced_final", False))
             record.error = result.error
             record.num_events = len(trace.events)
 

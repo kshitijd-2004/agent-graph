@@ -14,7 +14,7 @@ import shutil
 import string
 import tempfile
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace as dc_replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, Set
@@ -1108,6 +1108,7 @@ class ScenarioRunner:
         previous_stage: Optional[Stage] = None
         handoff_count = 0
         backedge_count = 0
+        review_cap_forced_final = False
         stage_run_counts: Dict[str, int] = {}
 
         loop_iteration = 0
@@ -1439,6 +1440,7 @@ class ScenarioRunner:
                 # use it as a dependency anchor for its first reasoning step.
                 # For linear stages this is a single-element list; for merge
                 # stages it will contain all branch event IDs after aggregation.
+                stage_handoff_inputs = handoff_payloads
                 handoff_payloads = [raw_payload]
                 handoff_event_ids = [stage_result.handoff_event_id]
 
@@ -1461,6 +1463,65 @@ class ScenarioRunner:
                         backedge_count, topology.max_review_cycles,
                     )
                     if backedge_count > topology.max_review_cycles:
+                        # Cap reached. Refuse the backedge, but instead of ending with no
+                        # answer, give the exit stage (analyst / coordinator) one last turn
+                        # in which it can only finalize. In review_loop the capped stage is
+                        # the analyst itself and it re-reads the draft it just reviewed; in
+                        # coordinator_workers a worker hit the cap, so the coordinator gets
+                        # every worker report collected so far.
+                        # exit_stage names the generic role, which is also the stage_id;
+                        # agent_role may have been remapped to task names (inspector, reviewer).
+                        exit_stage = (topology.stage_by_id.get(topology.exit_stage)
+                                      or topology.get_stage(topology.exit_stage))
+                        exit_role = exit_stage.agent_role if exit_stage else topology.exit_stage
+                        if exit_stage is not None and current_stage.stage_id == exit_stage.stage_id:
+                            final_inputs = list(stage_handoff_inputs) if stage_handoff_inputs else None
+                        else:
+                            raw_payload.to_agent = exit_role
+                            branch_handoffs[current_stage.agent_role] = raw_payload
+                            final_inputs = list(branch_handoffs.values()) or None
+                        cap_evt = make_evt(
+                            TraceEventType.PROTOCOL_RECOVERY,
+                            current_stage.agent_id,
+                            exit_stage.agent_id if exit_stage else "user",
+                            role=current_stage.agent_role,
+                            output_text=(
+                                f"Review cycle limit ({topology.max_review_cycles}) reached. "
+                                f"Handoff to {dest_role} refused; {exit_role} gets one "
+                                f"final turn and must call submit_final."
+                            ),
+                        )
+                        cap_evt.trace_id = trace_id
+                        events.append(cap_evt)
+                        forced = None
+                        if exit_stage is not None and global_event_counter[0] < self.max_events:
+                            final_only = dc_replace(exit_stage, can_handoff=False, can_finalize=True)
+                            forced = stage_runner.run_stage(
+                                stage=final_only,
+                                topology=topology,
+                                handoff_rule=None,
+                                scenario=scenario,
+                                ws_path=ws_path,
+                                task_prompt=task_prompt,
+                                prior_events=list(events),
+                                handoff_from_payload=final_inputs,
+                                lep_orchestrator=orchestrator,
+                                lep_corrupted_values=lep_corrupted_values,
+                                global_event_counter=global_event_counter,
+                                remaining_reviews=0,
+                                incoming_dep_event_id=cap_evt.event_id,
+                                memory_store=memory_store,
+                                propagation_tracker=propagation_tracker,
+                                backedge_count=backedge_count,
+                            )
+                            for evt in forced.events:
+                                evt.trace_id = trace_id
+                            events.extend(forced.events)
+                        if forced is not None and forced.termination_reason == "final":
+                            final_result = forced
+                            review_cap_forced_final = True
+                            break
+                        # The forced turn did not finalize either: end as before, no answer.
                         # Hard gate: prevent enqueuing the backedge destination
                         # so the offending stage never runs. Terminate with the
                         # current stage's handoff as the final artifact.
@@ -1493,6 +1554,7 @@ class ScenarioRunner:
                                 "dry_run": self.dry_run,
                                 "termination_reason": "max_review_cycles",
                                 "review_cycle_count": backedge_count,
+                                "review_cap_forced_final_attempted": forced is not None,
                                 "handoff_count": handoff_count,
                             },
                         )
@@ -1682,6 +1744,8 @@ class ScenarioRunner:
                 1 for e in events
                 if e.event_type == TraceEventType.AGENT_HANDOFF
             ),
+            "review_cycle_count": backedge_count,
+            "review_cap_forced_final": review_cap_forced_final,
         }
 
         if final_result is None:
