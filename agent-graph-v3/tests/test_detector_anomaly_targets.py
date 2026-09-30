@@ -79,6 +79,8 @@ def test_target_and_perturbation_labels_are_not_features(examples):
             task_family="financial_analysis", strict=False)
         return pipeline.encode_graphs([graph], [label])
     static_before, temporal_before = encode(1.)
+    trace.metadata["origin_validation"] = {
+        "valid": False, "errors": ["LEP_INDIRECT_PROMPT_INJECTION: unintended origin"]}
     trace.labels.downstream_failure = not trace.labels.downstream_failure
     for event in trace.events:
         event.event_labels.is_injection_origin = False

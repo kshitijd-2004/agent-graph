@@ -1,5 +1,6 @@
 """Deterministic production-runner exercise for fixture acceptance/regression."""
 import contextlib
+from collections import Counter
 from copy import deepcopy
 import hashlib
 import io
@@ -19,9 +20,11 @@ class FixtureBackend:
     def __init__(self, manifest):
         self.files = manifest['required_files']
         self.summary = 'Independent review: critical findings require verification. ' + ' '.join(self.files)
+        self.visits = Counter()
 
     def reset(self, *, agent_name, mcp_tools, **kwargs):
         self.role, self.tools, self.step = agent_name, mcp_tools, 0
+        self.visits[agent_name] += 1
 
     def _append_tool_result(self, *args, **kwargs):
         pass
@@ -34,6 +37,9 @@ class FixtureBackend:
             name, args = 'read_text_file', {'path': files[self.step - 1]}
         elif self.step == len(files) + 1 and 'write_memory' in self.tools:
             name, args = 'write_memory', {'key': 'analysis_notes', 'value': self.summary}
+        elif self.role == 'coordinator' and self.visits[self.role] == 1:
+            # The initial coordinator decomposes; its return pass aggregates.
+            name, args = 'handoff', {'summary': self.summary}
         elif 'submit_final' in self.tools:
             name, args = 'submit_final', {'summary': self.summary}
         else:

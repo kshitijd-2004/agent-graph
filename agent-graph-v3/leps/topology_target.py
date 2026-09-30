@@ -108,7 +108,7 @@ def resolve_target_stage(lep_config, topology, propagation_mode: str = "single_o
                 f"Canonical valid role for upstream: is '{canonical}'. "
                 f"Available roles: {sorted(available_roles)}"
             )
-        return role
+        return topology.stage_by_id[canonical].agent_role
 
     # Unknown prefix — hard error
     raise InvalidTopologyTargetError(

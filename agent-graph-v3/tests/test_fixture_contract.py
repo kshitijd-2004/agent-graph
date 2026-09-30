@@ -291,4 +291,15 @@ def test_materializer_defaults_to_one_and_runs_acceptance_gate(tmp_path, monkeyp
 def test_legacy_injection_fingerprints():
     baseline = json.loads((ROOT / 'tests/data/legacy_fixture_injections.json').read_text())
     for fixture, expected in baseline.items():
-        assert mock_fixture(FIXTURES / fixture) == expected
+        actual = mock_fixture(FIXTURES / fixture)
+        for cell, old in expected.items():
+            changed_policy = (cell.startswith('one_to_many/') or
+                              (fixture.startswith('financial_') and cell.endswith('/LEP_INDIRECT_PROMPT_INJECTION')))
+            if changed_policy:
+                # Approved first-read/upstream-order repair retires these old
+                # payload locations. Real structural admission must now pass.
+                assert actual[cell]['passed'], (fixture, cell, actual[cell])
+                assert actual[cell]['actual'] == actual[cell]['expected'] == old['expected']
+                assert len(set(actual[cell]['hashes'])) == old['expected']
+            else:
+                assert actual[cell] == old, (fixture, cell)

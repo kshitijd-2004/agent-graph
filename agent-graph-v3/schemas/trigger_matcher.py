@@ -132,8 +132,8 @@ class TriggerMatcher:
             )
 
         # Check occurrence
-        count = self._occurrence_counts.get(trigger_id, 0) + 1
-        self._occurrence_counts[trigger_id] = count
+        count = self._occurrence_counts.get(fk, 0) + 1
+        self._occurrence_counts[fk] = count
 
         if count < trigger.occurrence:
             return self._log_decision(

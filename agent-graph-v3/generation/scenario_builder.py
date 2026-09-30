@@ -93,6 +93,7 @@ class ScenarioBuildConfig:
 
     # Workflow config
     topology: str = "review_loop"
+    propagation_mode: str = "single_origin"
     sharing_policy: str = "full_state"
     memory_mode: str = "ephemeral_shared"
     verification_mode: str = "none"
@@ -135,6 +136,7 @@ class ScenarioBuilder:
 
         wcfg = WorkflowConfig(
             topology=config.topology,
+            propagation_mode=config.propagation_mode,
             sharing_policy=config.sharing_policy,
             memory_mode=config.memory_mode,
             verification_mode=config.verification_mode,

@@ -7,6 +7,8 @@ worker:<role>, None, and invalid/unknown inputs.
 from __future__ import annotations
 
 import unittest
+from collections import defaultdict
+from generation.topology import get_topology
 
 from leps.topology_target import (
     InvalidTopologyTargetError,
@@ -49,6 +51,10 @@ COORD_WORKERS = _FakeTopology(
     },
 )
 
+
+# Use real stage identities/handoff rules for routing, not role-only mocks.
+BANDV = get_topology("branch_and_verify", defaultdict(str))
+COORD_WORKERS = get_topology("coordinator_workers", defaultdict(str))
 
 # ── Tests ──────────────────────────────────────────────────────────────────
 
@@ -171,6 +177,7 @@ class TestEvaluateForBoundaryFilter(unittest.TestCase):
         )
         orchestrator.register_leps([lep_cfg])
         orchestrator.set_topology(BANDV)
+        orchestrator.set_max_origins(lep_cfg.code, 1)
 
         # Event from analyst should NOT be evaluated (target is researcher)
         analyst_evt = self._make_fake_event("analyst")
@@ -192,6 +199,7 @@ class TestEvaluateForBoundaryFilter(unittest.TestCase):
         )
         orchestrator.register_leps([lep_cfg])
         orchestrator.set_topology(BANDV)
+        orchestrator.set_max_origins(lep_cfg.code, 1)
 
         for role in ("researcher", "analyst", "verifier"):
             evt = self._make_fake_event(role)

@@ -308,11 +308,17 @@ def main():
     ap.add_argument("--temp", default=".cache/agentprop-swebench-worktrees")
     ap.add_argument("--limit", type=int, default=1,
                     help="Materialize only first N fixtures for a smoke test")
+    ap.add_argument("--overwrite", action="store_true",
+                    help="Remove and recreate fixtures that already exist in the output directory")
     ap.add_argument("--instance-id", action="append", default=[],
                     help="Select a frozen instance ID (repeatable); --limit applies after selection")
+    ap.add_argument("--offset", type=int, default=0,
+                    help="Skip the first N entries in the selection (for batching)")
     args = ap.parse_args()
     if args.limit < 1:
         ap.error("--limit must be positive")
+    if args.offset < 0:
+        ap.error("--offset must be non-negative")
 
     selection = json.loads(Path(args.selection).read_text())
     ids = [entry["instance_id"] for entry in selection["fixtures"]]
@@ -321,7 +327,10 @@ def main():
     if set(args.instance_id) - set(ids):
         ap.error("Requested instance ID is not in the frozen selection")
     chosen = [entry for entry in selection["fixtures"]
-              if not args.instance_id or entry["instance_id"] in args.instance_id][:args.limit]
+              if not args.instance_id or entry["instance_id"] in args.instance_id]
+    if args.offset:
+        chosen = chosen[args.offset:]
+    chosen = chosen[:args.limit]
     official = load_verified()
 
     out_root, cache_root, temp_root = map(
@@ -360,7 +369,10 @@ def main():
 
             dest = out_root / manifest["fixture_id"]
             if dest.exists():
-                raise FileExistsError(f"Refusing to overwrite existing fixture: {dest}")
+                if not args.overwrite:
+                    raise FileExistsError(f"Refusing to overwrite existing fixture: {dest}")
+                import shutil
+                shutil.rmtree(dest)
             dest.mkdir(parents=True)
             workspace = dest
 

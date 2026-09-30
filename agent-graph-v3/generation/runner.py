@@ -666,7 +666,12 @@ class ScenarioRunner:
                 topology=scenario.workflow_config.topology,
             )
             actual = trace.injection_origin_count
-            eligible = clean_completion and actual == expected
+            from generation.injection_origins import origin_structure_errors
+            origin_errors = origin_structure_errors(trace, scenario)
+            eligible = clean_completion and actual == expected and not origin_errors
+            if scenario.lep_configs and scenario.condition not in ("benign", "counterfactual"):
+                # Admission-only metadata, never added to event observables/features.
+                trace.metadata["origin_validation"] = {"valid": not origin_errors, "errors": origin_errors}
             trace.metadata["expected_injection_origins"] = expected
             trace.metadata["actual_injection_origins"] = actual
             if actual != expected:
@@ -675,6 +680,9 @@ class ScenarioRunner:
                 )
                 if clean_completion:
                     term_reason = "injection_count_mismatch"
+            elif origin_errors and clean_completion:
+                term_reason = "injection_structure_mismatch"
+                trace.metadata["admission_reason"] = "; ".join(origin_errors)
             trace.metadata["termination_reason"] = term_reason
             trace.metadata["dataset_eligible"] = eligible
             return RunResult(
@@ -928,19 +936,8 @@ class ScenarioRunner:
         # Topology builders use generic roles (researcher, analyst, verifier, …).
         # Each task family defines its own role names (inspector, reviewer, …).
         # We map positionally: stage 0 → task_agents[0], stage 1 → task_agents[1], etc.
-        from generation.scenario_builder import TASK_CONFIGS
-        task_cfg = TASK_CONFIGS.get(scenario.task_family, {})
-        task_agents = task_cfg.get("default_agents", [])
-        if task_agents and len(task_agents) == len(topology.stages):
-            role_mapping = {
-                stage.agent_role: task_agents[i]
-                for i, stage in enumerate(topology.stages)
-            }
-            for stage in topology.stages:
-                stage.agent_role = role_mapping.get(stage.agent_role, stage.agent_role)
-            for rule in topology.handoff_rules:
-                rule.from_stage = role_mapping.get(rule.from_stage, rule.from_stage)
-                rule.to_stage = role_mapping.get(rule.to_stage, rule.to_stage)
+        from generation.injection_origins import remap_task_roles
+        remap_task_roles(topology, scenario.task_family)
 
         agent_map = build_agent_map_from_topology(topology)
 
@@ -961,6 +958,7 @@ class ScenarioRunner:
                     condition=scenario.condition, lep_codes=[code],
                     propagation_mode=propagation_mode, topology=topology_id,
                 ))
+            orchestrator.validate_firing_configuration()
 
             logger.info(
                 "Runner: propagation_mode=%s origin_budget=%s topology=%s",
@@ -1122,7 +1120,10 @@ class ScenarioRunner:
             # ── Fan-in check: merge BEFORE emitting the transition event ──────
             # so that transition.depends_on can reference all branch event IDs.
             incoming_rules = topology.get_incoming_handoffs(current_stage.agent_role)
-            if len(incoming_rules) > 1:
+            initial_fanout = (wcfg.propagation_mode == "one_to_many"
+                              and current_stage.stage_id == topology.exit_stage
+                              and stage_run_counts.get(current_stage.stage_id, 0) == 0)
+            if len(incoming_rules) > 1 and not initial_fanout:
                 missing_sources = [
                     r.from_stage for r in incoming_rules
                     if r.from_stage not in branch_handoffs
@@ -1193,7 +1194,7 @@ class ScenarioRunner:
             # shared artifact so every worker sees identical input.
             if (wcfg.propagation_mode == "one_to_many"
                     and len(handoff_payloads) == 1
-                    and current_stage.agent_role != topology.exit_stage):
+                    and current_stage.stage_id != topology.exit_stage):
                 payload = handoff_payloads[0]
                 artifact_id = f"shared:{payload.from_agent}:{payload.event_id}"
                 shared = _o2m_shared_artifacts.get(artifact_id)

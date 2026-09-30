@@ -27,9 +27,11 @@ class ReluctantMemoryWriter:
         self.source = source
         self.writes_per_worker = writes_per_worker
         self.prompts = {}
+        self.visits = Counter()
 
     def reset(self, *, agent_name, mcp_tools, system_prompt="", **kwargs):
         self.role = agent_name
+        self.visits[agent_name] += 1
         self.tools = mcp_tools
         self.step = self.writes = 0
         self._conversation = []
@@ -44,13 +46,13 @@ class ReluctantMemoryWriter:
                      for m in self._conversation)
         if self.step == 1:
             name, args = "read_text_file", {"path": self.source}
-        elif repair and self.writes < self.writes_per_worker:
+        elif (repair or self.role == "coordinator") and self.writes < self.writes_per_worker:
             self.writes += 1
             name, args = "write_memory", {
                 "key": f"{self.role}_findings_{self.writes}",
                 "value": "Findings independently checked against source documents.",
             }
-        elif "submit_final" in self.tools:
+        elif "submit_final" in self.tools and not (self.role == "coordinator" and self.visits[self.role] == 1):
             name, args = "submit_final", {"summary": "Independent review complete."}
         else:
             name, args = "handoff", {"summary": "Source findings ready for verification."}

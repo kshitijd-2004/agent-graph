@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 
 from schemas import InjectionTrigger, LEPConfig, TraceEvent, TraceEventType
 from schemas.trigger_matcher import TriggerMatcher, TriggerDecision
+from schemas.triggers import TriggerState
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +142,11 @@ class IndirectPromptInjectionLEP:
     ) -> TriggerDecision:
         """Check if injection should occur for this read event."""
         target_file = self._target_file()
+
+        if event.tool_error:
+            return TriggerDecision(trigger_id=self.config.code, event_id=event.event_id,
+                                   state=TriggerState.ELIGIBLE, fired=False, matched=False,
+                                   reason="Failed read is not an injection surface")
 
         # Fixture-aware targeting. Legacy fixtures without an explicit
         # prompt-injection target retain the existing trigger behavior.

@@ -305,8 +305,8 @@ class StageRunner:
         fan_in_memory_writer = (
             getattr(scenario.workflow_config, "propagation_mode", "single_origin") == "many_to_one"
             and stage.can_handoff
-            and current_role != topology.exit_stage
-            and any(rule.from_stage == current_role and rule.to_stage == topology.exit_stage
+            and stage.stage_id != topology.exit_stage
+            and any(rule.from_stage == current_role and rule.to_stage == topology.stage_by_id[topology.exit_stage].agent_role
                     for rule in topology.handoff_rules)
         )
         requires_memory_write = role_category(current_role) == "writer" or fan_in_memory_writer
@@ -1451,7 +1451,7 @@ class StageRunner:
                                     ),
                                 }
                                 lep_orchestrator.mark_fired_origin(
-                                    "LEP_INPUT_DISREGARD", target=payload.to_agent
+                                    "LEP_INPUT_DISREGARD", target=current_role
                                 )
                                 label_injection(hoff_evt, "LEP_INPUT_DISREGARD")
                                 logger.info(

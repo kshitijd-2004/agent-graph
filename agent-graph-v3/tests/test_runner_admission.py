@@ -190,13 +190,25 @@ def test_exact_origin_admission_and_evaluation(tmp_path, monkeypatch, condition,
     assert expected_injection_origins(condition=condition, lep_codes=[c.code for c in spec.lep_configs],
                                      propagation_mode=mode, topology=topology) == expected
     events = [event(i, TraceEventType.TOOL_RESULT) for i in range(actual)]
-    for origin in events:
+    for i, origin in enumerate(events):
         origin.event_labels.is_injection_origin = True
-    final = event(actual, TraceEventType.FINAL_RESPONSE)
+        if mode == "many_to_one":
+            roles = (["researcher", "analyst"] if topology == "branch_and_verify"
+                     else ["specialist_a", "specialist_b", "synthesizer"])
+            origin.agent_role = roles[i % len(roles)]
+        elif mode == "one_to_many":
+            origin.agent_role = "coordinator"
+    if mode == "one_to_many":
+        fanout = event(actual, TraceEventType.AGENT_HANDOFF)
+        fanout.agent_role = "coordinator"
+        events.append(fanout)
+    final = event(len(events), TraceEventType.FINAL_RESPONSE)
     final.event_labels.consumes_perturbed_info = True
     final.event_labels.introduces_downstream_failure = True
     result = execute_trace(tmp_path, monkeypatch, "completed", events + [final], spec)
-    assert result.dataset_eligible == (actual == expected)
+    from schemas.scenario import TOPOLOGY_PROPAGATION_MODES
+    supported = mode in TOPOLOGY_PROPAGATION_MODES[topology]
+    assert result.dataset_eligible == (actual == expected and supported)
     assert result.trace.metadata["expected_injection_origins"] == expected
     if actual != expected:
         assert result.termination_reason == "injection_count_mismatch"

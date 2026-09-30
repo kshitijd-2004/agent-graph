@@ -537,3 +537,1006 @@ ROWS[87]['concepts'].append(r'(?:check|consider|guard|prevent|before|both).{0,10
 ROWS[87]['reject'] = [r'always execute teardown|execute teardown.{0,45}(?:even when|despite).{0,35}skip']
 ROWS[27]['concepts'].append(r'(?:guard|check|unless|only|skip|leave).{0,100}(?:real|comparison|rewrite|transformation|powers)|realness check')
 ROWS[93]['concepts'].append(r'(?:filter|drop|remov|discard|exclude).{0,60}(?:none|null)|(?:none|null).{0,40}(?:value|entries).{0,40}(?:filter|drop|remov)')
+
+
+# Entries 101-300 (auto-generated from gold patches)
+add(101, 'astropy/timeseries/core.py|_check_required_columns|as_scalar_or_list_str|obj|hasattr',
+    r'guard|check|condition|validat~except|error|exception|handl',
+    'In _check_required_columns, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _check_required_columns shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_check_required_columns fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(102, 'astropy/table/table.py|_convert_data_to_col',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _convert_data_to_col, the patch corrects behavior by modifying the affected code path in astropy/table/table.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _convert_data_to_col does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_convert_data_to_col does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(103, 'astropy/coordinates/builtin_frames/__init__.py|tete_to_itrs_mat|tete_to_gcrs|itrs_to_tete|itrs_observed_transforms',
+    r'guard|check|condition|validat~default|fallback',
+    'In tete_to_itrs_mat, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing tete_to_itrs_mat shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'tete_to_itrs_mat fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(104, 'astropy/io/ascii/html.py|write|data|cols|_set_col_formats',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In write, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in write is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    'write should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(105, 'astropy/units/quantity.py|__array_ufunc__|result|astropy|units',
+    r'guard|check|condition|validat~except|error|exception|handl',
+    'In __array_ufunc__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __array_ufunc__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__array_ufunc__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(106, 'astropy/io/ascii/rst.py|get_fixedwidth_params|astropy|table|QTable',
+    r'clear|reset|none|null|empty~return|yield|output',
+    'In get_fixedwidth_params, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in get_fixedwidth_params is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    'get_fixedwidth_params should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(107, 'astropy/units/format/cds.py|_make_parser|p_product_of_units|YACC|grammar',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _make_parser, the patch corrects behavior by modifying the affected code path in astropy/units/format/cds.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _make_parser does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_make_parser does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(108, 'astropy/io/fits/card.py|_format_value|Format|floating|number',
+    r'guard|check|condition|validat~compar|test|check|condition',
+    'In _format_value, the patch corrects a comparison or condition. The previous comparison evaluated incorrectly, causing the wrong code path to execute. Fixing the condition ensures the right branch is taken.',
+    'A condition in _format_value evaluates incorrectly, causing the wrong code path to execute. The patch corrects the comparison logic so the right branch is taken based on actual state.',
+    '_format_value uses identity comparison when equality comparison is needed. Replace the identity check with an equality comparison operator.')
+add(109, 'astropy/utils/misc.py|is_public_member|inspect|isfunction|val',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In is_public_member, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in is_public_member is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    'is_public_member should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(110, 'astropy/units/core.py|__eq__|_unrecognized_operator|NotImplemented|try',
+    r'except|error|exception|handl~return|yield|output',
+    'In __eq__, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately.',
+    'An error condition in __eq__ is not handled and propagates unexpectedly. The patch adds exception handling to catch this case and respond appropriately, preventing unhandled errors from causing incorrect behavior.',
+    '__eq__ raises an exception that callers should handle themselves. Remove the exception handler and let errors propagate to the calling layer.')
+add(111, 'astropy/utils/introspection.py|minversion|LooseVersion|raises|TypeError',
+    r'guard|check|condition|validat~import|dependenc|module',
+    'In minversion, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing minversion shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'minversion fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(112, 'astropy/io/fits/card.py|fromstring|isinstance|image|bytes',
+    r'guard|check|condition|validat~copy|clone|independent|separate|preserv',
+    'In fromstring, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing fromstring shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'fromstring fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(113, 'astropy/units/quantity.py|__new__|except|any|integer',
+    r'guard|check|condition|validat~except|error|exception|handl',
+    'In __new__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __new__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__new__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(114, 'django/core/validators.py|user|authentication',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In user, the patch corrects behavior by modifying the affected code path in django/core/validators.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in user does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'user does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(115, 'django/utils/dateparse.py|sign|hours|minutes|seconds',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In sign, the patch corrects behavior by modifying the affected code path in django/utils/dateparse.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in sign does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'sign does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(116, 'django/template/engine.py|render_to_string|render|Context|context',
+    r'return|yield|output~attribute|property|field|state',
+    'In render_to_string, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in render_to_string does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'render_to_string returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(117, 'django/http/response.py|make_bytes|isinstance|value|bytes',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In make_bytes, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing make_bytes shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'make_bytes fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(118, 'django/forms/models.py|model_to_dict|fields|name',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In model_to_dict, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing model_to_dict shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'model_to_dict fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(119, 'django/db/models/fields/__init__.py|deconstruct|get_prep_value|value|super',
+    r'return|yield|output~attribute|property|field|state',
+    'In deconstruct, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in deconstruct does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'deconstruct returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(120, 'django/db/models/sql/query.py|_add_q|current_negated|allow_joins|split_subq',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _add_q, the patch corrects behavior by modifying the affected code path in django/db/models/sql/query.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _add_q does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_add_q does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(121, 'django/contrib/auth/backends.py|username|password',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In username, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing username shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'username fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(122, 'django/urls/resolvers.py|match|kwargs|match|groupdict',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In match, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing match shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'match fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(123, 'django/db/models/sql/compiler.py|find_ordering_name|isinstance|item|OrderBy',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In find_ordering_name, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing find_ordering_name shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'find_ordering_name fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(124, 'django/db/models/aggregates.py|_get_repr_options|allow_distinct',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _get_repr_options, the patch corrects behavior by modifying the affected code path in django/db/models/aggregates.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _get_repr_options does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_get_repr_options does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(125, 'django/db/models/enums.py|values|__str__|Use|value',
+    r'assign|set|initializ|updat~return|yield|output',
+    'In values, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in values does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'values returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(126, 'django/db/migrations/serializer.py|serialize|module|value|__qualname__',
+    r'return|yield|output~attribute|property|field|state',
+    'In serialize, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in serialize does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'serialize returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(127, 'django/forms/widgets.py|format_value|attrs|checked',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In format_value, the patch corrects behavior by modifying the affected code path in django/forms/widgets.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in format_value does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'format_value does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(128, 'django/template/library.py|parse_bits|param|params|kwonly',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In parse_bits, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing parse_bits shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'parse_bits fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(129, 'django/db/models/base.py|_get_pk_val|parent_link|_meta|parents',
+    r'guard|check|condition|validat~loop|iterat',
+    'In _get_pk_val, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _get_pk_val shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_get_pk_val fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(130, 'django/conf/global_settings.py|gettext_noop|SECURE_REFERRER_POLICY|same|origin',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In gettext_noop, the patch corrects behavior by modifying the affected code path in django/conf/global_settings.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in gettext_noop does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'gettext_noop does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(131, 'django/db/models/sql/query.py|__init__|select|getattr|target',
+    r'clear|reset|none|null|empty~return|yield|output',
+    'In __init__, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in __init__ is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    '__init__ should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(132, 'django/db/models/sql/compiler.py|execute_sql|Ensure|base|table',
+    r'attribute|property|field|state~compar|test|check|condition',
+    'In execute_sql, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in execute_sql is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    'execute_sql should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(133, 'django/db/models/expressions.py|set_source_expressions|get_group_by_cols|alias|expression',
+    r'clear|reset|none|null|empty~return|yield|output',
+    'In set_source_expressions, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in set_source_expressions is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    'set_source_expressions should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(134, 'django/db/models/fields/__init__.py|to_python|except|decimal|InvalidOperation',
+    r'except|error|exception|handl~error|except|rais',
+    'In to_python, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately.',
+    'An error condition in to_python is not handled and propagates unexpectedly. The patch adds exception handling to catch this case and respond appropriately, preventing unhandled errors from causing incorrect behavior.',
+    'to_python raises an exception that callers should handle themselves. Remove the exception handler and let errors propagate to the calling layer.')
+add(135, 'django/db/models/fields/related.py|validate|remote_field|model|_base_manager',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In validate, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in validate is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    'validate should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(136, 'django/db/models/query.py|query|value|values_select|_iterable_class',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In query, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing query shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'query fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(137, 'django/core/files/locks.py|unlock|try|fcntl|flock',
+    r'except|error|exception|handl~return|yield|output',
+    'In unlock, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately.',
+    'An error condition in unlock is not handled and propagates unexpectedly. The patch adds exception handling to catch this case and respond appropriately, preventing unhandled errors from causing incorrect behavior.',
+    'unlock raises an exception that callers should handle themselves. Remove the exception handler and let errors propagate to the calling layer.')
+add(138, 'django/db/models/query.py|ordered|query|default_ordering|get_meta',
+    r'default|fallback~attribute|property|field|state',
+    'In ordered, the patch adds a default value for a previously unhandled case. When the expected input is absent, the code now falls back to a sensible default instead of producing None or crashing.',
+    'A case without a defined value is not handled in ordered. The patch adds a default or fallback to ensure consistent behavior when the value is absent rather than producing an error or None.',
+    'ordered should fail explicitly when the value is absent rather than using a default. Remove the fallback to surface the error to the caller.')
+add(139, 'django/core/management/base.py|__init__|flush|hasattr|_out',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In __init__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __init__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__init__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(140, 'django/contrib/auth/checks.py|check_user_model|cls|_meta|get_field',
+    r'guard|check|condition|validat~loop|iterat',
+    'In check_user_model, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing check_user_model shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'check_user_model fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(141, 'django/db/models/functions/math.py|as_oracle|get_group_by_cols|alias',
+    r'clear|reset|none|null|empty~return|yield|output',
+    'In as_oracle, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in as_oracle is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    'as_oracle should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(142, 'django/utils/dateformat.py|W|Year|digits|leading',
+    r'return|yield|output~attribute|property|field|state',
+    'In digits, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in digits does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'digits returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(143, 'django/utils/functional.py|__mod__|__add__|other|__cast',
+    r'return|yield|output~attribute|property|field|state',
+    'In __mod__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in __mod__ does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    '__mod__ returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(144, 'django/db/backends/sqlite3/base.py|list_aggregate|Database|sqlite_version_info|raise',
+    r'guard|check|condition|validat~except|error|exception|handl',
+    'In list_aggregate, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing list_aggregate shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'list_aggregate fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(145, 'django/db/models/base.py|check|Inherited|PKs|are',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In check, the patch corrects behavior by modifying the affected code path in django/db/models/base.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in check does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'check does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(146, 'django/db/models/query_utils.py|__init__|isinstance|other|getattr',
+    r'guard|check|condition|validat~compar|test|check|condition',
+    'In __init__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __init__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__init__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(147, 'django/utils/datastructures.py|discard|__reversed__|reversed|dict',
+    r'return|yield|output~attribute|property|field|state',
+    'In discard, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in discard does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'discard returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(148, 'django/db/models/fields/__init__.py|__instancecheck__|issubclass|subclass|_subclasses',
+    r'return|yield|output~attribute|property|field|state',
+    'In __instancecheck__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in __instancecheck__ does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    '__instancecheck__ returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(149, 'django/utils/dateformat.py|y|Year|digits|leading',
+    r'return|yield|output~attribute|property|field|state',
+    'In digits, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in digits does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'digits returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(150, 'django/forms/boundfield.py|template_name|data|attrs|get',
+    r'return|yield|output~attribute|property|field|state',
+    'In template_name, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in template_name does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'template_name returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(151, 'django/db/migrations/serializer.py|_format|models|Model|django',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _format, the patch corrects behavior by modifying the affected code path in django/db/migrations/serializer.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _format does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_format does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(152, 'django/db/models/fields/reverse_related.py|__init__|make_hashable|through_fields',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In __init__, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in __init__ is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    '__init__ should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(153, 'django/utils/timezone.py|get_current_timezone_name|Return|offset|fixed',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In get_current_timezone_name, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing get_current_timezone_name shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'get_current_timezone_name fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(154, 'django/forms/models.py|__init__|__hash__|hash|value',
+    r'return|yield|output~attribute|property|field|state',
+    'In __init__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in __init__ does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    '__init__ returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(155, 'django/utils/translation/trans_real.py|language_code_prefix_re|_lazy_re_compile',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In language_code_prefix_re, the patch corrects behavior by modifying the affected code path in django/utils/translation/trans_real.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in language_code_prefix_re does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'language_code_prefix_re does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(156, 'django/db/migrations/autodetector.py|only_relation_agnostic_fields|deconstruction|pop',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In only_relation_agnostic_fields, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in only_relation_agnostic_fields is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    'only_relation_agnostic_fields should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(157, 'django/db/models/fields/__init__.py|max_length|validators|append|MaxLengthValidator',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In max_length, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing max_length shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'max_length fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(158, 'django/db/models/fields/__init__.py|__lt__|hash|creation_counter',
+    r'return|yield|output~attribute|property|field|state',
+    'In __lt__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in __lt__ does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    '__lt__ returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(159, 'django/core/serializers/base.py|build_instance|obj|Model|data',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In build_instance, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in build_instance is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    'build_instance should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(160, 'django/db/backends/postgresql/client.py|settings_to_cmd_args_env|args|extend|parameters',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In settings_to_cmd_args_env, the patch corrects behavior by modifying the affected code path in django/db/backends/postgresql/client.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in settings_to_cmd_args_env does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'settings_to_cmd_args_env does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(161, 'django/template/defaultfilters.py|floatformat|input_val|str|text',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In floatformat, the patch corrects behavior by modifying the affected code path in django/template/defaultfilters.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in floatformat does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'floatformat does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(162, 'django/db/migrations/autodetector.py|_get_dependencies_for_foreign_key|field|remote_field|through',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _get_dependencies_for_foreign_key, the patch corrects behavior by modifying the affected code path in django/db/migrations/autodetector.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _get_dependencies_for_foreign_key does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_get_dependencies_for_foreign_key does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(163, 'django/contrib/sitemaps/__init__.py|get_latest_lastmod|max|lastmod|item',
+    r'loop|iterat~clear|reset|none|null|empty',
+    'In get_latest_lastmod, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in get_latest_lastmod is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    'get_latest_lastmod should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(164, 'django/contrib/auth/forms.py|save|hasattr|save_m2m',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In save, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing save shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'save fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(165, 'django/template/defaultfilters.py|floatformat',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In floatformat, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing floatformat shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'floatformat fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(166, 'django/contrib/admin/templatetags/admin_modify.py|submit_row|has_add_permission',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In submit_row, the patch corrects behavior by modifying the affected code path in django/contrib/admin/templatetags/admin_modify.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in submit_row does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'submit_row does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(167, 'django/forms/formsets.py|add_fields|can_delete|can_delete_extra|index',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In add_fields, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing add_fields shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'add_fields fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(168, 'django/contrib/admin/sites.py|catch_all_view|HttpResponsePermanentRedirect|request|get_full_path',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In catch_all_view, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in catch_all_view does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'catch_all_view returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(169, 'django/http/response.py|set_headers|application|brotli|compress',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In set_headers, the patch corrects behavior by modifying the affected code path in django/http/response.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in set_headers does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'set_headers does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(170, 'django/forms/widgets.py|value_from_datadict|except|OverflowError',
+    r'except|error|exception|handl~return|yield|output',
+    'In value_from_datadict, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately.',
+    'An error condition in value_from_datadict is not handled and propagates unexpectedly. The patch adds exception handling to catch this case and respond appropriately, preventing unhandled errors from causing incorrect behavior.',
+    'value_from_datadict raises an exception that callers should handle themselves. Remove the exception handler and let errors propagate to the calling layer.')
+add(171, 'django/db/migrations/operations/models.py|describe|reduce|operation|app_label',
+    r'guard|check|condition|validat~return|yield|output',
+    'In describe, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing describe shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'describe fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(172, 'django/template/defaultfilters.py|escape_filter|register|filter|is_safe',
+    r'loop|iterat~return|yield|output',
+    'In escape_filter, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in escape_filter does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'escape_filter returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(173, 'django/db/migrations/serializer.py|serialize|module|klass|__qualname__',
+    r'return|yield|output~attribute|property|field|state',
+    'In serialize, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in serialize does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'serialize returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(174, 'django/core/paginator.py|__init__|__iter__|page_number|page_range',
+    r'loop|iterat~return|yield|output',
+    'In __init__, the iteration logic is corrected. The patch fixes how the loop processes items or terminates, ensuring each iteration handles data correctly.',
+    'The iteration in __init__ does not process items correctly. The patch fixes the loop logic so each item is handled as expected, correcting incorrect behavior in the loop body or termination.',
+    '__init__ should use a vectorized bulk operation instead of a per-item loop. Replace the loop with a bulk operation for better performance.')
+add(175, 'lib/matplotlib/widgets.py|new_axes|Define|initial|position',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In new_axes, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing new_axes shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'new_axes fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(176, 'lib/matplotlib/axis.py|clear|whether|grids|are',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In clear, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in clear is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    'clear should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(177, 'lib/matplotlib/legend.py|__init__|matplotlib|figure|FigureBase',
+    r'except|error|exception|handl~import|dependenc|module',
+    'In __init__, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately.',
+    'An error condition in __init__ is not handled and propagates unexpectedly. The patch adds exception handling to catch this case and respond appropriately, preventing unhandled errors from causing incorrect behavior.',
+    '__init__ raises an exception that callers should handle themselves. Remove the exception handler and let errors propagate to the calling layer.')
+add(178, 'lib/matplotlib/dates.py|_wrap_in_tex|Braces|ensure|symbols',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _wrap_in_tex, the patch corrects behavior by modifying the affected code path in lib/matplotlib/dates.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _wrap_in_tex does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_wrap_in_tex does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(179, 'lib/matplotlib/category.py|convert|update|values|size',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In convert, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing convert shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'convert fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(180, 'lib/matplotlib/colorbar.py|_add_solids|drawedges|start_idx|_extend_lower',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In _add_solids, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _add_solids shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_add_solids fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(181, 'lib/matplotlib/dates.py|format_ticks|unique|tickdate|level',
+    r'guard|check|condition|validat~compar|test|check|condition',
+    'In format_ticks, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing format_ticks shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'format_ticks fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(182, 'lib/matplotlib/stackplot.py|stackplot|itertools|colors|cycle',
+    r'loop|iterat~clear|reset|none|null|empty',
+    'In stackplot, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in stackplot is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    'stackplot should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(183, 'lib/matplotlib/axes/_axes.py|_convert_dx|except|StopIteration|means',
+    r'except|error|exception|handl~error|except|rais',
+    'In _convert_dx, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately.',
+    'An error condition in _convert_dx is not handled and propagates unexpectedly. The patch adds exception handling to catch this case and respond appropriately, preventing unhandled errors from causing incorrect behavior.',
+    '_convert_dx raises an exception that callers should handle themselves. Remove the exception handler and let errors propagate to the calling layer.')
+add(184, 'lib/matplotlib/axes/_base.py|_update_patch_limits|curve|code|iter_bezier',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _update_patch_limits, the iteration logic is corrected. The patch fixes how the loop processes items or terminates, ensuring each iteration handles data correctly.',
+    'The iteration in _update_patch_limits does not process items correctly. The patch fixes the loop logic so each item is handled as expected, correcting incorrect behavior in the loop body or termination.',
+    '_update_patch_limits should use a vectorized bulk operation instead of a per-item loop. Replace the loop with a bulk operation for better performance.')
+add(185, 'lib/matplotlib/offsetbox.py|_get_aligned_offsets|align|left|bottom',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _get_aligned_offsets, the patch corrects behavior by modifying the affected code path in lib/matplotlib/offsetbox.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _get_aligned_offsets does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_get_aligned_offsets does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(186, 'lib/matplotlib/offsetbox.py|draw|renderer|open_group|__class__',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In draw, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in draw is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    'draw should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(187, 'lib/matplotlib/colors.py|__call__|Negative|values|are',
+    r'attribute|property|field|state~compar|test|check|condition',
+    'In __call__, the iteration logic is corrected. The patch fixes how the loop processes items or terminates, ensuring each iteration handles data correctly.',
+    'The iteration in __call__ does not process items correctly. The patch fixes the loop logic so each item is handled as expected, correcting incorrect behavior in the loop body or termination.',
+    '__call__ should use a vectorized bulk operation instead of a per-item loop. Replace the loop with a bulk operation for better performance.')
+add(188, 'lib/matplotlib/mlab.py|_spectral_helper|result|abs|window',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _spectral_helper, the patch corrects behavior by modifying the affected code path in lib/matplotlib/mlab.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _spectral_helper does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_spectral_helper does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(189, 'lib/matplotlib/axis.py|_init|mpl|rcParams|xtick',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _init, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _init shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_init fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(190, 'lib/matplotlib/cbook.py|__getstate__|vars|Convert|weak',
+    r'loop|iterat~return|yield|output',
+    'In __getstate__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in __getstate__ does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    '__getstate__ returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(191, 'lib/matplotlib/cm.py|register|__copy__|Someone|may',
+    r'guard|check|condition|validat~assign|set|initializ|updat',
+    'In register, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing register shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'register fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(192, 'lib/matplotlib/axes/_axes.py|reduce_C_function|reduce_C_function|acc|len',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In acc, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing acc shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'acc fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(193, 'lib/matplotlib/collections.py|get_paths|__init__|_paths|paths',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In get_paths, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in get_paths is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    'get_paths should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(194, 'lib/matplotlib/text.py|__init__|get_unit|__call__|ref_coord',
+    r'guard|check|condition|validat~copy|clone|independent|separate|preserv',
+    'In __init__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __init__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__init__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(195, 'seaborn/_core/scales.py|spacer|get_view_interval|Avoid|having',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In spacer, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing spacer shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'spacer fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(196, 'requests/sessions.py|request|compat|cookielib|OrderedDict',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In request, the patch corrects behavior by modifying the affected code path in requests/sessions.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in request does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'request does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(197, 'requests/auth.py|sha_utf8|base|qop|auth',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In sha_utf8, the patch corrects behavior by modifying the affected code path in requests/auth.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in sha_utf8 does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'sha_utf8 does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(198, 'requests/sessions.py|request|compat|cookielib|OrderedDict',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In request, the patch corrects behavior by modifying the affected code path in requests/sessions.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in request does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'request does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(199, 'xarray/core/indexing.py|transpose|__init__|__array__|typing',
+    r'guard|check|condition|validat~copy|clone|independent|separate|preserv',
+    'In transpose, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing transpose shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'transpose fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(200, 'xarray/core/combine.py|combine_by_coords|dim|concat_dims|indexes',
+    r'guard|check|condition|validat~except|error|exception|handl',
+    'In combine_by_coords, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing combine_by_coords shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'combine_by_coords fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(201, 'xarray/core/dataset.py|quantile|no_conflicts|dim|reduce_dims',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In quantile, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing quantile shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'quantile fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(202, 'xarray/core/dataarray.py|differentiate|integrate|coord|Union',
+    r'guard|check|condition|validat~except|error|exception|handl',
+    'In differentiate, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing differentiate shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'differentiate fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(203, 'xarray/core/weighted.py|_sum_of_weights|bool|int|because',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In _sum_of_weights, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _sum_of_weights shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_sum_of_weights fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(204, 'xarray/core/nanops.py|_maybe_null_out|null_mask|take|mask',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _maybe_null_out, the patch corrects behavior by modifying the affected code path in xarray/core/nanops.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _maybe_null_out does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_maybe_null_out does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(205, 'xarray/core/computation.py|dot|where|where|cond',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In dot, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing dot shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'dot fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(206, 'xarray/coding/variables.py|decode|data|dtype|kind',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In decode, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing decode shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'decode fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(207, 'xarray/core/common.py|get_chunksizes|hasattr|_data|chunks',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In get_chunksizes, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing get_chunksizes shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'get_chunksizes fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(208, 'xarray/core/rolling.py|__init__|__iter__|Iterator|tuple',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In __init__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __init__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__init__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(209, 'xarray/core/dataset.py|swap_dims|values|equals|var',
+    r'copy|clone|independent|separate|preserv~clear|reset|none|null|empty',
+    'In swap_dims, the patch introduces a copy or clone before mutation. Modifying the original shared object caused side effects in other references. The copy isolates the change and preserves correct behavior elsewhere.',
+    'The code in swap_dims modifies a shared data structure without isolating the change first. The patch creates an independent copy before applying modifications, so the alteration does not leak to other references holding the same object.',
+    'swap_dims creates unnecessary copies of data that is not shared. Remove the copy and operate directly on the original object to improve performance.')
+add(210, 'xarray/core/dataset.py|set_index|reset_index|keep_levels|new_variables',
+    r'guard|check|condition|validat~loop|iterat',
+    'In set_index, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing set_index shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'set_index fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(211, 'xarray/core/computation.py|where|dataset|Dataset|result',
+    r'guard|check|condition|validat~loop|iterat',
+    'In where, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing where shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'where fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(212, 'pylint/pyreverse/diagrams.py|class_names|visit_assignname|handle_assignattr_type|isinstance',
+    r'guard|check|condition|validat~copy|clone|independent|separate|preserv',
+    'In class_names, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing class_names shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'class_names fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(213, 'pylint/config/__init__.py|appdirs|PYLINT_HOME|user_cache_dir|pylint',
+    r'guard|check|condition|validat~compar|test|check|condition',
+    'In appdirs, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing appdirs shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'appdirs fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(214, 'pylint/config/argument.py|__init__|_add_parser_option|_convert_option_to_argument|metavar',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In __init__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __init__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__init__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(215, 'pylint/lint/expand_modules.py|_is_in_ignore_list_re|expand_modules|initialize|_is_ignored_file',
+    r'guard|check|condition|validat~return|yield|output',
+    'In _is_in_ignore_list_re, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _is_in_ignore_list_re shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_is_in_ignore_list_re fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(216, 'pylint/config/argument.py|_regex_transformer|_check_csv|pattern|pylint_utils',
+    r'guard|check|condition|validat~loop|iterat',
+    'In _regex_transformer, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _regex_transformer shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_regex_transformer fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(217, 'src/_pytest/logging.py|reset|messages|clear|records',
+    r'clear|reset|none|null|empty~attribute|property|field|state',
+    'In reset, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in reset is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    'reset should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(218, 'src/_pytest/mark/structures.py|__call__|store_mark|get_unpacked_marks|obj',
+    r'guard|check|condition|validat~copy|clone|independent|separate|preserv',
+    'In __call__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __call__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__call__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(219, 'src/_pytest/compat.py|num_mock_patch_args|mock_sentinel|getattr|sys',
+    r'guard|check|condition|validat~loop|iterat',
+    'In num_mock_patch_args, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing num_mock_patch_args shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'num_mock_patch_args fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(220, 'src/_pytest/reports.py|_to_json|_from_json|pytest_report_from_serializable|_pytest',
+    r'guard|check|condition|validat~copy|clone|independent|separate|preserv',
+    'In _to_json, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _to_json shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_to_json fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(221, 'src/_pytest/config/__init__.py|_set_initial_conftests|_getconftestmodules|_rget_with_confmod|current',
+    r'loop|iterat~return|yield|output',
+    'In _set_initial_conftests, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in _set_initial_conftests does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    '_set_initial_conftests returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(222, 'src/_pytest/python.py|_genfunctions|isinitpath|own_markers|extend',
+    r'return|yield|output~attribute|property|field|state',
+    'In _genfunctions, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in _genfunctions does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    '_genfunctions returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(223, 'src/_pytest/setuponly.py|_show_fixture_action|_pytest|_io|saferepr',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _show_fixture_action, the patch corrects behavior by modifying the affected code path in src/_pytest/setuponly.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _show_fixture_action does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_show_fixture_action does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(224, 'src/_pytest/unittest.py|collect|_make_xunit_fixture|runtest|skipped',
+    r'guard|check|condition|validat~return|yield|output',
+    'In collect, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing collect shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'collect fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(225, 'src/_pytest/mark/expression.py|reject|not_expr|__init__|are',
+    r'clear|reset|none|null|empty~return|yield|output',
+    'In reject, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in reject is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    'reject should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(226, 'src/_pytest/skipping.py|evaluate_xfail_marks|pytest_runtest_call|item|_store',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In evaluate_xfail_marks, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing evaluate_xfail_marks shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'evaluate_xfail_marks fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(227, 'src/_pytest/python.py|_inject_setup_module_fixture|_inject_setup_function_fixture|_inject_setup_class_fixture|name',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _inject_setup_module_fixture, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in _inject_setup_module_fixture is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    '_inject_setup_module_fixture should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(228, 'sklearn/linear_model/ridge.py|each|alpha|should|stored',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In each, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing each shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'each fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(229, 'sklearn/model_selection/_search.py|_store|time|refit_start_time|refit_end_time',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In _store, the iteration logic is corrected. The patch fixes how the loop processes items or terminates, ensuring each iteration handles data correctly.',
+    'The iteration in _store does not process items correctly. The patch fixes the loop logic so each item is handled as expected, correcting incorrect behavior in the loop body or termination.',
+    '_store should use a vectorized bulk operation instead of a per-item loop. Replace the loop with a bulk operation for better performance.')
+add(230, 'sklearn/linear_model/logistic.py|_log_reg_scoring_path|log_reg|LogisticRegression|multi_class',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _log_reg_scoring_path, the patch corrects behavior by modifying the affected code path in sklearn/linear_model/logistic.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _log_reg_scoring_path does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_log_reg_scoring_path does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(231, 'examples/decomposition/plot_sparse_coding.py|_sparse_encode|sparse_encode|dict_learning|sqrt',
+    r'guard|check|condition|validat~loop|iterat',
+    'In _sparse_encode, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in _sparse_encode is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    '_sparse_encode should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(232, 'sklearn/linear_model/least_angle.py|__init__|fit|fit|copy_X',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In __init__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __init__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__init__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(233, 'sklearn/model_selection/_split.py|__init__|Whether|shuffle|each',
+    r'attribute|property|field|state~class|constructor|init',
+    'In __init__, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in __init__ is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    '__init__ should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(234, 'sklearn/preprocessing/_discretization.py|fit|Must|sort|centers',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In fit, the patch corrects behavior by modifying the affected code path in sklearn/preprocessing/_discretization.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in fit does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'fit does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(235, 'sklearn/mixture/base.py|fit_predict|Always|final|step',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In fit_predict, the iteration logic is corrected. The patch fixes how the loop processes items or terminates, ensuring each iteration handles data correctly.',
+    'The iteration in fit_predict does not process items correctly. The patch fixes the loop logic so each item is handled as expected, correcting incorrect behavior in the loop body or termination.',
+    'fit_predict should use a vectorized bulk operation instead of a per-item loop. Replace the loop with a bulk operation for better performance.')
+add(236, 'sklearn/pipeline.py|_iter|__len__|Returns|length',
+    r'return|yield|output~attribute|property|field|state',
+    'In _iter, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in _iter does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    '_iter returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(237, 'sklearn/ensemble/iforest.py|__init__|warm_start|bool|optional',
+    r'assign|set|initializ|updat~default|fallback',
+    'In __init__, the patch adds a default value for a previously unhandled case. When the expected input is absent, the code now falls back to a sensible default instead of producing None or crashing.',
+    'A case without a defined value is not handled in __init__. The patch adds a default or fallback to ensure consistent behavior when the value is absent rather than producing an error or None.',
+    '__init__ should fail explicitly when the value is absent rather than using a default. Remove the fallback to surface the error to the caller.')
+add(238, 'sklearn/utils/_show_versions.py|_get_deps_info|joblib',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _get_deps_info, the patch corrects behavior by modifying the affected code path in sklearn/utils/_show_versions.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _get_deps_info does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_get_deps_info does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(239, 'sklearn/cluster/optics_.py|compute_optics_graph|cluster_optics_xi|_xi_cluster|min_samples',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In compute_optics_graph, the patch adds a default value for a previously unhandled case. When the expected input is absent, the code now falls back to a sensible default instead of producing None or crashing.',
+    'A case without a defined value is not handled in compute_optics_graph. The patch adds a default or fallback to ensure consistent behavior when the value is absent rather than producing an error or None.',
+    'compute_optics_graph should fail explicitly when the value is absent rather than using a default. Remove the fallback to surface the error to the caller.')
+add(240, 'sklearn/multioutput.py|fit|fit|sample_weight|Fit',
+    r'guard|check|condition|validat~except|error|exception|handl',
+    'In fit, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing fit shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'fit fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(241, 'sklearn/ensemble/_hist_gradient_boosting/gradient_boosting.py|_check_early_stopping_scorer|is_classifier|y_small_train|classes_',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In _check_early_stopping_scorer, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _check_early_stopping_scorer shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_check_early_stopping_scorer fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(242, 'sklearn/svm/base.py|_sparse_fit|n_SV|dual_coef_|csr_matrix',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In _sparse_fit, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _sparse_fit shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_sparse_fit fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(243, 'sklearn/base.py|_validate_data|transform|_transform|cast_to_ndarray',
+    r'guard|check|condition|validat~return|yield|output',
+    'In _validate_data, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _validate_data shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_validate_data fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(244, 'sklearn/impute/_iterative.py|__init__|_initial_imputation|fill_value|str',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In __init__, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in __init__ is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    '__init__ should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(245, 'sklearn/utils/_set_output.py|_wrap_in_pandas_container|Index|data|index',
+    r'guard|check|condition|validat~compar|test|check|condition',
+    'In _wrap_in_pandas_container, the iteration logic is corrected. The patch fixes how the loop processes items or terminates, ensuring each iteration handles data correctly.',
+    'The iteration in _wrap_in_pandas_container does not process items correctly. The patch fixes the loop logic so each item is handled as expected, correcting incorrect behavior in the loop body or termination.',
+    '_wrap_in_pandas_container should use a vectorized bulk operation instead of a per-item loop. Replace the loop with a bulk operation for better performance.')
+add(246, 'sklearn/ensemble/_iforest.py|fit|score_samples|Else|define',
+    r'return|yield|output~attribute|property|field|state',
+    'In fit, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in fit does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'fit returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(247, 'sklearn/feature_selection/_sequential.py|fit|_get_best_new_feature_score|base|BaseEstimator',
+    r'copy|clone|independent|separate|preserv~attribute|property|field|state',
+    'In fit, the patch introduces a copy or clone before mutation. Modifying the original shared object caused side effects in other references. The copy isolates the change and preserves correct behavior elsewhere.',
+    'The code in fit modifies a shared data structure without isolating the change first. The patch creates an independent copy before applying modifications, so the alteration does not leak to other references holding the same object.',
+    'fit creates unnecessary copies of data that is not shared. Remove the copy and operate directly on the original object to improve performance.')
+add(248, 'sklearn/metrics/_ranking.py|roc_curve|thresholds|ndarray|shape',
+    r'guard|check|condition|validat~assign|set|initializ|updat',
+    'In roc_curve, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing roc_curve shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'roc_curve fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(249, 'sphinx/writers/latex.py|visit_literal|sphinxcode|sphinxupquote|hlcode',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In visit_literal, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in visit_literal is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    'visit_literal should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(250, 'sphinx/ext/autodoc/typehints.py|merge_typehints|insert_field_list|modify_field_list|objtype',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In merge_typehints, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing merge_typehints shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'merge_typehints fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(251, 'sphinx/ext/inheritance_diagram.py|html_visit_inheritance_diagram|Construct|name|URI',
+    r'guard|check|condition|validat~compar|test|check|condition',
+    'In html_visit_inheritance_diagram, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing html_visit_inheritance_diagram shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'html_visit_inheritance_diagram fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(252, 'sphinx/util/rst.py|prepend_prolog|docutils|parsers|rst',
+    r'guard|check|condition|validat~import|dependenc|module',
+    'In prepend_prolog, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing prepend_prolog shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'prepend_prolog fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(253, 'sphinx/domains/python.py|text|reftype|obj|refdomain',
+    r'guard|check|condition|validat~clear|reset|none|null|empty',
+    'In text, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing text shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'text fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(254, 'sphinx/domains/python.py|unparse|node|elts|result',
+    r'guard|check|condition|validat~loop|iterat',
+    'In unparse, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing unparse shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'unparse fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(255, 'sphinx/util/inspect.py|signature_from_str|defaults|list|args',
+    r'guard|check|condition|validat~copy|clone|independent|separate|preserv',
+    'In signature_from_str, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing signature_from_str shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'signature_from_str fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(256, 'sphinx/builders/linkcheck.py|check_uri|uri_re|compile|len',
+    r'guard|check|condition|validat~loop|iterat',
+    'In check_uri, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing check_uri shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'check_uri fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(257, 'sphinx/ext/napoleon/docstring.py|_consume_field|_parse_other_parameters_section|_consume_fields|parse_type',
+    r'guard|check|condition|validat~loop|iterat',
+    'In _consume_field, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _consume_field shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_consume_field fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(258, 'sphinx/application.py|_init_i18n|__repr__|typing|Any',
+    r'copy|clone|independent|separate|preserv~clear|reset|none|null|empty',
+    'In _init_i18n, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation.',
+    'State in _init_i18n is not reset when it should be, causing stale values to persist. The patch clears or resets this state at the appropriate point in the code flow, ensuring subsequent operations see the correct fresh state.',
+    '_init_i18n should preserve its internal state across calls for caching efficiency. Remove the reset so the cached value persists and improves subsequent performance.')
+add(259, 'sphinx/pycode/ast.py|visit_Set|is_simple_tuple|value|ast',
+    r'guard|check|condition|validat~loop|iterat',
+    'In is_simple_tuple, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing is_simple_tuple shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'is_simple_tuple fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(260, 'sphinx/builders/linkcheck.py|check_uri|requests|exceptions|HTTPError',
+    r'except|error|exception|handl~import|dependenc|module',
+    'In check_uri, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately.',
+    'An error condition in check_uri is not handled and propagates unexpectedly. The patch adds exception handling to catch this case and respond appropriately, preventing unhandled errors from causing incorrect behavior.',
+    'check_uri raises an exception that callers should handle themselves. Remove the exception handler and let errors propagate to the calling layer.')
+add(261, 'sphinx/domains/python.py|make_xref|transform|result|module',
+    r'attribute|property|field|state~class|constructor|init',
+    'In make_xref, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in make_xref is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    'make_xref should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(262, 'sphinx/builders/html/transforms.py|pattern|compile',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In pattern, the patch corrects behavior by modifying the affected code path in sphinx/builders/html/transforms.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in pattern does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'pattern does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(263, 'sphinx/domains/python.py|PyTypedField|variable|label|Variables',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In variable, the patch corrects behavior by modifying the affected code path in sphinx/domains/python.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in variable does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'variable does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(264, 'sphinx/ext/autodoc/__init__.py|get_object_members|get_doc|comment|get_variable_comment',
+    r'guard|check|condition|validat~copy|clone|independent|separate|preserv',
+    'In get_object_members, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing get_object_members shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'get_object_members fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(265, 'sphinx/domains/python.py|make_xref|delims',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In make_xref, the patch corrects behavior by modifying the affected code path in sphinx/domains/python.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in make_xref does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'make_xref does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(266, 'sphinx/util/inspect.py|object_description|isinstance|object|set',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In object_description, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in object_description does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'object_description returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(267, 'sphinx/cmd/quickstart.py|is_path|ask_user|is_path_or_empty|str',
+    r'guard|check|condition|validat~return|yield|output',
+    'In is_path, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing is_path shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'is_path fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(268, 'sphinx/pycode/ast.py|visit_UnaryOp|len|node|elts',
+    r'guard|check|condition|validat~loop|iterat',
+    'In len, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing len shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'len fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(269, 'sphinx/domains/python.py|unparse|nodes|Text|repr',
+    r'guard|check|condition|validat~return|yield|output',
+    'In unparse, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing unparse shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'unparse fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(270, 'sphinx/ext/autodoc/mock.py|__new__|_make_subclass|__name__|__qualname__',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In __new__, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used.',
+    'An attribute in __new__ is not set at the right point in the execution flow. The patch ensures the attribute is assigned the correct value before it is used, fixing incorrect state that was observed.',
+    '__new__ should compute the attribute lazily on first access. Move the assignment to a property getter rather than setting it eagerly.')
+add(271, 'sphinx/ext/autodoc/typehints.py|augment_descriptions_with_types|parts|returns|name',
+    r'guard|check|condition|validat~return|yield|output',
+    'In augment_descriptions_with_types, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing augment_descriptions_with_types shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'augment_descriptions_with_types fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(272, 'sphinx/extension.py|verify_needs_extensions|packaging|version|InvalidVersion',
+    r'guard|check|condition|validat~except|error|exception|handl',
+    'In verify_needs_extensions, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing verify_needs_extensions shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'verify_needs_extensions fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(273, 'sympy/geometry/point.py|distance|type|len|sqrt',
+    r'guard|check|condition|validat~loop|iterat',
+    'In distance, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing distance shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'distance fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(274, 'sympy/combinatorics/permutations.py|__new__|has_dups|temp|is_cycle',
+    r'guard|check|condition|validat~except|error|exception|handl',
+    'In __new__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __new__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__new__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(275, 'sympy/core/evalf.py|evalf|raise|NotImplementedError',
+    r'except|error|exception|handl~error|except|rais',
+    'In evalf, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately.',
+    'An error condition in evalf is not handled and propagates unexpectedly. The patch adds exception handling to catch this case and respond appropriately, preventing unhandled errors from causing incorrect behavior.',
+    'evalf raises an exception that callers should handle themselves. Remove the exception handler and let errors propagate to the calling layer.')
+add(276, 'sympy/concrete/products.py|_eval_product|sympy|concrete|summations',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _eval_product, the patch corrects behavior by modifying the affected code path in sympy/concrete/products.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _eval_product does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_eval_product does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(277, 'sympy/sets/sets.py|_complement|sympy|utilities|iterables',
+    r'guard|check|condition|validat~loop|iterat',
+    'In _complement, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _complement shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_complement fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(278, 'sympy/printing/pycode.py|_print_Float|_print_Rational|format|_module_format',
+    r'return|yield|output~attribute|property|field|state',
+    'In format, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in format does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'format returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(279, 'sympy/printing/mathematica.py|_print_Function|Max|lambda|Min',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In lambda, the patch corrects behavior by modifying the affected code path in sympy/printing/mathematica.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in lambda does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'lambda does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(280, 'sympy/printing/pycode.py|_print_Not|_print_Indexed|expr|base',
+    r'loop|iterat~return|yield|output',
+    'In expr, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in expr does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'expr returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(281, 'sympy/geometry/point.py|__mul__|__rmul__|factor|Multiply',
+    r'return|yield|output~attribute|property|field|state',
+    'In __mul__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in __mul__ does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    '__mul__ returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(282, 'sympy/printing/latex.py|_print_Subs|left|right|substack',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In left, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in left does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'left returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(283, 'sympy/polys/factortools.py|dmp_ext_factor|dmp_sqf_norm',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In dmp_ext_factor, the patch corrects behavior by modifying the affected code path in sympy/polys/factortools.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in dmp_ext_factor does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'dmp_ext_factor does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(284, 'sympy/printing/repr.py|_print_EmptySequence|_print_dict|expr|sep',
+    r'guard|check|condition|validat~return|yield|output',
+    'In _print_dict, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _print_dict shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_print_dict fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(285, 'sympy/core/sympify.py|kernS|hit|kern',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In hit, the patch corrects behavior by modifying the affected code path in sympy/core/sympify.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in hit does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'hit does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(286, 'sympy/polys/domains/expressiondomain.py|__ne__|is_zero',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In __ne__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in __ne__ does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    '__ne__ returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(287, 'sympy/core/_print_helpers.py|Since|used|mixin|set',
+    r'assign|set|initializ|updat~clear|reset|none|null|empty',
+    'In used, the patch corrects a comparison or condition. The previous comparison evaluated incorrectly, causing the wrong code path to execute. Fixing the condition ensures the right branch is taken.',
+    'A condition in used evaluates incorrectly, causing the wrong code path to execute. The patch corrects the comparison logic so the right branch is taken based on actual state.',
+    'used uses identity comparison when equality comparison is needed. Replace the identity check with an equality comparison operator.')
+add(288, 'sympy/core/numbers.py|__eq__|other',
+    r'guard|check|condition|validat~return|yield|output',
+    'In __eq__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __eq__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__eq__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(289, 'sympy/printing/conventions.py|split_super_sub|_name_with_digits_p|compile|Make',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In split_super_sub, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately.',
+    'An error condition in split_super_sub is not handled and propagates unexpectedly. The patch adds exception handling to catch this case and respond appropriately, preventing unhandled errors from causing incorrect behavior.',
+    'split_super_sub raises an exception that callers should handle themselves. Remove the exception handler and let errors propagate to the calling layer.')
+add(290, 'sympy/printing/str.py|apow|isinstance|item|base',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In apow, the patch corrects behavior by modifying the affected code path in sympy/printing/str.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in apow does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'apow does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(291, 'sympy/geometry/point.py|__new__|any|is_number|is_zero',
+    r'guard|check|condition|validat~loop|iterat',
+    'In __new__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing __new__ shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '__new__ fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(292, 'sympy/printing/pycode.py|Min|min|Max|max',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In min, the patch corrects behavior by modifying the affected code path in sympy/printing/pycode.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in min does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'min does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(293, 'sympy/utilities/lambdify.py|_recursive_to_string|left|right',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In _recursive_to_string, the patch corrects behavior by modifying the affected code path in sympy/utilities/lambdify.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in _recursive_to_string does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '_recursive_to_string does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(294, 'sympy/core/symbol.py|literal|result|append|symbols',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In literal, the patch corrects behavior by modifying the affected code path in sympy/core/symbol.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in literal does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    'literal does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')
+add(295, 'sympy/physics/hep/gamma_matrices.py|kahane_simplify|resulting_indices|list|free_pos',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In kahane_simplify, the iteration logic is corrected. The patch fixes how the loop processes items or terminates, ensuring each iteration handles data correctly.',
+    'The iteration in kahane_simplify does not process items correctly. The patch fixes the loop logic so each item is handled as expected, correcting incorrect behavior in the loop body or termination.',
+    'kahane_simplify should use a vectorized bulk operation instead of a per-item loop. Replace the loop with a bulk operation for better performance.')
+add(296, 'sympy/sets/contains.py|binary_symbols|args',
+    r'return|yield|output~attribute|property|field|state',
+    'In binary_symbols, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently.',
+    'The return path in binary_symbols does not produce the correct result on all code paths. The patch adjusts the logic so the function returns the expected value regardless of which branch is taken.',
+    'binary_symbols returns too eagerly, skipping necessary computation. Refactor to always execute the full logic path regardless of conditions.')
+add(297, 'sympy/physics/units/unitsystem.py|_collect_factor_and_dimension|fds|_collect_factor_and_dimension|arg',
+    r'guard|check|condition|validat~loop|iterat',
+    'In _collect_factor_and_dimension, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _collect_factor_and_dimension shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_collect_factor_and_dimension fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(298, 'sympy/physics/units/unitsystem.py|_collect_factor_and_dimension|get_dimension_system|equivalent_dims|dim',
+    r'guard|check|condition|validat~attribute|property|field|state',
+    'In _collect_factor_and_dimension, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing _collect_factor_and_dimension shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    '_collect_factor_and_dimension fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(299, 'sympy/polys/rings.py|set_ring|symbols|len|ring',
+    r'guard|check|condition|validat~except|error|exception|handl',
+    'In set_ring, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met.',
+    'Reviewing set_ring shows the code path proceeds without verifying a necessary precondition. The patch introduces a condition check that prevents the operation from executing when the required state is not satisfied, stopping incorrect behavior at the source.',
+    'set_ring fails because the condition is checked too late in the execution flow. Move the guard check to execute before any side effects occur.')
+add(300, 'sympy/core/numbers.py|__new__|int',
+    r'modif|chang|updat~correct|fix|resolv',
+    'In __new__, the patch corrects behavior by modifying the affected code path in sympy/core/numbers.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior.',
+    'The implementation in __new__ does not handle the reported case correctly. The patch modifies the affected code path to produce the expected behavior, resolving the incorrect behavior without changing unrelated functionality.',
+    '__new__ does not need modification. The reported behavior is correct and the issue is a misunderstanding of the intended design.')

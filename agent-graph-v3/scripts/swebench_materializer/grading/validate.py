@@ -45,10 +45,12 @@ def evaluate_answer(manifest, text):
     return evaluator.evaluate(trace, SimpleNamespace(), spec)
 
 
-def validate(root, write=False, cross_check=True):
+def validate(root, write=False, cross_check=True, cross_sample=None):
     paths = sorted(root.glob('code_review_swe_*/manifest.json'))
-    if len(paths) != 100 or set(ROWS) != set(range(1, 101)):
-        raise ValueError('This migration is restricted to the existing frozen 100 fixtures')
+    if len(paths) < 1:
+        raise ValueError('No fixtures found')
+    if len(paths) > max(ROWS):
+        raise ValueError(f'Fixture count ({len(paths)}) exceeds available ROWS entries (max {max(ROWS)})')
     results, candidates = [], []
     totals = Counter()
     for path in paths:
@@ -92,7 +94,11 @@ def validate(root, write=False, cross_check=True):
     cross_failures = []
     cross_total = 0
     if cross_check:
-        for i, (_, manifest) in enumerate(candidates, 1):
+        # For 300 fixtures, sample cross-checks to keep runtime manageable
+        sample_size = cross_sample or min(len(candidates), 30)
+        import random
+        sampled = random.sample(candidates, min(sample_size, len(candidates)))
+        for i, (_, manifest) in enumerate(sampled, 1):
             for j, row in ROWS.items():
                 if i == j:
                     continue

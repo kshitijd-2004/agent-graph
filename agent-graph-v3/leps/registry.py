@@ -117,6 +117,8 @@ class LEPOrchestrator:
         self._propagation_mode: str = "single_origin"
         # Topology reference for M2O target filtering.
         self._topology: Optional[Any] = None
+        self._origin_roles: Dict[str, Optional[set[str]]] = {}
+        self._initial_fanout_seen = False
 
     def register_lep(self, lep_config: LEPConfig) -> None:
         """Register a LEP for execution."""
@@ -138,6 +140,8 @@ class LEPOrchestrator:
         instance.fixture_manifest = self.fixture_manifest
 
         self._active_leps[code] = instance
+        self._firing_state.pop(code, None)
+        self._origin_roles.pop(code, None)
         # Invalidate any previous topology binding so register_leps followed
         # by set_topology() always re-resolves from the new config.
         self._topology_target_stages.pop(code, None)
@@ -176,6 +180,8 @@ class LEPOrchestrator:
                 self._topology_target_stages[code] = resolve_target_stage(
                     lep.config, topology, propagation_mode=propagation_mode
                 )
+                from generation.injection_origins import intended_origin_roles
+                self._origin_roles[code] = intended_origin_roles(lep.config, topology, propagation_mode)
             except InvalidTopologyTargetError:
                 # Re-raise immediately — invalid targets should fail fast at
                 # scenario setup, not silently degrade at run time.
@@ -232,6 +238,15 @@ class LEPOrchestrator:
         at their semantically correct intervention point.
         """
         event_type = (event.event_type.value if hasattr(event.event_type, 'value') else str(event.event_type)).lower()
+        self.validate_firing_configuration()
+        fanout_boundary = (self._propagation_mode == "one_to_many"
+                           and event_type == "agent_handoff"
+                           and self._topology is not None
+                           and event.agent_role == self._topology.stage_by_id[self._topology.exit_stage].agent_role)
+        after_fanout = self._initial_fanout_seen
+        if fanout_boundary:
+            # Handoff LEPs may mutate this initial boundary; later events may not.
+            self._initial_fanout_seen = True
         eligible_codes = BOUNDARY_LEPS.get(event_type, set())
         if not eligible_codes:
             return {}
@@ -249,10 +264,6 @@ class LEPOrchestrator:
             if lep_instance is None or not hasattr(lep_instance, "evaluate"):
                 continue
 
-            # Ensure firing state exists for this LEP
-            if code not in self._firing_state:
-                self._firing_state[code] = LEPFiringState(max_origins=1)
-
             state = self._firing_state[code]
 
             # Origin budget: skip if this LEP has already fired its max origins
@@ -264,11 +275,13 @@ class LEPOrchestrator:
             # LEP's static target_stage — the explicit target filter is bypassed
             # in favour of the per-worker budget (state.fired_targets).
             event_role = getattr(event, "agent_role", "") or ""
+            required_roles = self._origin_roles.get(code)
+            if required_roles is not None and event_role not in required_roles:
+                continue
+            if self._propagation_mode == "one_to_many" and after_fanout:
+                continue
             if (self._propagation_mode == "many_to_one"
                     and self._topology is not None):
-                exit_role = getattr(self._topology, "exit_stage", "")
-                if event_role == exit_role:
-                    continue
                 if event_role in state.fired_targets:
                     continue
             else:
@@ -317,8 +330,15 @@ class LEPOrchestrator:
                       topology-agnostic.
         """
         if lep_code not in self._firing_state:
-            self._firing_state[lep_code] = LEPFiringState(max_origins=1)
+            raise ValueError(f"Unconfigured LEP firing state: {lep_code}")
         state = self._firing_state[lep_code]
+        if state.fired_origin_count >= state.max_origins:
+            raise ValueError(f"Origin budget exhausted: {lep_code}")
+        if self._propagation_mode == "many_to_one" and target in state.fired_targets:
+            raise ValueError(f"Duplicate origin role: {target}")
+        roles = self._origin_roles.get(lep_code)
+        if roles is not None and target not in roles:
+            raise ValueError(f"Unintended origin role: {target}")
         state.fired_origin_count += 1
         if target is not None:
             state.fired_targets.add(target)
@@ -337,6 +357,19 @@ class LEPOrchestrator:
     def get_firing_state(self, lep_code: str) -> Optional[LEPFiringState]:
         """Get the firing state for a LEP, or None if not initialized."""
         return self._firing_state.get(lep_code)
+
+    def validate_firing_configuration(self) -> None:
+        """Reject missing/wrong budgets before model inference or evaluation."""
+        for code in self._active_leps:
+            state = self._firing_state.get(code)
+            if state is None:
+                raise ValueError(f"Unconfigured LEP firing state: {code}")
+            if self._topology is None:
+                raise ValueError(f"Unconfigured LEP topology: {code}")
+            roles = self._origin_roles.get(code)
+            expected = len(roles) if self._propagation_mode == "many_to_one" and roles else 1
+            if state.max_origins != expected:
+                raise ValueError(f"Invalid origin budget for {code}: {state.max_origins} != {expected}")
 
     def get_lep_instance(self, lep_code: str) -> Any:
         """Get a specific LEP instance."""
@@ -448,6 +481,12 @@ class LEPOrchestrator:
                 lep.reset()
         self._active_leps.clear()
         self._trigger_results.clear()
+        self._firing_state.clear()
+        self._topology_target_stages.clear()
+        self._origin_roles.clear()
+        self._topology = None
+        self._propagation_mode = "single_origin"
+        self._initial_fanout_seen = False
 
     def mark_event_seen(self, event_type: str, tool_name: str = "") -> None:
         """Mark an event type and/or tool as seen on all active LEP matchers.

@@ -349,16 +349,12 @@ class TestMarkFiredOriginWithTarget:
         assert state.fired_origin_count == 1
         assert state.fired_targets == set()
 
-    def test_mark_fired_origin_creates_state_if_missing(self):
-        """mark_fired_origin creates a LEPFiringState with max_origins=1 if
-        none exists yet for that LEP."""
+    def test_mark_fired_origin_rejects_missing_configuration(self):
+        """A missing explicit budget is a configuration error, not a cap of one."""
         orchestrator = LEPOrchestrator()
-        orchestrator.mark_fired_origin("LEP_TOOL_RESULT_CORRUPTION", target="researcher")
-        state = orchestrator.get_firing_state("LEP_TOOL_RESULT_CORRUPTION")
-        assert state is not None
-        assert state.max_origins == 1
-        assert state.fired_origin_count == 1
-        assert "researcher" in state.fired_targets
+        with pytest.raises(ValueError, match="Unconfigured LEP firing state"):
+            orchestrator.mark_fired_origin("LEP_TOOL_RESULT_CORRUPTION", target="researcher")
+        assert orchestrator.get_firing_state("LEP_TOOL_RESULT_CORRUPTION") is None
 
     def test_mark_fired_origin_subsequent_calls_increment_progressively(
         self, coordinator_orchestrator_m2o
