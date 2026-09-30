@@ -182,6 +182,10 @@ class LEPOrchestrator:
                 )
                 from generation.injection_origins import intended_origin_roles
                 self._origin_roles[code] = intended_origin_roles(lep.config, topology, propagation_mode)
+                roles = self._origin_roles[code]
+                if LEP_BOUNDARY.get(code) == "agent_handoff" and roles:
+                    if any(not topology.stage_by_role[role].can_handoff for role in roles):
+                        raise ValueError(f"{code}: configured origin cannot emit a handoff")
             except InvalidTopologyTargetError:
                 # Re-raise immediately — invalid targets should fail fast at
                 # scenario setup, not silently degrade at run time.
@@ -364,7 +368,7 @@ class LEPOrchestrator:
             state = self._firing_state.get(code)
             if state is None:
                 raise ValueError(f"Unconfigured LEP firing state: {code}")
-            if self._topology is None:
+            if self._topology is None or code not in self._origin_roles:
                 raise ValueError(f"Unconfigured LEP topology: {code}")
             roles = self._origin_roles.get(code)
             expected = len(roles) if self._propagation_mode == "many_to_one" and roles else 1

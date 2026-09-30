@@ -1120,10 +1120,7 @@ class ScenarioRunner:
             # ── Fan-in check: merge BEFORE emitting the transition event ──────
             # so that transition.depends_on can reference all branch event IDs.
             incoming_rules = topology.get_incoming_handoffs(current_stage.agent_role)
-            initial_fanout = (wcfg.propagation_mode == "one_to_many"
-                              and current_stage.stage_id == topology.exit_stage
-                              and stage_run_counts.get(current_stage.stage_id, 0) == 0)
-            if len(incoming_rules) > 1 and not initial_fanout:
+            if len(incoming_rules) > 1:
                 missing_sources = [
                     r.from_stage for r in incoming_rules
                     if r.from_stage not in branch_handoffs

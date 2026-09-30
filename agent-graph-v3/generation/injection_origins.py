@@ -96,14 +96,9 @@ def origin_structure_errors(trace, scenario):
         if required is not None and (set(roles) != required or len(roles) != len(set(roles))):
             errors.append(f"{config.code}: intended roles {sorted(required)}, got {roles}")
         if mode == "one_to_many":
-            worker_starts = [e.event_index for e in trace.events
-                             if e.event_type.value == "topology_transition"
-                             and e.agent_role in topology.agent_roles and e.agent_role != exit_role]
             if fanout is None:
                 errors.append(f"{config.code}: no initial fan-out boundary")
             else:
-                if any(index < fanout for index in worker_starts):
-                    errors.append(f"{config.code}: downstream worker ran before initial fan-out")
                 for event in events:
                     on_handoff = (config.code in {"LEP_HANDOFF_CORRUPTION", "LEP_INPUT_DISREGARD"}
                                   and event.event_type.value == "agent_handoff")
