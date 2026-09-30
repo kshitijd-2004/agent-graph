@@ -13,8 +13,7 @@ from types import SimpleNamespace
 from evaluators.task_evaluators.code_review_evaluator import CodeReviewEvaluator
 from generation.runner import ScenarioRunner
 from schemas import ScenarioSpec, Trace, TraceEvent, TraceEventType, TraceVariant, WorkflowConfig
-from scripts.swebench_materializer.grading.build import with_grading, patch_digest
-from scripts.swebench_materializer.grading.curated import ROWS
+from scripts.swebench_materializer.grading.build import with_grading, patch_digest, ROWS
 
 ROOT = Path(__file__).resolve().parents[3]
 DRAFTS = ROOT / 'scripts/swebench_materializer/draft_manifests'
@@ -99,8 +98,9 @@ def validate(root, write=False, cross_check=True, cross_sample=None):
         import random
         sampled = random.sample(candidates, min(sample_size, len(candidates)))
         for i, (_, manifest) in enumerate(sampled, 1):
+            sel_index = manifest['provenance']['selection_index']
             for j, row in ROWS.items():
-                if i == j:
+                if sel_index == j:
                     continue
                 cross_total += 1
                 if evaluate_answer(manifest, row['gold']).task_success:
