@@ -2663,7 +2663,7 @@
       "get_chunksizes"
     ],
     "concepts": [
-      "(?:_data|underlying|internal|private)",
+      "(?:_?data|underlying|internal|private)",
       "(?:avoid|without|trigger|eager|load|materializ).{0,60}(?:data|load|materializ)|(?:data|load|materializ).{0,60}(?:avoid|eager)"
     ],
     "gold": "get_chunksizes accesses v.data merely to test for chunks, which can load lazy data. Inspect v._data instead so chunk metadata queries do not materialize the array.",
@@ -3613,7 +3613,8 @@
   {
     "locus": [
       "StrCategoryConverter.convert",
-      "UnitData.update"
+      "UnitData.update",
+      "Categorical conversion"
     ],
     "concepts": [
       "empty|size|nonempty",
@@ -3672,7 +3673,8 @@
   },
   {
     "locus": [
-      "_check_early_stopping_scorer"
+      "_check_early_stopping_scorer",
+      "early-stopping scorer"
     ],
     "concepts": [
       "classes|original.label|class.label",
@@ -3714,7 +3716,8 @@
   },
   {
     "locus": [
-      "HyperlinkAvailabilityChecker.check"
+      "HyperlinkAvailabilityChecker.check",
+      "link checker"
     ],
     "concepts": [
       "toomanyredirects|redirect.{0,20}(?:limit|loop)",
@@ -4940,7 +4943,7 @@
     ],
     "concepts": [
       "(?:axis|axes).{0,25}(?:bound|limit)|get.xbound|get.ybound",
-      "(?:initial|handle).{0,70}(?:position|bound)|(?:position|bound).{0,70}(?:initial|handle)"
+      "(?:initial|handle).{0,70}(?:position|bound)|(?:position|bound).{0,70}(?:initial|handle)|place.{0,30}handles.{0,30}axis limits"
     ],
     "gold": "SpanSelector initializes edge handles from selector extents, which can change axis bounds. Initialize their positions from the current x or y bounds according to direction so construction preserves the view.",
     "paraphrase": "In widgets.py place new span handles at existing axis limits. Using selector extents during setup can autoscale the axes unexpectedly; use the bounds for the selected orientation.",
@@ -4983,7 +4986,7 @@
       "LogCaptureFixture.clear"
     ],
     "concepts": [
-      "(?:clear|empt).{0,35}(?:existing|captured|same|in.place).{0,35}(?:record|list)|(?:record|list).{0,35}(?:clear|empt)",
+      "(?:clear|empt).{0,40}(?:record|list)|(?:record|list).{0,40}(?:clear|empt)",
       "stream|text|buffer"
     ],
     "gold": "caplog.clear uses reset, replacing the record list and leaving stored references stale. Add a handler clear that empties records in place and resets the text stream, then delegate caplog.clear to it.",
@@ -5003,7 +5006,7 @@
     ],
     "concepts": [
       "none",
-      "(?:obj|object|object.role|object.reference).{0,35}(?:role|reference|type)|(?:role|reference|type).{0,35}(?:obj|object)",
+      "(?:obj|object|object.role|object.reference).{0,35}(?:role|reference|type)|(?:role|reference|type).{0,35}(?:obj|object)|link.{0,35}annotation as an object",
       "class"
     ],
     "gold": "_parse_annotation gives None a class cross-reference, but None is an object. Use the obj role for None while retaining class references for other annotation names.",
@@ -5061,7 +5064,8 @@
   },
   {
     "locus": [
-      "UnitSystem._collect_factor_and_dimension"
+      "UnitSystem._collect_factor_and_dimension",
+      "Function dimension collection"
     ],
     "concepts": [
       "dimensionless",
@@ -5710,7 +5714,8 @@
   {
     "locus": [
       "UnitBase.__eq__",
-      "UnrecognizedUnit.__eq__"
+      "UnrecognizedUnit.__eq__",
+      "Unit equality"
     ],
     "concepts": [
       "notimplemented",
