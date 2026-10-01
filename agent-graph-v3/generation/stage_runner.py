@@ -1278,7 +1278,27 @@ class StageRunner:
                 )
 
                 if getattr(self, "result_x", None) is not None:
-                    self.result_x.seal(payload, payloads)
+                    repair = self.result_x.seal_or_repair(
+                        payload, payloads, allow_repair=turn < max_turns,
+                    )
+                    if repair is not None:
+                        # No handoff boundary or LEP origin exists for a rejected
+                        # draft. Continue this invocation under its existing cap.
+                        repair_evt = make_evt(
+                            TraceEventType.TOOL_RESULT, f"tool_{tc.name}", agent_id,
+                            role=current_role, tool_name=tc.name, tool_call_id=tc.id,
+                            output_text=repair, tool_result=repair,
+                        )
+                        repair_evt.depends_on = [tc_evt.event_id]
+                        repair_evt.observable = {"protocol_repair": True,
+                                                 "reason": "result_x_draft", "attempt": 1}
+                        events.append(repair_evt)
+                        _pending_deps.append(repair_evt.event_id)
+                        stage_history.append({"role": "assistant", "content": raw_output})
+                        stage_history.append({"role": "tool", "tool_name": "handoff", "content": repair})
+                        if hasattr(self.llm, "_append_tool_result"):
+                            self.llm._append_tool_result(tc, repair)
+                        continue
 
                 # ── Create the boundary event BEFORE LEP mutation ────────
                 hoff_evt = make_evt(
@@ -1553,7 +1573,25 @@ class StageRunner:
 
                 summary = action_input.get("summary", "") or "Task complete"
                 if getattr(self, "result_x", None) is not None:
-                    self.result_x.submit(action_input)
+                    repair = self.result_x.submit_or_repair(
+                        action_input, allow_repair=turn + 2 <= max_turns,
+                    )
+                    if repair is not None:
+                        repair_evt = make_evt(
+                            TraceEventType.TOOL_RESULT, f"tool_{tc.name}", agent_id,
+                            role=current_role, tool_name=tc.name, tool_call_id=tc.id,
+                            output_text=repair, tool_result=repair,
+                        )
+                        repair_evt.depends_on = [tc_evt.event_id]
+                        repair_evt.observable = {"protocol_repair": True,
+                                                 "reason": "result_x_missing_final_artifact", "attempt": 1}
+                        events.append(repair_evt)
+                        _pending_deps.append(repair_evt.event_id)
+                        stage_history.append({"role": "assistant", "content": raw_output})
+                        stage_history.append({"role": "tool", "tool_name": "submit_final", "content": repair})
+                        if hasattr(self.llm, "_append_tool_result"):
+                            self.llm._append_tool_result(tc, repair)
+                        continue
                 final_evt = make_evt(
                     TraceEventType.FINAL_RESPONSE, agent_id, "user",
                     role=current_role,

@@ -1,0 +1,480 @@
+[
+  {
+    "pair": "01_financial_forward",
+    "audit": "analysis/result_x_contract/live_validation_01/01_financial_forward/result_x_audit.json",
+    "audit_sha256": "7da0c3b599f813c0f145a79dcb194d322b611c880a4c423ef3ac6530af855ee2",
+    "clean_error": "Evidence must cite an original source actually read",
+    "stages": [
+      {
+        "index": 0,
+        "role": "extractor",
+        "read_calls": [
+          {
+            "path": "documents/report.md",
+            "canonical_path": "documents/report.md",
+            "original_bytes_returned": true,
+            "output_sha256": "610f57927c361ffb083245e7205262aaecea2e851164aa6096d3866a7e154937"
+          },
+          {
+            "path": "documents/call_transcript.md",
+            "canonical_path": "documents/call_transcript.md",
+            "original_bytes_returned": true,
+            "output_sha256": "691696c9fa8eaf7d51a6bd9007f3abd89726b44ceb6143bd588906920d05d3fb"
+          }
+        ],
+        "reconstructed_read_sources": [
+          "documents/call_transcript.md",
+          "documents/report.md"
+        ],
+        "handoff_evidence": [
+          {
+            "path": "documents/report.md",
+            "quote": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "expected_path": "documents/report.md",
+            "verbatim_match": true,
+            "source_excerpt": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "whitespace_only_difference": false
+          },
+          {
+            "path": "documents/call_transcript.md",
+            "quote": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions).",
+            "expected_path": "documents/call_transcript.md",
+            "verbatim_match": true,
+            "source_excerpt": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions).",
+            "whitespace_only_difference": false
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "role": "analyst",
+        "read_calls": [],
+        "reconstructed_read_sources": [],
+        "handoff_evidence": [
+          {
+            "path": "documents/report.md",
+            "quote": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "expected_path": "documents/report.md",
+            "verbatim_match": true,
+            "source_excerpt": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "whitespace_only_difference": false
+          },
+          {
+            "path": "documents/call_transcript.md",
+            "quote": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions).",
+            "expected_path": "documents/call_transcript.md",
+            "verbatim_match": true,
+            "source_excerpt": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions).",
+            "whitespace_only_difference": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pair": "02_swe_reverse",
+    "audit": "analysis/result_x_contract/live_validation_01/02_swe_reverse/result_x_audit.json",
+    "audit_sha256": "38b1eaa88c49fbbfba719254a9d3fb017a634c49561590da9b5a57ab9aada7bf",
+    "clean_error": "Evidence must cite an original source actually read",
+    "stages": [
+      {
+        "index": 0,
+        "role": "inspector",
+        "read_calls": [
+          {
+            "path": "django/forms/fields.py",
+            "canonical_path": "django/forms/fields.py",
+            "original_bytes_returned": true,
+            "output_sha256": "73c960e54202b9702e46cb0d7133cbde2268c9b54b3e577b02f7751d4bb02b96"
+          },
+          {
+            "path": "django/forms/forms.py",
+            "canonical_path": "django/forms/forms.py",
+            "original_bytes_returned": false,
+            "output_sha256": "08760b2b44f8963d6fee2111eb018f6733b0d468a93db66c5f63e7ca413326e0"
+          }
+        ],
+        "reconstructed_read_sources": [
+          "django/forms/fields.py"
+        ],
+        "handoff_evidence": [
+          {
+            "path": "django/forms/fields.py",
+            "quote": "def __deepcopy__(self, memo):\n        result = copy.copy(self)\n        memo[id(self)] = result\n        result.widget = copy.deepcopy(self.widget, memo)\n        result.validators = self.validators[:]\n        return result",
+            "expected_path": "django/forms/fields.py",
+            "verbatim_match": true,
+            "source_excerpt": "def __deepcopy__(self, memo):\n        result = copy.copy(self)\n        memo[id(self)] = result\n        result.widget = copy.deepcopy(self.widget, memo)\n        result.validators = self.validators[:]\n        return result",
+            "whitespace_only_difference": false
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "role": "reviewer",
+        "read_calls": [],
+        "reconstructed_read_sources": [],
+        "handoff_evidence": [
+          {
+            "path": "django/forms/fields.py",
+            "quote": "def __deepcopy__(self, memo):\n        result = copy.copy(self)\n        memo[id(self)] = result\n        result.widget = copy.deepcopy(self.widget, memo)\n        result.validators = self.validators[:]\n        return result",
+            "expected_path": "django/forms/fields.py",
+            "verbatim_match": true,
+            "source_excerpt": "def __deepcopy__(self, memo):\n        result = copy.copy(self)\n        memo[id(self)] = result\n        result.widget = copy.deepcopy(self.widget, memo)\n        result.validators = self.validators[:]\n        return result",
+            "whitespace_only_difference": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pair": "03_financial_revision",
+    "audit": "analysis/result_x_contract/live_validation_01/03_financial_revision/result_x_audit.json",
+    "audit_sha256": "34a435e629d7cb59cbf4ac9e581612319f4d7aec15638e887e43a795b1220bb1",
+    "clean_error": "Evidence must cite an original source actually read",
+    "stages": [
+      {
+        "index": 0,
+        "role": "extractor",
+        "read_calls": [
+          {
+            "path": "documents/report.md",
+            "canonical_path": "documents/report.md",
+            "original_bytes_returned": true,
+            "output_sha256": "610f57927c361ffb083245e7205262aaecea2e851164aa6096d3866a7e154937"
+          },
+          {
+            "path": "documents/call_transcript.md",
+            "canonical_path": "documents/call_transcript.md",
+            "original_bytes_returned": true,
+            "output_sha256": "691696c9fa8eaf7d51a6bd9007f3abd89726b44ceb6143bd588906920d05d3fb"
+          }
+        ],
+        "reconstructed_read_sources": [
+          "documents/call_transcript.md",
+          "documents/report.md"
+        ],
+        "handoff_evidence": [
+          {
+            "path": "documents/report.md",
+            "quote": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "expected_path": "documents/report.md",
+            "verbatim_match": true,
+            "source_excerpt": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "whitespace_only_difference": false
+          },
+          {
+            "path": "documents/call_transcript.md",
+            "quote": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions).",
+            "expected_path": "documents/call_transcript.md",
+            "verbatim_match": true,
+            "source_excerpt": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions).",
+            "whitespace_only_difference": false
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "role": "analyst",
+        "read_calls": [],
+        "reconstructed_read_sources": [],
+        "handoff_evidence": [
+          {
+            "path": "documents/report.md",
+            "quote": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "expected_path": "documents/report.md",
+            "verbatim_match": true,
+            "source_excerpt": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "whitespace_only_difference": false
+          },
+          {
+            "path": "documents/call_transcript.md",
+            "quote": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions).",
+            "expected_path": "documents/call_transcript.md",
+            "verbatim_match": true,
+            "source_excerpt": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions).",
+            "whitespace_only_difference": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pair": "04_research_branch",
+    "audit": "analysis/result_x_contract/live_validation_01/04_research_branch/result_x_audit.json",
+    "audit_sha256": "2035e527feb8f7f85685550970e13d4dd93932aaba884f09a9b02a3eea1903d3",
+    "clean_error": "Evidence quote absent from original source",
+    "stages": [
+      {
+        "index": 0,
+        "role": "researcher",
+        "read_calls": [
+          {
+            "path": "documents/paper_a.md",
+            "canonical_path": "documents/paper_a.md",
+            "original_bytes_returned": true,
+            "output_sha256": "0b4bc542a48725e0cc76ab2269008fa627058aafecf067bc892c9e73d2a83839"
+          },
+          {
+            "path": "documents/paper_b.md",
+            "canonical_path": "documents/paper_b.md",
+            "original_bytes_returned": true,
+            "output_sha256": "842bb4e89e785c5a1e3d3c53e21db8d3995099495e407eae176c0d3e9bf6a89a"
+          },
+          {
+            "path": "documents/trends_report.md",
+            "canonical_path": "documents/trends_report.md",
+            "original_bytes_returned": true,
+            "output_sha256": "3d51408f49f263b5127123f843e641dfff5045993ae3d0c162ab48c8631d98f1"
+          }
+        ],
+        "reconstructed_read_sources": [
+          "documents/paper_a.md",
+          "documents/paper_b.md",
+          "documents/trends_report.md"
+        ],
+        "handoff_evidence": [
+          {
+            "path": "documents/paper_a.md",
+            "quote": "Our experiments across 12 benchmark datasets show that NAS-optimized models achieve a **40% improvement** in F1 score over hand-designed architectures when training data is limited (fewer than 5,000 examples).",
+            "expected_path": "documents/paper_a.md",
+            "verbatim_match": false,
+            "source_excerpt": "Our experiments across 12 benchmark datasets show that\nNAS-optimized models achieve a **40% improvement** in F1 score over\nhand-designed architectures when training data is limited (fewer than 5,000\nexamples).",
+            "whitespace_only_difference": true
+          },
+          {
+            "path": "documents/paper_b.md",
+            "quote": "On 8 of 12 benchmark datasets, a manually tuned transformer model matches or exceeds NAS-optimized variants.",
+            "expected_path": "documents/paper_b.md",
+            "verbatim_match": false,
+            "source_excerpt": "On 8 of 12 benchmark datasets,\na manually tuned transformer model matches or exceeds NAS-optimized variants.",
+            "whitespace_only_difference": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pair": "05_financial_merge",
+    "audit": "analysis/result_x_contract/live_validation_01/05_financial_merge/result_x_audit.json",
+    "audit_sha256": "0b6f0109abcb98b0cf3fa578fea74062cc0fc937a3b94850e3da2abd9fe81f2f",
+    "clean_error": null,
+    "stages": [
+      {
+        "index": 0,
+        "role": "researcher",
+        "read_calls": [
+          {
+            "path": "documents/report.md",
+            "canonical_path": "documents/report.md",
+            "original_bytes_returned": true,
+            "output_sha256": "610f57927c361ffb083245e7205262aaecea2e851164aa6096d3866a7e154937"
+          },
+          {
+            "path": "documents/call_transcript.md",
+            "canonical_path": "documents/call_transcript.md",
+            "original_bytes_returned": true,
+            "output_sha256": "691696c9fa8eaf7d51a6bd9007f3abd89726b44ceb6143bd588906920d05d3fb"
+          }
+        ],
+        "reconstructed_read_sources": [
+          "documents/call_transcript.md",
+          "documents/report.md"
+        ],
+        "handoff_evidence": [
+          {
+            "path": "documents/report.md",
+            "quote": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "expected_path": "documents/report.md",
+            "verbatim_match": true,
+            "source_excerpt": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "whitespace_only_difference": false
+          },
+          {
+            "path": "documents/report.md",
+            "quote": "(1) amounts included represent firm, non-cancelable commitments. Debt obligations: at december 31, 2006, the company's long-term debt obligations, including current maturities and unamortized discount and issue costs, totaled $ 4.1 billion, as compared to $ 4.0 billion at december 31, 2005.",
+            "expected_path": "documents/report.md",
+            "verbatim_match": true,
+            "source_excerpt": "(1) amounts included represent firm, non-cancelable commitments. Debt obligations: at december 31, 2006, the company's long-term debt obligations, including current maturities and unamortized discount and issue costs, totaled $ 4.1 billion, as compared to $ 4.0 billion at december 31, 2005.",
+            "whitespace_only_difference": false
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "role": "analyst",
+        "read_calls": [
+          {
+            "path": "documents/report.md",
+            "canonical_path": "documents/report.md",
+            "original_bytes_returned": true,
+            "output_sha256": "610f57927c361ffb083245e7205262aaecea2e851164aa6096d3866a7e154937"
+          },
+          {
+            "path": "documents/call_transcript.md",
+            "canonical_path": "documents/call_transcript.md",
+            "original_bytes_returned": true,
+            "output_sha256": "691696c9fa8eaf7d51a6bd9007f3abd89726b44ceb6143bd588906920d05d3fb"
+          }
+        ],
+        "reconstructed_read_sources": [
+          "documents/call_transcript.md",
+          "documents/report.md"
+        ],
+        "handoff_evidence": [
+          {
+            "path": "documents/report.md",
+            "quote": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "expected_path": "documents/report.md",
+            "verbatim_match": true,
+            "source_excerpt": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451",
+            "whitespace_only_difference": false
+          },
+          {
+            "path": "documents/call_transcript.md",
+            "quote": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions).",
+            "expected_path": "documents/call_transcript.md",
+            "verbatim_match": true,
+            "source_excerpt": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions).",
+            "whitespace_only_difference": false
+          }
+        ]
+      },
+      {
+        "index": 2,
+        "role": "verifier",
+        "read_calls": [
+          {
+            "path": "documents/report.md",
+            "canonical_path": "documents/report.md",
+            "original_bytes_returned": true,
+            "output_sha256": "610f57927c361ffb083245e7205262aaecea2e851164aa6096d3866a7e154937"
+          },
+          {
+            "path": "documents/call_transcript.md",
+            "canonical_path": "documents/call_transcript.md",
+            "original_bytes_returned": true,
+            "output_sha256": "691696c9fa8eaf7d51a6bd9007f3abd89726b44ceb6143bd588906920d05d3fb"
+          }
+        ],
+        "reconstructed_read_sources": [
+          "documents/call_transcript.md",
+          "documents/report.md"
+        ],
+        "handoff_evidence": []
+      }
+    ]
+  },
+  {
+    "pair": "06_swe_worker",
+    "audit": "analysis/result_x_contract/live_validation_01/06_swe_worker/result_x_audit.json",
+    "audit_sha256": "dc476463a0507d2d6132afa4eacaec293bce88114b83da561f2b3bd943b4fda6",
+    "clean_error": "Evidence quote absent from original source",
+    "stages": [
+      {
+        "index": 0,
+        "role": "specialist_a",
+        "read_calls": [
+          {
+            "path": "django/forms/fields.py",
+            "canonical_path": "django/forms/fields.py",
+            "original_bytes_returned": true,
+            "output_sha256": "73c960e54202b9702e46cb0d7133cbde2268c9b54b3e577b02f7751d4bb02b96"
+          }
+        ],
+        "reconstructed_read_sources": [
+          "django/forms/fields.py"
+        ],
+        "handoff_evidence": [
+          {
+            "path": "django/forms/fields.py",
+            "quote": "def __deepcopy__(self, memo):\n        result = copy.copy(self)\n        memo[id(self)] = result\n        result.widget = copy.deepcopy(self.widget, memo)\n        result.validators = self.validators[:]\n        return result",
+            "expected_path": "django/forms/fields.py",
+            "verbatim_match": true,
+            "source_excerpt": "def __deepcopy__(self, memo):\n        result = copy.copy(self)\n        memo[id(self)] = result\n        result.widget = copy.deepcopy(self.widget, memo)\n        result.validators = self.validators[:]\n        return result",
+            "whitespace_only_difference": false
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "role": "specialist_b",
+        "read_calls": [
+          {
+            "path": "django/forms/fields.py",
+            "canonical_path": "django/forms/fields.py",
+            "original_bytes_returned": true,
+            "output_sha256": "73c960e54202b9702e46cb0d7133cbde2268c9b54b3e577b02f7751d4bb02b96"
+          }
+        ],
+        "reconstructed_read_sources": [
+          "django/forms/fields.py"
+        ],
+        "handoff_evidence": [
+          {
+            "path": "django/forms/fields.py",
+            "quote": "def __deepcopy__(self, memo):\n    result = copy.copy(self)\n    memo[id(self)] = result\n    result.widget = copy.deepcopy(self.widget, memo)\n    result.validators = self.validators[:]\n    return result",
+            "expected_path": "django/forms/fields.py",
+            "verbatim_match": false,
+            "source_excerpt": "def __deepcopy__(self, memo):\n        result = copy.copy(self)\n        memo[id(self)] = result\n        result.widget = copy.deepcopy(self.widget, memo)\n        result.validators = self.validators[:]\n        return result",
+            "whitespace_only_difference": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pair": "07_research_fanout",
+    "audit": "analysis/result_x_contract/live_validation_01/07_research_fanout/result_x_audit.json",
+    "audit_sha256": "ea34c6df173ed5f5132a71c3604b66efaf93d9aa70c49b58a2f5d7974e92aed1",
+    "clean_error": "Evidence quote absent from original source",
+    "stages": [
+      {
+        "index": 0,
+        "role": "coordinator",
+        "read_calls": [
+          {
+            "path": "documents/paper_a.md",
+            "canonical_path": "documents/paper_a.md",
+            "original_bytes_returned": true,
+            "output_sha256": "0b4bc542a48725e0cc76ab2269008fa627058aafecf067bc892c9e73d2a83839"
+          },
+          {
+            "path": "documents/paper_b.md",
+            "canonical_path": "documents/paper_b.md",
+            "original_bytes_returned": true,
+            "output_sha256": "842bb4e89e785c5a1e3d3c53e21db8d3995099495e407eae176c0d3e9bf6a89a"
+          },
+          {
+            "path": "documents/trends_report.md",
+            "canonical_path": "documents/trends_report.md",
+            "original_bytes_returned": true,
+            "output_sha256": "3d51408f49f263b5127123f843e641dfff5045993ae3d0c162ab48c8631d98f1"
+          }
+        ],
+        "reconstructed_read_sources": [
+          "documents/paper_a.md",
+          "documents/paper_b.md",
+          "documents/trends_report.md"
+        ],
+        "handoff_evidence": [
+          {
+            "path": "documents/paper_a.md",
+            "quote": "Our experiments across 12 benchmark datasets show that NAS-optimized models achieve a **40% improvement** in F1 score over hand-designed architectures when training data is limited (fewer than 5,000 examples).",
+            "expected_path": "documents/paper_a.md",
+            "verbatim_match": false,
+            "source_excerpt": "Our experiments across 12 benchmark datasets show that\nNAS-optimized models achieve a **40% improvement** in F1 score over\nhand-designed architectures when training data is limited (fewer than 5,000\nexamples).",
+            "whitespace_only_difference": true
+          },
+          {
+            "path": "documents/paper_b.md",
+            "quote": "On 8 of 12 benchmark datasets, a manually tuned transformer model matches or exceeds NAS-optimized variants. We identify data augmentation — not architecture search — as the primary driver of low-resource performance gains.",
+            "expected_path": "documents/paper_b.md",
+            "verbatim_match": false,
+            "source_excerpt": "On 8 of 12 benchmark datasets,\na manually tuned transformer model matches or exceeds NAS-optimized variants.\nWe identify data augmentation — not architecture search — as the primary\ndriver of low-resource performance gains.",
+            "whitespace_only_difference": true
+          }
+        ]
+      }
+    ]
+  }
+]

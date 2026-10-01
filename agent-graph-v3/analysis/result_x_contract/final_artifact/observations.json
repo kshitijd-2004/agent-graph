@@ -1,0 +1,89 @@
+[
+  {
+    "pair": "01_financial_forward",
+    "audit_sha256": "8c6d5b0ee373e7cda814a82499a1414ef74d6b67f5a96b8924cf5f74bef7b236",
+    "error": "Final artifact was not written in this stage",
+    "configured_report_path": "output/financial_summary.md",
+    "stage_count": 11,
+    "final_stage": "analyst",
+    "final_tools": [
+      "list_directory",
+      "read_text_file",
+      "write_file",
+      "search_files",
+      "create_directory",
+      "submit_final"
+    ],
+    "all_tool_call_counts": {
+      "read_text_file": 22
+    },
+    "all_model_call_counts": {
+      "read_text_file": 22,
+      "handoff": 10,
+      "submit_final": 1
+    },
+    "write_calls": [],
+    "existing_configured_artifacts": [],
+    "submitted_paths": [
+      "output/financial_summary.md"
+    ]
+  },
+  {
+    "pair": "02_swe_reverse",
+    "audit_sha256": "0182dbe14ed9d9987ab8b62e05de77f35ccd1a3ed86a08ff04294cf36eff127e",
+    "error": "Final artifact was not written in this stage",
+    "configured_report_path": "output/code_review_report.md",
+    "stage_count": 11,
+    "final_stage": "reviewer",
+    "final_tools": [
+      "list_directory",
+      "read_text_file",
+      "write_file",
+      "search_files",
+      "create_directory",
+      "submit_final"
+    ],
+    "all_tool_call_counts": {
+      "read_text_file": 11
+    },
+    "all_model_call_counts": {
+      "read_text_file": 11,
+      "handoff": 10,
+      "submit_final": 1
+    },
+    "write_calls": [],
+    "existing_configured_artifacts": [],
+    "submitted_paths": [
+      "output/code_review_report.md"
+    ]
+  },
+  {
+    "pair": "06_swe_worker",
+    "audit_sha256": "fa7141941604c6f60b73b61816b25047f3efe1d6a77b20738545552d3607ee0f",
+    "error": "Final artifact was not written in this stage",
+    "configured_report_path": "output/code_review_report.md",
+    "stage_count": 10,
+    "final_stage": "coordinator",
+    "final_tools": [
+      "list_directory",
+      "read_text_file",
+      "write_file",
+      "search_files",
+      "create_directory",
+      "submit_final"
+    ],
+    "all_tool_call_counts": {
+      "read_text_file": 10
+    },
+    "all_model_call_counts": {
+      "read_text_file": 10,
+      "handoff": 9,
+      "submit_final": 1
+    },
+    "write_calls": [],
+    "existing_configured_artifacts": [],
+    "submitted_paths": [
+      "output/code_review_report.md"
+    ]
+  }
+]
