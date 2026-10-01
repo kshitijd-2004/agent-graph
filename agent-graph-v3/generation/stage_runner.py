@@ -359,8 +359,11 @@ class StageRunner:
             # In review_loop topologies, gate submit_final on the number of
             # completed review cycles. The analyst may only finalize after
             # required_review_cycles backedges have occurred.
+            # A forced final-only stage must be able to finish even when the
+            # cycle/event budget prevents that minimum from being reached.
             can_submit_final = True
-            if topology is not None and topology.topology_id == "review_loop":
+            if (stage.can_handoff and topology is not None
+                    and topology.topology_id == "review_loop"):
                 if backedge_count < getattr(topology, 'required_review_cycles', 1):
                     can_submit_final = False
             if can_submit_final:
@@ -392,6 +395,19 @@ class StageRunner:
         # It is NOT rebuilt from global events each turn.
         # On handoff, the receiving agent gets a FRESH history.
         stage_history: List[Dict[str, Any]] = []
+        # Private provenance for artifacts actually inserted into this context.
+        # Generated summaries do not inherit taint merely by ancestry.
+        context_artifacts = []
+        prior_by_id = {e.event_id: e for e in prior_events}
+        incoming_event = prior_by_id.get(incoming_dep_event_id)
+
+        def copied_lineages(content):
+            """Exact artifact copies only; paraphrases remain unassessed."""
+            found = {}
+            for lineage, source_id, artifact in context_artifacts:
+                if artifact.strip() and artifact.strip() in content:
+                    found[(lineage.lep_code, lineage.origin_event_id)] = (lineage, source_id)
+            return list(found.values())
 
         # Seed history with system + task — reuse the canonical system_prompt
         # built above (which includes remaining_reviews). Do NOT rebuild here.
@@ -417,6 +433,11 @@ class StageRunner:
         payloads: List[HandoffPayload] = handoff_from_payload or []
         for handoff_from_payload in payloads:
             handoff_received = True
+            if getattr(self, "result_x", None) is not None:
+                from generation.result_x_production import deliver
+                deliver(self, handoff_from_payload, current_role, stage_history,
+                        incoming_event, prior_by_id, propagation_tracker, context_artifacts)
+                continue
             handoff_content = (
                 f"[Handoff received from {handoff_from_payload.from_agent}]\n"
                 f"Summary: {handoff_from_payload.summary}\n"
@@ -435,24 +456,16 @@ class StageRunner:
                 id_meta = (handoff_from_payload.extra or {}).get(
                     "input_disregard"
                 ) if handoff_from_payload else None
-                if not id_meta:
-                    # Fallback: check LEP instances directly (legacy path)
-                    for code, lep_instance in lep_orchestrator._active_leps.items():
-                        if code != "LEP_INPUT_DISREGARD":
-                            continue
-                        instances = getattr(lep_instance, 'get_instances', lambda: [])()
-                        for inst in instances:
-                            if (inst.fired and inst.target_agent == current_role):
-                                id_meta = {
-                                    "instruction": lep_instance.get_injected_instruction(inst),
-                                    "disregard_type": inst.disregard_type,
-                                }
-                                break
-                        if id_meta:
-                            break
-
-                if id_meta:
-                    instruction = id_meta.get("instruction", "")
+                # A merged payload nests per-branch interventions. Use only
+                # actual incoming edges, never a stale global target-role match.
+                id_metas = [id_meta] if id_meta else []
+                for branch in (handoff_from_payload.extra or {}).get("branch_metadata", {}).values():
+                    if branch.get("input_disregard"):
+                        id_metas.append(branch["input_disregard"])
+                instructions = dict.fromkeys(meta.get("instruction", "") for meta in id_metas)
+                for instruction in instructions:
+                    if not instruction:
+                        continue
                     handoff_content += (
                         f"\n[Note from {handoff_from_payload.from_agent}: "
                         f"{instruction}]"
@@ -466,6 +479,18 @@ class StageRunner:
                 "role": "user",
                 "content": handoff_content,
             })
+
+            if propagation_tracker is not None and incoming_event is not None:
+                for source_id in incoming_event.depends_on:
+                    source = prior_by_id.get(source_id)
+                    if source is None:
+                        continue
+                    for lineage in propagation_tracker.get_lineages_for_event(source_id):
+                        artifact = (source.hidden.get("input_disregard", {}).get("instruction") or source.output_text
+                                    if lineage.lep_code == "LEP_INPUT_DISREGARD" else source.output_text)
+                        if artifact and artifact in handoff_content:
+                            context_artifacts.append((lineage, source_id, artifact))
+                            propagation_tracker.annotate_delivery(incoming_event, lineage)
 
             # Native backend (APIBackend) owns its own _conversation list
             # which is the source of truth for messages sent to the model.
@@ -545,6 +570,24 @@ class StageRunner:
 
             # Force tool selection — works for both native and text-mode backends.
             tool_choice = "any"
+
+            # Snapshot before generate(): native backends append the response
+            # to their conversation, which is not part of this call's input.
+            if is_native:
+                submitted_messages = self.llm._messages
+                if callable(submitted_messages):
+                    submitted_messages = submitted_messages()
+                submitted_input = json.dumps(submitted_messages)
+            else:
+                submitted_input = prompt
+
+            def annotate_processed_input(evt):
+                if propagation_tracker is None:
+                    return
+                for lineage, source_id, content in context_artifacts:
+                    needle = json.dumps(content)[1:-1] if is_native else content
+                    if needle and needle in submitted_input:
+                        propagation_tracker.annotate_input_processing(evt, lineage, source_id)
 
             try:
                 # ── First API call ───────────────────────────────────────────────
@@ -701,6 +744,7 @@ class StageRunner:
             _pending_deps.clear()
             _last_reasoning_event_id = reasoning_evt.event_id
             events.append(reasoning_evt)
+            annotate_processed_input(reasoning_evt)
             if lep_orchestrator:
                 lep_orchestrator.evaluate_for_boundary(reasoning_evt)
 
@@ -845,11 +889,8 @@ class StageRunner:
                                         event_id=tr_evt.event_id,
                                         agent_role=current_role,
                                     )
-                                    propagation_tracker.annotate_consumption(
-                                        event=tr_evt,
-                                        lineage=lineage,
-                                        consuming_agent=current_role,
-                                    )
+                                    propagation_tracker.annotate_delivery(tr_evt, lineage)
+                                    context_artifacts.append((lineage, tr_evt.event_id, result_text))
 
                                 logger.info(
                                     "LEP %s: tool result corrupted "
@@ -876,14 +917,12 @@ class StageRunner:
                 query = action_input.get("query", "")
                 top_k = int(action_input.get("top_k", 3))
                 results = []
-                poisoned_keys_in_results = []
+                poisoned_records = []
                 if stage_memory_store is not None:
                     results = stage_memory_store.retrieve(query, top_k=top_k)
                     for rec, score in results:
-                        if lep_orchestrator:
-                            mp_lep = lep_orchestrator.get_lep_instance("LEP_MEMORY_POISONING")
-                            if mp_lep and mp_lep.is_poisoned(rec.key):
-                                poisoned_keys_in_results.append(rec.key)
+                        for code, origin_id in rec.metadata.get("delivery_origins", []):
+                            poisoned_records.append((rec, code, origin_id))
 
                 # Format results for the model
                 if results:
@@ -913,29 +952,15 @@ class StageRunner:
                 ]
                 events.append(retrieval_evt)
 
-                # Label consumption if any retrieved record is poisoned
-                if poisoned_keys_in_results:
-                    label_consumption(retrieval_evt, "LEP_MEMORY_POISONING")
-                    if propagation_tracker is not None:
-                        mp_lep = lep_orchestrator.get_lep_instance("LEP_MEMORY_POISONING")
-                        if mp_lep:
-                            for key in poisoned_keys_in_results:
-                                origin_evt = mp_lep.get_origin_event_id(key)
-                                if origin_evt:
-                                    lineage = propagation_tracker.get_lineage(
-                                        "LEP_MEMORY_POISONING", origin_evt
-                                    )
-                                    if lineage is None:
-                                        lineage = propagation_tracker.register_origin(
-                                            lep_code="LEP_MEMORY_POISONING",
-                                            event_id=origin_evt,
-                                            agent_role=current_role,
-                                        )
-                                    propagation_tracker.annotate_consumption(
-                                        event=retrieval_evt,
-                                        lineage=lineage,
-                                        consuming_agent=current_role,
-                                    )
+                # Attribute the returned version, not a key that was poisoned
+                # sometime in the past (keys may collide or be overwritten).
+                if propagation_tracker is not None:
+                    for rec, code, origin_id in poisoned_records:
+                        lineage = propagation_tracker.get_lineage(code, origin_id)
+                        if lineage is not None:
+                            propagation_tracker.annotate_delivery(retrieval_evt, lineage)
+                            context_artifacts.append((lineage, retrieval_evt.event_id,
+                                                      rec.value[:300]))
 
                 # Create TOOL_RESULT event
                 tr_evt = make_evt(
@@ -1055,6 +1080,33 @@ class StageRunner:
                         metadata={"write_event_id": write_evt.event_id},
                     )
                     stage_memory_store.add(record)
+                    record.metadata["perturbation_origins"] = []
+                    record.metadata["delivery_origins"] = []
+                    if propagation_tracker is not None:
+                        for lineage, source_id in copied_lineages(value):
+                            propagation_tracker.annotate_storage(write_evt, lineage)
+                            write_evt.event_labels.inferred_propagation = True
+                            write_evt.hidden.setdefault("copy_evidence", []).append({
+                                "source_event_id": source_id, "origin_event_id": lineage.origin_event_id,
+                                "basis": "exact_artifact_match"})
+                            record.metadata["perturbation_origins"].append(
+                                [lineage.lep_code, lineage.origin_event_id])
+                        for lineage, _ in copied_lineages(value[:300]):
+                            record.metadata["delivery_origins"].append(
+                                [lineage.lep_code, lineage.origin_event_id])
+                    if write_was_poisoned:
+                        record.metadata["poison_origin_event_id"] = write_evt.event_id
+                        if propagation_tracker is not None:
+                            lineage = propagation_tracker.register_origin(
+                                "LEP_MEMORY_POISONING", write_evt.event_id, current_role)
+                            propagation_tracker.annotate_storage(write_evt, lineage)
+                            record.metadata["perturbation_origins"].append(
+                                [lineage.lep_code, lineage.origin_event_id])
+                            # Retrieval exposes only a prefix. An altered suffix
+                            # outside that prefix was stored but never delivered.
+                            if value[:300] != action_input["value"].strip()[:300]:
+                                record.metadata["delivery_origins"].append(
+                                    [lineage.lep_code, lineage.origin_event_id])
 
                 # Create TOOL_RESULT event for the write_memory call
                 tool_result_text = f"Memory record stored: {key}"
@@ -1225,6 +1277,9 @@ class StageRunner:
                     corrupted_tool_call_event_id="",
                 )
 
+                if getattr(self, "result_x", None) is not None:
+                    self.result_x.seal(payload, payloads)
+
                 # ── Create the boundary event BEFORE LEP mutation ────────
                 hoff_evt = make_evt(
                     TraceEventType.AGENT_HANDOFF, agent_id,
@@ -1308,6 +1363,7 @@ class StageRunner:
                             )
                             if actually_changed:
                                 payload.summary = corruption.corrupted_content
+                                hoff_evt.output_text = payload.summary
                                 payload.contains_corrupted_data = True
 
                                 # Record successful mutation so this LEP is
@@ -1450,15 +1506,34 @@ class StageRunner:
                                         disregard_result
                                     ),
                                 }
+                                if getattr(self, "result_x", None) is not None:
+                                    from generation.result_x_production import disregard
+                                    instruction = disregard(payload)
+                                    for metadata in (hoff_evt.hidden["input_disregard"],
+                                                     payload.extra["input_disregard"]):
+                                        metadata["instruction"] = instruction
+                                        metadata["disregard_type"] = "result_x_non_use"
                                 lep_orchestrator.mark_fired_origin(
                                     "LEP_INPUT_DISREGARD", target=current_role
                                 )
                                 label_injection(hoff_evt, "LEP_INPUT_DISREGARD")
+                                if propagation_tracker is not None:
+                                    lineage = propagation_tracker.register_origin(
+                                        "LEP_INPUT_DISREGARD", hoff_evt.event_id, current_role)
+                                    propagation_tracker.annotate_propagation(hoff_evt, lineage, payload.to_agent)
                                 logger.info(
                                     "LEP_INPUT_DISREGARD: disregard created "
                                     "event=%s target=%s",
                                     hoff_evt.event_id, payload.to_agent,
                                 )
+
+                if propagation_tracker is not None:
+                    for lineage, source_id in copied_lineages(payload.summary):
+                        propagation_tracker.annotate_propagation(hoff_evt, lineage, payload.to_agent)
+                        hoff_evt.event_labels.inferred_propagation = True
+                        hoff_evt.hidden.setdefault("copy_evidence", []).append({
+                            "source_event_id": source_id, "origin_event_id": lineage.origin_event_id,
+                            "basis": "exact_artifact_match"})
 
                 return StageResult(
                     stage_id=stage.stage_id,
@@ -1477,6 +1552,8 @@ class StageRunner:
                     break
 
                 summary = action_input.get("summary", "") or "Task complete"
+                if getattr(self, "result_x", None) is not None:
+                    self.result_x.submit(action_input)
                 final_evt = make_evt(
                     TraceEventType.FINAL_RESPONSE, agent_id, "user",
                     role=current_role,
@@ -1492,6 +1569,7 @@ class StageRunner:
                 _pending_deps.clear()
 
                 events.append(final_evt)
+                annotate_processed_input(final_evt)
 
                 if lep_orchestrator and lep_orchestrator._active_leps:
                     lep_orchestrator.evaluate_for_boundary(final_evt)
@@ -1781,7 +1859,7 @@ class StageRunner:
         for i, stage in enumerate(stages):
             if stage.agent_role == current_role and i + 1 < len(stages):
                 return [stages[i + 1].agent_role]
-        return [topology.exit_stage]
+        return [topology.stage_by_id[topology.exit_stage].agent_role]
 
     @staticmethod
     def _build_workspace_listing(ws_path) -> str:

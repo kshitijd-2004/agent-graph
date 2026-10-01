@@ -1,0 +1,26 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /u/kdhande/agent-graph
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 353 items
+
+tests/test_result_x_production.py ..................................     [  9%]
+tests/test_result_x_workflow.py ..................................       [ 19%]
+tests/test_delivery_provenance.py ..........................             [ 26%]
+tests/test_injection_count_regression.py ............................... [ 35%]
+..........................                                               [ 42%]
+tests/test_injection_lifecycle_diagnosis.py ...                          [ 43%]
+tests/test_runner_admission.py ......................................... [ 55%]
+.                                                                        [ 55%]
+tests/test_memory_many_to_one.py ...........                             [ 58%]
+tests/test_backend_retries.py .................................          [ 67%]
+tests/test_topology_targeting.py .................                       [ 72%]
+tests/test_fan_out_fan_in.py ......                                      [ 74%]
+tests/test_behavioral_anomaly.py ....................................... [ 85%]
+............................                                             [ 93%]
+tests/test_fixture_aware_propagation.py .........                        [ 96%]
+tests/test_review_cap_finalize.py ..............                         [100%]
+
+- generated xml file: /u/kdhande/agent-graph/agent-graph-v3/analysis/result_x_contract/production/regressions.xml -
+============================= 353 passed in 8.81s ==============================

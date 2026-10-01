@@ -596,6 +596,17 @@ class ScenarioRunner:
         self.propagation_evaluator = DryRunEvaluator()
         self._task_evaluator_cache: Dict[tuple, Any] = {}
 
+    def run_result_x_pair(self, scenario, fixture_root, *, backend_factory,
+                          validator, final_path, pair_name):
+        """Explicit matched Result-X clean/ID experiment on production execution.
+
+        Other LEPs and ordinary run() calls retain the legacy protocol.
+        See generation.result_x_production for validation and audit contracts.
+        """
+        from generation.result_x_production import run_pair
+        return run_pair(self, scenario, fixture_root, backend_factory=backend_factory,
+                        validator=validator, final_path=final_path, pair_name=pair_name)
+
     def run(
         self,
         scenario: ScenarioSpec,
@@ -620,8 +631,14 @@ class ScenarioRunner:
         self._backend_diagnostics = {"backend_retry_count": 0}
         try:
             trace = self._execute_scenario(scenario, fixture_root, execution_id)
+            trace.metadata["propagation_label_semantics"] = "input_processing_v2"
             trace.metadata.update(self._backend_diagnostics)
             runtime = (datetime.now(timezone.utc) - t0).total_seconds()
+
+            # Result-X artifacts become public only after scheduler completion.
+            result_x = getattr(self, "_result_x_session", None)
+            if result_x is not None and trace.metadata.get("termination_reason") == "completed":
+                result_x.publish()
 
             # Evaluate the trace (two-tier: propagation + task correctness)
             evaluation = self._evaluate(trace, scenario, fixture_root)
@@ -1080,6 +1097,9 @@ class ScenarioRunner:
 
         from generation.stage_runner import StageRunner
         stage_runner = StageRunner(llm_backend=self.llm)
+        if getattr(self, "_result_x_session", None) is not None:
+            from generation.result_x_production import ResultXStageRunner
+            stage_runner = ResultXStageRunner(self.llm, self._result_x_session)
         self._backend_diagnostics = stage_runner.backend_diagnostics
 
         final_result = None
@@ -1110,7 +1130,9 @@ class ScenarioRunner:
         handoff_count = 0
         backedge_count = 0
         review_cap_forced_final = False
+        review_finalization_reason = None
         stage_run_counts: Dict[str, int] = {}
+        stage_event_costs: Dict[str, int] = {}
 
         loop_iteration = 0
         while stage_queue and loop_iteration < topology.max_iterations:
@@ -1244,6 +1266,12 @@ class ScenarioRunner:
                 evt.trace_id = trace_id
 
             events.extend(stage_result.events)
+            # Include the transition and keep the largest observed invocation
+            # cost, so a short later turn does not erase the headroom estimate.
+            stage_event_costs[current_stage.stage_id] = max(
+                stage_event_costs.get(current_stage.stage_id, 0),
+                len(stage_result.events) + 1,
+            )
             stage_run_counts[current_stage.stage_id] = (
                 stage_run_counts.get(current_stage.stage_id, 0) + 1)
 
@@ -1298,23 +1326,9 @@ class ScenarioRunner:
                         recovered_event_ids,
                     )
 
-            # ── O2M consumption tracking: annotate shared-artifact consumption ──
-            # In one_to_many mode, workers consume the coordinator's handoff as
-            # a shared artifact. Annotate the transition event and propagation
-            # tracker so downstream analysis can identify which workers consumed
-            # the perturbation.
-            if propagation_tracker is not None and shared is not None:
-                # Reuse the upstream lineage; consumption never creates origins.
-                for lineage in propagation_tracker.get_lineages_for_event(shared["event_id"]):
-                    label_consumption(transition_evt, lineage.lep_code)
-                    propagation_tracker.annotate_consumption(
-                        transition_evt, lineage, current_stage.agent_role,
-                    )
-                    propagation_tracker.annotate_propagation(
-                        event=transition_evt,
-                        lineage=lineage,
-                        target_agent=current_stage.agent_role,
-                    )
+            # StageRunner records delivery and successful input processing for
+            # every topology. A transition itself neither consumes nor forwards
+            # the shared artifact, and a failed backend call is not consumption.
 
             # After a merge stage runs, its source branch payloads have been
             # consumed. Clear them so subsequent stages don't see stale
@@ -1445,13 +1459,35 @@ class ScenarioRunner:
                     # Only a return from a worker that was sent back counts.
                     counts_as_review = stage_run_counts.get(current_stage.stage_id, 0) > 1
                 if counts_as_review:
-                    backedge_count += 1
+                    # Admit a backedge before counting it. The count represents
+                    # accepted revision rounds, not the refused attempt.
+                    cycle_cap_reached = backedge_count >= topology.max_review_cycles
+                    review_budget_exhausted = False
+                    if topology.topology_id == "review_loop":
+                        # A revision needs both stages plus a final-only pass if
+                        # the reviewer still refuses to accept it. Reserve that
+                        # pass BEFORE dispatching the next inspector. Merely
+                        # moving the cycle-cap check cannot fit four two-read
+                        # rounds into a 50-event budget.
+                        next_cycle_cost = sum(stage_event_costs.values())
+                        # Replace its transition with the recovery event: one
+                        # event plus the exit stage's observed execution cost.
+                        # This is an estimate; an unexpectedly expensive stage
+                        # must still fail the unchanged global event check.
+                        final_cost = stage_event_costs[current_stage.stage_id]
+                        review_budget_exhausted = (
+                            global_event_counter[0] + next_cycle_cost + final_cost
+                            >= self.max_events
+                        )
                     logger.info(
-                        "Backedge %s -> %s (traversal %d/%d)",
+                        "Backedge request %s -> %s (accepted %d/%d)",
                         outgoing.from_stage, outgoing.to_stage,
                         backedge_count, topology.max_review_cycles,
                     )
-                    if backedge_count > topology.max_review_cycles:
+                    if cycle_cap_reached or review_budget_exhausted:
+                        review_finalization_reason = (
+                            "max_review_cycles" if cycle_cap_reached else "review_event_budget"
+                        )
                         # Cap reached. Refuse the backedge, but instead of ending with no
                         # answer, give the exit stage (analyst / coordinator) one last turn
                         # in which it can only finalize. In review_loop the capped stage is
@@ -1475,10 +1511,14 @@ class ScenarioRunner:
                             exit_stage.agent_id if exit_stage else "user",
                             role=current_stage.agent_role,
                             output_text=(
-                                f"Review cycle limit ({topology.max_review_cycles}) reached. "
+                                (f"Review cycle limit ({topology.max_review_cycles}) reached. "
+                                 if cycle_cap_reached else
+                                 "Insufficient event budget for another review cycle and finalization. ") +
                                 f"Handoff to {dest_role} refused; {exit_role} gets one "
                                 f"final turn and must call submit_final."
                             ),
+                            observable={"reason": review_finalization_reason,
+                                        "review_cycle_count": backedge_count},
                         )
                         cap_evt.trace_id = trace_id
                         events.append(cap_evt)
@@ -1506,7 +1546,9 @@ class ScenarioRunner:
                             for evt in forced.events:
                                 evt.trace_id = trace_id
                             events.extend(forced.events)
-                        if forced is not None and forced.termination_reason == "final":
+                        final_event_limit_reached = global_event_counter[0] >= self.max_events
+                        if (forced is not None and forced.termination_reason == "final"
+                                and not final_event_limit_reached):
                             final_result = forced
                             review_cap_forced_final = True
                             break
@@ -1519,8 +1561,9 @@ class ScenarioRunner:
                             current_stage.agent_id, "user",
                             role=current_stage.agent_role,
                             output_text=(
-                                f"Terminated: review cycle limit "
-                                f"({topology.max_review_cycles}) reached. "
+                                f"Terminated: max event limit ({self.max_events}) reached."
+                                if final_event_limit_reached else
+                                f"Terminated: forced review finalization failed. "
                                 f"Refusing to hand off to {dest_role}."
                             ),
                         )
@@ -1541,7 +1584,9 @@ class ScenarioRunner:
                                 "repetition_index": scenario.repetition_index,
                                 "propagation_mode": wcfg.propagation_mode,
                                 "dry_run": self.dry_run,
-                                "termination_reason": "max_review_cycles",
+                                "termination_reason": ("max_events_reached" if final_event_limit_reached
+                                                       else "max_review_cycles"),
+                                "review_finalization_reason": review_finalization_reason,
                                 "review_cycle_count": backedge_count,
                                 "review_cap_forced_final_attempted": forced is not None,
                                 "handoff_count": handoff_count,
@@ -1549,6 +1594,7 @@ class ScenarioRunner:
                         )
                         self.propagation_evaluator.reset()
                         return trace
+                    backedge_count += 1
 
                 # Queue all destinations from outgoing rules (fan-out support).
                 # For single-rule topologies this queues one stage — equivalent
@@ -1735,6 +1781,7 @@ class ScenarioRunner:
             ),
             "review_cycle_count": backedge_count,
             "review_cap_forced_final": review_cap_forced_final,
+            "review_finalization_reason": review_finalization_reason,
         }
 
         if final_result is None:
@@ -1831,6 +1878,12 @@ class ScenarioRunner:
             pid for pid in all_provenance if pid
         ]
         merged_extra["branch_metadata"] = branch_metadata
+        # Preserve full envelopes without sender flattening in the opt-in path.
+        if any("result_x" in p.extra for p in payloads):
+            from copy import deepcopy
+            merged_extra["result_x"] = deepcopy([
+                entry for p in payloads for entry in p.extra.get("result_x", [])
+            ])
 
         return HP(
             from_agent="+".join(source_roles),
