@@ -6,7 +6,7 @@ cohort and prevents a later selection edit from silently relabeling reviews.
 import json
 from pathlib import Path
 
-from scripts.swebench_materializer.grading.expanded_review import REVIEWS
+from scripts.swebench_materializer.grading.expanded_review import REVIEWS, ORIGINAL_CONCEPT_REPAIRS
 
 ROOT = Path(__file__).resolve().parents[3]
 BASE = ROOT / 'scripts/swebench_materializer'
@@ -18,6 +18,9 @@ def main():
     selection = json.loads((BASE / 'selection.json').read_text())
     frozen, entries = [], []
     assert set(REVIEWS) == {r['instance_id'] for r in baseline if r['selection_index'] > 100}
+    assert set(ORIGINAL_CONCEPT_REPAIRS) <= {
+        r['instance_id'] for r in baseline if r['selection_index'] <= 100
+    }
     for record in baseline:
         index = record['selection_index']
         identity = {k: record[k] for k in ('instance_id', 'fixture_id', 'gold_patch_sha256')}
@@ -29,6 +32,8 @@ def main():
         assert draft['provenance']['selection_index'] == index
         if index <= 100:
             row = dict(record['curated_row'])
+            if identity['instance_id'] in ORIGINAL_CONCEPT_REPAIRS:
+                row['concepts'] = ORIGINAL_CONCEPT_REPAIRS[identity['instance_id']]
             entry = record['selection_entry']
         else:
             row = dict(REVIEWS[identity['instance_id']])

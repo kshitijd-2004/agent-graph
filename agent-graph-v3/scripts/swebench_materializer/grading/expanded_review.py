@@ -5,6 +5,15 @@ The repair exporter pins these records to full patch hashes before use.
 """
 REVIEWS = {}
 
+# Concept-only repairs for the original cohort. The exporter retains the frozen
+# identity, locations, and probes; these are keyed by reviewed source instance.
+ORIGINAL_CONCEPT_REPAIRS = {
+    'sphinx-doc__sphinx-9591': [
+        r'pars(?:e|ed|ing).{0,35}annotation',
+        r'(?:insert|produc|result|annotation).{0,35}nodes',
+    ],
+}
+
 
 def review(instance, locus, concepts, gold, paraphrase, incorrect, reject=''):
     if instance in REVIEWS:
@@ -216,7 +225,7 @@ review('django__django-17087', 'FunctionTypeSerializer',
        'In serializer.py retain the qualified name of the owner of a class method. Its short name omits enclosing classes and produces an unresolvable migration reference.',
        'FunctionTypeSerializer should call the class method during serialization and store its return value in the migration.')
 review('django__django-7530', 'makemigrations.Command.handle',
-       r'app.config|get.app.config~(?:model|enumerat).{0,75}(?:app|scope)|(?:app|scope).{0,75}(?:model|enumerat)',
+       r'app.?config|get.app.config~(?:model|enumerat).{0,75}(?:app|scope)|(?:app|scope).{0,75}(?:model|enumerat)',
        'makemigrations passes an app label to the global get_models API, which does not select that app. Retrieve its AppConfig and enumerate that config models when checking migration routing.',
        'In makemigrations.py use get_app_config(app_label).get_models() to scope model enumeration. The registry-wide call treats the label as a different option and checks unrelated models.',
        'makemigrations should skip consistency checking for all apps with database routers because their migration histories cannot be inspected.')
@@ -271,7 +280,7 @@ review('sympy__sympy-23534', 'symbols',
        'In symbol.py preserve the custom class across recursive symbol creation. Each name in an iterable must receive cls instead of silently reverting to the default Symbol class.',
        'symbols should always convert iterable inputs to a plain list because tuple containers cannot hold custom symbol subclasses.')
 review('sympy__sympy-23950', 'Contains.as_set',
-    r'(?:return|use|expos).{0,60}(?:set|second.argument)|(?:set|second.argument).{0,60}(?:return|use|expos)~membership|contains|args\[1\]|contained',
+    r'(?:return|expos).{0,35}(?:second.argument|args\[1\]|set.operand|membership.set)~membership|contains|args\[1\]|contained',
     'Contains.as_set raises NotImplementedError despite already storing the membership set. Return the second argument, the set in the Contains expression, to implement conversion.',
     'In contains.py expose the set operand of membership when converting to a set. Returning args[1] supplies the existing set instead of reporting an unsupported operation.',
     'Contains.as_set should return a singleton containing the tested element, regardless of the set used by the membership predicate.',
@@ -287,7 +296,7 @@ review('django__django-11555', 'find_ordering_name',
        'In compiler.py accept an OrderBy item from related-model ordering as an expression. Append it directly and skip the field-name recursion that cannot handle expression objects.',
        'find_ordering_name should stringify each OrderBy expression and look for a database column with that exact name.')
 review('django__django-11951', '_batched_insert',
-       r'batch~(?:min|cap|limit|clamp).{0,65}(?:backend|database|maximum|batch)|(?:backend|database).{0,65}(?:min|cap|limit|clamp)',
+       r'batch~(?:cap|clamp|limit|minimum|min\().{0,65}(?:requested|user|size|batch).{0,65}(?:backend|database|maximum)|(?:backend|database).{0,65}(?:cap|clamp).{0,35}(?:size|batch)',
        '_batched_insert lets an explicit batch_size bypass the backend limit. Cap the requested size at the database maximum, with a minimum supported maximum of one, before splitting inserts.',
        'In query.py clamp user-specified insertion batches to the backend bulk limit. Otherwise a large requested batch exceeds the database parameter capacity.',
        '_batched_insert should retry oversized batches indefinitely without changing their size because database limits are temporary.')
@@ -324,7 +333,7 @@ review('django__django-14089', 'OrderedSet.__reversed__',
        'In datastructures.py delegate reverse iteration to the underlying ordered dict. This adds reversed() support while preserving the reverse of the set insertion order.',
        'OrderedSet should sort elements by value when reversed is called, since insertion order is irrelevant to set iteration.')
 review('django__django-14349', 'URLValidator.__call__',
-       r'tab|\\t~newline|carriage|\\n|\\r~reject|raise|unsafe|invalid',
+       r'tab|\\t~newline|line.break|carriage|\\n|\\r~reject|raise|unsafe|invalid',
        'URLValidator can accept URLs containing tab, carriage-return or newline characters that URL parsing strips. Reject these unsafe characters explicitly before scheme and URL validation.',
        'In validators.py disallow embedded tabs and line breaks before parsing a URL. The parser may silently remove them, so validate the original input for these unsafe characters.',
        'URLValidator should strip all control characters and accept the resulting URL, since browser normalization makes the original input safe.')
@@ -408,7 +417,7 @@ review('django__django-13670', 'DateFormat.y',
        'In dateformat.py compute the last two year digits arithmetically and include leading zeros. String slicing does not produce a two-digit value for early years.',
        'DateFormat.y should prepend the current century to every year below one hundred before formatting it.')
 review('django__django-14373', 'DateFormat.Y',
-       r'(?:four|4).{0,15}digit~zero.pad|leading.zero|04d|pad.{0,25}zero',
+       r'(?:format|emit|return|render|output).{0,35}(?:four|4).digit|04d~zero.pad|leading.zero|04d|pad.{0,25}zero',
        'DateFormat.Y returns the raw year number, omitting leading zeros for early dates. Format the year with four-digit zero padding so the full-year token has the expected width.',
        'In dateformat.py emit a four-digit year string including leading zeros. Returning an integer loses the padding needed for dates before year one thousand.',
        'DateFormat.Y should add 1900 to all years below one thousand to make the output contain four digits.')
@@ -418,7 +427,7 @@ review('django__django-15022', 'ModelAdmin.get_search_results',
        'In admin/options.py combine the per-term search conditions before one filter call. Chaining filters can use different related rows and unnecessarily multiply joins.',
        'The admin search should OR all search words together so a record matching any single word is always returned.')
 review('django__django-15368', 'QuerySet.bulk_update',
-       r'resolve.expression~(?:attribute|protocol|hasattr|duck|check).{0,65}(?:expression|resolve)|(?:expression|resolve).{0,65}(?:attribute|protocol|hasattr|duck|check)',
+       r'resolve.expression~(?:attribute|protocol|hasattr|duck|check).{0,65}(?:expression|resolve)|(?:expression|resolve).{0,65}(?:attribute|protocol|hasattr|duck|check)~wrap.{0,65}\bvalue\b|(?:treat|coerc|convert).{0,45}literal.values',
        'QuerySet.bulk_update recognizes only Expression subclasses and wraps other expression-like objects in Value. Check for resolve_expression instead so F and other protocol-compatible expressions are preserved.',
        'In query.py detect bulk-update expressions by the resolve_expression protocol. A concrete-class test misses valid expression objects and incorrectly treats them as literal values.',
        'QuerySet.bulk_update should convert F expressions to their string representation before wrapping them in Value.')
@@ -531,7 +540,7 @@ review('sympy__sympy-20916', 'split_super_sub',
        'In conventions.py extend the name-plus-digits regex to Unicode letters. A Greek or other non-ASCII name followed by digits should split into a base name and numeric subscript.',
        'split_super_sub should transliterate every Unicode symbol name to ASCII before rendering it, discarding the original letters.')
 review('sympy__sympy-21847', 'itermonomials',
-       r'(?:sum|total).{0,35}(?:degree|exponent|power)|(?:degree|exponent|power).{0,35}(?:sum|total)~min|lower.bound~max|individual',
+       r'(?:sum|total).{0,35}(?:degree|exponent|power)|(?:degree|exponent|power).{0,35}(?:sum|total)~min|lower.bound~(?:compare|sum).{0,35}(?:exponent|power)|(?:lower.bound).{0,25}(?:applies|uses).{0,25}total.degree',
        'itermonomials tests the maximum individual exponent against min_degree. Compare the sum of exponents, the total degree, in both commutative and noncommutative branches so mixed monomials are not omitted.',
        'In monomials.py the lower bound applies to total degree rather than the largest variable power. Sum the exponent counts before filtering by minimum degree.',
        'itermonomials should require every individual variable exponent to exceed the minimum degree, even when the total degree already meets it.')
@@ -556,12 +565,12 @@ review('django__django-13028', 'Query.check_filterable',
        'Query.check_filterable treats any object filterable attribute as expression metadata. Require resolve_expression before enforcing filterable=False so ordinary model values with a same-named field are not rejected.',
        'In query.py apply the filterable restriction only to objects implementing the expression protocol. An unrelated value attribute must not control whether a filter is allowed.',
        'Query.check_filterable should ignore filterable=False for all SQL expressions because every expression is valid in a WHERE clause.')
-review('django__django-13297', '_wrap_url_kwargs_with_deprecation_warning',
+review('django__django-13297', '_wrap_url_kwargs_with_deprecation_warning|URL-kwargs deprecation wrapper',
        r'lazy~(?:type|typed|original).{0,60}(?:value|proxy|wrap)|(?:value|proxy|wrap).{0,60}(?:type|typed|original)~simplelazyobject|deprecat|warning',
        'The URL-kwargs deprecation wrapper uses SimpleLazyObject, which does not preserve the value type protocol adequately. Use lazy(access_value, type(value)) so deferred access retains type-specific behavior while issuing the warning.',
        'In generic/base.py wrap deprecated URL context values with a typed lazy proxy. The warning should remain deferred while operations use the original value type rather than a generic SimpleLazyObject.',
        'The deprecation wrapper should convert all URL keyword values into strings immediately and emit warnings during view construction.')
-review('django__django-13512', 'display_for_field|JSONField.prepare_value',
+review('django__django-13512', 'display_for_field|JSONField.prepare_value|admin display|form preparation',
        r'json~ensure.ascii.{0,15}false|(?:preserv|unescaped|literal).{0,45}(?:unicode|non.ascii)|(?:unicode|non.ascii).{0,45}(?:preserv|unescaped|literal)~encoder|serializ|dumps',
        'JSON display escapes non-ASCII characters by default. Use json.dumps with ensure_ascii=False and the configured encoder in both admin display and form preparation so Unicode remains readable.',
        'In admin/utils.py and forms/fields.py preserve literal Unicode when serializing JSON for display. Disable ASCII escaping while retaining each field encoder.',
@@ -571,7 +580,7 @@ review('django__django-13568', 'check_user_model',
        'check_user_model recognizes only the username field unique flag. Accept an unconditional single-field UniqueConstraint on USERNAME_FIELD as equivalent uniqueness enforcement.',
        'In auth/checks.py a username may be uniquely constrained at model level. Check total_unique_constraints for exactly that one field before issuing the nonunique-username diagnostic.',
        'The user-model check should accept any multi-column unique constraint containing the username because that makes the username alone unique.')
-review('django__django-14315', 'BaseDatabaseClient.runshell',
+review('django__django-14315', 'BaseDatabaseClient.runshell|database shell',
        r'env|environment~(?:empty|none)~inherit|parent|os.environ',
        'The database shell passes an empty env mapping when no overrides exist, clearing the inherited environment. Pass None in that case and merge nonempty overrides with os.environ.',
        'In client.py preserve the parent environment when no database-specific variables are supplied. An empty mapping replaces the environment; None inherits it, while explicit overrides should be merged.',
@@ -582,7 +591,7 @@ review('django__django-14404', 'AdminSite.catch_all_view',
        'In sites.py resolve the slash variant without the script prefix, then redirect with the full request path. Using path_info for the destination drops the mount prefix.',
        'The admin catch-all should remove the deployment prefix from every redirect so the client always reaches a root-mounted URL.')
 review('django__django-14500', 'MigrationExecutor.unapply_migration',
-       r'replac|squash~(?:record|mark|unappl).{0,75}(?:both|itself|replacement|squash)|(?:both|itself|replacement|squash).{0,75}(?:record|mark|unappl)',
+       r'replac|squash~(?:record|mark).{0,90}(?:replacement|squash).{0,65}\bunapplied\b|(?:clear|remov).{0,65}(?:squash|replacement).{0,35}(?:record|entry)',
        'unapply_migration records only replaced migrations when reverting a squash. Also record the replacement migration itself as unapplied so neither it nor its replaced entries remain applied.',
        'In executor.py mark both the squashed migration and the individual migrations unapplied. The replacement branch currently skips clearing the squash own recorder entry.',
        'unapply_migration should leave the squashed migration marked applied permanently because its individual migrations already track reversals.')
@@ -596,7 +605,7 @@ review('django__django-14771', 'get_child_arguments',
        'get_child_arguments preserves warnings but drops CPython -X options. Forward sys._xoptions as flags or key=value arguments so the autoreloaded child uses the same interpreter configuration.',
        'In autoreload.py propagate CPython interpreter options to the restarted child. Reconstruct each -X setting, including options with values, instead of silently losing them on reload.',
        'The autoreloader should discard all interpreter flags so each child always starts with Python default settings.')
-review('django__django-15280', 'get_prefetch_queryset',
+review('django__django-15280', 'get_prefetch_queryset|reverse prefetch',
        r'cached|cache~(?:not|unless|only|skip|preserv).{0,70}(?:cached|cache|assign|overwrite)|(?:cached|cache).{0,70}(?:preserv|overwrite|skip)',
        'Reverse prefetch unconditionally assigns the related object back-reference, overwriting a relation already cached by the queryset. Assign it only when field.is_cached is false so existing related-object state is preserved.',
        'In related_descriptors.py preserve a cached forward relation during reverse prefetch. Skip back-reference assignment when the field cache already holds the related object.',
@@ -612,7 +621,7 @@ review('django__django-16493', 'FileField.deconstruct',
        'In files.py preserve a supplied storage callable during deconstruction even if its current result is the default storage. Compare the original callable before deciding to omit the storage argument.',
        'FileField.deconstruct should call the storage factory repeatedly until it returns a nondefault storage instance to serialize.')
 review('django__django-16662', 'MigrationWriter.as_string',
-       r'import~(?:group|before|first).{0,65}(?:from|plain|import)|(?:from).{0,65}(?:after|group)~sort|order',
+       r'import~plain.import.{0,30}(?:before|ahead.of).{0,20}from|from.{0,25}import.{0,30}after.{0,20}plain~sort|order',
        'MigrationWriter sorts imports only by module name, mixing import and from statements. Sort first by statement kind, placing plain imports before from imports, then by module.',
        'In writer.py group plain import statements ahead of from-import statements. Module-name sorting should occur within those groups for consistent migration import order.',
        'MigrationWriter should reverse alphabetic module order and put every from import before all plain imports.')
@@ -622,8 +631,8 @@ review('django__django-16819', 'AddIndex.reduce',
        'In operations/models.py eliminate index creation followed by removal of that same index. The optimizer should reduce the pair to no operations rather than retain unnecessary schema work.',
        'AddIndex.reduce should cancel every later RemoveIndex regardless of its index name.',
        reject=r'cancel every later removeindex|regardless of its index name')
-review('django__django-16899', '_check_readonly_fields_item',
-       r'readonly|read.only~(?:include|name|identify|show).{0,65}(?:field|invalid|offend)|(?:field|invalid|offend).{0,65}(?:include|name|identify|show)~message|error|diagnostic',
+review('django__django-16899', '_check_readonly_fields_item|readonly-fields check',
+       r'readonly|read.only~\b(?:include|name|identify|show)\b.{0,65}(?:field|invalid|offend)~message|error|diagnostic',
        'The readonly-fields check reports the option position but omits the invalid field value. Include field_name in the error message so users can identify the offending readonly-field reference.',
        'In admin/checks.py name the actual invalid readonly field in the diagnostic. Reporting only the configuration label makes the bad reference unnecessarily hard to locate.',
        'The readonly-fields check should automatically remove unknown names from the admin configuration instead of reporting an error.')
@@ -653,7 +662,7 @@ review('sympy__sympy-20590', 'Printable',
        'In _print_helpers.py give Printable empty slots. Otherwise inheriting this printing mixin defeats a subclass slot layout by adding per-instance dictionary storage.',
        'Printable should add every subclass attribute to a shared class dictionary so individual instances never need their own state.')
 review('django__django-11095', 'BaseModelAdmin.get_inlines|ModelAdmin.get_inline_instances',
-       r'get.inlines|inline.{0,25}hook~request|object|dynamic~(?:call|use|route|delegat)',
+       r'get.inlines|inline.{0,55}hook~request|object|dynamic~(?:call|use|route|delegat)',
        'get_inline_instances reads self.inlines directly, preventing request-specific selection. Add get_inlines(request, obj) and call that hook so subclasses can choose inline classes dynamically.',
        'In admin/options.py route inline construction through an overridable hook receiving the request and object. The default can return self.inlines while custom admins vary the selection.',
        'The admin should instantiate every registered inline for every model and hide unwanted ones only with CSS.')
@@ -668,7 +677,7 @@ review('django__django-13112', 'ForeignObject.deconstruct',
        'In related.py retain the app label exactly when serializing a dotted relation string. Only the model-name component should be normalized to lowercase.',
        'ForeignObject.deconstruct should uppercase both the app label and model name so all relation targets share a canonical form.')
 review('django__django-13590', 'Query.resolve_lookup_value',
-       r'namedtuple~(?:unpack|positional|\*values|splat)',
+       r'namedtuple~(?:unpack|positional|\*values|splat)|(?:pass|supply).{0,35}(?:fields|values).{0,20}separately',
        'resolve_lookup_value rebuilds every tuple type from one iterable, which is invalid for namedtuple constructors. Detect namedtuples and unpack resolved values as positional arguments.',
        'In query.py reconstruct a namedtuple by passing its resolved fields separately. The ordinary tuple constructor convention of one iterable does not work for this tuple subclass.',
        'resolve_lookup_value should flatten every namedtuple into a plain string before using it in a lookup.')
@@ -700,7 +709,7 @@ review('django__django-13933', 'ModelChoiceField.to_python',
        'In forms/models.py supply the failing value when constructing the choice-validation error. The message interpolation context is otherwise missing its value entry.',
        'ModelChoiceField.to_python should replace every invalid choice with the first queryset object rather than raising a validation error.')
 review('django__django-14559', 'QuerySet.bulk_update',
-       r'rows|row.count|affected~(?:sum|accumulat|total).{0,70}(?:update|count|batch)|(?:update|count|batch).{0,70}(?:sum|accumulat|total)~return',
+       r'rows|row.count|affected~(?:sum|accumulat|total).{0,70}(?:update|count|batch)|(?:update|count|batch).{0,70}(?:sum|accumulat|total)~return|report.{0,35}(?:total|count|number)',
        'QuerySet.bulk_update discards each update row count and returns None. Accumulate affected rows across batches, return the total, and return zero for an empty input.',
        'In query.py report the total number of rows updated by bulk_update. Sum the batch update results and use zero when there are no objects to process.',
        'QuerySet.bulk_update should return the number of supplied objects without considering whether the database actually matched those rows.')
@@ -720,7 +729,7 @@ review('django__django-15315', 'Field.__hash__',
        'In fields/__init__.py use the immutable creation counter for hashing. Including app and model names changes a field hash after binding and breaks dictionary or set lookup.',
        'Field.__hash__ should generate a fresh random number on every call to prevent collisions between model fields.')
 review('django__django-16595', 'AlterField.reduce',
-       r'alter.field~(?:same.field|successive|consecutive|later|last)~(?:reduc|retain|keep|replace|collapse)',
+       r'alter.?field~(?:same.field|successive|consecutive|later|last)~(?:reduc|retain|keep|replace|collapse)',
        'AlterField.reduce handles later removal but not another alteration of the same field. Reduce successive AlterField operations to the later operation so intermediate field definitions are discarded.',
        'In operations/fields.py collapse consecutive alterations of one field to the final definition. The later AlterField supersedes the earlier one just as removal does.',
        'AlterField.reduce should merge alterations of unrelated fields into one operation using whichever field name sorts first.')
@@ -881,7 +890,7 @@ review('django__django-15037', 'inspectdb.Command.handle_inspection',
        'In inspectdb.py preserve foreign-key targets that are not the related primary key. Set to_field to the referenced column instead of generating a relation that silently points at the primary key.',
        'inspectdb should always use the source column name as to_field, regardless of which target column the database constraint references.')
 review('django__django-15252', 'MigrationExecutor.migrate',
-       r'empty.plan|no.migration|plan.{0,10}\[\]~(?:avoid|skip|not.create|without|return).{0,80}(?:table|schema|state)|(?:table|schema).{0,80}(?:avoid|skip|not.create)',
+       r'empty.plan|no.migration|plan.{0,10}(?:\[\]|empty)~(?:avoid|skip|not.create|without|return).{0,80}(?:table|schema|state)|(?:table|schema).{0,80}(?:avoid|skip|not.create)',
        'MigrationExecutor.migrate creates the recorder table even for an explicitly empty plan. If no migrations are planned and that table is absent, return the project state without creating the schema.',
        'In executor.py avoid creating django_migrations when the supplied plan is empty. With no recorder table and no work to apply, construct an unapplied project state and return.',
        'MigrationExecutor.migrate should drop the recorder table whenever the migration plan is empty to reset migration history.')
@@ -932,12 +941,12 @@ review('astropy__astropy-7671', 'minversion',
        'In introspection.py compare against the numeric prefix of the requested minimum version. Removing its development suffix avoids incompatible token types in LooseVersion.',
        'minversion should compare version strings lexicographically without parsing numbers, treating 1.10 as older than 1.9.')
 review('django__django-12741', 'BaseDatabaseOperations.execute_sql_flush',
-       r'connection.alias~transaction|atomic~(?:remove|drop|derive|own|using)',
+       r'connection(?:.own)?.alias~transaction|atomic~(?:remove|drop|derive|own|using)',
        'execute_sql_flush takes a separate database alias even though it already owns a connection. Use self.connection.alias for the atomic block and remove the redundant using argument from the method and caller.',
        'In operations.py bind the flush transaction to the connection own alias. Drop the extra database parameter so the cursor and transaction cannot accidentally refer to different databases.',
        'execute_sql_flush should always open its transaction on the default database while executing statements through the selected connection.')
 review('django__django-13089', 'DatabaseCache._cull',
-       r'fetchone|fetched.row|boundary.row~none|missing|absent|empty~guard|check|skip|only',
+       r'fetchone|fetched.row|boundary.(?:row|fetch)~none|missing|absent|empty|whether.{0,25}row.exists|only.when.a.row.was.returned~guard|check|skip|only',
        'DatabaseCache._cull indexes fetchone() without checking whether the boundary row exists. Guard the fetched result and issue the deletion only when a row was returned, avoiding a crash after concurrent cache changes.',
        'In cache/backends/db.py check the culling boundary fetch before subscripting it. An absent row should skip the range deletion rather than dereference None.',
        'DatabaseCache._cull should delete the entire cache table whenever the boundary query returns no row.')
@@ -968,7 +977,7 @@ review('django__django-16116', 'makemigrations.Command.handle',
        'In makemigrations.py handle the check-only failure before writing or updating migrations. Pending changes should cause a nonzero exit with no generated files.',
        'makemigrations --check should always write the missing migrations and then exit successfully because the repository has been repaired.')
 review('django__django-16145', 'runserver.Command.inner_run',
-       r'0\.0\.0\.0~(?:display|print|message|url)~(?:\b0\b|wildcard|shorthand)',
+       r'0\.0\.0\.0|full.wildcard.ipv4.address~(?:display|print|message|url)~(?:\b0\b|wildcard|shorthand)',
        'runserver displays the address shorthand 0 literally in its startup URL. Format that wildcard address as 0.0.0.0 while retaining IPv6 brackets and other addresses unchanged.',
        'In runserver.py expand the zero-address shorthand for the displayed server URL. The listening behavior stays the same, but the message should show the full wildcard IPv4 address.',
        'runserver should change a wildcard bind into localhost-only binding whenever the user supplies address zero.')
@@ -978,7 +987,7 @@ review('pydata__xarray-4075', 'Weighted._sum_of_weights',
        'In weighted.py convert boolean weights to integer values when computing their sum. Boolean dot products collapse multiple true entries to true rather than counting them.',
        'Weighted._sum_of_weights should convert all numeric weights to booleans so only their truth value contributes to weighted means.')
 review('sympy__sympy-17318', '_sqrt_match',
-       r'square|squared~positive~rational~(?:guard|require|only|check).{0,80}(?:split.surds|surd|positive)|(?:split.surds).{0,80}(?:guard|require|only)',
+       r'square|squared~positiv(?:e|ity)~rational~(?:guard|require|only|check).{0,80}(?:split.surds|surd|positive)|(?:split.surds).{0,80}(?:guard|require|only)',
        '_sqrt_match sends rational but negative term squares into split_surds, whose algorithm assumes positive rationals. Require every squared term to be both rational and positive before using that branch.',
        'In sqrtdenest.py guard the surd-splitting path with positivity of all rational squares. Complex terms with negative squares violate the helper precondition and must not enter it.',
        '_sqrt_match should replace negative squared terms by their absolute values and continue denesting as if the expression were real.')
@@ -988,7 +997,7 @@ review('sympy__sympy-18211', 'Relational._eval_as_set',
        'In relational.py preserve an unsolved real relation as a ConditionSet. Catch the unsupported-solver case instead of failing set conversion or guessing its solutions.',
        'Relational._eval_as_set should return the empty set whenever the solver cannot find an explicit solution.')
 review('sympy__sympy-19954', 'PermutationGroup.minimal_blocks',
-       r'block~(?:mask|defer|after).{0,60}(?:remov|delet|filter)|(?:remov|delet|filter).{0,60}(?:mask|defer|after)~parallel|align|three|list',
+       r'block~(?:mask|defer).{0,60}(?:remov|delet|filter)|(?:remov|delet|filter).{0,60}(?:mask|defer)~parallel|align|three|list',
        'minimal_blocks deletes from parallel block lists while iterating representative blocks, shifting indices. Mark removals in a mask and filter all three lists afterward so their entries remain aligned.',
        'In perm_groups.py defer removing nonminimal block systems until comparison ends. Apply one removal mask to each parallel list instead of deleting by shifting indices during iteration.',
        'minimal_blocks should sort each of its three block lists independently after every deletion to restore their correspondence.')
@@ -1010,7 +1019,7 @@ review('astropy__astropy-7606', 'UnitBase.__eq__|UnrecognizedUnit.__eq__|Unit eq
     'Unit equality should treat every unconvertible object as equal to an unrecognized unit because neither has a known physical dimension.',
     reject=r'treat.*unconvertible.*equal|unconvertible.*equal.*unrecognized')
 review('django__django-11141', 'MigrationLoader.load_disk',
-       r'migration~(?:namespace|__file__)~(?:discover|enumerat|names|empty|ignore.no.migrations)',
+       r'migration~(?:namespace|\bfile\b)~(?:discover|enumerat|empty.package|ignore.no.migrations)',
        'MigrationLoader.load_disk rejects packages without __file__ before discovering migrations. Enumerate package modules first, then classify the app using discovered migration names and ignore_no_migrations so namespace packages can supply migrations.',
        'In loader.py do not infer that an app is unmigrated solely from a missing __file__. Inspect its package path for migration modules and apply the empty-package policy after discovery.',
        'MigrationLoader.load_disk should mark every namespace package migrated without inspecting whether it contains any migration modules.')
@@ -1025,7 +1034,7 @@ review('django__django-11734', 'RelatedLookupMixin.get_prep_lookup|Query.split_e
        'In related_lookups.py bypass literal field preparation for expression operands. In query.py preserve a nested OuterRef when exclusion adds another query scope, instead of flattening its reference.',
        'Related lookups should resolve every OuterRef immediately against the innermost query and convert it to an integer primary key.')
 review('django__django-11749', 'call_command',
-       r'mutually.exclusive|required.group~(?:option|keyword|kwargs)~(?:pass|forward|include).{0,60}(?:pars|argument)|(?:pars).{0,60}(?:pass|forward|include)',
+       r'mutually.exclusive|required.(?:exclusive.)?group~(?:supplied|provided).{0,25}(?:group|option)|keyword.provided~(?:pass|forward|include).{0,85}(?:pars|argument)|(?:pars).{0,85}(?:pass|forward|include)',
        'call_command forwards individually required keyword options to argparse but misses members of required mutually exclusive groups. Include supplied group members in parse_args so the parser sees the satisfied requirement.',
        'In management/__init__.py pass keyword-provided options from required exclusive groups into argument parsing. Their own required flag is false even though the group requires one member.',
        'call_command should pass every member of a mutually exclusive group simultaneously so the parser always sees at least one required option.')
@@ -1045,7 +1054,7 @@ review('django__django-13551', 'PasswordResetTokenGenerator._make_hash_value',
        'In tokens.py incorporate the user email into password-reset token state. An address change should invalidate previously issued tokens even when password and login time remain unchanged.',
        'PasswordResetTokenGenerator should remove the password from the hash and bind tokens only to the user primary key forever.')
 review('django__django-13837', 'get_child_arguments',
-       r'__spec__|module.spec~(?:parent|package)~(?:instead|hardcod|django.__main__|general|custom)',
+       r'\bspec\b|module.spec~(?:parent|package)~(?:instead|hardcod|django.__main__|general|custom)',
        'get_child_arguments recognizes module execution only by comparing with django.__main__. Use the running __main__.__spec__.parent as the -m target so custom package entry points reload correctly too.',
        'In autoreload.py derive a package restart target from the running module spec instead of hardcoding Django main-file identity. A custom package launched with -m needs its own parent package preserved.',
        'get_child_arguments should always restart with -m django regardless of which custom package launched the development server.')

@@ -707,8 +707,8 @@
       "handle_signature"
     ],
     "concepts": [
-      "pars|cross.reference|xref|reference.node",
-      "annotation|type"
+      "pars(?:e|ed|ing).{0,35}annotation",
+      "(?:insert|produc|result|annotation).{0,35}nodes"
     ],
     "gold": "PyProperty.handle_signature inserts the type as plain text instead of parsing its annotation. Use _parse_annotation and insert the resulting nodes so cross references can be resolved.",
     "paraphrase": "In domains/python.py property types need parsed annotation nodes, including reference nodes, rather than a literal text annotation. That lets the normal cross-reference machinery link the type.",
@@ -2644,7 +2644,7 @@
       "makemigrations.Command.handle"
     ],
     "concepts": [
-      "app.config|get.app.config",
+      "app.?config|get.app.config",
       "(?:model|enumerat).{0,75}(?:app|scope)|(?:app|scope).{0,75}(?:model|enumerat)"
     ],
     "gold": "makemigrations passes an app label to the global get_models API, which does not select that app. Retrieve its AppConfig and enumerate that config models when checking migration routing.",
@@ -2857,7 +2857,7 @@
       "Contains.as_set"
     ],
     "concepts": [
-      "(?:return|use|expos).{0,60}(?:set|second.argument)|(?:set|second.argument).{0,60}(?:return|use|expos)",
+      "(?:return|expos).{0,35}(?:second.argument|args\\[1\\]|set.operand|membership.set)",
       "membership|contains|args\\[1\\]|contained"
     ],
     "gold": "Contains.as_set raises NotImplementedError despite already storing the membership set. Return the second argument, the set in the Contains expression, to implement conversion.",
@@ -2918,7 +2918,7 @@
     ],
     "concepts": [
       "batch",
-      "(?:min|cap|limit|clamp).{0,65}(?:backend|database|maximum|batch)|(?:backend|database).{0,65}(?:min|cap|limit|clamp)"
+      "(?:cap|clamp|limit|minimum|min\\().{0,65}(?:requested|user|size|batch).{0,65}(?:backend|database|maximum)|(?:backend|database).{0,65}(?:cap|clamp).{0,35}(?:size|batch)"
     ],
     "gold": "_batched_insert lets an explicit batch_size bypass the backend limit. Cap the requested size at the database maximum, with a minimum supported maximum of one, before splitting inserts.",
     "paraphrase": "In query.py clamp user-specified insertion batches to the backend bulk limit. Otherwise a large requested batch exceeds the database parameter capacity.",
@@ -3058,7 +3058,7 @@
     ],
     "concepts": [
       "tab|\\\\t",
-      "newline|carriage|\\\\n|\\\\r",
+      "newline|line.break|carriage|\\\\n|\\\\r",
       "reject|raise|unsafe|invalid"
     ],
     "gold": "URLValidator can accept URLs containing tab, carriage-return or newline characters that URL parsing strips. Reject these unsafe characters explicitly before scheme and URL validation.",
@@ -3381,7 +3381,7 @@
       "DateFormat.Y"
     ],
     "concepts": [
-      "(?:four|4).{0,15}digit",
+      "(?:format|emit|return|render|output).{0,35}(?:four|4).digit|04d",
       "zero.pad|leading.zero|04d|pad.{0,25}zero"
     ],
     "gold": "DateFormat.Y returns the raw year number, omitting leading zeros for early dates. Format the year with four-digit zero padding so the full-year token has the expected width.",
@@ -3420,7 +3420,8 @@
     ],
     "concepts": [
       "resolve.expression",
-      "(?:attribute|protocol|hasattr|duck|check).{0,65}(?:expression|resolve)|(?:expression|resolve).{0,65}(?:attribute|protocol|hasattr|duck|check)"
+      "(?:attribute|protocol|hasattr|duck|check).{0,65}(?:expression|resolve)|(?:expression|resolve).{0,65}(?:attribute|protocol|hasattr|duck|check)",
+      "wrap.{0,65}\\bvalue\\b|(?:treat|coerc|convert).{0,45}literal.values"
     ],
     "gold": "QuerySet.bulk_update recognizes only Expression subclasses and wraps other expression-like objects in Value. Check for resolve_expression instead so F and other protocol-compatible expressions are preserved.",
     "paraphrase": "In query.py detect bulk-update expressions by the resolve_expression protocol. A concrete-class test misses valid expression objects and incorrectly treats them as literal values.",
@@ -3863,7 +3864,7 @@
     "concepts": [
       "(?:sum|total).{0,35}(?:degree|exponent|power)|(?:degree|exponent|power).{0,35}(?:sum|total)",
       "min|lower.bound",
-      "max|individual"
+      "(?:compare|sum).{0,35}(?:exponent|power)|(?:lower.bound).{0,25}(?:applies|uses).{0,25}total.degree"
     ],
     "gold": "itermonomials tests the maximum individual exponent against min_degree. Compare the sum of exponents, the total degree, in both commutative and noncommutative branches so mixed monomials are not omitted.",
     "paraphrase": "In monomials.py the lower bound applies to total degree rather than the largest variable power. Sum the exponent counts before filtering by minimum degree.",
@@ -3957,7 +3958,8 @@
   },
   {
     "locus": [
-      "_wrap_url_kwargs_with_deprecation_warning"
+      "_wrap_url_kwargs_with_deprecation_warning",
+      "URL-kwargs deprecation wrapper"
     ],
     "concepts": [
       "lazy",
@@ -3978,7 +3980,9 @@
   {
     "locus": [
       "display_for_field",
-      "JSONField.prepare_value"
+      "JSONField.prepare_value",
+      "admin display",
+      "form preparation"
     ],
     "concepts": [
       "json",
@@ -4018,7 +4022,8 @@
   },
   {
     "locus": [
-      "BaseDatabaseClient.runshell"
+      "BaseDatabaseClient.runshell",
+      "database shell"
     ],
     "concepts": [
       "env|environment",
@@ -4062,7 +4067,7 @@
     ],
     "concepts": [
       "replac|squash",
-      "(?:record|mark|unappl).{0,75}(?:both|itself|replacement|squash)|(?:both|itself|replacement|squash).{0,75}(?:record|mark|unappl)"
+      "(?:record|mark).{0,90}(?:replacement|squash).{0,65}\\bunapplied\\b|(?:clear|remov).{0,65}(?:squash|replacement).{0,35}(?:record|entry)"
     ],
     "gold": "unapply_migration records only replaced migrations when reverting a squash. Also record the replacement migration itself as unapplied so neither it nor its replaced entries remain applied.",
     "paraphrase": "In executor.py mark both the squashed migration and the individual migrations unapplied. The replacement branch currently skips clearing the squash own recorder entry.",
@@ -4116,7 +4121,8 @@
   },
   {
     "locus": [
-      "get_prefetch_queryset"
+      "get_prefetch_queryset",
+      "reverse prefetch"
     ],
     "concepts": [
       "cached|cache",
@@ -4178,7 +4184,7 @@
     ],
     "concepts": [
       "import",
-      "(?:group|before|first).{0,65}(?:from|plain|import)|(?:from).{0,65}(?:after|group)",
+      "plain.import.{0,30}(?:before|ahead.of).{0,20}from|from.{0,25}import.{0,30}after.{0,20}plain",
       "sort|order"
     ],
     "gold": "MigrationWriter sorts imports only by module name, mixing import and from statements. Sort first by statement kind, placing plain imports before from imports, then by module.",
@@ -4216,11 +4222,12 @@
   },
   {
     "locus": [
-      "_check_readonly_fields_item"
+      "_check_readonly_fields_item",
+      "readonly-fields check"
     ],
     "concepts": [
       "readonly|read.only",
-      "(?:include|name|identify|show).{0,65}(?:field|invalid|offend)|(?:field|invalid|offend).{0,65}(?:include|name|identify|show)",
+      "\\b(?:include|name|identify|show)\\b.{0,65}(?:field|invalid|offend)",
       "message|error|diagnostic"
     ],
     "gold": "The readonly-fields check reports the option position but omits the invalid field value. Include field_name in the error message so users can identify the offending readonly-field reference.",
@@ -4339,7 +4346,7 @@
       "ModelAdmin.get_inline_instances"
     ],
     "concepts": [
-      "get.inlines|inline.{0,25}hook",
+      "get.inlines|inline.{0,55}hook",
       "request|object|dynamic",
       "(?:call|use|route|delegat)"
     ],
@@ -4400,7 +4407,7 @@
     ],
     "concepts": [
       "namedtuple",
-      "(?:unpack|positional|\\*values|splat)"
+      "(?:unpack|positional|\\*values|splat)|(?:pass|supply).{0,35}(?:fields|values).{0,20}separately"
     ],
     "gold": "resolve_lookup_value rebuilds every tuple type from one iterable, which is invalid for namedtuple constructors. Detect namedtuples and unpack resolved values as positional arguments.",
     "paraphrase": "In query.py reconstruct a namedtuple by passing its resolved fields separately. The ordinary tuple constructor convention of one iterable does not work for this tuple subclass.",
@@ -4522,7 +4529,7 @@
     "concepts": [
       "rows|row.count|affected",
       "(?:sum|accumulat|total).{0,70}(?:update|count|batch)|(?:update|count|batch).{0,70}(?:sum|accumulat|total)",
-      "return"
+      "return|report.{0,35}(?:total|count|number)"
     ],
     "gold": "QuerySet.bulk_update discards each update row count and returns None. Accumulate affected rows across batches, return the total, and return zero for an empty input.",
     "paraphrase": "In query.py report the total number of rows updated by bulk_update. Sum the batch update results and use zero when there are no objects to process.",
@@ -4604,7 +4611,7 @@
       "AlterField.reduce"
     ],
     "concepts": [
-      "alter.field",
+      "alter.?field",
       "(?:same.field|successive|consecutive|later|last)",
       "(?:reduc|retain|keep|replace|collapse)"
     ],
@@ -5229,7 +5236,7 @@
       "MigrationExecutor.migrate"
     ],
     "concepts": [
-      "empty.plan|no.migration|plan.{0,10}\\[\\]",
+      "empty.plan|no.migration|plan.{0,10}(?:\\[\\]|empty)",
       "(?:avoid|skip|not.create|without|return).{0,80}(?:table|schema|state)|(?:table|schema).{0,80}(?:avoid|skip|not.create)"
     ],
     "gold": "MigrationExecutor.migrate creates the recorder table even for an explicitly empty plan. If no migrations are planned and that table is absent, return the project state without creating the schema.",
@@ -5431,7 +5438,7 @@
       "BaseDatabaseOperations.execute_sql_flush"
     ],
     "concepts": [
-      "connection.alias",
+      "connection(?:.own)?.alias",
       "transaction|atomic",
       "(?:remove|drop|derive|own|using)"
     ],
@@ -5451,8 +5458,8 @@
       "DatabaseCache._cull"
     ],
     "concepts": [
-      "fetchone|fetched.row|boundary.row",
-      "none|missing|absent|empty",
+      "fetchone|fetched.row|boundary.(?:row|fetch)",
+      "none|missing|absent|empty|whether.{0,25}row.exists|only.when.a.row.was.returned",
       "guard|check|skip|only"
     ],
     "gold": "DatabaseCache._cull indexes fetchone() without checking whether the boundary row exists. Guard the fetched result and issue the deletion only when a row was returned, avoiding a crash after concurrent cache changes.",
@@ -5574,7 +5581,7 @@
       "runserver.Command.inner_run"
     ],
     "concepts": [
-      "0\\.0\\.0\\.0",
+      "0\\.0\\.0\\.0|full.wildcard.ipv4.address",
       "(?:display|print|message|url)",
       "(?:\\b0\\b|wildcard|shorthand)"
     ],
@@ -5615,7 +5622,7 @@
     ],
     "concepts": [
       "square|squared",
-      "positive",
+      "positiv(?:e|ity)",
       "rational",
       "(?:guard|require|only|check).{0,80}(?:split.surds|surd|positive)|(?:split.surds).{0,80}(?:guard|require|only)"
     ],
@@ -5656,7 +5663,7 @@
     ],
     "concepts": [
       "block",
-      "(?:mask|defer|after).{0,60}(?:remov|delet|filter)|(?:remov|delet|filter).{0,60}(?:mask|defer|after)",
+      "(?:mask|defer).{0,60}(?:remov|delet|filter)|(?:remov|delet|filter).{0,60}(?:mask|defer)",
       "parallel|align|three|list"
     ],
     "gold": "minimal_blocks deletes from parallel block lists while iterating representative blocks, shifting indices. Mark removals in a mask and filter all three lists afterward so their entries remain aligned.",
@@ -5741,8 +5748,8 @@
     ],
     "concepts": [
       "migration",
-      "(?:namespace|__file__)",
-      "(?:discover|enumerat|names|empty|ignore.no.migrations)"
+      "(?:namespace|\\bfile\\b)",
+      "(?:discover|enumerat|empty.package|ignore.no.migrations)"
     ],
     "gold": "MigrationLoader.load_disk rejects packages without __file__ before discovering migrations. Enumerate package modules first, then classify the app using discovered migration names and ignore_no_migrations so namespace packages can supply migrations.",
     "paraphrase": "In loader.py do not infer that an app is unmigrated solely from a missing __file__. Inspect its package path for migration modules and apply the empty-package policy after discovery.",
@@ -5803,9 +5810,9 @@
       "call_command"
     ],
     "concepts": [
-      "mutually.exclusive|required.group",
-      "(?:option|keyword|kwargs)",
-      "(?:pass|forward|include).{0,60}(?:pars|argument)|(?:pars).{0,60}(?:pass|forward|include)"
+      "mutually.exclusive|required.(?:exclusive.)?group",
+      "(?:supplied|provided).{0,25}(?:group|option)|keyword.provided",
+      "(?:pass|forward|include).{0,85}(?:pars|argument)|(?:pars).{0,85}(?:pass|forward|include)"
     ],
     "gold": "call_command forwards individually required keyword options to argparse but misses members of required mutually exclusive groups. Include supplied group members in parse_args so the parser sees the satisfied requirement.",
     "paraphrase": "In management/__init__.py pass keyword-provided options from required exclusive groups into argument parsing. Their own required flag is false even though the group requires one member.",
@@ -5884,7 +5891,7 @@
       "get_child_arguments"
     ],
     "concepts": [
-      "__spec__|module.spec",
+      "\\bspec\\b|module.spec",
       "(?:parent|package)",
       "(?:instead|hardcod|django.__main__|general|custom)"
     ],
