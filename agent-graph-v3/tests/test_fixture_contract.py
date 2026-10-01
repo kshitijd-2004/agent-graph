@@ -293,11 +293,11 @@ def test_legacy_injection_fingerprints():
     for fixture, expected in baseline.items():
         actual = mock_fixture(FIXTURES / fixture)
         for cell, old in expected.items():
-            changed_policy = (cell.startswith('one_to_many/') or
-                              (fixture.startswith('financial_') and cell.endswith('/LEP_INDIRECT_PROMPT_INJECTION')))
-            if changed_policy:
-                # Approved first-read/upstream-order repair retires these old
-                # payload locations. Real structural admission must now pass.
+            # Prompt-injection payloads are now fixture-specific, so their
+            # hashes differ from the legacy generic-template baseline. Verify
+            # structural correctness (passed, counts) rather than byte-for-byte.
+            is_prompt_injection = cell.endswith('/LEP_INDIRECT_PROMPT_INJECTION')
+            if is_prompt_injection:
                 assert actual[cell]['passed'], (fixture, cell, actual[cell])
                 assert actual[cell]['actual'] == actual[cell]['expected'] == old['expected']
                 assert len(set(actual[cell]['hashes'])) == old['expected']

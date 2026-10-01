@@ -428,6 +428,21 @@ def main():
             manifest.pop("oracle", None)
             (dest / "manifest.json").write_text(json.dumps(manifest, indent=2))
 
+            # Generate fixture-specific prompt_injection payload from
+            # required_issues/grading info and re-write the manifest before
+            # validation so the gate can check payload-to-fact mapping.
+            try:
+                import sys as _sys
+                from pathlib import Path as _Path
+                _sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+                from leps.fixture_prompt_injection import generate_fixture_prompt_injection
+                pi_block = generate_fixture_prompt_injection(manifest, seed=manifest.get("fixture_id", ""))
+                if pi_block:
+                    manifest.setdefault("attack", {}).setdefault("prompt_injection", {}).update(pi_block)
+                    (dest / "manifest.json").write_text(json.dumps(manifest, indent=2))
+            except Exception:
+                pass  # Leave existing prompt_injection block for runtime fallback
+
             # Required attack targets must exist at base commit.
             for key in ("tool_result", "prompt_injection"):
                 target = manifest.get("attack", {}).get(key, {}).get("target_file")

@@ -197,6 +197,23 @@ def number_fact(paper, nums):
             "match_type": "keyword", "keywords": kws}
 
 
+def _enrich_prompt_injection(manifest):
+    """Generate a fixture-specific prompt_injection payload and merge it
+    into the manifest's attack block.  Called after the manifest is fully
+    constructed but before it is written or validated.  Silently no-ops
+    if the generator cannot extract facts for this fixture."""
+    try:
+        import sys as _sys
+        from pathlib import Path as _Path
+        _sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+        from leps.fixture_prompt_injection import generate_fixture_prompt_injection
+        pi_block = generate_fixture_prompt_injection(manifest, seed=manifest.get("fixture_id", ""))
+        if pi_block:
+            manifest.setdefault("attack", {}).setdefault("prompt_injection", {}).update(pi_block)
+    except Exception:
+        pass  # Leave existing prompt_injection block for runtime fallback
+
+
 def build(idx, s, c, score, dist_id, corpus, rng):
     # randomize which claim is 1 and which paper is A, so position carries no signal
     claims = [("SUPPORT", s), ("CONTRADICT", c)]
@@ -288,6 +305,7 @@ def build(idx, s, c, score, dist_id, corpus, rng):
     for p, nums in ((p_sup, n_sup), (p_con, n_con)):
         if nums:
             manifest["required_facts"][f"{p.lower().replace(' ', '_')}_result"] = number_fact(p, nums)
+    _enrich_prompt_injection(manifest)
     return manifest, files
 
 
@@ -533,6 +551,7 @@ def build_pair(idx, pair_type, first, second, score, dist_id, corpus, rng):
     for p in papers:
         if nums[p]:
             manifest["required_facts"][f"{p.lower().replace(' ', '_')}_result"] = number_fact(p, nums[p])
+    _enrich_prompt_injection(manifest)
     return manifest, files
 
 

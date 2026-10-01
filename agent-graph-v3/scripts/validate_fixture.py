@@ -63,7 +63,11 @@ def check_fixture(fixture_dir, *, fixture_roots=(), run_mock=True):
     for block, fields in {
         'tool_result': {'target_file', 'operator', 'conclusion_marker', 'alt_conclusion'},
         'handoff': {'swap_pairs', 'critical_terms'},
-        'prompt_injection': {'target_file'},
+        'prompt_injection': {
+            'target_file', 'payload_text', 'perturbed_fact_id',
+            'perturbation_strategy', 'perturbed_value', 'true_value',
+            'fact_type', 'original_fact_summary', 'template_index',
+        },
     }.items():
         if set(attack.get(block, {})) - fields:
             errors.append(f'Unknown {block} fields')
@@ -195,6 +199,61 @@ def check_fixture(fixture_dir, *, fixture_roots=(), run_mock=True):
         if not isinstance(pair, list) or len(pair) != 2 or pair[0] == pair[1] or not all(isinstance(entity, str) and entity and entity in text for entity in pair):
             errors.append(f'Swap entities absent or invalid: {pair}')
     checks['swap_pairs_grounded'] = len(errors) == start
+
+    # ── Prompt-injection payload validation ─────────────────────────────
+    start = len(errors)
+    pi = attack.get('prompt_injection', {})
+    pi_payload_text = pi.get('payload_text', '')
+    if pi_payload_text:
+        # Structural requirement: every stored payload must have a fact mapping.
+        pfid = pi.get('perturbed_fact_id', '')
+        if not pfid:
+            errors.append('prompt_injection.payload_text requires perturbed_fact_id')
+        else:
+            # Verify the perturbed_fact_id resolves in this manifest.
+            if family == 'financial_analysis' and pfid in facts:
+                true_val = facts[pfid].get('value')
+                perturbed_str = pi.get('perturbed_value', '')
+                # Extract the numeric part from perturbed_value for comparison.
+                perturbed_nums = re.findall(r'-?[0-9][0-9,]*(?:\\.[0-9]+)?', perturbed_str.replace(',', ''))
+                if true_val is not None and isinstance(true_val, (int, float)) and perturbed_nums:
+                    try:
+                        p_val = float(perturbed_nums[0])
+                        if abs(p_val - float(true_val)) < 1e-9:
+                            errors.append(f'prompt_injection: perturbed_value equals true value for {pfid}')
+                    except (ValueError, TypeError):
+                        pass
+            elif family == 'research_synthesis':
+                # Validate that the label transformation is explicit and correct.
+                # true_value is the raw SciFact label; perturbed_value may be
+                # the natural-language form used in templates (SUPPORTED,
+                # CONTRADICTED, NOT ENOUGH INFO).  They must differ.
+                raw_labels = {'SUPPORT', 'CONTRADICT', 'NEI'}
+                natural_forms = {'SUPPORTED', 'CONTRADICTED', 'NOT ENOUGH INFO'}
+                true_label = pi.get('true_value', '')
+                perturbed_label = pi.get('perturbed_value', '')
+                if true_label not in raw_labels:
+                    errors.append(f'prompt_injection: true_value {true_label!r} is not a valid verdict label')
+                if perturbed_label not in natural_forms:
+                    errors.append(f'prompt_injection: perturbed_value {perturbed_label!r} is not a valid natural-language verdict form')
+                if true_label and perturbed_label:
+                    true_natural = ('SUPPORTED' if true_label == 'SUPPORT'
+                                    else 'CONTRADICTED' if true_label == 'CONTRADICT'
+                                    else 'NOT ENOUGH INFO')
+                    if true_natural == perturbed_label:
+                        errors.append(f'prompt_injection: perturbed_value equals true_value for {pfid}')
+            elif family == 'code_review':
+                # Verify the fact_id references a known required_issue.
+                known_ids = {issue.get('id') for issue in issues}
+                if pfid not in known_ids:
+                    errors.append(f'prompt_injection: perturbed_fact_id {pfid!r} not in required_issues')
+        # Payload text must be non-empty and must reference the perturbed value.
+        if pi_payload_text and pi.get('perturbed_value'):
+            if pi['perturbed_value'] not in pi_payload_text:
+                # The payload should contain the false proposition so that
+                # downstream analysis can detect it in agent output.
+                errors.append('prompt_injection: payload_text does not contain perturbed_value')
+    checks['prompt_injection_payload_valid'] = len(errors) == start
     # Include metadata and all files, not just required sources. Validation
     # itself is excluded to keep repeated gate runs stable.
     clean_manifest = {key: value for key, value in manifest.items() if key != 'validation'}

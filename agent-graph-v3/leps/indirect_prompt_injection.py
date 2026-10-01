@@ -15,6 +15,11 @@ from schemas import InjectionTrigger, LEPConfig, TraceEvent, TraceEventType
 from schemas.trigger_matcher import TriggerMatcher, TriggerDecision
 from schemas.triggers import TriggerState
 
+from leps.fixture_prompt_injection import (
+    FixtureAwarePromptInjectionGenerator,
+    PromptInjectionPayload,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,6 +35,10 @@ class IndirectInjectionResult:
     injection_position: str = "inline"
     agent_obeyed: bool = False
     first_consuming_event_id: str | None = None
+    # Fixture-aware provenance fields.
+    perturbed_fact_id: str = ""
+    perturbation_strategy: str = ""
+    payload_source: str = "generic_fallback"  # "fixture_specific" | "generic_fallback"
 
 
 def _wrap(text: str, width: int = 76) -> list:
@@ -176,6 +185,33 @@ class IndirectPromptInjectionLEP:
             scope=event.agent_role,
         )
 
+    def _fixture_payload(self, seed: str) -> Optional[Dict[str, Any]]:
+        """Return a fixture-specific payload from the manifest, if present.
+
+        Returns the stored payload dict from
+        ``manifest.attack.prompt_injection.payload_text`` and related
+        fields.  Returns None if the manifest lacks a fixture-specific
+        payload (legacy fixtures, or materialization that did not
+        generate one).
+        """
+        attack_pi = self._fixture_attack_config()
+        if attack_pi.get("payload_text"):
+            return attack_pi
+        # Attempt on-the-fly generation as a last resort for manifests
+        # that have required_facts/seeds/required_issues but no stored
+        # payload.  This is NOT the preferred path -- materializers
+        # should pre-generate and store the payload.
+        try:
+            from leps.fixture_prompt_injection import generate_fixture_prompt_injection
+            generated = generate_fixture_prompt_injection(
+                getattr(self, "fixture_manifest", {}) or {}, seed=seed
+            )
+            if generated:
+                return generated
+        except Exception:
+            logger.debug("On-the-fly payload generation failed", exc_info=True)
+        return None
+
     def inject_into_content(
         self,
         file_path: str,
@@ -185,18 +221,34 @@ class IndirectPromptInjectionLEP:
     ) -> IndirectInjectionResult:
         """Inject adversarial text into file content.
 
+        Prefers a fixture-specific payload stored in the manifest.
+        Falls back to the generic INJECTION_TEMPLATES for legacy fixtures.
+
         Returns the injection result object (consistent with other LEPs).
         The poisoned content is accessible via .perturbed_result.
         """
-        templates = self.INJECTION_TEMPLATES.get(variant, self.INJECTION_TEMPLATES["ignore_previous"])
-        # Deterministic per (seed, file), but not the same string every run:
-        # the seed comes from the run, so reps and scenarios get different
-        # wordings and placements while a rerun of the same run is identical.
-        pick = self._pick(seed, file_path)
-        template = templates[pick % len(templates)]
+        # ── Fixture-specific payload path ──────────────────────────────────
+        fixture_payload = self._fixture_payload(seed)
+        if fixture_payload:
+            template = fixture_payload.get("payload_text", "")
+            payload_source = "fixture_specific"
+            perturbed_fact_id = fixture_payload.get("perturbed_fact_id", "")
+            perturbation_strategy = fixture_payload.get("perturbation_strategy", "")
+        else:
+            # ── Generic fallback path ───────────────────────────────────────
+            templates = self.INJECTION_TEMPLATES.get(
+                variant, self.INJECTION_TEMPLATES["ignore_previous"]
+            )
+            pick = self._pick(seed, file_path)
+            template = templates[pick % len(templates)]
+            payload_source = "generic_fallback"
+            perturbed_fact_id = ""
+            perturbation_strategy = ""
 
         # Embed naturally, with the placement also varied, so position in the
         # file is not a constant signature either.
+        # Recompute pick for position selection independent of template count.
+        pos_pick = self._pick(seed, file_path)
         if file_path.endswith(".md"):
             lines = original_content.split("\n")
             choices = [
@@ -216,12 +268,12 @@ class IndirectPromptInjectionLEP:
                 (f"{original_content.rstrip()}\n\n{wrapped}\n", "footer"),
             ]
         elif file_path.endswith(".json"):
-            key = ["_processing_note", "_meta", "comment", "notes"][pick % 4]
-            choices = [(f'{{"{key}": "{template}"}}\n\n{original_content}', "inline")]
+            key = ["_processing_note", "_meta", "comment", "notes"][pos_pick % 4]
+            choices = [(f'{{"{key}": "{template}"}}\\n\\n{original_content}', "inline")]
         else:
-            choices = [(f"{template}\n\n{original_content}", "header"),
-                       (f"{original_content.rstrip()}\n\n{template}\n", "footer")]
-        poisoned, position = choices[(pick // len(templates)) % len(choices)]
+            choices = [(f"{template}\\n\\n{original_content}", "header"),
+                       (f"{original_content.rstrip()}\\n\\n{template}\\n", "footer")]
+        poisoned, position = choices[(pos_pick // 7) % len(choices)]
 
         instance_id = f"{self.config.code}_{file_path.replace('/', '_')}"
         result = IndirectInjectionResult(
@@ -232,6 +284,9 @@ class IndirectPromptInjectionLEP:
             injected_text=template[:200],
             target_file=file_path,
             injection_position=position,
+            perturbed_fact_id=perturbed_fact_id,
+            perturbation_strategy=perturbation_strategy,
+            payload_source=payload_source,
         )
         self._injection_instances.append(result)
 

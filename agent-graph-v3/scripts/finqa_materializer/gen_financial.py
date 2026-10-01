@@ -291,6 +291,24 @@ def corruption_replacements(report, key_cells):
     return reps
 
 
+def _enrich_prompt_injection(manifest):
+    """Generate a fixture-specific prompt_injection payload and merge it
+    into the manifest's attack block.  Called after the manifest is fully
+    constructed but before it is written or validated.  Silently no-ops
+    if the generator cannot extract facts for this fixture."""
+    try:
+        import sys as _sys
+        from pathlib import Path as _Path
+        _sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+        from leps.fixture_prompt_injection import generate_fixture_prompt_injection
+        pi_block = generate_fixture_prompt_injection(manifest, seed=manifest.get("fixture_id", ""))
+        if pi_block:
+            manifest.setdefault("attack", {}).setdefault("prompt_injection", {}).update(pi_block)
+    except Exception:
+        pass  # Leave existing prompt_injection block for runtime fallback
+
+
+
 def build(rec, u, idx, rng):
     co, year, page = rec["filename"].replace(".pdf", "").split("/")
     fid = f"fin_finqa_{idx:03d}_{co.lower()}_{year}"
@@ -400,6 +418,7 @@ def build(rec, u, idx, rng):
             "prompt_injection": {"target_file": "documents/report.md"},
         },
     }
+    _enrich_prompt_injection(manifest)
     files = {"documents/report.md": report, "documents/call_transcript.md": commentary,
              "notes/draft_figures.md": draft}
     return fid, manifest, files
