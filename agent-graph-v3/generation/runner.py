@@ -1120,7 +1120,14 @@ class ScenarioRunner:
             # ── Fan-in check: merge BEFORE emitting the transition event ──────
             # so that transition.depends_on can reference all branch event IDs.
             incoming_rules = topology.get_incoming_handoffs(current_stage.agent_role)
-            if len(incoming_rules) > 1:
+            # The O2M entry turn produces the fan-out artifact; its incoming
+            # worker edges are return edges, required only on later visits.
+            initial_fanout = (
+                wcfg.propagation_mode == "one_to_many"
+                and current_stage.stage_id == topology.stages[0].stage_id
+                and not stage_run_counts
+            )
+            if len(incoming_rules) > 1 and not initial_fanout:
                 missing_sources = [
                     r.from_stage for r in incoming_rules
                     if r.from_stage not in branch_handoffs
@@ -1139,17 +1146,34 @@ class ScenarioRunner:
                 # DO NOT clear branch_handoffs/branch_handoff_event_ids yet;
                 # the transition event below needs them for depends_on.
                 merged_payload = ScenarioRunner._merge_handoff_payloads(
-                    list(branch_handoffs.values()),
+                    [branch_handoffs[r.from_stage] for r in incoming_rules],
                     target_role=current_stage.agent_role,
                 )
                 handoff_payloads = [merged_payload]
-                handoff_event_ids = list(branch_handoff_event_ids.values())
+                handoff_event_ids = [branch_handoff_event_ids[r.from_stage] for r in incoming_rules]
             elif not incoming_rules:
                 # This stage has no incoming handoff edges in the topology.
                 # Clear any stale handoff state from a previous iteration
                 # (e.g. a sibling branch that ran before this one).
                 handoff_payloads = []
                 handoff_event_ids = []
+
+            shared = None
+            # Resolve shared inputs from the incoming edge, not the last stage
+            # executed: sibling workers overwrite the rolling handoff state.
+            if (wcfg.propagation_mode == "one_to_many"
+                    and current_stage.stage_id != topology.exit_stage):
+                for rule in incoming_rules:
+                    payload = branch_handoffs.get(rule.from_stage)
+                    if payload is None:
+                        continue
+                    artifact_id = f"shared:{payload.from_agent}:{payload.event_id}"
+                    shared = _o2m_shared_artifacts.get(artifact_id)
+                    if shared is not None:
+                        handoff_payloads = [shared["payload"]]
+                        handoff_event_ids = [shared["event_id"]]
+                        shared["consumed_by"].append(current_stage.agent_role)
+                        break
 
             # Emit topology-transition event using actual runtime state.
             # For merge stages, depends_on now correctly contains ALL branch
@@ -1185,25 +1209,6 @@ class ScenarioRunner:
                         handoff_rule = rule
                         break
 
-            # ── O2M shared-artifact delivery ────────────────────────────────
-            # In one_to_many mode, ALL workers consume the SAME artifact
-            # from the coordinator. Override handoff_payloads with the
-            # shared artifact so every worker sees identical input.
-            if (wcfg.propagation_mode == "one_to_many"
-                    and len(handoff_payloads) == 1
-                    and current_stage.stage_id != topology.exit_stage):
-                payload = handoff_payloads[0]
-                artifact_id = f"shared:{payload.from_agent}:{payload.event_id}"
-                shared = _o2m_shared_artifacts.get(artifact_id)
-                if shared is not None:
-                    # Deliver the shared artifact (same object to all workers)
-                    handoff_payloads = [shared["payload"]]
-                    shared["consumed_by"].append(current_stage.agent_role)
-                    logger.debug(
-                        "O2M: delivering shared artifact %s to %s",
-                        artifact_id, current_stage.agent_role,
-                    )
-
             # Run the stage (backend.reset() is called ONCE inside run_stage)
             # Compute remaining reviews for prompt awareness
             reviewer_stage = topology.get_reviewer_stage()
@@ -1216,7 +1221,7 @@ class ScenarioRunner:
                 remaining_reviews = max(0, topology.max_review_cycles - backedge_count)
 
             stage_result = stage_runner.run_stage(
-                stage=current_stage,
+                stage=dc_replace(current_stage, can_finalize=False) if initial_fanout else current_stage,
                 topology=topology,
                 handoff_rule=handoff_rule,
                 scenario=scenario,
@@ -1298,34 +1303,17 @@ class ScenarioRunner:
             # a shared artifact. Annotate the transition event and propagation
             # tracker so downstream analysis can identify which workers consumed
             # the perturbation.
-            if (propagation_tracker is not None
-                    and wcfg.propagation_mode == "one_to_many"
-                    and handoff_payloads):
-                # The TOPOLOGY_TRANSITION event is the consumption boundary —
-                # it represents the worker receiving the shared artifact.
-                trans_evt = transition_evt
-                # Check if the handoff was corrupted (has LEP markers in extra)
-                handoff_extra = (handoff_payloads[0].extra or {}) if handoff_payloads[0].extra else {}
-                if any(k.startswith("lep_") for k in handoff_extra.keys()):
-                    # This worker consumed a corrupted shared artifact
-                    label_consumption(trans_evt, "LEP_HANDOFF_CORRUPTION")
-                    # Find the LEP lineage and annotate propagation to this worker
-                    for code in orchestrator._active_leps:
-                        lineage = propagation_tracker.get_lineage(code, "")
-                        if lineage is None:
-                            lineage = propagation_tracker.register_origin(
-                                lep_code=code,
-                                event_id=trans_evt.event_id,
-                                agent_role=current_stage.agent_role,
-                            )
-                        propagation_tracker.annotate_propagation(
-                            event=trans_evt,
-                            lineage=lineage,
-                            target_agent=current_stage.agent_role,
-                        )
-                    logger.debug(
-                        "O2M: worker %s consumed shared artifact (LEP markers in handoff)",
-                        current_stage.agent_role,
+            if propagation_tracker is not None and shared is not None:
+                # Reuse the upstream lineage; consumption never creates origins.
+                for lineage in propagation_tracker.get_lineages_for_event(shared["event_id"]):
+                    label_consumption(transition_evt, lineage.lep_code)
+                    propagation_tracker.annotate_consumption(
+                        transition_evt, lineage, current_stage.agent_role,
+                    )
+                    propagation_tracker.annotate_propagation(
+                        event=transition_evt,
+                        lineage=lineage,
+                        target_agent=current_stage.agent_role,
                     )
 
             # After a merge stage runs, its source branch payloads have been

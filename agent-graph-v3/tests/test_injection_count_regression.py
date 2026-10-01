@@ -279,3 +279,95 @@ def test_admission_metadata_does_not_change_graph_features(tmp_path):
     assert torch.equal(before.edge_features, after.edge_features)
     assert before.edges == after.edges
     assert all("origin_validation" not in event.observable for event in trace.events)
+
+
+@pytest.mark.parametrize("mode,topology,expected", [
+    ("single_origin", "coordinator_workers", 1),
+    ("one_to_many", "coordinator_workers", 1),
+    ("many_to_one", "branch_and_verify", 2),
+])
+@pytest.mark.parametrize("injected", [False, True])
+def test_handoff_execution_and_shared_inputs(tmp_path, monkeypatch, mode, topology, expected, injected):
+    from generation.stage_runner import StageRunner
+    calls = []
+    original = StageRunner.run_stage
+
+    def capture(self, **kwargs):
+        result = original(self, **kwargs)
+        calls.append((kwargs["stage"], kwargs["handoff_from_payload"], result))
+        return result
+
+    monkeypatch.setattr(StageRunner, "run_stage", capture)
+    result = execute(tmp_path, mode, topology, "LEP_HANDOFF_CORRUPTION" if injected else None)
+    assert result.dataset_eligible, result.trace.metadata
+    assert len(origins(result)) == (expected if injected else 0)
+    if mode != "one_to_many":
+        assert calls[0][0].agent_role == ("specialist_a" if topology == "coordinator_workers" else "researcher")
+        return
+    assert [stage.agent_role for stage, _, _ in calls] == [
+        "coordinator", "specialist_a", "specialist_b", "synthesizer", "coordinator"]
+    assert not calls[0][0].can_finalize
+    assert calls[-1][0].can_finalize
+    shared = calls[0][2].handoff_payload
+    assert all(inputs[0] is shared for _, inputs, _ in calls[1:4])
+    assert shared.contains_corrupted_data == injected
+    assert calls[-1][1][0].extra["merged_from"] == ["specialist_a", "specialist_b", "synthesizer"]
+    transitions = [e for e in result.trace.events if e.event_type == TraceEventType.TOPOLOGY_TRANSITION]
+    for event in transitions[1:4]:
+        assert event.depends_on == [calls[0][2].handoff_event_id]
+        assert event.observable["handoff_summary"] == shared.summary
+        assert event.event_labels.consumes_perturbed_info == injected
+        assert not event.event_labels.is_injection_origin
+    if injected:
+        assert origins(result) == [next(e for e in result.trace.events
+            if e.event_id == calls[0][2].handoff_event_id)]
+        assert origins(result)[0].hidden["original_hash"] != origins(result)[0].hidden["perturbed_hash"]
+
+
+def test_swe_one_to_many_six_run_smoke(tmp_path):
+    """Real runner/mutation/audit with deterministic inference and frozen fixtures."""
+    import json
+    fixture_root = FIXTURES.parent / "workspace_fixtures_v3"
+    fixtures = ["code_review_swe_001_django_django_11179",
+                "code_review_swe_002_django_django_11490",
+                "code_review_swe_003_django_django_11880"]
+    manifest = BenchmarkManifest(topologies=["coordinator_workers"], task_families=["code_review"],
+        propagation_modes=["one_to_many"], fixture_root=fixture_root, output_dir=tmp_path, dry_run=False)
+    class ScriptedReviewBackend(ScriptedFinancialBackend):
+        def reset(self, *, agent_name, mcp_tools, **kwargs):
+            super().reset(agent_name=agent_name, mcp_tools=mcp_tools, **kwargs)
+            summary = "Potential correctness issue: verify the changed behavior and add a regression test."
+            self.calls = [("list_directory", {"path": "."})]
+            if agent_name == "coordinator" and self.visits[agent_name] > 1:
+                self.calls.append(("submit_final", {"summary": summary}))
+            else:
+                report = f"output/{agent_name}.md"
+                self.calls.extend([
+                    ("write_file", {"path": report, "content": summary}),
+                    ("handoff", {"summary": summary, "report_path": report}),
+                ])
+
+    benchmark = BenchmarkRunner(manifest)
+    for fixture in fixtures:
+        for injected in (False, True):
+            benchmark.llm_backend = ScriptedReviewBackend("coordinator_workers")
+            entry = dict(scenario_id=f"{fixture}_{injected}", task_family="code_review", task_variant="swebench",
+                fixture_id=fixture, topology="coordinator_workers", propagation_mode="one_to_many",
+                condition="single_lep" if injected else "benign", repetition_index=0,
+                execution_variant="standard", lep_codes=["LEP_HANDOFF_CORRUPTION"] if injected else [])
+            record = benchmark._execute(entry)
+            assert record.success, record.error
+            assert record.dataset_eligible, record.termination_reason
+            assert record.injection_fired == injected
+            trace = json.loads(Path(record.trace_path).read_text())
+            assert trace["metadata"]["expected_injection_origins"] == int(injected)
+            assert trace["injection_origin_count"] == int(injected)
+            if injected:
+                origin = next(e for e in trace["events"] if e["event_labels"]["is_injection_origin"])
+                assert origin["agent_role"] == "coordinator"
+                workers = [e for e in trace["events"] if e["event_type"] == "topology_transition"
+                           and e["agent_role"] in ("specialist_a", "specialist_b", "synthesizer")]
+                assert len(workers) == 3
+                assert all(e["event_labels"]["consumes_perturbed_info"] for e in workers)
+                assert all(e["depends_on"] == [origin["event_id"]] for e in workers)
+    assert Path(benchmark.audit_injection_counts()).read_text() == ""
