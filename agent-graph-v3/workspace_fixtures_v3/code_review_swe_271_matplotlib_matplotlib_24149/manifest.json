@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "lib/matplotlib/axes/_axes.py",
-          "sphinx/ext/autodoc/typehints.py",
-          "augment_descriptions_with_types",
-          "parts",
-          "returns",
-          "name",
-          "_axes.py"
+          "Axes._convert_dx",
+          "_axes.py",
+          "lib/matplotlib/axes/ axes py",
+          "lib/matplotlib/axes/_axes",
+          "py",
+          "Axes convert dx",
+          "Axes",
+          "_convert_dx",
+          "axes py",
+          "_axes"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "return|yield|output"
+          "no.finite|all.nan|nonfinite|non.finite",
+          "stopiteration|first.element|first.item",
+          "fallback|fall.back|catch|handle"
         ],
         "reject_any": [],
-        "explanation": "In augment_descriptions_with_types, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "Axes._convert_dx assumes a finite element exists in original and converted coordinates. Catch StopIteration from each search and fall back to the first element so all-NaN input does not crash conversion."
       }
     }
   ],

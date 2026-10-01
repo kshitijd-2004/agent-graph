@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "astropy/utils/introspection.py",
-          "sympy/sets/sets.py",
-          "_complement",
-          "sympy",
-          "utilities",
-          "iterables",
-          "introspection.py"
+          "minversion",
+          "introspection.py",
+          "astropy/utils/introspection py",
+          "astropy/utils/introspection",
+          "py",
+          "introspection py",
+          "introspection"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "version",
+          "(?:numeric|dotted).{0,40}(?:prefix|part)|(?:prefix|part).{0,40}(?:numeric|dotted)",
+          "dev|rc|suffix|looseversion"
         ],
         "reject_any": [],
-        "explanation": "In _complement, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "minversion passes development suffixes into LooseVersion comparisons that can mix strings and integers. Extract the required version numeric dotted prefix before comparison, avoiding dev or rc token TypeErrors."
       }
     }
   ],

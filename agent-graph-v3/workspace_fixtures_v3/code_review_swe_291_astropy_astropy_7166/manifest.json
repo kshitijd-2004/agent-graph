@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "astropy/utils/misc.py",
-          "sympy/geometry/point.py",
-          "__new__",
-          "any",
-          "is_number",
-          "is_zero",
-          "misc.py"
+          "InheritDocstrings",
+          "misc.py",
+          "astropy/utils/misc py",
+          "astropy/utils/misc",
+          "py",
+          "Inherit Docstrings",
+          "misc py",
+          "misc"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "descriptor|propert",
+          "docstring|documentation",
+          "(?:include|recogniz|inherit|extend)"
         ],
-        "reject_any": [],
-        "explanation": "In __new__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "overwrite.*existing.*docstring"
+        ],
+        "explanation": "InheritDocstrings processes functions only, excluding properties and other data descriptors. Include inspect.isdatadescriptor in the eligibility check so undocumented public descriptors inherit base documentation."
       }
     }
   ],

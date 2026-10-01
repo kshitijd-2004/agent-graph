@@ -72,11 +72,19 @@
           "sphinx/domains/python.py",
           "PyProperty.handle_signature",
           "handle_signature",
-          "python.py"
+          "python.py",
+          "sphinx/domains/python py",
+          "sphinx/domains/python",
+          "py",
+          "Py Property handle signature",
+          "PyProperty",
+          "handle signature",
+          "python py",
+          "python"
         ],
         "all_of": [
-          "pars|cross.reference|xref|reference.node",
-          "annotation|type"
+          "pars(?:e|ed|ing).{0,35}annotation",
+          "(?:insert|produc|result|annotation).{0,35}nodes"
         ],
         "reject_any": [],
         "explanation": "PyProperty.handle_signature inserts the type as plain text instead of parsing its annotation. Use _parse_annotation and insert the resulting nodes so cross references can be resolved."

@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "django/db/migrations/serializer.py",
-          "astropy/utils/introspection.py",
-          "minversion",
-          "LooseVersion",
-          "raises",
-          "TypeError",
-          "serializer.py"
+          "TypeSerializer",
+          "serializer.py",
+          "django/db/migrations/serializer py",
+          "django/db/migrations/serializer",
+          "py",
+          "Type Serializer",
+          "serializer py",
+          "serializer"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "import|dependenc|module"
+          "qualname|qualified.name|nested.{0,25}(?:path|name)",
+          "(?:use|preserv|retain|emit|serializ).{0,70}(?:qual|nest)|(?:qual|nest).{0,70}(?:use|preserv|retain|emit|serializ)"
         ],
         "reject_any": [],
-        "explanation": "In minversion, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "TypeSerializer uses __name__, losing enclosing classes for nested types. Serialize the module plus __qualname__ so the emitted import path resolves the nested class."
       }
     }
   ],

@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "django/db/migrations/autodetector.py",
-          "django/db/migrations/serializer.py",
-          "serialize",
-          "module",
-          "value",
-          "__qualname__",
-          "autodetector.py"
+          "only_relation_agnostic_fields",
+          "autodetector.py",
+          "django/db/migrations/autodetector py",
+          "django/db/migrations/autodetector",
+          "py",
+          "only relation agnostic fields",
+          "autodetector py",
+          "autodetector"
         ],
         "all_of": [
-          "return|yield|output",
-          "attribute|property|field|state"
+          "\\bto\\b|target.key",
+          "(?:pop|safe|optional|missing|absent).{0,65}(?:key|remov|to|default)|(?:remov|key).{0,65}(?:safe|optional|missing|absent)"
         ],
         "reject_any": [],
-        "explanation": "In serialize, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "only_relation_agnostic_fields deletes the to key unconditionally even when field deconstruction omits it. Use pop with a default to remove the optional relation target safely."
       }
     }
   ],

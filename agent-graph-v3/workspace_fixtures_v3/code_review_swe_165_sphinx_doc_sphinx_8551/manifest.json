@@ -36,17 +36,35 @@
         "location_any": [
           "sphinx/domains/python.py",
           "sphinx/util/docfields.py",
-          "django/template/defaultfilters.py",
-          "floatformat",
+          "PyTypedField.make_xref",
+          "DocFieldTransformer.transform",
           "python.py",
-          "docfields.py"
+          "docfields.py",
+          "sphinx/domains/python py",
+          "sphinx/domains/python",
+          "py",
+          "sphinx/util/docfields py",
+          "sphinx/util/docfields",
+          "Py Typed Field make xref",
+          "PyTypedField",
+          "make_xref",
+          "Doc Field Transformer transform",
+          "DocFieldTransformer",
+          "python py",
+          "python",
+          "docfields py",
+          "docfields"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "module",
+          "class",
+          "(?:context|environment|\\benv\\b)",
+          "pass|propagat|attach|copy|forward"
         ],
-        "reject_any": [],
-        "explanation": "In floatformat, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "resolve from the root module|discard.*class context"
+        ],
+        "explanation": "Python typed-field references lack module and class context. Pass the build environment from docfield transformation and attach its current Python module and class to the generated cross-reference."
       }
     }
   ],

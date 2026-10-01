@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/db/backends/postgresql/client.py",
-          "django/template/library.py",
-          "parse_bits",
-          "param",
-          "params",
-          "kwonly",
-          "client.py"
+          "DatabaseClient.settings_to_cmd_args_env",
+          "client.py",
+          "django/db/backends/postgresql/client py",
+          "django/db/backends/postgresql/client",
+          "py",
+          "Database Client settings to cmd args env",
+          "DatabaseClient",
+          "settings_to_cmd_args_env",
+          "client py",
+          "client"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "clear|reset|none|null|empty"
+          "parameter|option|argument",
+          "(?:before|preced|ahead).{0,65}(?:database|dbname)|(?:database|dbname).{0,65}(?:after|last|follow)"
         ],
         "reject_any": [],
-        "explanation": "In parse_bits, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "The PostgreSQL client appends extra parameters after the database name. Put parameters before dbname so psql parses command options correctly rather than treating later arguments positionally."
       }
     }
   ],

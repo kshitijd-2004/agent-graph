@@ -33,18 +33,29 @@
         ],
         "location_any": [
           "django/db/models/fields/__init__.py",
-          "django/db/migrations/autodetector.py",
-          "_get_dependencies_for_foreign_key",
-          "field",
-          "remote_field",
-          "through"
+          "CharField.__init__",
+          "fields/__init__.py",
+          "models/fields/__init__.py",
+          "db/models/fields/__init__.py",
+          "django/db/models/fields/ init py",
+          "django/db/models/fields/__init__",
+          "py",
+          "Char Field init",
+          "CharField",
+          "fields/ init py",
+          "fields/__init__",
+          "models/fields/ init py",
+          "models/fields/__init__",
+          "db/models/fields/ init py",
+          "db/models/fields/__init__"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "max.length|length.limit",
+          "(?:none|unset|absent|unspecified)",
+          "(?:skip|only|guard|avoid|unless|conditional)"
         ],
         "reject_any": [],
-        "explanation": "In _get_dependencies_for_foreign_key, the patch corrects behavior by modifying the affected code path in django/db/migrations/autodetector.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "CharField.__init__ always installs MaxLengthValidator, even when max_length is None. Add it only for a specified length so unbounded fields do not run an invalid length comparison."
       }
     }
   ],

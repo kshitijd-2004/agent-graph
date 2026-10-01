@@ -33,17 +33,22 @@
         ],
         "location_any": [
           "sympy/printing/conventions.py",
-          "xarray/core/indexing.py",
-          "transpose",
-          "typing",
-          "conventions.py"
+          "split_super_sub",
+          "conventions.py",
+          "sympy/printing/conventions py",
+          "sympy/printing/conventions",
+          "py",
+          "split super sub",
+          "conventions py",
+          "conventions"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "copy|clone|independent|separate|preserv"
+          "unicode|non.ascii",
+          "digit|subscript",
+          "regex|pattern|letter"
         ],
         "reject_any": [],
-        "explanation": "In transpose, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "split_super_sub recognizes digit suffixes only after ASCII letters. Use a Unicode-aware letter pattern and digit class so non-ASCII symbol names receive trailing-digit subscripts too."
       }
     }
   ],

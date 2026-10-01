@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "sklearn/model_selection/_split.py",
-          "src/_pytest/reports.py",
-          "_to_json",
-          "_from_json",
-          "pytest_report_from_serializable",
-          "_pytest",
-          "_split.py"
+          "StratifiedKFold._make_test_folds",
+          "_split.py",
+          "sklearn/model selection/ split py",
+          "sklearn/model_selection/_split",
+          "py",
+          "Stratified KFold make test folds",
+          "StratifiedKFold",
+          "_make_test_folds",
+          "split py",
+          "_split"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "copy|clone|independent|separate|preserv"
+          "check.random.state|shared.{0,25}(?:rng|generator)|randomstate",
+          "seed|shuffle|class"
         ],
         "reject_any": [],
-        "explanation": "In _to_json, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "StratifiedKFold passes a raw seed into per-class splitting, restarting random sequences. Normalize it once with check_random_state and share the resulting generator so class shuffles advance one RNG state."
       }
     }
   ],

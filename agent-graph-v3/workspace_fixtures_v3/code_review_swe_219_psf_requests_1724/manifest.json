@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "requests/sessions.py",
-          "src/_pytest/compat.py",
-          "num_mock_patch_args",
-          "mock_sentinel",
-          "getattr",
-          "sys",
-          "sessions.py"
+          "Session.request",
+          "sessions.py",
+          "requests/sessions py",
+          "requests/sessions",
+          "py",
+          "Session request",
+          "Session",
+          "request",
+          "sessions py",
+          "sessions"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "method",
+          "builtin.str|builtin.string|built.in.string|native.str",
+          "(?:coerc|convert|normaliz).{0,60}(?:method|string)|(?:method).{0,60}(?:coerc|convert|normaliz)"
         ],
         "reject_any": [],
-        "explanation": "In num_mock_patch_args, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "Session.request forwards the supplied method type unchanged into request construction. Coerce it with builtin_str before uppercasing so the method uses the runtime built-in string type."
       }
     }
   ],

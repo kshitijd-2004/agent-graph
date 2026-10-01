@@ -33,18 +33,25 @@
         ],
         "location_any": [
           "django/db/models/expressions.py",
-          "django/db/migrations/autodetector.py",
-          "only_relation_agnostic_fields",
-          "deconstruction",
-          "pop",
-          "expressions.py"
+          "ExpressionWrapper.get_group_by_cols",
+          "expressions.py",
+          "django/db/models/expressions py",
+          "django/db/models/expressions",
+          "py",
+          "Expression Wrapper get group by cols",
+          "ExpressionWrapper",
+          "get_group_by_cols",
+          "expressions py",
+          "expressions"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "group.by",
+          "(?:delegat|forward|use).{0,75}(?:wrapped|inner|expression)|(?:wrapped|inner).{0,75}(?:delegat|group)"
         ],
-        "reject_any": [],
-        "explanation": "In only_relation_agnostic_fields, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation."
+        "reject_any": [
+          "force.*wrapped constant.*group|force.*constant.*into group"
+        ],
+        "explanation": "ExpressionWrapper.get_group_by_cols does not delegate grouping to its wrapped expression. Forward get_group_by_cols and its alias to the inner expression so grouping follows that expression semantics."
       }
     }
   ],

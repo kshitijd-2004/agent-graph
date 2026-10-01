@@ -33,18 +33,25 @@
         ],
         "location_any": [
           "django/db/models/base.py",
-          "django/forms/models.py",
-          "__hash__",
-          "hash",
-          "value",
-          "base.py"
+          "Model._set_pk_val",
+          "base.py",
+          "django/db/models/base py",
+          "django/db/models/base",
+          "py",
+          "Model set pk val",
+          "Model",
+          "_set_pk_val",
+          "base py",
+          "base"
         ],
         "all_of": [
-          "return|yield|output",
-          "attribute|property|field|state"
+          "parent",
+          "(?:set|assign|propagat|synchroniz).{0,70}(?:key|pk|field)|(?:key|pk|field).{0,70}(?:set|assign|propagat|synchroniz)"
         ],
-        "reject_any": [],
-        "explanation": "In __init__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "reject_any": [
+          "allocate.{0,20}primary key|unrelated primary key"
+        ],
+        "explanation": "Model._set_pk_val changes only the local primary key, leaving inherited parent key fields stale. Propagate the assigned value to parent-link target fields as well as the local pk."
       }
     }
   ],

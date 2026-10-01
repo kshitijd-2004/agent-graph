@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "sympy/core/sympify.py",
-          "requests/auth.py",
-          "sha_utf8",
-          "base",
-          "qop",
-          "auth",
-          "sympify.py"
+          "kernS",
+          "sympify.py",
+          "sympy/core/sympify py",
+          "sympy/core/sympify",
+          "py",
+          "kern S",
+          "sympify py",
+          "sympify"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "kern|placeholder",
+          "(?:hit|flag).{0,60}(?:false|initializ|set)|(?:false|initializ|set).{0,60}(?:hit|flag)"
         ],
         "reject_any": [],
-        "explanation": "In sha_utf8, the patch corrects behavior by modifying the affected code path in requests/auth.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "kernS tests for a placeholder even on a branch that never creates kern. Set hit=False when no placeholder substitution occurs and perform membership testing only after the placeholder exists."
       }
     }
   ],

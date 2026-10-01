@@ -33,19 +33,22 @@
         ],
         "location_any": [
           "lib/matplotlib/mlab.py",
-          "sphinx/extension.py",
-          "verify_needs_extensions",
-          "packaging",
-          "version",
-          "InvalidVersion",
-          "mlab.py"
+          "_spectral_helper",
+          "mlab.py",
+          "lib/matplotlib/mlab py",
+          "lib/matplotlib/mlab",
+          "py",
+          "spectral helper",
+          "mlab py",
+          "mlab"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "except|error|exception|handl"
+          "window",
+          "(?:remove|without|not|instead).{0,55}(?:abs|absolute)|(?:abs|absolute).{0,55}(?:remove|incorrect|sum)",
+          "sum|normaliz"
         ],
         "reject_any": [],
-        "explanation": "In verify_needs_extensions, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "_spectral_helper normalizes using absolute window values, changing signed-window scaling. Use window.sum and sums of window squared without abs in magnitude, complex and power normalization."
       }
     }
   ],

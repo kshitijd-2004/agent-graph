@@ -33,19 +33,22 @@
         ],
         "location_any": [
           "django/db/backends/sqlite3/base.py",
-          "examples/decomposition/plot_sparse_coding.py",
-          "_sparse_encode",
-          "sparse_encode",
-          "dict_learning",
-          "sqrt",
-          "base.py"
+          "check_sqlite_version",
+          "base.py",
+          "django/db/backends/sqlite3/base py",
+          "django/db/backends/sqlite3/base",
+          "py",
+          "check sqlite version",
+          "base py",
+          "base"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "sqlite",
+          "3\\.9(?:\\.0)?",
+          "minimum|require|reject|threshold"
         ],
         "reject_any": [],
-        "explanation": "In _sparse_encode, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation."
+        "explanation": "check_sqlite_version still accepts SQLite 3.8.3 although the supported minimum is now 3.9.0. Raise the version threshold and update the error message to enforce that requirement."
       }
     }
   ],

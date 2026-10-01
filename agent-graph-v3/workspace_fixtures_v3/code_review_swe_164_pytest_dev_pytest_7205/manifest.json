@@ -33,18 +33,22 @@
         ],
         "location_any": [
           "src/_pytest/setuponly.py",
-          "django/contrib/auth/forms.py",
-          "save",
-          "hasattr",
-          "save_m2m",
-          "setuponly.py"
+          "_show_fixture_action",
+          "setuponly.py",
+          "src/ pytest/setuponly py",
+          "src/_pytest/setuponly",
+          "py",
+          "show fixture action",
+          "setuponly py",
+          "setuponly"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "attribute|property|field|state"
+          "saferepr|safe.repr|safe.representation",
+          "param",
+          "limit|42|truncat|bounded|short"
         ],
         "reject_any": [],
-        "explanation": "In save, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "_show_fixture_action formats cached parameters directly, allowing failing or huge representations to disrupt setup display. Use saferepr with maxsize=42 for safe, bounded parameter output."
       }
     }
   ],

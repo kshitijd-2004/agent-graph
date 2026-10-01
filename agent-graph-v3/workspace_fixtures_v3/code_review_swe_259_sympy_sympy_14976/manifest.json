@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "sympy/printing/pycode.py",
-          "sphinx/pycode/ast.py",
-          "visit_Set",
-          "is_simple_tuple",
-          "value",
-          "ast",
-          "pycode.py"
+          "MpmathPrinter._print_Rational",
+          "pycode.py",
+          "sympy/printing/pycode py",
+          "sympy/printing/pycode",
+          "py",
+          "Mpmath Printer print Rational",
+          "MpmathPrinter",
+          "_print_Rational",
+          "pycode py",
+          "pycode"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "mpf|mpmath",
+          "numerator|denominator",
+          "(?:before|division|divide|precision)"
         ],
         "reject_any": [],
-        "explanation": "In is_simple_tuple, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "MpmathPrinter prints rationals as native division, losing precision before mpmath sees them. Convert numerator and denominator to mpf before dividing so evaluation uses arbitrary precision."
       }
     }
   ],

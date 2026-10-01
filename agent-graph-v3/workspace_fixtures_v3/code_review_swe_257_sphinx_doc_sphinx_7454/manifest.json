@@ -33,19 +33,22 @@
         ],
         "location_any": [
           "sphinx/domains/python.py",
-          "sphinx/ext/napoleon/docstring.py",
-          "_consume_field",
-          "_parse_other_parameters_section",
-          "_consume_fields",
-          "parse_type",
-          "python.py"
+          "_parse_annotation",
+          "python.py",
+          "sphinx/domains/python py",
+          "sphinx/domains/python",
+          "py",
+          "parse annotation",
+          "python py",
+          "python"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "none",
+          "(?:obj|object|object.role|object.reference).{0,35}(?:role|reference|type)|(?:role|reference|type).{0,35}(?:obj|object)|link.{0,35}annotation as an object",
+          "class"
         ],
         "reject_any": [],
-        "explanation": "In _consume_field, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "_parse_annotation gives None a class cross-reference, but None is an object. Use the obj role for None while retaining class references for other annotation names."
       }
     }
   ],

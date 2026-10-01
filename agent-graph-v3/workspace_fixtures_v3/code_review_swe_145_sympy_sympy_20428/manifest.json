@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "sympy/polys/domains/expressiondomain.py",
-          "django/db/models/base.py",
-          "check",
-          "Inherited",
-          "PKs",
-          "are",
-          "expressiondomain.py"
+          "Expression.__bool__",
+          "expressiondomain.py",
+          "sympy/polys/domains/expressiondomain py",
+          "sympy/polys/domains/expressiondomain",
+          "py",
+          "Expression bool",
+          "Expression",
+          "__bool__",
+          "expressiondomain py",
+          "expressiondomain"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "is.zero|zero.predicate|mathematical.zero",
+          "(?:structural|!=|inequality|float|symbolic|zero)"
         ],
         "reject_any": [],
-        "explanation": "In check, the patch corrects behavior by modifying the affected code path in django/db/models/base.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "Expression.__bool__ compares structurally with integer zero, so other mathematically zero expressions can be truthy. Use the expression is_zero predicate rather than structural inequality."
       }
     }
   ],

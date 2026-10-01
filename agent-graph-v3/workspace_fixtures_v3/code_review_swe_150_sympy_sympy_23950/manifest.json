@@ -33,19 +33,25 @@
         ],
         "location_any": [
           "sympy/sets/contains.py",
-          "django/forms/boundfield.py",
-          "template_name",
-          "data",
-          "attrs",
-          "get",
-          "contains.py"
+          "Contains.as_set",
+          "contains.py",
+          "sympy/sets/contains py",
+          "sympy/sets/contains",
+          "py",
+          "Contains as set",
+          "Contains",
+          "as_set",
+          "contains py",
+          "contains"
         ],
         "all_of": [
-          "return|yield|output",
-          "attribute|property|field|state"
+          "(?:return|expos).{0,35}(?:second.argument|args\\[1\\]|set.operand|membership.set)",
+          "membership|contains|args\\[1\\]|contained"
         ],
-        "reject_any": [],
-        "explanation": "In template_name, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "reject_any": [
+          "singleton.*tested element|return.*singleton"
+        ],
+        "explanation": "Contains.as_set raises NotImplementedError despite already storing the membership set. Return the second argument, the set in the Contains expression, to implement conversion."
       }
     }
   ],

@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "sklearn/preprocessing/_discretization.py",
-          "django/utils/dateformat.py",
-          "W",
-          "Year",
-          "digits",
-          "leading",
-          "_discretization.py"
+          "KBinsDiscretizer.fit",
+          "_discretization.py",
+          "sklearn/preprocessing/ discretization py",
+          "sklearn/preprocessing/_discretization",
+          "py",
+          "KBins Discretizer fit",
+          "KBinsDiscretizer",
+          "discretization py",
+          "_discretization"
         ],
         "all_of": [
-          "return|yield|output",
-          "attribute|property|field|state"
+          "cent(?:er|re)",
+          "sort|order",
+          "before.{0,55}(?:edge|midpoint)|(?:edge|midpoint).{0,55}(?:calcul|comput|deriv)"
         ],
         "reject_any": [],
-        "explanation": "In digits, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "KBinsDiscretizer assumes fitted k-means centers remain ordered. Sort the centers before computing adjacent midpoints so bin edges are monotonically ordered."
       }
     }
   ],

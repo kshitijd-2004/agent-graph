@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "django/forms/formsets.py",
-          "lib/matplotlib/offsetbox.py",
-          "_get_aligned_offsets",
-          "align",
-          "left",
-          "bottom",
-          "formsets.py"
+          "BaseFormSet.add_fields",
+          "formsets.py",
+          "django/forms/formsets py",
+          "django/forms/formsets",
+          "py",
+          "Base Form Set add fields",
+          "BaseFormSet",
+          "add_fields",
+          "formsets py",
+          "formsets"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "index",
+          "none|empty.form",
+          "(?:guard|check|before|only).{0,75}(?:compar|index|count)|(?:compar).{0,75}(?:guard|none)"
         ],
         "reject_any": [],
-        "explanation": "In _get_aligned_offsets, the patch corrects behavior by modifying the affected code path in lib/matplotlib/offsetbox.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "BaseFormSet.add_fields compares index with the initial form count even when the empty form has index=None. Guard against None before that comparison when deciding whether to add deletion controls."
       }
     }
   ],

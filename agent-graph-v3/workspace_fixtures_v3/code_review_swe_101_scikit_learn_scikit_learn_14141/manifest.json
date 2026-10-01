@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "sklearn/utils/_show_versions.py",
-          "astropy/timeseries/core.py",
-          "_check_required_columns",
-          "as_scalar_or_list_str",
-          "obj",
-          "hasattr",
-          "_show_versions.py"
+          "_get_deps_info",
+          "_show_versions.py",
+          "sklearn/utils/ show versions py",
+          "sklearn/utils/_show_versions",
+          "py",
+          "get deps info",
+          "show versions py",
+          "_show_versions"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "except|error|exception|handl"
+          "joblib",
+          "(?:add|includ|list|report|collect).{0,70}(?:dependenc|version)|(?:dependenc|version).{0,70}(?:add|includ|list|report|collect)"
         ],
-        "reject_any": [],
-        "explanation": "In _check_required_columns, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "defer.{0,40}import|delay.{0,40}import"
+        ],
+        "explanation": "In _get_deps_info the dependency list omits joblib, so diagnostic output cannot report its version. Include joblib among the dependencies whose versions are collected."
       }
     }
   ],

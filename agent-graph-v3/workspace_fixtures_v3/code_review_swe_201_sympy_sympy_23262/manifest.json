@@ -33,19 +33,22 @@
         ],
         "location_any": [
           "sympy/utilities/lambdify.py",
-          "xarray/core/dataset.py",
-          "quantile",
-          "no_conflicts",
-          "dim",
-          "reduce_dims",
-          "lambdify.py"
+          "_recursive_to_string",
+          "lambdify.py",
+          "sympy/utilities/lambdify py",
+          "sympy/utilities/lambdify",
+          "py",
+          "recursive to string",
+          "lambdify py",
+          "lambdify"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "clear|reset|none|null|empty"
+          "tuple",
+          "(?:trailing|final).{0,20}comma|comma.{0,30}(?:tuple|singleton)",
+          "single|one.element|one.item"
         ],
         "reject_any": [],
-        "explanation": "In quantile, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "_recursive_to_string emits tuples without a trailing comma, so a one-element tuple becomes a parenthesized scalar. Add the trailing comma to tuple output to preserve its container type."
       }
     }
   ],

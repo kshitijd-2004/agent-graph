@@ -33,19 +33,25 @@
         ],
         "location_any": [
           "django/db/models/enums.py",
-          "sphinx/domains/python.py",
-          "PyTypedField",
-          "variable",
-          "label",
-          "Variables",
-          "enums.py"
+          "Choices.__str__",
+          "enums.py",
+          "django/db/models/enums py",
+          "django/db/models/enums",
+          "py",
+          "Choices str",
+          "Choices",
+          "__str__",
+          "enums py",
+          "enums"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "choices|enum",
+          "(?:str|render|string).{0,65}(?:value|underlying)|(?:value|underlying).{0,65}(?:str|render|string)"
         ],
-        "reject_any": [],
-        "explanation": "In variable, the patch corrects behavior by modifying the affected code path in sphinx/domains/python.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "reject_any": [
+          "human.readable label.*replacing|replacing.*stored choice value"
+        ],
+        "explanation": "Choices inherits enum stringification, displaying the member identity instead of its stored value. Implement __str__ as str(self.value) so model attributes render the underlying choice value."
       }
     }
   ],

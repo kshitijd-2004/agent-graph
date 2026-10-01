@@ -33,19 +33,22 @@
         ],
         "location_any": [
           "django/conf/global_settings.py",
-          "astropy/units/quantity.py",
-          "__new__",
-          "except",
-          "any",
-          "integer",
-          "global_settings.py"
+          "SECURE_REFERRER_POLICY",
+          "global_settings.py",
+          "django/conf/global settings py",
+          "django/conf/global_settings",
+          "py",
+          "SECURE REFERRER POLICY",
+          "global settings py",
+          "global_settings"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "except|error|exception|handl"
+          "referrer",
+          "same.origin",
+          "default|unset|none"
         ],
         "reject_any": [],
-        "explanation": "In __new__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "SECURE_REFERRER_POLICY defaults to None, leaving the policy unset. Set the default to same-origin so referrer information is withheld for cross-origin requests."
       }
     }
   ],

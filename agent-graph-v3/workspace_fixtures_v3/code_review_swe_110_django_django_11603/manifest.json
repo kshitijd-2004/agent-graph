@@ -33,19 +33,22 @@
         ],
         "location_any": [
           "django/db/models/aggregates.py",
-          "astropy/units/core.py",
-          "__eq__",
-          "_unrecognized_operator",
-          "NotImplemented",
-          "try",
-          "aggregates.py"
+          "Avg",
+          "Sum",
+          "aggregates.py",
+          "django/db/models/aggregates py",
+          "django/db/models/aggregates",
+          "py",
+          "aggregates py",
+          "aggregates"
         ],
         "all_of": [
-          "except|error|exception|handl",
-          "return|yield|output"
+          "avg|average",
+          "sum",
+          "(?:allow|enable|support|accept|permit).{0,50}distinct|distinct.{0,50}(?:allow|enable|support|accept|permit)"
         ],
         "reject_any": [],
-        "explanation": "In __eq__, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately."
+        "explanation": "Avg and Sum inherit the distinct prohibition even though SQL supports it. Enable allow_distinct for both aggregate classes so their constructors accept DISTINCT."
       }
     }
   ],

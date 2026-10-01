@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/urls/resolvers.py",
-          "astropy/utils/misc.py",
-          "is_public_member",
-          "inspect",
-          "isfunction",
-          "val",
-          "resolvers.py"
+          "RegexPattern.match",
+          "resolvers.py",
+          "django/urls/resolvers py",
+          "django/urls/resolvers",
+          "py",
+          "Regex Pattern match",
+          "RegexPattern",
+          "match",
+          "resolvers py",
+          "resolvers"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "clear|reset|none|null|empty"
+          "(?:named|keyword).{0,35}(?:group|argument)|groupdict",
+          "(?:filter|drop|omit|exclud|remov).{0,65}(?:none|null|unmatched)"
         ],
         "reject_any": [],
-        "explanation": "In is_public_member, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation."
+        "explanation": "RegexPattern.match passes unmatched named groups as None keyword arguments. Filter out None values from groupdict so absent optional captures do not override downstream defaults."
       }
     }
   ],

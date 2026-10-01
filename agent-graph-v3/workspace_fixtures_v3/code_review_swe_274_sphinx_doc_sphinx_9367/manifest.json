@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "sphinx/pycode/ast.py",
-          "sympy/combinatorics/permutations.py",
-          "__new__",
-          "has_dups",
-          "temp",
-          "is_cycle",
-          "ast.py"
+          "Unparser.visit_Tuple",
+          "ast.py",
+          "sphinx/pycode/ast py",
+          "sphinx/pycode/ast",
+          "py",
+          "Unparser visit Tuple",
+          "Unparser",
+          "visit_Tuple",
+          "ast py",
+          "ast"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "except|error|exception|handl"
+          "tuple",
+          "single|one.element|one.item",
+          "comma"
         ],
         "reject_any": [],
-        "explanation": "In __new__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "Unparser.visit_Tuple renders a one-element tuple without the required comma, turning it into a scalar expression. Add a singleton branch emitting (element,) while preserving empty and multi-element tuple syntax."
       }
     }
   ],

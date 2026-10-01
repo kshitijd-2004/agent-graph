@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "django/contrib/admin/templatetags/admin_modify.py",
-          "django/db/models/fields/related.py",
-          "validate",
-          "remote_field",
-          "model",
-          "_base_manager",
-          "admin_modify.py"
+          "submit_row",
+          "admin_modify.py",
+          "django/contrib/admin/templatetags/admin modify py",
+          "django/contrib/admin/templatetags/admin_modify",
+          "py",
+          "submit row",
+          "admin modify py",
+          "admin_modify"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "save.as.new",
+          "add.permission|permission.{0,35}(?:add|creat)"
         ],
         "reject_any": [],
-        "explanation": "In validate, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used."
+        "explanation": "submit_row gates save-as-new on change permission even though the operation creates an object. Require add permission for that button while retaining the existing popup and change-view conditions."
       }
     }
   ],

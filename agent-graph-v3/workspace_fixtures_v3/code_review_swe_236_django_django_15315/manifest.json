@@ -33,18 +33,30 @@
         ],
         "location_any": [
           "django/db/models/fields/__init__.py",
-          "sklearn/pipeline.py",
-          "_iter",
-          "__len__",
-          "Returns",
-          "length"
+          "Field.__hash__",
+          "fields/__init__.py",
+          "models/fields/__init__.py",
+          "db/models/fields/__init__.py",
+          "django/db/models/fields/ init py",
+          "django/db/models/fields/__init__",
+          "py",
+          "Field hash",
+          "Field",
+          "__hash__",
+          "fields/ init py",
+          "fields/__init__",
+          "models/fields/ init py",
+          "models/fields/__init__",
+          "db/models/fields/ init py",
+          "db/models/fields/__init__"
         ],
         "all_of": [
-          "return|yield|output",
-          "attribute|property|field|state"
+          "creation.counter",
+          "(?:stable|chang|model|bind|attach)",
+          "hash"
         ],
         "reject_any": [],
-        "explanation": "In _iter, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "Field.__hash__ includes model metadata that changes when a field is attached to a model. Hash only creation_counter so the field hash stays stable across model binding."
       }
     }
   ],

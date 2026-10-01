@@ -33,19 +33,25 @@
         ],
         "location_any": [
           "sklearn/ensemble/_hist_gradient_boosting/gradient_boosting.py",
-          "lib/matplotlib/cm.py",
-          "register",
-          "__copy__",
-          "Someone",
-          "may",
-          "gradient_boosting.py"
+          "_check_early_stopping_scorer",
+          "early-stopping scorer",
+          "gradient_boosting.py",
+          "sklearn/ensemble/ hist gradient boosting/gradient boosting py",
+          "sklearn/ensemble/_hist_gradient_boosting/gradient_boosting",
+          "py",
+          "check early stopping scorer",
+          "gradient boosting py",
+          "gradient_boosting"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "assign|set|initializ|updat"
+          "classes|original.label|class.label",
+          "(?:map|decode|convert|restor).{0,75}(?:label|target|class)|(?:label|target).{0,75}(?:map|decode|convert|restor)",
+          "train|validation|both|scoring.dataset"
         ],
-        "reject_any": [],
-        "explanation": "In register, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "score only.*first training sample"
+        ],
+        "explanation": "The early-stopping scorer receives encoded class indices while predictions use original labels. Map training and validation targets back through classes_ before calling the scorer for classifiers."
       }
     }
   ],

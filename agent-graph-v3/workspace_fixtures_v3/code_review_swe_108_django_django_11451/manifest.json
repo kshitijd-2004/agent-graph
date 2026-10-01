@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "django/contrib/auth/backends.py",
-          "astropy/io/fits/card.py",
-          "_format_value",
-          "Format",
-          "floating",
-          "number",
-          "backends.py"
+          "ModelBackend.authenticate",
+          "backends.py",
+          "django/contrib/auth/backends py",
+          "django/contrib/auth/backends",
+          "py",
+          "Model Backend authenticate",
+          "ModelBackend",
+          "authenticate",
+          "backends py",
+          "backends"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "compar|test|check|condition"
+          "username|credential",
+          "(?:password|credential).{0,85}(?:none|missing|absent)|(?:none|missing|absent).{0,85}(?:password|credential)",
+          "return|short.circuit|skip.{0,35}(?:lookup|query)"
         ],
         "reject_any": [],
-        "explanation": "In _format_value, the patch corrects a comparison or condition. The previous comparison evaluated incorrectly, causing the wrong code path to execute. Fixing the condition ensures the right branch is taken."
+        "explanation": "ModelBackend.authenticate attempts lookup even when username or password is None. Return early for either missing credential before querying the user manager."
       }
     }
   ],

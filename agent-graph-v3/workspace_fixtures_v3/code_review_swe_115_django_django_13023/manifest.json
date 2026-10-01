@@ -33,18 +33,30 @@
         ],
         "location_any": [
           "django/db/models/fields/__init__.py",
-          "django/utils/dateparse.py",
-          "sign",
-          "hours",
-          "minutes",
-          "seconds"
+          "DecimalField.to_python",
+          "fields/__init__.py",
+          "models/fields/__init__.py",
+          "db/models/fields/__init__.py",
+          "django/db/models/fields/ init py",
+          "django/db/models/fields/__init__",
+          "py",
+          "Decimal Field to python",
+          "DecimalField",
+          "to_python",
+          "fields/ init py",
+          "fields/__init__",
+          "models/fields/ init py",
+          "models/fields/__init__",
+          "db/models/fields/ init py",
+          "db/models/fields/__init__"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "typeerror",
+          "valueerror",
+          "(?:catch|handle|convert|translat).{0,90}(?:validation|exception|error)"
         ],
         "reject_any": [],
-        "explanation": "In sign, the patch corrects behavior by modifying the affected code path in django/utils/dateparse.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "DecimalField.to_python catches only InvalidOperation. Catch TypeError and ValueError from Decimal conversion too and translate them into the normal ValidationError for invalid input."
       }
     }
   ],

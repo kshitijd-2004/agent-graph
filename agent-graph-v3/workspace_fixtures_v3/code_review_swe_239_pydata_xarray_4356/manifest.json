@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "xarray/core/nanops.py",
-          "sklearn/cluster/optics_.py",
-          "compute_optics_graph",
-          "cluster_optics_xi",
-          "_xi_cluster",
-          "min_samples",
-          "nanops.py"
+          "_maybe_null_out",
+          "nanops.py",
+          "xarray/core/nanops py",
+          "xarray/core/nanops",
+          "py",
+          "maybe null out",
+          "nanops py",
+          "nanops"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "min.count|minimum.count",
+          "(?:product|prod|multiply).{0,60}(?:dimension|shape|size|axis)|(?:dimension|shape|size|axis).{0,60}(?:product|prod|multiply)"
         ],
         "reject_any": [],
-        "explanation": "In compute_optics_graph, the patch adds a default value for a previously unhandled case. When the expected input is absent, the code now falls back to a sensible default instead of producing None or crashing."
+        "explanation": "_maybe_null_out rejects multiple reduction axes and assumes one dimension size. Use the product of reduced-axis sizes to compute valid counts, allowing min_count across multiple dimensions."
       }
     }
   ],

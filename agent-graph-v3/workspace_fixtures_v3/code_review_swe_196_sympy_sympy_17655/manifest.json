@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "sympy/geometry/point.py",
-          "requests/sessions.py",
-          "request",
-          "compat",
-          "cookielib",
-          "OrderedDict",
-          "point.py"
+          "Point.__rmul__",
+          "point.py",
+          "sympy/geometry/point py",
+          "sympy/geometry/point",
+          "py",
+          "Point rmul",
+          "Point",
+          "__rmul__",
+          "point py",
+          "point"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "reflected|reverse|left.scalar|scalar.on.the.left|rmul",
+          "(?:delegat|call|reuse|reusing|forward).{0,60}(?:mul|multipli|multiplication)"
         ],
         "reject_any": [],
-        "explanation": "In request, the patch corrects behavior by modifying the affected code path in requests/sessions.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "Point implements multiplication only when the point is the left operand. Add __rmul__ delegating to __mul__ so a scalar on the left scales the point coordinates too."
       }
     }
   ],

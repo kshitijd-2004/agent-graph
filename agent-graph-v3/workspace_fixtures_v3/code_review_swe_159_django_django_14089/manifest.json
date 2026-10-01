@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/utils/datastructures.py",
-          "django/core/serializers/base.py",
-          "build_instance",
-          "obj",
-          "Model",
-          "data",
-          "datastructures.py"
+          "OrderedSet.__reversed__",
+          "datastructures.py",
+          "django/utils/datastructures py",
+          "django/utils/datastructures",
+          "py",
+          "Ordered Set reversed",
+          "OrderedSet",
+          "__reversed__",
+          "datastructures py",
+          "datastructures"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "revers",
+          "(?:dict|backing|underlying).{0,70}(?:iter|order|revers)|(?:iter|order|revers).{0,70}(?:dict|backing|underlying)"
         ],
         "reject_any": [],
-        "explanation": "In build_instance, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used."
+        "explanation": "OrderedSet lacks reverse iteration support. Implement __reversed__ by reversing the backing dictionary so elements are yielded in reverse insertion order."
       }
     }
   ],

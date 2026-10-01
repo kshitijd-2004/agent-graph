@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "sympy/polys/factortools.py",
-          "django/db/backends/sqlite3/base.py",
-          "list_aggregate",
-          "Database",
-          "sqlite_version_info",
-          "raise",
-          "factortools.py"
+          "dmp_ext_factor",
+          "factortools.py",
+          "sympy/polys/factortools py",
+          "sympy/polys/factortools",
+          "py",
+          "dmp ext factor",
+          "factortools py",
+          "factortools"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "except|error|exception|handl"
+          "norm",
+          "(?:original|full|unsquared|multiplicit).{0,75}(?:polynomial|input|\\bf\\b)|(?:polynomial|input).{0,75}(?:original|full|multiplicit)"
         ],
         "reject_any": [],
-        "explanation": "In list_aggregate, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "dmp_ext_factor computes the square-free norm from the already square-free part. Pass the original polynomial F to dmp_sqf_norm so the norm computation retains the information in the full input."
       }
     }
   ],

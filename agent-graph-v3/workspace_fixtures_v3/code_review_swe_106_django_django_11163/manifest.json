@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "django/forms/models.py",
-          "astropy/io/ascii/rst.py",
-          "get_fixedwidth_params",
-          "astropy",
-          "table",
-          "QTable",
-          "models.py"
+          "model_to_dict",
+          "models.py",
+          "django/forms/models py",
+          "django/forms/models",
+          "py",
+          "model to dict",
+          "models py",
+          "models"
         ],
         "all_of": [
-          "clear|reset|none|null|empty",
-          "return|yield|output"
+          "empty|\\[\\]",
+          "(?:none|unspecified).{0,75}(?:distinguish|instead|only|explicit)|(?:distinguish|check|test|only).{0,75}(?:none|unspecified)"
         ],
         "reject_any": [],
-        "explanation": "In get_fixedwidth_params, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation."
+        "explanation": "model_to_dict tests fields by truthiness, treating an empty list like an unspecified selection. Check fields is not None so an explicitly empty selection excludes every field."
       }
     }
   ],

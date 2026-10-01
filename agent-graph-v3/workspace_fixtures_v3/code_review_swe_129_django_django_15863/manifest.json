@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "django/template/defaultfilters.py",
-          "django/db/models/base.py",
-          "_get_pk_val",
-          "parent_link",
-          "_meta",
-          "parents",
-          "defaultfilters.py"
+          "floatformat",
+          "defaultfilters.py",
+          "django/template/defaultfilters py",
+          "django/template/defaultfilters",
+          "py",
+          "defaultfilters py",
+          "defaultfilters"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "\\bstr\\b|string",
+          "(?:repr|representation|quoted)",
+          "decimal|precision|coerc|convert"
         ],
         "reject_any": [],
-        "explanation": "In _get_pk_val, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "floatformat feeds repr(text) into Decimal, introducing representation syntax for inputs such as Decimal objects. Use str(text) to preserve the numeric value without repr wrappers or a lossy float fallback."
       }
     }
   ],

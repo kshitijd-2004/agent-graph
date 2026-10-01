@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/forms/widgets.py",
-          "django/core/files/locks.py",
-          "unlock",
-          "try",
-          "fcntl",
-          "flock",
-          "widgets.py"
+          "SelectDateWidget.value_from_datadict",
+          "widgets.py",
+          "django/forms/widgets py",
+          "django/forms/widgets",
+          "py",
+          "Select Date Widget value from datadict",
+          "SelectDateWidget",
+          "value_from_datadict",
+          "widgets py",
+          "widgets"
         ],
         "all_of": [
-          "except|error|exception|handl",
-          "return|yield|output"
+          "overflow",
+          "(?:catch|handle|return).{0,70}(?:0.0.0|invalid|sentinel)|(?:invalid|sentinel).{0,70}(?:return|date)"
         ],
         "reject_any": [],
-        "explanation": "In unlock, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately."
+        "explanation": "SelectDateWidget.value_from_datadict does not catch date-construction OverflowError for extreme inputs. Catch it and return the invalid date sentinel 0-0-0 so ordinary validation rejects the input."
       }
     }
   ],

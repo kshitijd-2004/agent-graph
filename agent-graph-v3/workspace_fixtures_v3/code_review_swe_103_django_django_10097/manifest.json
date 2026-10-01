@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "django/core/validators.py",
-          "astropy/coordinates/builtin_frames/__init__.py",
-          "tete_to_itrs_mat",
-          "tete_to_gcrs",
-          "itrs_to_tete",
-          "itrs_observed_transforms",
-          "validators.py"
+          "URLValidator",
+          "validators.py",
+          "django/core/validators py",
+          "django/core/validators",
+          "py",
+          "URL Validator",
+          "validators py",
+          "validators"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "default|fallback"
+          "user|password|credential|auth",
+          "(?:exclud|reject|disallow|forbid|restrict).{0,90}(?:colon|slash|@|delimiter)"
         ],
         "reject_any": [],
-        "explanation": "In tete_to_itrs_mat, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "URLValidator allows arbitrary non-whitespace in credentials, which can swallow authority delimiters. Restrict username and password character classes to exclude colon, slash and @ as well as whitespace."
       }
     }
   ],

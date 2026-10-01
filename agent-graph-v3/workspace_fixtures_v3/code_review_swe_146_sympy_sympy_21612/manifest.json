@@ -33,18 +33,24 @@
         ],
         "location_any": [
           "sympy/printing/str.py",
-          "django/db/models/query_utils.py",
-          "isinstance",
-          "other",
-          "getattr",
-          "str.py"
+          "StrPrinter._print_Mul",
+          "str.py",
+          "sympy/printing/str py",
+          "sympy/printing/str",
+          "py",
+          "Str Printer print Mul",
+          "StrPrinter",
+          "_print_Mul",
+          "str py",
+          "str"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "compar|test|check|condition"
+          "power|\\bpow\\b",
+          "parenthes|group",
+          "denominator|division|reciprocal"
         ],
         "reject_any": [],
-        "explanation": "In __init__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "StrPrinter._print_Mul only marks multiplicative bases for denominator parentheses. Include power bases too so a reciprocal of a nested power is grouped unambiguously in string output."
       }
     }
   ],

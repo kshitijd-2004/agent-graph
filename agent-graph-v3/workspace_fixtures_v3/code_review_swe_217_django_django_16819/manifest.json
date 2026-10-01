@@ -33,19 +33,26 @@
         ],
         "location_any": [
           "django/db/migrations/operations/models.py",
-          "src/_pytest/logging.py",
-          "reset",
-          "messages",
-          "clear",
-          "records",
-          "models.py"
+          "AddIndex.reduce",
+          "models.py",
+          "django/db/migrations/operations/models py",
+          "django/db/migrations/operations/models",
+          "py",
+          "Add Index reduce",
+          "AddIndex",
+          "reduce",
+          "models py",
+          "models"
         ],
         "all_of": [
-          "clear|reset|none|null|empty",
-          "attribute|property|field|state"
+          "(?:addindex|add.index|index.creation|creation.*index)",
+          "(?:removeindex|remove.index|index.removal|removal.*index)",
+          "cancel|empty|eliminat|reduc.{0,30}\\[\\]"
         ],
-        "reject_any": [],
-        "explanation": "In reset, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation."
+        "reject_any": [
+          "cancel every later removeindex|regardless of its index name"
+        ],
+        "explanation": "AddIndex lacks a reduction for a subsequent RemoveIndex with the same name. Cancel the matching creation/removal pair by returning an empty operation list during migration optimization."
       }
     }
   ],

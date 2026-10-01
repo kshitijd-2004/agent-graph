@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "sympy/printing/pycode.py",
-          "django/db/models/fields/__init__.py",
-          "__instancecheck__",
-          "issubclass",
-          "subclass",
-          "_subclasses",
-          "pycode.py"
+          "PythonCodePrinter",
+          "_known_functions",
+          "pycode.py",
+          "sympy/printing/pycode py",
+          "sympy/printing/pycode",
+          "py",
+          "Python Code Printer",
+          "known functions",
+          "pycode py",
+          "pycode"
         ],
         "all_of": [
-          "return|yield|output",
-          "attribute|property|field|state"
+          "\\bmin\\b",
+          "\\bmax\\b",
+          "builtin|built.in|map"
         ],
         "reject_any": [],
-        "explanation": "In __instancecheck__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "The Python code printer lacks Min and Max mappings. Map them to the built-in min and max functions so generated Python uses supported callable names."
       }
     }
   ],

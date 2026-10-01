@@ -33,18 +33,24 @@
         ],
         "location_any": [
           "django/db/models/functions/math.py",
-          "django/db/models/fields/__init__.py",
-          "__lt__",
-          "hash",
-          "creation_counter",
-          "math.py"
+          "Random.get_group_by_cols",
+          "math.py",
+          "django/db/models/functions/math py",
+          "django/db/models/functions/math",
+          "py",
+          "Random get group by cols",
+          "Random",
+          "get_group_by_cols",
+          "math py",
+          "math"
         ],
         "all_of": [
-          "return|yield|output",
-          "attribute|property|field|state"
+          "random",
+          "group.by",
+          "empty|\\[\\]|no.columns|exclude|omit"
         ],
         "reject_any": [],
-        "explanation": "In __lt__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "Random inherits grouping behavior that adds a nondeterministic expression to GROUP BY. Override get_group_by_cols to return an empty list so random ordering does not split aggregate groups."
       }
     }
   ],

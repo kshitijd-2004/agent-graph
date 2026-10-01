@@ -33,19 +33,27 @@
         ],
         "location_any": [
           "xarray/coding/variables.py",
-          "sympy/geometry/point.py",
-          "distance",
-          "type",
-          "len",
-          "sqrt",
-          "variables.py"
+          "UnsignedIntegerCoder.decode",
+          "variables.py",
+          "xarray/coding/variables py",
+          "xarray/coding/variables",
+          "py",
+          "Unsigned Integer Coder decode",
+          "UnsignedIntegerCoder",
+          "decode",
+          "variables py",
+          "variables"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "unsigned",
+          "false",
+          "signed",
+          "fill.value|fillvalue"
         ],
-        "reject_any": [],
-        "explanation": "In distance, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "ignore.*unsigned.*false|keep.*unsigned"
+        ],
+        "explanation": "UnsignedIntegerCoder.decode handles signed-to-unsigned but not unsigned storage marked _Unsigned=false. Convert that data lazily to a same-width signed dtype and convert _FillValue to the signed type too."
       }
     }
   ],

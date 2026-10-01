@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/db/models/sql/query.py",
-          "astropy/units/format/cds.py",
-          "_make_parser",
-          "p_product_of_units",
-          "YACC",
-          "grammar",
-          "query.py"
+          "Query._add_q",
+          "query.py",
+          "django/db/models/sql/query py",
+          "django/db/models/sql/query",
+          "py",
+          "Query add q",
+          "Query",
+          "_add_q",
+          "query py",
+          "query"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "simple.col|column.{0,25}(mode|flag)",
+          "(?:pass|forward|propagat).{0,65}(?:recurs|nested|child)"
         ],
         "reject_any": [],
-        "explanation": "In _make_parser, the patch corrects behavior by modifying the affected code path in astropy/units/format/cds.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "Query._add_q drops simple_col when recursing into child nodes. Forward the column-mode flag to the recursive call so nested predicates use the same column rendering mode."
       }
     }
   ],

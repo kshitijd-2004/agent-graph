@@ -33,19 +33,25 @@
         ],
         "location_any": [
           "sympy/printing/mathematica.py",
-          "src/_pytest/config/__init__.py",
-          "_set_initial_conftests",
-          "_getconftestmodules",
-          "_rget_with_confmod",
-          "current",
-          "mathematica.py"
+          "MCodePrinter._print_MinMaxBase",
+          "mathematica.py",
+          "sympy/printing/mathematica py",
+          "sympy/printing/mathematica",
+          "py",
+          "MCode Printer print Min Max Base",
+          "MCodePrinter",
+          "_print_MinMaxBase",
+          "mathematica py",
+          "mathematica"
         ],
         "all_of": [
-          "loop|iterat",
-          "return|yield|output"
+          "min",
+          "max",
+          "mathematica|square.bracket|function.printer",
+          "dispatch|map|route|register"
         ],
         "reject_any": [],
-        "explanation": "In _set_initial_conftests, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "The Mathematica printer lacks Min/Max dispatch through its function printer. Register both names and route MinMaxBase to _print_Function so it emits Mathematica function-call syntax."
       }
     }
   ],

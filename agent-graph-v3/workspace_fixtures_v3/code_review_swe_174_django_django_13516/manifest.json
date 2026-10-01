@@ -33,17 +33,25 @@
         ],
         "location_any": [
           "django/core/management/base.py",
-          "django/core/paginator.py",
-          "page_number",
-          "page_range",
-          "base.py"
+          "OutputWrapper.flush",
+          "base.py",
+          "django/core/management/base py",
+          "django/core/management/base",
+          "py",
+          "Output Wrapper flush",
+          "OutputWrapper",
+          "flush",
+          "base py",
+          "base"
         ],
         "all_of": [
-          "loop|iterat",
-          "return|yield|output"
+          "flush",
+          "(?:delegat|forward|call).{0,60}(?:underlying|wrapped|_out|stream)|(?:underlying|wrapped|stream).{0,60}(?:delegat|forward|flush)"
         ],
-        "reject_any": [],
-        "explanation": "In __init__, the iteration logic is corrected. The patch fixes how the loop processes items or terminates, ensuring each iteration handles data correctly."
+        "reject_any": [
+          "close.*stream immediately|close.*underlying stream immediately"
+        ],
+        "explanation": "OutputWrapper does not forward flush through its inherited stream method. Implement flush explicitly and delegate to the wrapped output when that method is available."
       }
     }
   ],

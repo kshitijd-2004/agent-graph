@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "django/db/migrations/autodetector.py",
-          "django/conf/global_settings.py",
-          "gettext_noop",
-          "SECURE_REFERRER_POLICY",
-          "same",
-          "origin",
-          "autodetector.py"
+          "_get_dependencies_for_foreign_key",
+          "autodetector.py",
+          "django/db/migrations/autodetector py",
+          "django/db/migrations/autodetector",
+          "py",
+          "get dependencies for foreign key",
+          "autodetector py",
+          "autodetector"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "through|intermediate",
+          "(?:resolve|use|dependenc).{0,70}(?:through|intermediate)|(?:through|intermediate).{0,70}(?:resolve|use|dependenc)"
         ],
         "reject_any": [],
-        "explanation": "In gettext_noop, the patch corrects behavior by modifying the affected code path in django/conf/global_settings.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "_get_dependencies_for_foreign_key resolves the remote target again when computing a through-model dependency. Resolve field.remote_field.through instead to depend on the actual intermediate model."
       }
     }
   ],

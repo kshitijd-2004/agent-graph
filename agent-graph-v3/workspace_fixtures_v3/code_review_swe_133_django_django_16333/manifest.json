@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/contrib/auth/forms.py",
-          "django/db/models/expressions.py",
-          "set_source_expressions",
-          "get_group_by_cols",
-          "alias",
-          "expression",
-          "forms.py"
+          "UserCreationForm.save",
+          "forms.py",
+          "django/contrib/auth/forms py",
+          "django/contrib/auth/forms",
+          "py",
+          "User Creation Form save",
+          "UserCreationForm",
+          "save",
+          "forms py",
+          "forms"
         ],
         "all_of": [
-          "clear|reset|none|null|empty",
-          "return|yield|output"
+          "many.to.many|save.m2m",
+          "(?:after|following).{0,40}(?:user|save)|(?:call|persist|save).{0,65}(?:relation|save.m2m)"
         ],
         "reject_any": [],
-        "explanation": "In set_source_expressions, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation."
+        "explanation": "UserCreationForm.save saves the user but omits many-to-many persistence. After saving on commit=True, call save_m2m when available so form-provided relationships are stored."
       }
     }
   ],

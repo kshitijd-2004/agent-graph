@@ -33,19 +33,26 @@
         ],
         "location_any": [
           "lib/matplotlib/collections.py",
-          "sphinx/util/inspect.py",
-          "signature_from_str",
-          "defaults",
-          "list",
-          "args",
-          "collections.py"
+          "Collection.set_paths",
+          "collections.py",
+          "lib/matplotlib/collections py",
+          "lib/matplotlib/collections",
+          "py",
+          "Collection set paths",
+          "Collection",
+          "set_paths",
+          "collections py",
+          "collections"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "copy|clone|independent|separate|preserv"
+          "(?:base|collection).{0,35}(?:set.paths|setter)|set.paths",
+          "(?:assign|store|set).{0,35}paths",
+          "stale"
         ],
-        "reject_any": [],
-        "explanation": "In signature_from_str, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "silently discard|discard.*new path"
+        ],
+        "explanation": "Collection.set_paths raises NotImplementedError while PathCollection alone implements it. Move the setter into the base collection, storing paths and marking the artist stale so other collections support updates."
       }
     }
   ],

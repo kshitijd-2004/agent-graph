@@ -33,19 +33,20 @@
         ],
         "location_any": [
           "sympy/core/_print_helpers.py",
-          "src/_pytest/setuponly.py",
-          "_show_fixture_action",
-          "_pytest",
-          "_io",
-          "saferepr",
-          "_print_helpers.py"
+          "Printable",
+          "_print_helpers.py",
+          "sympy/core/ print helpers py",
+          "sympy/core/_print_helpers",
+          "py",
+          "print helpers py",
+          "_print_helpers"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "empty.slots|__slots__.{0,15}\\(\\)|slots.{0,20}empty",
+          "dict|instance.dictionary|subclass"
         ],
         "reject_any": [],
-        "explanation": "In _show_fixture_action, the patch corrects behavior by modifying the affected code path in src/_pytest/setuponly.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "Printable is a mixin without slots, so slotted subclasses still inherit an instance dictionary. Declare empty __slots__ on the mixin to avoid introducing __dict__."
       }
     }
   ],

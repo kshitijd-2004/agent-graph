@@ -33,18 +33,23 @@
         ],
         "location_any": [
           "django/contrib/admin/sites.py",
-          "lib/matplotlib/offsetbox.py",
-          "renderer",
-          "open_group",
-          "__class__",
-          "sites.py"
+          "AdminSite.catch_all_view",
+          "sites.py",
+          "django/contrib/admin/sites py",
+          "django/contrib/admin/sites",
+          "py",
+          "Admin Site catch all view",
+          "AdminSite",
+          "catch_all_view",
+          "sites py",
+          "sites"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "query.string|query.parameter|full.path",
+          "(?:preserv|retain|keep|use|get.full.path)"
         ],
         "reject_any": [],
-        "explanation": "In draw, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used."
+        "explanation": "AdminSite.catch_all_view appends a slash to request.path and loses the query string. Use get_full_path(force_append_slash=True) so the redirect preserves query parameters."
       }
     }
   ],

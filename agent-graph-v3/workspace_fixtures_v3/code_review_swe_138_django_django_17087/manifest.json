@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "django/db/migrations/serializer.py",
-          "django/db/models/query.py",
-          "ordered",
-          "query",
-          "default_ordering",
-          "get_meta",
-          "serializer.py"
+          "FunctionTypeSerializer",
+          "serializer.py",
+          "django/db/migrations/serializer py",
+          "django/db/migrations/serializer",
+          "py",
+          "Function Type Serializer",
+          "serializer py",
+          "serializer"
         ],
         "all_of": [
-          "default|fallback",
-          "attribute|property|field|state"
+          "class.method|bound.method",
+          "qualname|qualified.name|nested.class.path"
         ],
         "reject_any": [],
-        "explanation": "In ordered, the patch adds a default value for a previously unhandled case. When the expected input is absent, the code now falls back to a sensible default instead of producing None or crashing."
+        "explanation": "FunctionTypeSerializer serializes a bound class method using the class short name. Use the class __qualname__ so the enclosing class path is preserved for nested class methods."
       }
     }
   ],

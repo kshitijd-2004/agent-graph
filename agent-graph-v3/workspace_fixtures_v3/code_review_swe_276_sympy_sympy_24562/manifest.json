@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "sympy/core/numbers.py",
-          "sympy/concrete/products.py",
-          "_eval_product",
-          "sympy",
-          "concrete",
-          "summations",
-          "numbers.py"
+          "Rational.__new__",
+          "numbers.py",
+          "sympy/core/numbers py",
+          "sympy/core/numbers",
+          "py",
+          "Rational new",
+          "Rational",
+          "__new__",
+          "numbers py",
+          "numbers"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "denominator",
+          "(?:separate|accumulat|integer).{0,65}(?:factor|denominator|\\bq\\b)|(?:factor|denominator).{0,65}(?:separate|accumulat|integer)",
+          "string|text|repeat"
         ],
         "reject_any": [],
-        "explanation": "In _eval_product, the patch corrects behavior by modifying the affected code path in sympy/concrete/products.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "Rational.__new__ multiplies the raw denominator by a numerator factor before converting it, repeating strings instead of multiplying numerically. Accumulate denominator factors separately and normalize both operands before combining them."
       }
     }
   ],

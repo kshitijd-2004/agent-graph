@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/template/library.py",
-          "astropy/io/fits/card.py",
-          "fromstring",
-          "isinstance",
-          "image",
-          "bytes",
-          "library.py"
+          "parse_bits",
+          "library.py",
+          "django/template/library py",
+          "django/template/library",
+          "py",
+          "parse bits",
+          "library py",
+          "library"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "copy|clone|independent|separate|preserv"
+          "keyword.only|kwonly",
+          "(?:declared|signature|complete|all).{0,60}(?:parameter|argument|list)|(?:parameter|argument|list).{0,60}(?:declared|signature|complete)"
         ],
-        "reject_any": [],
-        "explanation": "In fromstring, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "discard.*all.*keyword.only|drop.*all.*kwonly"
+        ],
+        "explanation": "parse_bits validates keywords against unhandled_kwargs, which excludes keyword-only parameters with defaults. Check the declared kwonly parameter list so those valid arguments are accepted."
       }
     }
   ],

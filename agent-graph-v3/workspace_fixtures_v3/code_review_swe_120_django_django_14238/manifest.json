@@ -33,18 +33,29 @@
         ],
         "location_any": [
           "django/db/models/fields/__init__.py",
-          "django/db/models/sql/query.py",
-          "_add_q",
-          "current_negated",
-          "allow_joins",
-          "split_subq"
+          "AutoFieldMeta.__subclasscheck__",
+          "fields/__init__.py",
+          "models/fields/__init__.py",
+          "db/models/fields/__init__.py",
+          "django/db/models/fields/ init py",
+          "django/db/models/fields/__init__",
+          "py",
+          "Auto Field Meta subclasscheck",
+          "AutoFieldMeta",
+          "__subclasscheck__",
+          "fields/ init py",
+          "fields/__init__",
+          "models/fields/ init py",
+          "models/fields/__init__",
+          "db/models/fields/ init py",
+          "db/models/fields/__init__"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "issubclass|recursive.{0,25}subclass|indirect.{0,25}subclass",
+          "(?:replace|use|recogniz|check|accept).{0,75}(?:issubclass|descendant|subclass)"
         ],
         "reject_any": [],
-        "explanation": "In _add_q, the patch corrects behavior by modifying the affected code path in django/db/models/sql/query.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "AutoFieldMeta.__subclasscheck__ tests direct tuple membership, missing descendants of registered field classes. Use issubclass against the registered subclasses so indirect subclasses are recognized."
       }
     }
   ],

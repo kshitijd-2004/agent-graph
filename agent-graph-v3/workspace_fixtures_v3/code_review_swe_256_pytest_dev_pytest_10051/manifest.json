@@ -33,19 +33,26 @@
         ],
         "location_any": [
           "src/_pytest/logging.py",
-          "sphinx/builders/linkcheck.py",
-          "check_uri",
-          "uri_re",
-          "compile",
-          "len",
-          "logging.py"
+          "LogCaptureHandler.clear",
+          "LogCaptureFixture.clear",
+          "logging.py",
+          "src/ pytest/logging py",
+          "src/_pytest/logging",
+          "py",
+          "Log Capture Handler clear",
+          "LogCaptureHandler",
+          "clear",
+          "Log Capture Fixture clear",
+          "LogCaptureFixture",
+          "logging py",
+          "logging"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "(?:clear|empt).{0,40}(?:record|list)|(?:record|list).{0,40}(?:clear|empt)",
+          "stream|text|buffer"
         ],
         "reject_any": [],
-        "explanation": "In check_uri, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "caplog.clear uses reset, replacing the record list and leaving stored references stale. Add a handler clear that empties records in place and resets the text stream, then delegate caplog.clear to it."
       }
     }
   ],

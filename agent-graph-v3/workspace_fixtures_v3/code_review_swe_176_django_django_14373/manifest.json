@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/utils/dateformat.py",
-          "lib/matplotlib/axis.py",
-          "clear",
-          "whether",
-          "grids",
-          "are",
-          "dateformat.py"
+          "DateFormat.Y",
+          "dateformat.py",
+          "django/utils/dateformat py",
+          "django/utils/dateformat",
+          "py",
+          "Date Format Y",
+          "DateFormat",
+          "Y",
+          "dateformat py",
+          "dateformat"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "(?:format|emit|return|render|output).{0,35}(?:four|4).digit|04d",
+          "zero.pad|leading.zero|04d|pad.{0,25}zero"
         ],
         "reject_any": [],
-        "explanation": "In clear, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used."
+        "explanation": "DateFormat.Y returns the raw year number, omitting leading zeros for early dates. Format the year with four-digit zero padding so the full-year token has the expected width."
       }
     }
   ],

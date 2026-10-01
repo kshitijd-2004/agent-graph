@@ -33,18 +33,27 @@
         ],
         "location_any": [
           "sphinx/builders/linkcheck.py",
-          "lib/matplotlib/collections.py",
-          "get_paths",
-          "_paths",
-          "paths",
-          "linkcheck.py"
+          "HyperlinkAvailabilityChecker.check",
+          "link checker",
+          "linkcheck.py",
+          "sphinx/builders/linkcheck py",
+          "sphinx/builders/linkcheck",
+          "py",
+          "Hyperlink Availability Checker check",
+          "HyperlinkAvailabilityChecker",
+          "check",
+          "linkcheck py",
+          "linkcheck"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "toomanyredirects|redirect.{0,20}(?:limit|loop)",
+          "head",
+          "(?:retry|fallback|fall.back).{0,45}get|(?:get).{0,45}(?:retry|fallback)"
         ],
-        "reject_any": [],
-        "explanation": "In get_paths, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used."
+        "reject_any": [
+          "treat.*redirect loop.*valid link|valid link without.*request"
+        ],
+        "explanation": "The link checker retries HEAD failures with GET only for HTTPError. Handle TooManyRedirects in the same branch so HEAD redirect loops can fall back to a successful GET request."
       }
     }
   ],

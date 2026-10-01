@@ -33,19 +33,25 @@
         ],
         "location_any": [
           "sympy/concrete/products.py",
-          "seaborn/_core/scales.py",
-          "spacer",
-          "get_view_interval",
-          "Avoid",
-          "having",
-          "products.py"
+          "Product._eval_product",
+          "products.py",
+          "sympy/concrete/products py",
+          "sympy/concrete/products",
+          "py",
+          "Product eval product",
+          "Product",
+          "_eval_product",
+          "products py",
+          "products"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "exp|exponential",
+          "sum",
+          "log",
+          "product"
         ],
         "reject_any": [],
-        "explanation": "In spacer, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "Product._eval_product incorrectly distributes a product over additive pieces when numerator decomposition makes no progress. Represent the remaining product as exp(Sum(log(p))) instead of summing products of terms."
       }
     }
   ],

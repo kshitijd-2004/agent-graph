@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "django/db/models/query.py",
-          "sklearn/metrics/_ranking.py",
-          "roc_curve",
-          "thresholds",
-          "ndarray",
-          "shape",
-          "query.py"
+          "QuerySet.ordered",
+          "query.py",
+          "django/db/models/query py",
+          "django/db/models/query",
+          "py",
+          "Query Set ordered",
+          "QuerySet",
+          "ordered",
+          "query py",
+          "query"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "assign|set|initializ|updat"
+          "group.by|grouped",
+          "default.order|model.order",
+          "(?:ignore|exclude|not|false|disregard)"
         ],
         "reject_any": [],
-        "explanation": "In roc_curve, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "QuerySet.ordered reports model default ordering even for grouped queries that ignore it. Exclude default ordering when group_by is set while retaining explicit ordering checks."
       }
     }
   ],

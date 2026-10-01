@@ -33,19 +33,26 @@
         ],
         "location_any": [
           "django/http/response.py",
-          "django/db/models/query.py",
-          "query",
-          "value",
-          "values_select",
-          "_iterable_class",
-          "response.py"
+          "FileResponse.set_headers",
+          "response.py",
+          "django/http/response py",
+          "django/http/response",
+          "py",
+          "File Response set headers",
+          "FileResponse",
+          "set_headers",
+          "response py",
+          "response"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "attribute|property|field|state"
+          "brotli|\\bbr\\b",
+          "compress",
+          "(?:mime|content.type|application/)"
         ],
-        "reject_any": [],
-        "explanation": "In query, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "decompress.{0,30}(?:brotli|compress).{0,30}memory"
+        ],
+        "explanation": "FileResponse.set_headers lacks MIME overrides for br and compress encodings. Map them to application/x-brotli and application/x-compress so compressed downloads receive the correct content type."
       }
     }
   ],

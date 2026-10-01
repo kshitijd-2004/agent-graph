@@ -33,19 +33,22 @@
         ],
         "location_any": [
           "django/core/serializers/base.py",
-          "lib/matplotlib/dates.py",
-          "format_ticks",
-          "unique",
-          "tickdate",
-          "level",
-          "base.py"
+          "build_instance",
+          "base.py",
+          "django/core/serializers/base py",
+          "django/core/serializers/base",
+          "py",
+          "build instance",
+          "base py",
+          "base"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "compar|test|check|condition"
+          "natural.key",
+          "(?:state.db|database|\\bdb\\b)",
+          "(?:before|prior).{0,60}(?:natural|key|call)|(?:set|assign).{0,60}(?:state|database)"
         ],
         "reject_any": [],
-        "explanation": "In format_ticks, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "build_instance invokes natural_key on a temporary object whose database state is unset. Assign obj._state.db before calling natural_key so related lookups use the deserialization database."
       }
     }
   ],

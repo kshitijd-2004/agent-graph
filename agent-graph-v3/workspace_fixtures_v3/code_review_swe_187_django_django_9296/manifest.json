@@ -33,18 +33,24 @@
         ],
         "location_any": [
           "django/core/paginator.py",
-          "lib/matplotlib/colors.py",
-          "Negative",
-          "values",
-          "are",
-          "paginator.py"
+          "Paginator.__iter__",
+          "paginator.py",
+          "django/core/paginator py",
+          "django/core/paginator",
+          "py",
+          "Paginator iter",
+          "Paginator",
+          "paginator py",
+          "paginator"
         ],
         "all_of": [
-          "attribute|property|field|state",
-          "compar|test|check|condition"
+          "iter|yield",
+          "(?:page.objects|self.page|page\\(page|each.page|pages).{0,65}(?:range|yield|iter)|(?:range|yield|iter).{0,65}(?:page.objects|self.page|each.page|pages)"
         ],
-        "reject_any": [],
-        "explanation": "In __call__, the iteration logic is corrected. The patch fixes how the loop processes items or terminates, ensuring each iteration handles data correctly."
+        "reject_any": [
+          "yield individual record|bypass page boundary"
+        ],
+        "explanation": "Paginator lacks iteration over its pages. Implement __iter__ to walk page_range and yield self.page(page_number), exposing Page objects rather than raw page numbers."
       }
     }
   ],

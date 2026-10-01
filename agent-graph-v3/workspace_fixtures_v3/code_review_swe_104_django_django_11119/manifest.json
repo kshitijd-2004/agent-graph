@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/template/engine.py",
-          "astropy/io/ascii/html.py",
-          "write",
-          "data",
-          "cols",
-          "_set_col_formats",
-          "engine.py"
+          "Engine.render_to_string",
+          "engine.py",
+          "django/template/engine py",
+          "django/template/engine",
+          "py",
+          "Engine render to string",
+          "Engine",
+          "render_to_string",
+          "engine py",
+          "engine"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "autoescap",
+          "(?:pass|propagat|inherit|use|forward).{0,70}(?:engine|setting|context)|(?:engine|setting).{0,70}(?:pass|propagat|inherit|context)"
         ],
         "reject_any": [],
-        "explanation": "In write, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used."
+        "explanation": "Engine.render_to_string constructs Context with its default autoescape setting. Pass the engine autoescape setting into the new Context so dictionary rendering honors the engine configuration."
       }
     }
   ],

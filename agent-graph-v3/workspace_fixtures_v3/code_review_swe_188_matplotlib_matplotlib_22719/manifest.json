@@ -33,19 +33,28 @@
         ],
         "location_any": [
           "lib/matplotlib/category.py",
-          "lib/matplotlib/mlab.py",
-          "_spectral_helper",
-          "result",
-          "abs",
-          "window",
-          "category.py"
+          "StrCategoryConverter.convert",
+          "UnitData.update",
+          "Categorical conversion",
+          "category.py",
+          "lib/matplotlib/category py",
+          "lib/matplotlib/category",
+          "py",
+          "Str Category Converter convert",
+          "StrCategoryConverter",
+          "convert",
+          "Unit Data update",
+          "UnitData",
+          "update",
+          "category py",
+          "category"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "empty|size|nonempty",
+          "(?:warn|log|diagnostic).{0,75}(?:skip|guard|suppress|only)|(?:skip|guard|suppress|only).{0,75}(?:warn|log|diagnostic)"
         ],
         "reject_any": [],
-        "explanation": "In _spectral_helper, the patch corrects behavior by modifying the affected code path in lib/matplotlib/mlab.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "Categorical conversion treats all(empty) as numeric and logs convertibility for empty data. Guard both diagnostics with nonzero array size so empty inputs produce neither the numeric deprecation warning nor the conversion log."
       }
     }
   ],

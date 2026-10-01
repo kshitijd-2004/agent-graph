@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "sympy/printing/pycode.py",
-          "src/_pytest/python.py",
-          "_genfunctions",
-          "isinitpath",
-          "own_markers",
-          "extend",
-          "pycode.py"
+          "PythonCodePrinter._print_Indexed",
+          "pycode.py",
+          "sympy/printing/pycode py",
+          "sympy/printing/pycode",
+          "py",
+          "Python Code Printer print Indexed",
+          "PythonCodePrinter",
+          "_print_Indexed",
+          "pycode py",
+          "pycode"
         ],
         "all_of": [
-          "return|yield|output",
-          "attribute|property|field|state"
+          "index|indices",
+          "(?:bracket|subscript)",
+          "(?:print|render|comma|base)"
         ],
         "reject_any": [],
-        "explanation": "In _genfunctions, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "PythonCodePrinter lacks an Indexed handler. Print the base followed by square brackets containing recursively printed, comma-separated indices so indexed expressions become valid Python subscripts."
       }
     }
   ],

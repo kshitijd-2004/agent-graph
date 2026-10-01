@@ -33,19 +33,22 @@
         ],
         "location_any": [
           "django/contrib/auth/checks.py",
-          "xarray/core/common.py",
-          "get_chunksizes",
-          "hasattr",
-          "_data",
-          "chunks",
-          "checks.py"
+          "check_user_model",
+          "checks.py",
+          "django/contrib/auth/checks py",
+          "django/contrib/auth/checks",
+          "py",
+          "check user model",
+          "checks py",
+          "checks"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "username",
+          "unique.constraint|uniqueness.constraint|uniqueconstraint",
+          "single|only|field|unconditional"
         ],
         "reject_any": [],
-        "explanation": "In get_chunksizes, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "check_user_model recognizes only the username field unique flag. Accept an unconditional single-field UniqueConstraint on USERNAME_FIELD as equivalent uniqueness enforcement."
       }
     }
   ],

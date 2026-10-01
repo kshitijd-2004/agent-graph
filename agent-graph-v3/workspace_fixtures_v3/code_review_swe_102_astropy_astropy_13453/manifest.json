@@ -33,16 +33,23 @@
         ],
         "location_any": [
           "astropy/io/ascii/html.py",
-          "astropy/table/table.py",
-          "_convert_data_to_col",
-          "html.py"
+          "HTML.write",
+          "html.py",
+          "astropy/io/ascii/html py",
+          "astropy/io/ascii/html",
+          "py",
+          "HTML write",
+          "HTML",
+          "write",
+          "html py",
+          "html"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "(?:data.cols|data columns|column list).{0,65}(?:set|assign|initializ)|(?:set|assign|initializ).{0,65}(?:data.cols|data columns|column list)",
+          "(?:apply|set|initializ|call).{0,60}(?:format|_set_col_formats)"
         ],
         "reject_any": [],
-        "explanation": "In _convert_data_to_col, the patch corrects behavior by modifying the affected code path in astropy/table/table.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "HTML.write sets header columns but not the data columns or their formats. Assign the data column list and call _set_col_formats before rendering cells so requested column formatting is used."
       }
     }
   ],

@@ -33,19 +33,30 @@
         ],
         "location_any": [
           "astropy/units/core.py",
-          "sympy/printing/pycode.py",
-          "Min",
-          "min",
-          "Max",
-          "max",
-          "core.py"
+          "UnitBase.__eq__",
+          "UnrecognizedUnit.__eq__",
+          "Unit equality",
+          "core.py",
+          "astropy/units/core py",
+          "astropy/units/core",
+          "py",
+          "Unit Base eq",
+          "UnitBase",
+          "__eq__",
+          "Unrecognized Unit eq",
+          "UnrecognizedUnit",
+          "core py",
+          "core"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "notimplemented",
+          "(?:convert|coerc|unsupported|other).{0,60}(?:unit|operand|fail)|(?:unit|operand).{0,60}(?:convert|coerc|unsupported|fail)",
+          "equal|compar|reflected"
         ],
-        "reject_any": [],
-        "explanation": "In min, the patch corrects behavior by modifying the affected code path in sympy/printing/pycode.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "reject_any": [
+          "treat.*unconvertible.*equal|unconvertible.*equal.*unrecognized"
+        ],
+        "explanation": "Unit equality returns False or raises when coercion of the other operand fails, preventing reflected comparison. Return NotImplemented on conversion errors in both ordinary and unrecognized unit equality."
       }
     }
   ],

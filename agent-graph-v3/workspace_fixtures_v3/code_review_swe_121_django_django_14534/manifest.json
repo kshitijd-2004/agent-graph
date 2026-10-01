@@ -33,17 +33,25 @@
         ],
         "location_any": [
           "django/forms/boundfield.py",
-          "django/contrib/auth/backends.py",
-          "username",
-          "password",
-          "boundfield.py"
+          "BoundWidget.id_for_label",
+          "boundfield.py",
+          "django/forms/boundfield py",
+          "django/forms/boundfield",
+          "py",
+          "Bound Widget id for label",
+          "BoundWidget",
+          "id_for_label",
+          "boundfield py",
+          "boundfield"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "clear|reset|none|null|empty"
+          "attrs|attribute|widget.id",
+          "(?:read|use|return|respect).{0,70}(?:id|identifier)|(?:id|identifier).{0,70}(?:read|use|return|respect)"
         ],
-        "reject_any": [],
-        "explanation": "In username, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "choice display text|display text.*html identifier"
+        ],
+        "explanation": "BoundWidget.id_for_label synthesizes an id from name and index, ignoring the actual widget id. Return the id from data attrs so labels target the rendered control."
       }
     }
   ],

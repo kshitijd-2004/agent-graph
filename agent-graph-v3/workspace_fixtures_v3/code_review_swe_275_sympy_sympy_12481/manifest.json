@@ -33,18 +33,24 @@
         ],
         "location_any": [
           "sympy/combinatorics/permutations.py",
-          "sympy/core/evalf.py",
-          "evalf",
-          "raise",
-          "NotImplementedError",
-          "permutations.py"
+          "Permutation.__new__",
+          "permutations.py",
+          "sympy/combinatorics/permutations py",
+          "sympy/combinatorics/permutations",
+          "py",
+          "Permutation new",
+          "Permutation",
+          "__new__",
+          "permutations py",
+          "permutations"
         ],
         "all_of": [
-          "except|error|exception|handl",
-          "error|except|rais"
+          "cycle",
+          "(?:allow|accept|permit).{0,65}(?:repeat|overlap|duplicate)|(?:repeat|overlap|duplicate).{0,65}(?:allow|accept|permit)",
+          "array|non.cycle|notation"
         ],
         "reject_any": [],
-        "explanation": "In evalf, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately."
+        "explanation": "Permutation rejects repeated elements even in cycle notation, where overlapping cycles are valid compositions. Apply duplicate rejection only to non-cycle array input and allow overlap in cycle input."
       }
     }
   ],

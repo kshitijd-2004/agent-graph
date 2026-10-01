@@ -33,18 +33,21 @@
         ],
         "location_any": [
           "django/utils/dateparse.py",
-          "sklearn/base.py",
-          "_validate_data",
-          "_transform",
-          "cast_to_ndarray",
-          "dateparse.py"
+          "standard_duration_re",
+          "dateparse.py",
+          "django/utils/dateparse py",
+          "django/utils/dateparse",
+          "py",
+          "standard duration re",
+          "dateparse py",
+          "dateparse"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "return|yield|output"
+          "sign",
+          "(?:whole|entire|single|shared).{0,55}(?:time|duration|component)|(?:time|duration).{0,55}(?:whole|entire|single|shared)"
         ],
         "reject_any": [],
-        "explanation": "In _validate_data, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "standard_duration_re assigns independent minus signs to time components, misinterpreting negative durations. Capture one shared sign for the whole time portion and parse unsigned hours, minutes and seconds."
       }
     }
   ],

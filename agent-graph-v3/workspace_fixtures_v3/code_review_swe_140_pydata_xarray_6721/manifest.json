@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "xarray/core/common.py",
-          "django/contrib/auth/checks.py",
-          "check_user_model",
-          "cls",
-          "_meta",
-          "get_field",
-          "common.py"
+          "get_chunksizes",
+          "common.py",
+          "xarray/core/common py",
+          "xarray/core/common",
+          "py",
+          "get chunksizes",
+          "common py",
+          "common"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "(?:_?data|underlying|internal|private)",
+          "(?:avoid|without|trigger|eager|load|materializ).{0,60}(?:data|load|materializ)|(?:data|load|materializ).{0,60}(?:avoid|eager)"
         ],
         "reject_any": [],
-        "explanation": "In check_user_model, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "get_chunksizes accesses v.data merely to test for chunks, which can load lazy data. Inspect v._data instead so chunk metadata queries do not materialize the array."
       }
     }
   ],

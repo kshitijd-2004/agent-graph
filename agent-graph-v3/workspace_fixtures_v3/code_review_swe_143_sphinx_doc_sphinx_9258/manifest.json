@@ -33,18 +33,23 @@
         ],
         "location_any": [
           "sphinx/domains/python.py",
-          "django/utils/functional.py",
-          "__mod__",
-          "other",
-          "__cast",
-          "python.py"
+          "PyTypedField.make_xrefs",
+          "python.py",
+          "sphinx/domains/python py",
+          "sphinx/domains/python",
+          "py",
+          "Py Typed Field make xrefs",
+          "PyTypedField",
+          "make_xrefs",
+          "python py",
+          "python"
         ],
         "all_of": [
-          "return|yield|output",
-          "attribute|property|field|state"
+          "union|pipe|vertical.bar",
+          "(?:split|delimit|separat).{0,75}(?:\\||union|pipe|type)|(?:\\||union|pipe).{0,75}(?:split|delimit|separat)"
         ],
         "reject_any": [],
-        "explanation": "In __mod__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "PyTypedField.make_xrefs does not split pipe-separated union types. Add the vertical bar with surrounding whitespace to its delimiters so each union member gets its own cross-reference."
       }
     }
   ],

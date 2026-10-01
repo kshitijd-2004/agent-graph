@@ -33,17 +33,21 @@
         ],
         "location_any": [
           "django/db/models/sql/compiler.py",
-          "django/db/models/fields/reverse_related.py",
-          "make_hashable",
-          "through_fields",
-          "compiler.py"
+          "find_ordering_name",
+          "compiler.py",
+          "django/db/models/sql/compiler py",
+          "django/db/models/sql/compiler",
+          "py",
+          "find ordering name",
+          "compiler py",
+          "compiler"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "orderby|ordering.expression",
+          "(?:append|preserv|retain|accept|direct).{0,65}(?:expression|orderby|item)|(?:expression|orderby).{0,65}(?:append|preserv|retain|accept|direct)"
         ],
         "reject_any": [],
-        "explanation": "In __init__, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used."
+        "explanation": "find_ordering_name recursively treats every related-model ordering item as a field name. Preserve OrderBy expressions directly in the result instead of passing them into string name resolution."
       }
     }
   ],

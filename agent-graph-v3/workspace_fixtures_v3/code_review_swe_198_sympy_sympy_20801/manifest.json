@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "sympy/core/numbers.py",
-          "requests/sessions.py",
-          "request",
-          "compat",
-          "cookielib",
-          "OrderedDict",
-          "numbers.py"
+          "Float.__eq__",
+          "numbers.py",
+          "sympy/core/numbers py",
+          "sympy/core/numbers",
+          "py",
+          "Float eq",
+          "Float",
+          "__eq__",
+          "numbers py",
+          "numbers"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "zero",
+          "(?:boolean|type.check)",
+          "(?:before|after|defer|move|order)"
         ],
         "reject_any": [],
-        "explanation": "In request, the patch corrects behavior by modifying the affected code path in requests/sessions.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "Float.__eq__ handles zero via general truthiness before checking Boolean operands. Move the zero fallback after the type-specific comparisons so floating zero does not compare equal to Boolean false."
       }
     }
   ],

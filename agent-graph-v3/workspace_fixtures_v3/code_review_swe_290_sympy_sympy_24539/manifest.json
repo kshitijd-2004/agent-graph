@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "sympy/polys/rings.py",
-          "sympy/printing/str.py",
-          "apow",
-          "isinstance",
-          "item",
-          "base",
-          "rings.py"
+          "PolyElement.as_expr",
+          "rings.py",
+          "sympy/polys/rings py",
+          "sympy/polys/rings",
+          "py",
+          "Poly Element as expr",
+          "PolyElement",
+          "as_expr",
+          "rings py",
+          "rings"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "(?:supplied|provided|custom|keep).{0,65}(?:preserv|retain|keep|use)|(?:preserv|retain|keep|use).{0,65}(?:supplied|provided|custom)",
+          "default|absent|omitted|none"
         ],
         "reject_any": [],
-        "explanation": "In apow, the patch corrects behavior by modifying the affected code path in sympy/printing/str.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "PolyElement.as_expr replaces valid supplied symbols with ring defaults because the else branch covers valid input. Use defaults only when no symbols are passed and otherwise preserve the supplied symbols after length validation."
       }
     }
   ],

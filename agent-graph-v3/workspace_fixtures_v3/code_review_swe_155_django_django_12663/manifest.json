@@ -33,17 +33,23 @@
         ],
         "location_any": [
           "django/db/models/sql/query.py",
-          "django/utils/translation/trans_real.py",
-          "language_code_prefix_re",
-          "_lazy_re_compile",
-          "query.py"
+          "Query.output_field",
+          "query.py",
+          "django/db/models/sql/query py",
+          "django/db/models/sql/query",
+          "py",
+          "Query output field",
+          "Query",
+          "output_field",
+          "query py",
+          "query"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "target",
+          "(?:prefer|use|return|select).{0,75}(?:target|concrete|referenced)|(?:target|concrete|referenced).{0,75}(?:prefer|use|return|type)"
         ],
         "reject_any": [],
-        "explanation": "In language_code_prefix_re, the patch corrects behavior by modifying the affected code path in django/utils/translation/trans_real.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "Query.output_field uses a selected column field, which can be a relation rather than its concrete target. Prefer select.target when available and fall back to select.field to expose the actual output type."
       }
     }
   ],

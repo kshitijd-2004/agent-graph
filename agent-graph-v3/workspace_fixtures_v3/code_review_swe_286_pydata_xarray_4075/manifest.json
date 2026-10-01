@@ -33,17 +33,24 @@
         ],
         "location_any": [
           "xarray/core/weighted.py",
-          "sympy/polys/domains/expressiondomain.py",
-          "__ne__",
-          "is_zero",
-          "weighted.py"
+          "Weighted._sum_of_weights",
+          "weighted.py",
+          "xarray/core/weighted py",
+          "xarray/core/weighted",
+          "py",
+          "Weighted sum of weights",
+          "Weighted",
+          "_sum_of_weights",
+          "weighted py",
+          "weighted"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "bool",
+          "(?:cast|convert).{0,50}(?:int|integer)|(?:int|integer).{0,50}(?:cast|convert)",
+          "sum|count|dot"
         ],
         "reject_any": [],
-        "explanation": "In __ne__, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "Weighted._sum_of_weights applies dot to boolean weights, producing boolean truth instead of a count. Cast boolean weights to integers before reduction so the denominator sums all valid weights."
       }
     }
   ],

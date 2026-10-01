@@ -33,18 +33,22 @@
         ],
         "location_any": [
           "sklearn/utils/_set_output.py",
-          "lib/matplotlib/axes/_axes.py",
-          "reduce_C_function",
-          "acc",
-          "len",
-          "_set_output.py"
+          "_wrap_in_pandas_container",
+          "_set_output.py",
+          "sklearn/utils/ set output py",
+          "sklearn/utils/_set_output",
+          "py",
+          "wrap in pandas container",
+          "set output py",
+          "_set_output"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "dataframe",
+          "index",
+          "(?:preserv|retain|keep|ignore|not.overwrite)"
         ],
         "reject_any": [],
-        "explanation": "In acc, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "_wrap_in_pandas_container overwrites an existing DataFrame index with the input index. Preserve the DataFrame own index and ignore the supplied index in that branch, while still allowing column names to change."
       }
     }
   ],

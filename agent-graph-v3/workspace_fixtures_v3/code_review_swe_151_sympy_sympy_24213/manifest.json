@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "sympy/physics/units/unitsystem.py",
-          "django/db/migrations/serializer.py",
-          "_format",
-          "models",
-          "Model",
-          "django",
-          "unitsystem.py"
+          "UnitSystem._collect_factor_and_dimension",
+          "unitsystem.py",
+          "sympy/physics/units/unitsystem py",
+          "sympy/physics/units/unitsystem",
+          "py",
+          "Unit System collect factor and dimension",
+          "UnitSystem",
+          "_collect_factor_and_dimension",
+          "unitsystem py",
+          "unitsystem"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "equivalent|equivalence",
+          "dimension.system|equivalent.dims",
+          "add|sum|addend"
         ],
         "reject_any": [],
-        "explanation": "In _format, the patch corrects behavior by modifying the affected code path in django/db/migrations/serializer.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "UnitSystem._collect_factor_and_dimension compares addend dimensions structurally. Ask the dimension system whether they are equivalent so sums of dimensionally equivalent expressions are accepted."
       }
     }
   ],

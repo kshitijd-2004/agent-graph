@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/db/models/query.py",
-          "django/http/response.py",
-          "make_bytes",
-          "isinstance",
-          "value",
-          "bytes",
-          "query.py"
+          "QuerySet.query",
+          "query.py",
+          "django/db/models/query py",
+          "django/db/models/query",
+          "py",
+          "Query Set query",
+          "QuerySet",
+          "query",
+          "query py"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "values.select|values.query|values projection",
+          "valuesiterable|dictionary.{0,25}iter|dict.{0,25}iter",
+          "(?:set|switch|select|restore|update).{0,65}(?:iter|valuesiterable)"
         ],
         "reject_any": [],
-        "explanation": "In make_bytes, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "QuerySet.query replaces the query without updating its iterable class. When values_select is present, set ValuesIterable so the restored values query yields dictionaries rather than model objects."
       }
     }
   ],

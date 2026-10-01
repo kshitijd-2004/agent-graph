@@ -33,19 +33,22 @@
         ],
         "location_any": [
           "django/utils/timezone.py",
-          "sphinx/util/rst.py",
-          "prepend_prolog",
-          "docutils",
-          "parsers",
-          "rst",
-          "timezone.py"
+          "_get_timezone_name",
+          "timezone.py",
+          "django/utils/timezone py",
+          "django/utils/timezone",
+          "py",
+          "get timezone name",
+          "timezone py",
+          "timezone"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "import|dependenc|module"
+          "tzname",
+          "(?:fixed|offset)",
+          "(?:fallback|fall.back|or.str|string)"
         ],
         "reject_any": [],
-        "explanation": "In prepend_prolog, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "_get_timezone_name always uses str(timezone), which can obscure a fixed offset name. Prefer timezone.tzname(None) and fall back to str only when no name is returned."
       }
     }
   ],

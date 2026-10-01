@@ -33,18 +33,21 @@
         ],
         "location_any": [
           "sklearn/linear_model/logistic.py",
-          "django/db/models/functions/math.py",
-          "as_oracle",
-          "get_group_by_cols",
-          "alias",
-          "logistic.py"
+          "_log_reg_scoring_path",
+          "logistic.py",
+          "sklearn/linear model/logistic py",
+          "sklearn/linear_model/logistic",
+          "py",
+          "log reg scoring path",
+          "logistic py",
+          "logistic"
         ],
         "all_of": [
-          "clear|reset|none|null|empty",
-          "return|yield|output"
+          "multi.class|multinomial",
+          "(?:pass|propagat|configur|set|preserv).{0,75}(?:scor|regression|multi.class)|(?:scor|regression).{0,75}(?:pass|propagat|configur|set|preserv)"
         ],
         "reject_any": [],
-        "explanation": "In as_oracle, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation."
+        "explanation": "_log_reg_scoring_path constructs its scoring LogisticRegression without multi_class. Pass the trained multiclass mode into that estimator so scoring interprets the fitted coefficients consistently."
       }
     }
   ],

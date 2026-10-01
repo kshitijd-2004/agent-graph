@@ -33,17 +33,23 @@
         ],
         "location_any": [
           "django/db/models/sql/compiler.py",
-          "django/core/validators.py",
-          "user",
-          "authentication",
-          "compiler.py"
+          "SQLDeleteCompiler.single_alias",
+          "compiler.py",
+          "django/db/models/sql/compiler py",
+          "django/db/models/sql/compiler",
+          "py",
+          "SQL Delete Compiler single alias",
+          "SQLDeleteCompiler",
+          "single_alias",
+          "compiler py",
+          "compiler"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "(?:initial|base).{0,25}(?:alias|table)",
+          "(?:initializ|register|ensure|add).{0,70}(?:before|count)|(?:before|count).{0,70}(?:initializ|register|ensure|add)"
         ],
         "reject_any": [],
-        "explanation": "In user, the patch corrects behavior by modifying the affected code path in django/core/validators.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "SQLDeleteCompiler.single_alias counts aliases before the base table is registered. Initialize the base alias with get_initial_alias before counting active table references."
       }
     }
   ],

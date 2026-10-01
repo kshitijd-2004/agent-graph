@@ -33,18 +33,31 @@
         ],
         "location_any": [
           "django/db/models/fields/__init__.py",
-          "django/contrib/admin/sites.py",
-          "catch_all_view",
-          "HttpResponsePermanentRedirect",
-          "request",
-          "get_full_path"
+          "UUIDField.get_prep_value",
+          "fields/__init__.py",
+          "models/fields/__init__.py",
+          "db/models/fields/__init__.py",
+          "django/db/models/fields/ init py",
+          "django/db/models/fields/__init__",
+          "py",
+          "UUID Field get prep value",
+          "UUIDField",
+          "get_prep_value",
+          "fields/ init py",
+          "fields/__init__",
+          "models/fields/ init py",
+          "models/fields/__init__",
+          "db/models/fields/ init py",
+          "db/models/fields/__init__"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "uuid",
+          "(?:prep|prepar).{0,70}(?:to.python|convert|normaliz)|(?:to.python|convert|normaliz).{0,70}(?:prep|prepar)"
         ],
-        "reject_any": [],
-        "explanation": "In catch_all_view, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "reject_any": [
+          "generate.*new random uuid"
+        ],
+        "explanation": "UUIDField lacks Python normalization in get_prep_value. Run the parent preparation and then to_python so prepared values are UUID objects before comparisons and database preparation."
       }
     }
   ],

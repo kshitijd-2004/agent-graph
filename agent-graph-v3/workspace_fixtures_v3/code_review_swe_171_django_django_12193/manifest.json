@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/forms/widgets.py",
-          "django/db/migrations/operations/models.py",
-          "describe",
-          "reduce",
-          "operation",
-          "app_label",
-          "widgets.py"
+          "CheckboxInput.get_context",
+          "widgets.py",
+          "django/forms/widgets py",
+          "django/forms/widgets",
+          "py",
+          "Checkbox Input get context",
+          "CheckboxInput",
+          "get_context",
+          "widgets py",
+          "widgets"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "return|yield|output"
+          "checked",
+          "(?:copy|new|fresh).{0,50}(?:attrs|mapping|dict)|(?:attrs|mapping|dict).{0,50}(?:copy|new|fresh)"
         ],
         "reject_any": [],
-        "explanation": "In describe, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "CheckboxInput.get_context mutates the caller attrs dictionary when adding checked. Create a fresh mapping with the checked entry so shared attributes do not make later checkboxes appear selected."
       }
     }
   ],

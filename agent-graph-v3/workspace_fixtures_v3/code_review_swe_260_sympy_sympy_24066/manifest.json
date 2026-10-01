@@ -33,19 +33,25 @@
         ],
         "location_any": [
           "sympy/physics/units/unitsystem.py",
-          "sphinx/builders/linkcheck.py",
-          "check_uri",
-          "requests",
-          "exceptions",
-          "HTTPError",
-          "unitsystem.py"
+          "UnitSystem._collect_factor_and_dimension",
+          "Function dimension collection",
+          "unitsystem.py",
+          "sympy/physics/units/unitsystem py",
+          "sympy/physics/units/unitsystem",
+          "py",
+          "Unit System collect factor and dimension",
+          "UnitSystem",
+          "_collect_factor_and_dimension",
+          "unitsystem py",
+          "unitsystem"
         ],
         "all_of": [
-          "except|error|exception|handl",
-          "import|dependenc|module"
+          "dimensionless",
+          "(?:dimension\\(1\\)|unit.dimension|canonical|normaliz|one)",
+          "function|argument"
         ],
         "reject_any": [],
-        "explanation": "In check_uri, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately."
+        "explanation": "Function dimension collection returns compound dimension expressions even when the dimension system considers them dimensionless. Normalize those argument dimensions to Dimension(1) before returning the function result dimensions."
       }
     }
   ],

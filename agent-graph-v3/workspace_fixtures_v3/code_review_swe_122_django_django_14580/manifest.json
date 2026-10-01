@@ -33,18 +33,21 @@
         ],
         "location_any": [
           "django/db/migrations/serializer.py",
-          "django/urls/resolvers.py",
-          "match",
-          "kwargs",
-          "groupdict",
-          "serializer.py"
+          "TypeSerializer",
+          "serializer.py",
+          "django/db/migrations/serializer py",
+          "django/db/migrations/serializer",
+          "py",
+          "Type Serializer",
+          "serializer py",
+          "serializer"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "clear|reset|none|null|empty"
+          "models.model",
+          "(?:add|include|emit|supply).{0,70}import|import.{0,70}(?:add|include|emit|supply)"
         ],
         "reject_any": [],
-        "explanation": "In match, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "TypeSerializer emits models.Model with no supporting import. Include from django.db import models in that special case so the generated migration can resolve the base class."
       }
     }
   ],

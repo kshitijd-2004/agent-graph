@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "django/utils/translation/trans_real.py",
-          "django/db/models/enums.py",
-          "values",
-          "__str__",
-          "Use",
-          "value",
-          "trans_real.py"
+          "language_code_prefix_re",
+          "trans_real.py",
+          "django/utils/translation/trans real py",
+          "django/utils/translation/trans_real",
+          "py",
+          "language code prefix re",
+          "trans real py",
+          "trans_real"
         ],
         "all_of": [
-          "assign|set|initializ|updat",
-          "return|yield|output"
+          "language|locale",
+          "(?:two|2|three|3).{0,45}(?:suffix|part|component|segment)|(?:suffix|part|component|segment).{0,45}(?:two|2|three|3)"
         ],
         "reject_any": [],
-        "explanation": "In values, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "language_code_prefix_re permits only one optional locale suffix. Allow up to two suffix components so three-part language codes are recognized in URL prefixes."
       }
     }
   ],

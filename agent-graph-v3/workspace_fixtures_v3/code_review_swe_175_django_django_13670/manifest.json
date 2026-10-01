@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "django/utils/dateformat.py",
-          "lib/matplotlib/widgets.py",
-          "new_axes",
-          "Define",
-          "initial",
-          "position",
-          "dateformat.py"
+          "DateFormat.y",
+          "dateformat.py",
+          "django/utils/dateformat py",
+          "django/utils/dateformat",
+          "py",
+          "Date Format y",
+          "DateFormat",
+          "y",
+          "dateformat py",
+          "dateformat"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "attribute|property|field|state"
+          "(?:two|2).{0,15}digit",
+          "(?:zero.pad|leading.zero|02d)|(?:pad).{0,25}zero",
+          "modulo|% ?100|last.two|year"
         ],
         "reject_any": [],
-        "explanation": "In new_axes, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "DateFormat.y slices the year string, failing for years with fewer than four digits. Take the year modulo 100 and zero-pad to two digits for the two-digit year format."
       }
     }
   ],

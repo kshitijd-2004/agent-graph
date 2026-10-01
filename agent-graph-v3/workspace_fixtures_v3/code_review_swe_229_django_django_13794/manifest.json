@@ -33,19 +33,30 @@
         ],
         "location_any": [
           "django/utils/functional.py",
-          "sklearn/model_selection/_search.py",
-          "_store",
-          "time",
-          "refit_start_time",
-          "refit_end_time",
-          "functional.py"
+          "lazy.__proxy__.__add__",
+          "lazy.__proxy__.__radd__",
+          "functional.py",
+          "django/utils/functional py",
+          "django/utils/functional",
+          "py",
+          "lazy proxy add",
+          "lazy",
+          "__proxy__",
+          "lazy.__proxy__",
+          "lazy proxy radd",
+          "__radd__",
+          "functional py",
+          "functional"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "attribute|property|field|state"
+          "lazy|proxy",
+          "(?:add|concatenat)",
+          "(?:cast|evaluat|unwrap).{0,60}(?:value|operand|proxy)|(?:value|operand|proxy).{0,60}(?:cast|evaluat|unwrap)"
         ],
-        "reject_any": [],
-        "explanation": "In _store, the iteration logic is corrected. The patch fixes how the loop processes items or terminates, ensuring each iteration handles data correctly."
+        "reject_any": [
+          "concatenate.*repr|repr text without evaluat"
+        ],
+        "explanation": "The lazy proxy lacks explicit addition methods that evaluate the wrapped value. Add __add__ and __radd__ using __cast so both operand orders delegate to the resolved value."
       }
     }
   ],

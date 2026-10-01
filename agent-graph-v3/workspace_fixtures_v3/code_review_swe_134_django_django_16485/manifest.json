@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "django/template/defaultfilters.py",
-          "django/db/models/fields/__init__.py",
-          "to_python",
-          "except",
-          "decimal",
-          "InvalidOperation",
-          "defaultfilters.py"
+          "floatformat",
+          "defaultfilters.py",
+          "django/template/defaultfilters py",
+          "django/template/defaultfilters",
+          "py",
+          "defaultfilters py",
+          "defaultfilters"
         ],
         "all_of": [
-          "except|error|exception|handl",
-          "error|except|rais"
+          "zero|\\b0\\b",
+          "(?:precision|decimal.places|\\bp\\b)",
+          "(?:integer|integral|fast.path|shortcut)"
         ],
         "reject_any": [],
-        "explanation": "In to_python, the patch adds error handling or exception catching. Previously unhandled errors propagate and cause crashes or incorrect behavior. The handler ensures errors are dealt with appropriately."
+        "explanation": "floatformat excludes zero precision from its integral-value shortcut. Include p == 0 in the integer branch so integral inputs avoid the unnecessary Decimal quantization path."
       }
     }
   ],

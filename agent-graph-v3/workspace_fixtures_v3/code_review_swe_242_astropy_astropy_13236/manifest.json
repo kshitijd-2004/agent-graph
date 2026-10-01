@@ -33,19 +33,21 @@
         ],
         "location_any": [
           "astropy/table/table.py",
-          "sklearn/svm/base.py",
-          "_sparse_fit",
-          "n_SV",
-          "dual_coef_",
-          "csr_matrix",
-          "table.py"
+          "_convert_data_to_col",
+          "table.py",
+          "astropy/table/table py",
+          "astropy/table/table",
+          "py",
+          "convert data to col",
+          "table py",
+          "table"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "attribute|property|field|state"
+          "structured|record.array",
+          "(?:remove|stop|avoid|no.longer).{0,70}(?:mixin|view|coerc|convert)|(?:mixin|view).{0,70}(?:remove|stop|avoid)"
         ],
         "reject_any": [],
-        "explanation": "In _sparse_fit, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "_convert_data_to_col automatically views structured ndarrays as NdarrayMixin. Remove that special coercion so structured arrays use ordinary column conversion unless already a genuine mixin."
       }
     }
   ],

@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "django/http/response.py",
-          "astropy/units/quantity.py",
-          "__array_ufunc__",
-          "result",
-          "astropy",
-          "units",
-          "response.py"
+          "HttpResponse.make_bytes",
+          "response.py",
+          "django/http/response py",
+          "django/http/response",
+          "py",
+          "Http Response make bytes",
+          "HttpResponse",
+          "make_bytes",
+          "response py",
+          "response"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "except|error|exception|handl"
+          "memoryview|memory view",
+          "(?:bytes|byte conversion|raw bytes).{0,75}(?:convert|direct|use|instead)|(?:convert|treat|handle).{0,75}(?:bytes|byte sequence)"
         ],
         "reject_any": [],
-        "explanation": "In __array_ufunc__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "HttpResponse.make_bytes stringifies memoryview objects instead of returning their contents. Handle memoryview alongside bytes and convert directly with bytes(value), avoiding the object representation."
       }
     }
   ],

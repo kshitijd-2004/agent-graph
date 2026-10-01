@@ -33,19 +33,23 @@
         ],
         "location_any": [
           "sympy/geometry/point.py",
-          "django/utils/datastructures.py",
-          "discard",
-          "__reversed__",
-          "reversed",
-          "dict",
-          "point.py"
+          "Point.__new__",
+          "point.py",
+          "sympy/geometry/point py",
+          "sympy/geometry/point",
+          "py",
+          "Point new",
+          "Point",
+          "__new__",
+          "point py",
+          "point"
         ],
         "all_of": [
-          "return|yield|output",
-          "attribute|property|field|state"
+          "imaginary|im\\(",
+          "(?:definit|known|explicit).{0,45}(?:nonzero|non.zero|false)|is.zero.{0,25}false"
         ],
         "reject_any": [],
-        "explanation": "In discard, the patch corrects the return logic. The function returned an incorrect value or missed a step on certain code paths. Adjusting the return ensures the expected value is produced consistently."
+        "explanation": "Point.__new__ truth-tests imaginary parts and may reject an undecidable value. Reject a numeric coordinate only when its imaginary part is definitively nonzero, using is_zero is False."
       }
     }
   ],

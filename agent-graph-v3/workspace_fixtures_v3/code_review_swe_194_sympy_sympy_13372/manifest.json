@@ -33,17 +33,20 @@
         ],
         "location_any": [
           "sympy/core/evalf.py",
-          "lib/matplotlib/text.py",
-          "get_unit",
-          "ref_coord",
-          "evalf.py"
+          "evalf",
+          "evalf.py",
+          "sympy/core/evalf py",
+          "sympy/core/evalf",
+          "py",
+          "evalf py"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "copy|clone|independent|separate|preserv"
+          "(?:real|imaginary|component)",
+          "(?:nonnumeric|non.numeric|symbolic|not.numeric)",
+          "notimplementederror|unsupported|raise"
         ],
         "reject_any": [],
-        "explanation": "In __init__, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "evalf leaves precision variables unset when a real or imaginary component is nonnumeric. Raise NotImplementedError for those components rather than constructing a partial numerical result."
       }
     }
   ],

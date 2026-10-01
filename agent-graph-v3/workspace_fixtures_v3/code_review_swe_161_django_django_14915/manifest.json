@@ -33,19 +33,25 @@
         ],
         "location_any": [
           "django/forms/models.py",
-          "django/template/defaultfilters.py",
-          "floatformat",
-          "input_val",
-          "str",
-          "text",
-          "models.py"
+          "ModelChoiceIteratorValue.__hash__",
+          "models.py",
+          "django/forms/models py",
+          "django/forms/models",
+          "py",
+          "Model Choice Iterator Value hash",
+          "ModelChoiceIteratorValue",
+          "__hash__",
+          "models py",
+          "models"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "hash",
+          "(?:underlying|wrapped|self.value|stored).{0,65}(?:value|hash)|(?:hash).{0,65}(?:value)"
         ],
-        "reject_any": [],
-        "explanation": "In floatformat, the patch corrects behavior by modifying the affected code path in django/template/defaultfilters.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "reject_any": [
+          "hash.*model object identity|model object identity"
+        ],
+        "explanation": "ModelChoiceIteratorValue defines equality but has no hash implementation. Hash its underlying value so it can be used as a dictionary key consistently with equality."
       }
     }
   ],

@@ -33,19 +33,25 @@
         ],
         "location_any": [
           "lib/matplotlib/widgets.py",
-          "sphinx/domains/python.py",
-          "unparse",
-          "node",
-          "elts",
-          "result",
-          "widgets.py"
+          "SpanSelector._setup_edge_handle",
+          "widgets.py",
+          "lib/matplotlib/widgets py",
+          "lib/matplotlib/widgets",
+          "py",
+          "Span Selector setup edge handle",
+          "SpanSelector",
+          "_setup_edge_handle",
+          "widgets py",
+          "widgets"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "loop|iterat"
+          "(?:axis|axes).{0,25}(?:bound|limit)|get.xbound|get.ybound",
+          "(?:initial|handle).{0,70}(?:position|bound)|(?:position|bound).{0,70}(?:initial|handle)|place.{0,30}handles.{0,30}axis limits"
         ],
-        "reject_any": [],
-        "explanation": "In unparse, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "reset both axes|zero.to.one bounds|zero to one"
+        ],
+        "explanation": "SpanSelector initializes edge handles from selector extents, which can change axis bounds. Initialize their positions from the current x or y bounds according to direction so construction preserves the view."
       }
     }
   ],

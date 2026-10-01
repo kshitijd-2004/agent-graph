@@ -33,17 +33,21 @@
         ],
         "location_any": [
           "sympy/physics/hep/gamma_matrices.py",
-          "django/contrib/admin/templatetags/admin_modify.py",
-          "submit_row",
-          "has_add_permission",
-          "gamma_matrices.py"
+          "kahane_simplify",
+          "gamma_matrices.py",
+          "sympy/physics/hep/gamma matrices py",
+          "sympy/physics/hep/gamma_matrices",
+          "py",
+          "kahane simplify",
+          "gamma matrices py",
+          "gamma_matrices"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "free",
+          "(?:preserv|retain|original).{0,50}order|order.{0,50}(?:preserv|retain)|prepend.{0,50}(?:slice|prefix)"
         ],
         "reject_any": [],
-        "explanation": "In submit_row, the patch corrects behavior by modifying the affected code path in django/contrib/admin/templatetags/admin_modify.py. The previous implementation did not handle the reported case correctly, leading to the observed incorrect behavior."
+        "explanation": "kahane_simplify inserts each leading free index at position zero, reversing their order. Prepend the entire free-index prefix in its original order to each resulting index sequence."
       }
     }
   ],

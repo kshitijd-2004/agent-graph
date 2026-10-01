@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "sphinx/util/inspect.py",
-          "sphinx/application.py",
-          "_init_i18n",
-          "__repr__",
-          "typing",
-          "Any",
-          "inspect.py"
+          "object_description",
+          "inspect.py",
+          "sphinx/util/inspect py",
+          "sphinx/util/inspect",
+          "py",
+          "object description",
+          "inspect py",
+          "inspect"
         ],
         "all_of": [
-          "copy|clone|independent|separate|preserv",
-          "clear|reset|none|null|empty"
+          "enum",
+          "(?:class|type).{0,40}(?:member|name)|(?:member|name).{0,40}(?:class|type)",
+          "repr|display|render|format"
         ],
-        "reject_any": [],
-        "explanation": "In _init_i18n, the patch clears or resets state that was retained incorrectly. Stale state causes the code to behave as if the object still holds old data. Resetting ensures a clean state for the next operation."
+        "reject_any": [
+          "display only.*raw value|omit.*class.*member name"
+        ],
+        "explanation": "object_description uses generic repr for enum members, including implementation-style value details. Format enum defaults as ClassName.member_name for a concise usable reference."
       }
     }
   ],

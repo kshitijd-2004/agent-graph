@@ -33,19 +33,24 @@
         ],
         "location_any": [
           "requests/auth.py",
-          "lib/matplotlib/axis.py",
-          "_init",
-          "mpl",
-          "rcParams",
-          "xtick",
-          "auth.py"
+          "HTTPDigestAuth.build_digest_header",
+          "auth.py",
+          "requests/auth py",
+          "requests/auth",
+          "py",
+          "HTTP Digest Auth build digest header",
+          "HTTPDigestAuth",
+          "build_digest_header",
+          "auth py",
+          "auth"
         ],
         "all_of": [
-          "modif|chang|updat",
-          "correct|fix|resolv"
+          "qop",
+          "auth",
+          "quot|double.quot"
         ],
         "reject_any": [],
-        "explanation": "In _init, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "explanation": "HTTPDigestAuth.build_digest_header emits qop=auth without quotes. Quote the auth value in the Digest authorization header so servers expecting the quoted quality-of-protection token accept it."
       }
     }
   ],

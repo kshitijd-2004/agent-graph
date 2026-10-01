@@ -33,18 +33,27 @@
         ],
         "location_any": [
           "django/contrib/sitemaps/__init__.py",
-          "django/db/models/sql/compiler.py",
-          "execute_sql",
-          "Ensure",
-          "base",
-          "table"
+          "Sitemap.get_latest_lastmod",
+          "sitemaps/__init__.py",
+          "contrib/sitemaps/__init__.py",
+          "django/contrib/sitemaps/ init py",
+          "django/contrib/sitemaps/__init__",
+          "py",
+          "Sitemap get latest lastmod",
+          "Sitemap",
+          "get_latest_lastmod",
+          "sitemaps/ init py",
+          "sitemaps/__init__",
+          "contrib/sitemaps/ init py",
+          "contrib/sitemaps/__init__"
         ],
         "all_of": [
-          "attribute|property|field|state",
-          "compar|test|check|condition"
+          "empty|no.items",
+          "max",
+          "default.{0,25}none|return.{0,25}none|none.{0,25}default"
         ],
         "reject_any": [],
-        "explanation": "In execute_sql, the patch corrects attribute assignment. The attribute was set at the wrong point in the code flow, leading to incorrect state when the value was used."
+        "explanation": "Sitemap.get_latest_lastmod calls max on an empty item list, raising ValueError. Supply default=None to max so an empty sitemap has no latest modification time."
       }
     }
   ],

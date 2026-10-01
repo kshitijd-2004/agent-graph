@@ -33,17 +33,25 @@
         ],
         "location_any": [
           "sklearn/pipeline.py",
-          "sklearn/multioutput.py",
-          "sample_weight",
-          "Fit",
-          "pipeline.py"
+          "Pipeline.__len__",
+          "pipeline.py",
+          "sklearn/pipeline py",
+          "sklearn/pipeline",
+          "py",
+          "Pipeline len",
+          "Pipeline",
+          "__len__",
+          "pipeline py",
+          "pipeline"
         ],
         "all_of": [
-          "guard|check|condition|validat",
-          "except|error|exception|handl"
+          "len|length",
+          "(?:steps|step.count|number.of.steps)"
         ],
-        "reject_any": [],
-        "explanation": "In fit, the patch adds a guard or condition check that was missing. Without this check, the code proceeds with invalid state and produces incorrect behavior. The guard ensures the operation only executes when the precondition is met."
+        "reject_any": [
+          "return.*number of sample|samples seen during fit"
+        ],
+        "explanation": "Pipeline supports indexing but does not implement length. Add __len__ returning len(self.steps) so callers can query the number of configured pipeline steps."
       }
     }
   ],
