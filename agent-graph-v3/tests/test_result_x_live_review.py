@@ -9,6 +9,7 @@ import pytest
 
 from generation.result_x_live_review import (
     FIELDS, JSONModelReviewer, PRIMARY, SOURCE_PATHS, SourceReviewValidator, arithmetic, finqa_table,
+    candidate_claim_spans,
 )
 from generation.result_x_workflow import DerivedResultDraft, Evidence
 
@@ -52,10 +53,11 @@ def draft(domain, conclusion=None):
 
 def verdict(domain, candidate, **overrides):
     response = {"correct": True, "useful": True, "issues": [],
-        "assessments": {field: {"supported": True, "reason": "Checked the supplied primary evidence and task."} for field in FIELDS},
+        "assessments": {field: {"supported": True, "reason": "Checked the supplied primary evidence and task.",
+            "claim_ids": [s["claim_id"] for s in candidate_claim_spans(candidate) if s["field"] == field]} for field in FIELDS},
         "citations": [{"path": e.path, "quote": e.quote} for e in candidate.evidence], "calculations": []}
     if domain == "finqa":
-        response["calculations"] = [{"claim_quote": candidate.conclusion,
+        response["calculations"] = [{"claim_id": "conclusion:0",
             "expression": "debt_thereafter / debt_total * 100", "reported_value": "35.1",
             "decimal_places": 1, "relation": "equals"}]
     response.update(overrides)

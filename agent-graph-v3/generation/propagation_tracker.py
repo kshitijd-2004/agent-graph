@@ -115,6 +115,34 @@ class PropagationTracker:
             event.event_id, lineage.origin_event_id,
         )
 
+    def annotate_delivery(self, event: TraceEvent, lineage: PerturbationLineage) -> None:
+        """Record delivery only; a later model call may fail or never occur."""
+        event.event_labels.receives_perturbed_info = True
+        lineage.target_agents.add(event.agent_role or "")
+        lid = self._lineage_id(lineage)
+        if lid not in self._event_to_lineages.setdefault(event.event_id, []):
+            self._event_to_lineages[event.event_id].append(lid)
+        origins = event.hidden.setdefault("delivered_origins", [])
+        if lineage.origin_event_id not in origins:
+            origins.append(lineage.origin_event_id)
+
+    def annotate_input_processing(self, event: TraceEvent,
+                                  lineage: PerturbationLineage, source_event_id: str) -> None:
+        """A successful model turn included a delivered artifact in its input.
+
+        This is input-level consumption, not proof of semantic use or influence.
+        Never call this based only on DAG reachability or role-level exposure.
+        """
+        self.annotate_consumption(event, lineage)
+        event.event_labels.inferred_propagation = True
+        evidence = event.hidden.setdefault("input_processing_evidence", [])
+        item = {"origin_event_id": lineage.origin_event_id,
+                "source_event_id": source_event_id,
+                "basis": "successful_model_turn_with_artifact_in_input"}
+        if item not in evidence:
+            evidence.append(item)
+        event.hidden["semantic_use"] = "unassessed"
+
     def annotate_transformation(
         self,
         event: TraceEvent,
@@ -144,6 +172,9 @@ class PropagationTracker:
         )
         event.hidden["propagation_role"] = "storage"
         event.hidden["lep_code"] = lineage.lep_code
+        origins = event.hidden.setdefault("stored_origins", [])
+        if lineage.origin_event_id not in origins:
+            origins.append(lineage.origin_event_id)
 
     def annotate_propagation(
         self,
@@ -162,6 +193,9 @@ class PropagationTracker:
         )
         event.hidden["propagation_role"] = "propagation"
         event.hidden["lep_code"] = lineage.lep_code
+        origins = event.hidden.setdefault("forwarded_origins", [])
+        if lineage.origin_event_id not in origins:
+            origins.append(lineage.origin_event_id)
         logger.debug(
             "PropagationTracker: %s propagated perturbation to %s",
             event.event_id, target_agent,

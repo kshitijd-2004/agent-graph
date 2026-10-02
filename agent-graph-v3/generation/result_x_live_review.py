@@ -39,7 +39,7 @@ RULES = {
         "Use relation=not_equals for an explicitly rejected value. For a verbal approximation "
         "(e.g. roughly a third) use reported_value=null, quote just that quantity phrase without "
         "surrounding dates, and explain its accuracy in the assessment. "
-        "A calculation must quote the actual candidate claim; never replace its claimed number "
+        "A calculation must reference a supplied candidate claim_id; never replace its claimed number "
         "with the number you believe it should have said. At least one relevant source-table "
         "calculation/factual lookup is required for this financial derivation."
     ),
@@ -79,22 +79,57 @@ If uncertain or unable to verify a material claim, reject with an explanation.
 Return ONLY a JSON object with this schema:
 {"correct": true, "useful": true,
  "assessments": {
-   "conclusion": {"supported": true, "reason": "source-based explanation"},
-   "reasoning": {"supported": true, "reason": "source-based explanation"},
-   "intended_use": {"supported": true, "reason": "why useful for the supplied task"}},
+   "conclusion": {"claim_ids": ["conclusion:0"], "supported": true, "reason": "source-based explanation"},
+   "reasoning": {"claim_ids": ["reasoning:0"], "supported": true, "reason": "source-based explanation"},
+   "intended_use": {"claim_ids": ["intended_use:0"], "supported": true, "reason": "why useful for the supplied task"}},
  "citations": [{"path": "original source path", "quote": "exact nonempty source substring"}],
- "calculations": [{"claim_quote": "exact substring of candidate conclusion or reasoning",
-   "expression": "debt_thereafter / debt_total * 100", "reported_value": "decimal numeral from claim_quote",
+ "calculations": [{"claim_id": "conclusion:0",
+   "expression": "debt_thereafter / debt_total * 100", "reported_value": "decimal numeral from the referenced span",
    "decimal_places": 1, "relation": "equals"}],
  "issues": []}
+Use ONLY IDs from the supplied claim_spans. These are identified verbatim candidate
+spans, not automatically verified claims. Each field assessment must list ALL of that
+field's claim_ids, including unsupported claims when rejecting. Calculations must
+reference one conclusion or reasoning span by claim_id. Never return claim_quote or
+replacement claim text: the validator resolves IDs to the original candidate itself.
+Keep explanations in reason and source arithmetic in expression, not in a quoted claim.
 Use actual booleans. Set correct/useful/supported false and list issues when rejecting.
 Calculations apply only to FinQA (empty list otherwise). Allowed expressions contain
 source variable names, + - * / parentheses, and conversion constants 1 or 100 only.
 reported_value is the number the candidate states, expressed as a decimal string;
-decimal_places is its stated precision (0..6). Never add a number absent from claim_quote.
+decimal_places is its stated precision (0..6). Never add a number absent from the referenced span.
 For purely verbal approximations use null instead and assess them semantically. Cite
 the original evidence supporting your review. Return no tool calls or markdown.
 """
+
+
+def candidate_claim_spans(candidate: DerivedResultDraft) -> list[dict]:
+    """Identify nonblank candidate lines without rewriting their content.
+
+    Offsets are Python character offsets within the named field. Blank lines
+    carry no claims; all non-whitespace text remains covered by an assessment.
+    IDs are scoped to this candidate/request, whose full content is in the cache key.
+    """
+    spans = []
+    for field in FIELDS:
+        text = getattr(candidate, field)
+        index = 0
+        for match in re.finditer(r"[^\r\n]+", text):
+            if not match.group().strip():
+                continue
+            spans.append({"claim_id": f"{field}:{index}", "field": field,
+                          "start": match.start(), "end": match.end(), "text": match.group()})
+            index += 1
+    return spans
+
+
+def _resolve_claim(claim_id, spans, fields):
+    if not isinstance(claim_id, str) or claim_id not in spans:
+        raise ValueError("Unknown or invalid candidate claim_id")
+    span = spans[claim_id]
+    if span["field"] not in fields:
+        raise ValueError("Candidate claim_id references the wrong field")
+    return span["text"]
 
 
 def finqa_table(source: str) -> dict:
@@ -189,6 +224,7 @@ class SourceReviewValidator:
             if not any(e["path"] in PRIMARY[self.domain] for e in evidence):
                 raise ValueError("Primary-source evidence is required")
             packet = {"task": task, "sources": text, "candidate": asdict(candidate),
+                      "claim_spans": candidate_claim_spans(candidate),
                       "review_rules": RULES[self.domain]}
             if self.domain == "finqa":
                 packet["table_variables"] = finqa_table(text["documents/report.md"])
@@ -215,6 +251,9 @@ class SourceReviewValidator:
         return record["accepted"] is True
 
     def _check(self, response, candidate, sources, variables):
+        # Rebuild from the authoritative candidate, never reviewer-supplied text
+        # or a possibly modified callback packet.
+        spans = {s["claim_id"]: s for s in candidate_claim_spans(candidate)}
         if not isinstance(response, dict) or response.get("correct") is not True or response.get("useful") is not True:
             raise ValueError("Reviewer did not affirm substantive correctness and usefulness")
         if response.get("issues") != []:
@@ -222,6 +261,16 @@ class SourceReviewValidator:
         assessments = response.get("assessments", {})
         for field in FIELDS:
             check = assessments.get(field, {})
+            if not isinstance(check, dict) or set(check) != {"claim_ids", "supported", "reason"}:
+                raise ValueError(f"Assessment must use candidate claim_ids: {field}")
+            ids = check["claim_ids"]
+            if not isinstance(ids, list) or not ids:
+                raise ValueError(f"Missing candidate claim_ids: {field}")
+            for claim_id in ids:
+                _resolve_claim(claim_id, spans, (field,))
+            expected = {k for k, s in spans.items() if s["field"] == field}
+            if len(ids) != len(set(ids)) or set(ids) != expected:
+                raise ValueError(f"Assessment must cover every candidate span: {field}")
             if check.get("supported") is not True or not isinstance(check.get("reason"), str) or not check["reason"].strip():
                 raise ValueError(f"Missing/negative semantic assessment: {field}")
         citations = response.get("citations")
@@ -233,9 +282,11 @@ class SourceReviewValidator:
         if not isinstance(calculations, list) or (self.domain == "finqa" and not calculations):
             raise ValueError("Financial derivation requires a source-based arithmetic/fact check")
         for check in calculations:
-            claim = check["claim_quote"]
-            if not isinstance(claim, str) or not claim.strip() or not any(claim in getattr(candidate, f) for f in FIELDS[:2]):
-                raise ValueError("Calculation must refer to the candidate's actual claim")
+            if not isinstance(check, dict) or set(check) != {
+                "claim_id", "expression", "reported_value", "decimal_places", "relation"
+            }:
+                raise ValueError("Calculation must use claim_id without replacement claim text")
+            claim = _resolve_claim(check["claim_id"], spans, FIELDS[:2])
             actual = arithmetic(check["expression"], variables)
             relation, places = check["relation"], check["decimal_places"]
             if relation not in ("equals", "not_equals") or type(places) is not int or not 0 <= places <= 6:

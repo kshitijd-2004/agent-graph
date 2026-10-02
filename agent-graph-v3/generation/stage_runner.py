@@ -1246,14 +1246,10 @@ class StageRunner:
                     )
                     continue
                 elif not summary:
-                    # Second repair failed — auto-generate from events
-                    summary = self._auto_generate_handoff_summary(
-                        events=events, current_role=current_role,
-                    )
-                    logger.info(
-                        "Protocol repair fallback: auto-generated summary "
-                        "for stage=%s role=%s len=%d",
-                        stage.stage_id, current_role, len(summary),
+                    # Repeated protocol failure after single repair — fail closed.
+                    raise ContractError(
+                        f"Protocol repair exhausted at stage={stage.stage_id} "
+                        f"role={current_role} turn={turn}"
                     )
 
                 # Build structured payload from model's native tool arguments

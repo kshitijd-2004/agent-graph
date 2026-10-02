@@ -134,6 +134,8 @@ class BenchmarkRecord:
     injection_fired: bool = False
     injection_event_ids: list[str] = field(default_factory=list)
     consumption_event_ids: list[str] = field(default_factory=list)
+    delivery_event_ids: list[str] = field(default_factory=list)
+    storage_event_ids: list[str] = field(default_factory=list)
     propagation_event_ids: list[str] = field(default_factory=list)
     recovery_event_ids: list[str] = field(default_factory=list)
     # Outcomes
@@ -182,6 +184,8 @@ class BenchmarkRecord:
             "injection_fired": self.injection_fired,
             "injection_event_ids": self.injection_event_ids,
             "consumption_event_ids": self.consumption_event_ids,
+            "delivery_event_ids": self.delivery_event_ids,
+            "storage_event_ids": self.storage_event_ids,
             "propagation_event_ids": self.propagation_event_ids,
             "recovery_event_ids": self.recovery_event_ids,
             "downstream_failure": self.downstream_failure,
@@ -481,9 +485,10 @@ class BenchmarkRunner:
         self.results: list[BenchmarkRecord] = []
         self._run_idx = 0
 
-    def run(self) -> dict[str, Any]:
-        """Execute the full benchmark plan."""
-        plan = self.manifest.build_plan()
+    def run(self, *, plan: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+        """Execute the normal plan, or an explicitly validated selection."""
+        selected_count = len(plan) if plan is not None else None
+        plan = self.manifest.build_plan() if plan is None else plan
 
         # Apply node partition if multi-node
         if self.manifest.num_nodes > 1:
@@ -492,7 +497,7 @@ class BenchmarkRunner:
             logger.info(
                 "Node %d/%d: executing %d of %d plan entries",
                 self.manifest.node_id, self.manifest.num_nodes,
-                len(plan), len(self.manifest.build_plan()),
+                len(plan), len(self.manifest.build_plan()) if selected_count is None else selected_count,
             )
 
         logger.info(
@@ -623,6 +628,12 @@ class BenchmarkRunner:
             record.consumption_event_ids = [
                 e.event_id for e in trace.events
                 if getattr(e, "event_labels", None) and e.event_labels.consumes_perturbed_info
+            ]
+            record.delivery_event_ids = [
+                e.event_id for e in trace.events if e.event_labels.receives_perturbed_info
+            ]
+            record.storage_event_ids = [
+                e.event_id for e in trace.events if e.event_labels.stores_perturbed_info
             ]
             record.propagation_event_ids = [
                 e.event_id for e in trace.events

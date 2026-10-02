@@ -196,7 +196,13 @@ class _Session:
         try:
             candidate = json.loads(payload.summary)
         except (TypeError, ValueError) as exc:
-            raise _DraftProtocolError("handoff.summary must contain the Result X JSON contract") from exc
+            raise _DraftProtocolError(
+                f"handoff.summary is not valid JSON: {exc}. "
+                "Literal control characters and newlines inside JSON string values must be "
+                "escaped (for example, use \\n for a newline, not a literal line break). "
+                "Every code block, multiline quote, and line break in the summary must be "
+                "JSON-escaped inside the string value."
+            ) from exc
         if not isinstance(candidate, dict):
             raise _DraftProtocolError("handoff.summary must contain a Result X JSON object")
         received = {json.loads(e["wire"])["result_id"]: e["wire"] for e in entries(incoming)}
@@ -367,7 +373,12 @@ class ResultXStageRunner(StageRunner):
             "When handing off, use the ordinary handoff tool, with summary containing a JSON "
             "object with conclusion, reasoning, evidence (a list of {path, quote} from original "
             "sources you read), and intended_use. These must describe substantive derived work. "
-            "Use a concise complete object, not repeated code blocks or escaped newlines. "
+            "Use a concise complete object, not repeated code blocks. "
+            "If reasoning or conclusion includes a code block or other multiline text, "
+            "the JSON string value must use valid JSON escaping: literal newlines become "
+            "\\n, literal backslashes become \\\\, and literal double quotes become \\\". "
+            "A raw line break inside a JSON string is invalid and will cause the handoff "
+            "to be rejected. "
             "Serialize the summary JSON once; do not print a tool-call wrapper as text. "
             "All four fields are mandatory for every new derivation or revision, including "
             "intended_use: explain how the receiver should use this result. Do not omit fields "

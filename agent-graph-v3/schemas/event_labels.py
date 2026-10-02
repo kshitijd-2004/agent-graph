@@ -57,7 +57,12 @@ class EventLabels:
     is_injection_origin: bool = False
 
     # Perturbation flow
+    # v2: inferred input processing on a successful model turn, with private
+    # input_processing_evidence. False is not a verified semantic-use negative.
     consumes_perturbed_info: bool = False
+    # Delivery is distinct from a completed inference with that input. Neither
+    # establishes endorsement, semantic use, or a causal behavioral effect.
+    receives_perturbed_info: bool = False
     transforms_perturbed_info: bool = False
     stores_perturbed_info: bool = False
     forwards_perturbed_info: bool = False

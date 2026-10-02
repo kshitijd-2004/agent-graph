@@ -152,10 +152,14 @@ Examples:
     )
     parser.add_argument(
         "--plan-manifest", type=Path, default=None,
-        help="Path to scenario manifest JSONL (for merge validation)",
+        help="Execute only the scenarios in a validated selection JSON manifest",
     )
 
     args = parser.parse_args()
+
+    if args.plan_manifest is not None and args.merge:
+        logger.error("--plan-manifest cannot be combined with --merge")
+        return 1
 
     dry_run = not args.real_model
 
@@ -245,21 +249,54 @@ Examples:
         num_nodes=num_nodes,
     )
 
-    logger.info(
-        "Benchmark plan: %d topologies × %d tasks × %d LEPs × %d prop_modes × %d reps = %d scenarios",
-        len(topologies),
-        len(task_families),
-        len(available_leps),
-        len(propagation_modes),
-        args.repetitions,
-        len(topologies) * len(task_families) * len(available_leps) * len(propagation_modes) * args.repetitions,
-    )
+    selected_plan = None
+    if args.plan_manifest is not None:
+        from benchmark.plan_manifest import load_plan_manifest
+        try:
+            manifest, selected_plan = load_plan_manifest(args.plan_manifest, manifest)
+            # Defaults must not replace saved settings; explicit conflicts reject.
+            supplied = set()
+            for arg in sys.argv[1:]:
+                if arg.startswith("--"):
+                    flag = arg.split("=", 1)[0]
+                    # argparse also accepts unambiguous long-option prefixes.
+                    matches = [option for option in parser._option_string_actions if option.startswith(flag)]
+                    supplied.add(flag if flag in parser._option_string_actions else matches[0])
+            if supplied & {"--topologies", "--task-families", "--lep-codes", "--propagation-modes"}:
+                raise ValueError("Plan selection cannot be combined with matrix filters")
+            for flag, field, value in (
+                ("--repetitions", "num_repetitions", args.repetitions),
+                ("--benign-repetitions", "num_benign_repetitions", args.benign_repetitions),
+                ("--max-events", "max_events", args.max_events),
+                ("--model", "model_name", args.model),
+                ("--backend", "backend_name", args.backend),
+                ("--vllm-url", "vllm_url", args.vllm_url),
+                ("--real-model", "dry_run", False),
+                ("--dry-run", "dry_run", True),
+            ):
+                if flag in supplied and getattr(manifest, field) != value:
+                    raise ValueError(f"{flag} conflicts with saved manifest settings")
+        except (OSError, ValueError, TypeError) as exc:
+            logger.error("Invalid plan manifest: %s", exc)
+            return 1
+        logger.info("Selected exactly %d manifest scenarios", len(selected_plan))
+
+    if selected_plan is None:
+        logger.info(
+            "Benchmark plan: %d topologies × %d tasks × %d LEPs × %d prop_modes × %d reps = %d scenarios",
+            len(topologies),
+            len(task_families),
+            len(available_leps),
+            len(propagation_modes),
+            args.repetitions,
+            len(topologies) * len(task_families) * len(available_leps) * len(propagation_modes) * args.repetitions,
+        )
 
     if num_nodes > 1:
         logger.info("Running as node %d/%d", node_id, num_nodes)
 
     runner = BenchmarkRunner(manifest)
-    summary = runner.run()
+    summary = runner.run() if selected_plan is None else runner.run(plan=selected_plan)
 
     # Print summary
     print("\n" + "=" * 60)

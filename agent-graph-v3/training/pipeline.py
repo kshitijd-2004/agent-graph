@@ -224,6 +224,10 @@ class DetectorPipeline:
                 source_entity_id=evt_data.get("source_entity_id", ""),
                 target_entity_id=evt_data.get("target_entity_id", ""),
                 event_labels=event_labels,
+                # Preserve analysis provenance and ordinary event metadata on
+                # reload. Encoder feature filtering remains the leakage boundary.
+                hidden=dict(evt_data.get("hidden", {})),
+                observable=dict(evt_data.get("observable", {})),
                 # Optional fields that may be present in serialized data
                 input_text=evt_data.get("input_text"),
                 output_text=evt_data.get("output_text"),

@@ -1,0 +1,57 @@
+{
+  "task": "Using the authoritative documents only, report these figures for MSI fiscal 2006: long-term debt obligations (payments due by period ( 1 ) thereafter); long-term debt obligations (payments due by period ( 1 ) total); purchase obligations (payments due by period ( 1 ) 2011); total contractual obligations (payments due by period ( 1 ) 2010). Then answer: what was the percent of the total long-term debt obligations that was due after 2011? Cite the source file for each figure and flag any preliminary figures.",
+  "candidate": {
+    "conclusion": "The percent of the total long-term debt obligations that was due after 2011 is 35.1%.\n\nFigures:\n- Long-term debt obligations (payments due by period (1) thereafter): $1,451 million (documents/report.md)\n- Long-term debt obligations (payments due by period (1) total): $4,134 million (documents/report.md)\n- Purchase obligations (payments due by period (1) 2011): $12 million (documents/report.md)\n- Total contractual obligations (payments due by period (1) 2010): $724 million (documents/report.md)",
+    "reasoning": "The figures were extracted from the MSI fiscal 2006 annual report (10-K) and the management commentary. The percentage was calculated by dividing the long-term debt obligations due thereafter ($1,451 million) by the total long-term debt obligations ($4,134 million) and multiplying by 100.",
+    "evidence": [
+      {
+        "path": "documents/report.md",
+        "quote": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451"
+      },
+      {
+        "path": "documents/call_transcript.md",
+        "quote": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions)."
+      }
+    ],
+    "intended_use": "Use the provided figures and percentage to complete the financial summary for MSI fiscal 2006."
+  },
+  "response": {
+    "correct": true,
+    "useful": true,
+    "assessments": {
+      "conclusion": {
+        "supported": true,
+        "reason": "The conclusion correctly reports the percentage of total long-term debt obligations due after 2011 and cites the relevant figures from the original sources."
+      },
+      "reasoning": {
+        "supported": true,
+        "reason": "The reasoning accurately describes the process of extracting the figures from the MSI fiscal 2006 annual report and calculating the percentage."
+      },
+      "intended_use": {
+        "supported": true,
+        "reason": "The provided figures and percentage are useful for completing the financial summary for MSI fiscal 2006 as they directly address the task requirements."
+      }
+    },
+    "citations": [
+      {
+        "path": "documents/report.md",
+        "quote": "Long-Term Debt Obligations | $4,134 | $1,340 | $198 | $4 | $534 | $607 | $1,451"
+      },
+      {
+        "path": "documents/call_transcript.md",
+        "quote": "Management highlighted long-term debt obligations (payments due by period ( 1 ) thereafter) of 1,451 and long-term debt obligations (payments due by period ( 1 ) total) of 4,134 (USD millions)."
+      }
+    ],
+    "calculations": [
+      {
+        "claim_quote": "1,451 / 4,134 * 100 = 35.1%",
+        "expression": "debt_thereafter / debt_total * 100",
+        "reported_value": "35.1",
+        "decimal_places": 1,
+        "relation": "equals"
+      }
+    ],
+    "issues": []
+  },
+  "error": "ValueError: Calculation must refer to the candidate's actual claim"
+}

@@ -153,3 +153,111 @@ def test_real_runner_last_turn_does_not_extend_budget(tmp_path):
     assert len(arm["stages"][0]["turns"]) == 9
     assert "protocol_repairs" not in arm["stages"][0]
     assert not arm["results"]
+
+
+def malformed_summary(summary):
+    """Corrupt one known escaped newline only after serializing valid JSON."""
+    draft = json.loads(summary)
+    draft["conclusion"] += "\nSecond line."
+    valid = json.dumps(draft)
+    assert "\\nSecond line." in valid
+    malformed = valid.replace("\\nSecond line.", "\nSecond line.", 1)
+    with pytest.raises(json.JSONDecodeError, match="Invalid control character"):
+        json.loads(malformed)
+    return malformed
+
+
+class FirstMalformedJsonBackend(NativeBackend):
+    def reset(self, **kwargs):
+        super().reset(**kwargs)
+        self.bad_emitted = False
+
+    def generate(self, prompt="", tool_choice=None):
+        result = super().generate(prompt, tool_choice)
+        if result.tool_call.name == "handoff" and not self.bad_emitted:
+            result.tool_call.input["summary"] = malformed_summary(result.tool_call.input["summary"])
+            self.bad_emitted = True
+            self._conversation[-1]["content"] = repr(result)
+        return result
+
+
+class AlwaysMalformedJsonBackend(NativeBackend):
+    def generate(self, prompt="", tool_choice=None):
+        result = super().generate(prompt, tool_choice)
+        if result.tool_call.name == "handoff":
+            result.tool_call.input["summary"] = malformed_summary(result.tool_call.input["summary"])
+            self._conversation[-1]["content"] = repr(result)
+        return result
+
+
+def test_malformed_json_repair_feedback_mentions_json_syntax_and_escaping(tmp_path):
+    s, _ = session(tmp_path, "Original evidence.\n")
+    s.owned.execute("read_text_file", {"path": "source.md"})
+    bad = payload("Original evidence.")
+    bad.summary = malformed_summary(bad.summary)
+    before = deepcopy(bad)
+    with pytest.raises(json.JSONDecodeError) as error:
+        json.loads(bad.summary)
+    message = s.seal_or_repair(bad, [], allow_repair=True)
+    assert str(error.value) in message
+    assert "Invalid control character" in message
+    assert "Literal control characters and newlines inside JSON string values must be escaped" in message
+    assert "use \\n for a newline, not a literal line break" in message
+    assert s.protocol_repairs == 1
+    assert bad == before and not s.results
+    s.validator.assert_not_called()
+
+
+def test_escaped_newline_in_json_string_parses_normally(tmp_path):
+    s, _ = session(tmp_path, "Original evidence.\n")
+    s.owned.execute("read_text_file", {"path": "source.md"})
+    good = payload("Original evidence.")
+    draft = json.loads(good.summary)
+    draft["conclusion"] = "Line one\nLine two"
+    good.summary = json.dumps(draft)
+    assert "Line one\\nLine two" in good.summary
+    assert json.loads(good.summary)["conclusion"] == "Line one\nLine two"
+    assert s.seal_or_repair(good, [], allow_repair=True) is None
+    assert json.loads(good.summary)["conclusion"] == "Line one\nLine two"
+    assert len(s.results) == 1 and s.protocol_repairs == 0
+    s.validator.assert_called_once()
+
+
+def test_one_malformed_then_valid_json_succeeds(tmp_path):
+    pair, audit, _ = run_pair(tmp_path, backend_class=FirstMalformedJsonBackend)
+    for name, result in (("clean", pair.clean), ("input_disregard", pair.input_disregard)):
+        assert result.runner_success and result.dataset_eligible
+        arm = audit["arms"][name]
+        assert arm["results"]
+        handoff_stages = [row for row in arm["stages"] if any(
+            (turn["output"].get("tool_call") or {}).get("name") == "handoff"
+            for turn in row["turns"])]
+        assert handoff_stages
+        for row in handoff_stages:
+            assert len(row["protocol_repairs"]) == 1
+            message = row["protocol_repairs"][0]["instruction"]
+            assert "Invalid control character" in message
+            handoffs = [turn for turn in row["turns"]
+                        if (turn["output"].get("tool_call") or {}).get("name") == "handoff"]
+            assert len(handoffs) == 2
+            with pytest.raises(json.JSONDecodeError, match="Invalid control character"):
+                json.loads(handoffs[0]["output"]["tool_call"]["input"]["summary"])
+            json.loads(handoffs[1]["output"]["tool_call"]["input"]["summary"])
+            assert any(m.get("content") == message for m in handoffs[1]["request"]["input"])
+
+
+def test_repeated_malformed_json_fails_closed_after_single_repair(tmp_path):
+    with pytest.raises(ContractError, match="Matched production run failed"):
+        run_pair(tmp_path, backend_class=AlwaysMalformedJsonBackend)
+    arm = json.loads((tmp_path / "pair/result_x_audit.json").read_text())["arms"]["clean"]
+    assert not arm["results"] and not arm["runner_success"]
+    assert not list(tmp_path.glob("pair/*/ws_*/output/*.md"))
+    assert "Invalid control character" in arm["error"]
+    stage = arm["stages"][0]
+    assert len(stage["protocol_repairs"]) == 1
+    handoffs = [turn for turn in stage["turns"]
+                if (turn["output"].get("tool_call") or {}).get("name") == "handoff"]
+    assert len(handoffs) == 2
+    for turn in handoffs:
+        with pytest.raises(json.JSONDecodeError, match="Invalid control character"):
+            json.loads(turn["output"]["tool_call"]["input"]["summary"])

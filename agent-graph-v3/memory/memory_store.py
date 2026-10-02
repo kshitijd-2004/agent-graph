@@ -119,7 +119,9 @@ class MemoryStore:
             tokens = set(self._tokenize(doc))
             for t in tokens:
                 df[t] = df.get(t, 0) + 1
-        self._idf = {t: math.log(n / (1 + df.get(t, 0))) for t in df}
+        # Positive smoothed IDF: with n=2, df=1 the former formula
+        # erased every term unique to a record, including an exact key match.
+        self._idf = {t: math.log((1 + n) / (1 + df[t])) + 1 for t in df}
 
     def _tfidf_vector(self, text: str) -> Dict[str, float]:
         tokens = self._tokenize(text)

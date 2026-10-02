@@ -316,7 +316,10 @@ def test_handoff_execution_and_shared_inputs(tmp_path, monkeypatch, mode, topolo
     for event in transitions[1:4]:
         assert event.depends_on == [calls[0][2].handoff_event_id]
         assert event.observable["handoff_summary"] == shared.summary
-        assert event.event_labels.consumes_perturbed_info == injected
+        assert event.event_labels.receives_perturbed_info == injected
+        assert not event.event_labels.consumes_perturbed_info
+        assert any(e.event_labels.consumes_perturbed_info for e in result.trace.events
+                   if e.agent_role == event.agent_role) == injected
         assert not event.event_labels.is_injection_origin
     if injected:
         assert origins(result) == [next(e for e in result.trace.events
@@ -368,6 +371,9 @@ def test_swe_one_to_many_six_run_smoke(tmp_path):
                 workers = [e for e in trace["events"] if e["event_type"] == "topology_transition"
                            and e["agent_role"] in ("specialist_a", "specialist_b", "synthesizer")]
                 assert len(workers) == 3
-                assert all(e["event_labels"]["consumes_perturbed_info"] for e in workers)
+                assert all(e["event_labels"]["receives_perturbed_info"] for e in workers)
+                assert all(not e["event_labels"]["consumes_perturbed_info"] for e in workers)
+                assert record.delivery_event_ids
+                assert record.consumption_event_ids
                 assert all(e["depends_on"] == [origin["event_id"]] for e in workers)
     assert Path(benchmark.audit_injection_counts()).read_text() == ""

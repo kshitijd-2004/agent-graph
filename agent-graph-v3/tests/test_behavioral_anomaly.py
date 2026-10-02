@@ -630,7 +630,9 @@ def test_stage_runner_poisoned_memory_causally_reaches_behavior(tmp_path):
     """Exercise real memory writes/retrievals and dependencies, with no edited events."""
     from backend.api_backend import ModelTurn, ToolCall
     from generation.stage_runner import StageRunner
-    from generation.topology import Stage, TopologyConfig
+    from generation.topology import Stage, TopologyConfig, get_topology
+    from generation.propagation_tracker import PropagationTracker
+    from collections import defaultdict
     from leps.registry import LEPOrchestrator
     from memory.memory_store import MemoryStore
     from schemas import LEPConfig, ScenarioSpec, WorkflowConfig
@@ -673,10 +675,16 @@ def test_stage_runner_poisoned_memory_causally_reaches_behavior(tmp_path):
                                 lep_configs=[config] if poisoned else [])
         orchestrator = LEPOrchestrator()
         orchestrator.register_leps(scenario.lep_configs)
+        # Match production's mandatory topology/budget binding; the isolated
+        # stage remains intentionally small for this behavioral regression.
+        orchestrator.set_topology(get_topology("review_loop", defaultdict(str)), "single_origin")
+        if poisoned:
+            orchestrator.set_max_origins(code, 1)
         result = StageRunner(MemoryConsumer()).run_stage(
             stage=stage, topology=topology, handoff_rule=None, scenario=scenario,
             ws_path=workspace, task_prompt="Report Q3 revenue from memory.", prior_events=[],
             lep_orchestrator=orchestrator, memory_store=MemoryStore(),
+            propagation_tracker=PropagationTracker(),
         )
         assert result.termination_reason == "final"
         trace = _mk_trace(str(index), result.events, task_family="financial_analysis",

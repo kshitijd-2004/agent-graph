@@ -1,0 +1,976 @@
+{
+  "schema": "agentprop-readiness-selection-v1",
+  "settings": {
+    "num_repetitions": 1,
+    "num_benign_repetitions": 0,
+    "dry_run": false,
+    "model_name": "Qwen/Qwen2.5-72B-Instruct-AWQ",
+    "backend_name": "vllm",
+    "vllm_url": "http://127.0.0.1:8001/v1",
+    "seed": 42,
+    "max_events": 300,
+    "max_agent_turns": 80,
+    "temperature": 0.4
+  },
+  "selection": {
+    "seed": 42,
+    "normal_plan_size": 17575,
+    "method": "Two entries per LEP x valid topology/mode; round-robin family; minimum SHA256(readiness-50-v1|42|scenario_id), excluding already selected fixtures.",
+    "production_entries_preserved": true
+  },
+  "execution_ready": true,
+  "fixture_manifest_sha256": {
+    "code_review_swe_096_pylint_dev_pylint_6903": "95404c32429bf676b3a2fe58185d58fcba40866d1c6e9f7a642cea1198daf6ec",
+    "fin_finqa_088_vno_2012": "7b765a741c95ff437bc1822dcabbc63a8ac8d372fcf00a85a6ab189bdb6f92a8",
+    "res_scifact_252_951_587": "750a54f9be283f78d6a330a3bf8662b42886ddf202de9a004b0358782977f0c0",
+    "code_review_swe_050_scikit_learn_scikit_learn_14983": "ad5132c498994c14283a5253c79745261d5fd5187f7b3b2d47eae98cb147987e",
+    "fin_finqa_089_vtr_2006": "25928f59336a1b2270ac93e4282903f0052eebb419b6aec8a6611346616f015f",
+    "res_scifact_106_299_962": "3ead6514d447b5fa71c0e4674952b337156e9fca9fae9b3d9a82a424a01f25ae",
+    "code_review_swe_073_pydata_xarray_4094": "5736eee514fc1e798e8d6428d9238db8f1f0106ccec7f08e8f388f254fa473f8",
+    "fin_finqa_031_etr_2008": "2a8da25e02eb6692816d3f72ce21830c65051798ecec5242d9fd66ee94060408",
+    "res_scifact_224_526_979": "ad0475443543885f5a254d91966901f96efd7ce44ecd0bbb10dc4d854c9c3595",
+    "code_review_swe_005_django_django_12304": "a8ad6c5f8d953e97aa8a675e3edffa88f0fd82f5744d4e3b2cc2b9e50071bffb",
+    "fin_finqa_187_kim_2006": "2cd90f47696639c8d0def67708bf52cae0dffbac16b6729b37f52696579c0fa0",
+    "res_scifact_248_224_640": "08b26c93af83f543cdeffc0f3502e9d2ce57c099c60a197396276e2533985be9",
+    "code_review_swe_034_sphinx_doc_sphinx_8721": "b9cdde09d8e6d7af76252c0f06947ca81fc35e224c0d5fcf18c4c1156d8bd598",
+    "fin_finqa_016_vrtx_2006": "356c8d1e0331e806549b8fbd3fbf5aed0830730ebe16da86c54e403420c0172a",
+    "res_scifact_033_115_44": "09f73aa35c3a915e37d9003d0e01091016be06997779180fa91415a30b71cc69",
+    "code_review_swe_066_astropy_astropy_13579": "a9372ac1991a4802c34e5cbcb823b96818fcaec621ec2eddf2bf248c6f82500c",
+    "fin_finqa_137_regn_2010": "71035fdb3c072f33b80178b4683331acc2e78420259a0a511fb0417ba891805a",
+    "res_scifact_134_861_957": "1a026ea71a5b67ce26081a0248326d0c44035a0513b2ab5f10642a91757054a8",
+    "code_review_swe_003_django_django_11880": "ca904e5ab906afc905515c7988710986218e3c89648ca662ee834fde8db5efd9",
+    "fin_finqa_014_nke_2015": "1aa1651edb8497c970653fff22226595ef62d69659218522182fea082ba35e71",
+    "res_scifact_187_877_141": "10320b14e17eaa33944ccf61e9fbe38e0ff19b35bf18d39e0ee14ad5f7581259",
+    "code_review_swe_100_pallets_flask_5014": "5952440e275e28943e0f01a7e2759a23ad4d5ca8f4f6fbdcdae558bba0a943b0",
+    "fin_finqa_125_mar_2005": "0bc9eb75d0da494401587d7dd5d6ec7cce10fe8926528a4dd97d8d33f19e46c8",
+    "res_scifact_212_1091_295": "bd946e2b7f5eb2b118d32920a13e48cd4dd813cebbef89cdae86de79afb5d873",
+    "code_review_swe_095_pylint_dev_pylint_7277": "4a4532f05deeae00deb9be1d4874595e0d65fe429f74b046bb2e017a0efb1a0d",
+    "fin_finqa_210_hii_2017": "0c7938744ee8dba52ad807f32d992fedfdb10f3e04b70c98b508f197f9bc93a7",
+    "res_scifact_093_1323_256": "f7f036207805f0beffb75393f357dccea21ab97db4f5b928918fb10491abc1d1",
+    "code_review_swe_014_django_django_10914": "40c4417200245249ca6a413a32e8e8c5148c07ecbc161ca661bf533e61b705b3",
+    "fin_finqa_018_holx_2006": "537a3f6374c3db20103f93bde17b25a22162b381fcb5ea367ccb53bb084e3831",
+    "res_scifact_183_751_554": "21e7668db60e679484b4dc5a55ef1b13db19f4d6a4d4cb264d3b2e07689da513",
+    "code_review_swe_064_astropy_astropy_14539": "41615cb0253eaccf170ca66f9e02dc1abaaff2a915f345ce58a164542ff501af",
+    "fin_finqa_294_lmt_2015": "d9213ccba957c4b2055af2dedb975f67249b29f150937a7eacb8233dd353d259",
+    "res_scifact_202_404_1356": "96415fb4c0e0a43c5cf5171e37c3b948223a1a6ffe082f334fc86c4d15052132",
+    "code_review_swe_037_sphinx_doc_sphinx_7910": "0b41f6b34f20e7c4ce23abe5f5bb2b3ecba97857c90d6ff87f28b40ad664b6f1",
+    "fin_finqa_070_snps_2006": "350344a249d077fd806ca5db0a4fca9e3cc89a5d3395a7e06a823845f7aed62f",
+    "res_scifact_191_1114_1096": "2e1259840358332e4acd1a4602a2f097fa1e20ee3a53aa3d8d63089dd6d5e887",
+    "code_review_swe_098_pylint_dev_pylint_4604": "ce6980e418df81681e0a9d4d9a5fe29cbf942ed4277b00bafe3960c187507f08",
+    "fin_finqa_062_jpm_2017": "7b84b66ffc6bb1eb8466aa5c2667887cddcd8fd6df7809d33f2349d50310b9a7",
+    "res_scifact_258_1363_14": "4519cc54bd367479cc10c93620a1deca6767689fa273e010f4723b299acc28dc",
+    "code_review_swe_063_astropy_astropy_12907": "4f09b66de9b651dd1ac8b241acf5a4e0657cfa7e5a09018164bf861f276075ae",
+    "fin_finqa_036_ma_2008": "4df9ede4948f72cf55b233d0119c3a52b31e4ecb387fa11bbb9acce9f772e368",
+    "res_scifact_132_1126_1333": "64fda81edbb0e494ab7f31ac72c9f1530c2081ae3c159ebd145af7e4cd0ce997",
+    "code_review_swe_028_sympy_sympy_17630": "236b700c2c0eb9be3a0ccc9b66cd20511da42f011f69da127de9b4c123421001",
+    "fin_finqa_053_hst_2018": "db17685a458fe1184111b85db7295b6c630c371c167035f95b6c5a449c26b816",
+    "res_scifact_210_653_1306": "aa922e3bdcb2284ff72ba419e1b3742ba732d4213e430b513ad97263939a0672",
+    "code_review_swe_054_matplotlib_matplotlib_23314": "64b12764bcdd6c4accb0cc043c3b53ae4dfb605c1b48fc0fe798ae96a165e135",
+    "fin_finqa_076_ms_2013": "18b2db2aeb504896dd159a6c73714e3d19a063efe74a9dcace0b27c1c164d9a0",
+    "res_scifact_145_1101_428": "9a072715b25e6743da5217d9c96075fbf0e309f0a9d05e571cdb7b5ae02a929e",
+    "code_review_swe_019_sympy_sympy_13647": "c7026d812b70fe7ec533612c895314b7507c4cdba83006cbd046daa613717292",
+    "fin_finqa_067_ipg_2018": "d1157718a8c905d940db188f172d978971b0ced760aad5cebc6d802b9e3ec40d"
+  },
+  "scenarios": [
+    {
+      "run_id": "run-2426",
+      "scenario_id": "review_loop_code_review_swe_096_pylint_dev_pylint_6903_LEP_HANDOFF_CORRUPTION_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_096_pylint_dev_pylint_6903",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_HANDOFF_CORRUPTION"
+      ],
+      "topology": "review_loop",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_HANDOFF_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_review_loop_code_review_swe_096_pylint_dev_pylint_6903_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-4727",
+      "scenario_id": "review_loop_fin_finqa_088_vno_2012_LEP_HANDOFF_CORRUPTION_single_origin_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_088_vno_2012",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_HANDOFF_CORRUPTION"
+      ],
+      "topology": "review_loop",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_HANDOFF_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_review_loop_fin_finqa_088_vno_2012_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-16375",
+      "scenario_id": "review_loop_res_scifact_252_951_587_LEP_INDIRECT_PROMPT_INJECTION_single_origin_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_252_951_587",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INDIRECT_PROMPT_INJECTION"
+      ],
+      "topology": "review_loop",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INDIRECT_PROMPT_INJECTION",
+      "repetition_index": 0,
+      "pair_tag": "b_review_loop_res_scifact_252_951_587_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-1278",
+      "scenario_id": "review_loop_code_review_swe_050_scikit_learn_scikit_learn_14983_LEP_INDIRECT_PROMPT_INJECTION_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_050_scikit_learn_scikit_learn_14983",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INDIRECT_PROMPT_INJECTION"
+      ],
+      "topology": "review_loop",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INDIRECT_PROMPT_INJECTION",
+      "repetition_index": 0,
+      "pair_tag": "b_review_loop_code_review_swe_050_scikit_learn_scikit_learn_14983_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-4754",
+      "scenario_id": "review_loop_fin_finqa_089_vtr_2006_LEP_INPUT_DISREGARD_single_origin_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_089_vtr_2006",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INPUT_DISREGARD"
+      ],
+      "topology": "review_loop",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INPUT_DISREGARD",
+      "repetition_index": 0,
+      "pair_tag": "b_review_loop_fin_finqa_089_vtr_2006_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-12729",
+      "scenario_id": "review_loop_res_scifact_106_299_962_LEP_INPUT_DISREGARD_single_origin_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_106_299_962",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INPUT_DISREGARD"
+      ],
+      "topology": "review_loop",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INPUT_DISREGARD",
+      "repetition_index": 0,
+      "pair_tag": "b_review_loop_res_scifact_106_299_962_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-1854",
+      "scenario_id": "review_loop_code_review_swe_073_pydata_xarray_4094_LEP_MEMORY_POISONING_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_073_pydata_xarray_4094",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "memory_enabled",
+      "lep_codes": [
+        "LEP_MEMORY_POISONING"
+      ],
+      "topology": "review_loop",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_MEMORY_POISONING",
+      "repetition_index": 0,
+      "pair_tag": "b_review_loop_code_review_swe_073_pydata_xarray_4094_memory_enabled_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-3301",
+      "scenario_id": "review_loop_fin_finqa_031_etr_2008_LEP_MEMORY_POISONING_single_origin_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_031_etr_2008",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "memory_enabled",
+      "lep_codes": [
+        "LEP_MEMORY_POISONING"
+      ],
+      "topology": "review_loop",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_MEMORY_POISONING",
+      "repetition_index": 0,
+      "pair_tag": "b_review_loop_fin_finqa_031_etr_2008_memory_enabled_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-15678",
+      "scenario_id": "review_loop_res_scifact_224_526_979_LEP_TOOL_RESULT_CORRUPTION_single_origin_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_224_526_979",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_TOOL_RESULT_CORRUPTION"
+      ],
+      "topology": "review_loop",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_TOOL_RESULT_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_review_loop_res_scifact_224_526_979_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-0150",
+      "scenario_id": "review_loop_code_review_swe_005_django_django_12304_LEP_TOOL_RESULT_CORRUPTION_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_005_django_django_12304",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_TOOL_RESULT_CORRUPTION"
+      ],
+      "topology": "review_loop",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_TOOL_RESULT_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_review_loop_code_review_swe_005_django_django_12304_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-7184",
+      "scenario_id": "branch_and_verify_fin_finqa_187_kim_2006_LEP_HANDOFF_CORRUPTION_single_origin_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_187_kim_2006",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_HANDOFF_CORRUPTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_HANDOFF_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_fin_finqa_187_kim_2006_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-16284",
+      "scenario_id": "branch_and_verify_res_scifact_248_224_640_LEP_HANDOFF_CORRUPTION_single_origin_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_248_224_640",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_HANDOFF_CORRUPTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_HANDOFF_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_res_scifact_248_224_640_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-0886",
+      "scenario_id": "branch_and_verify_code_review_swe_034_sphinx_doc_sphinx_8721_LEP_INDIRECT_PROMPT_INJECTION_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_034_sphinx_doc_sphinx_8721",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INDIRECT_PROMPT_INJECTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INDIRECT_PROMPT_INJECTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_code_review_swe_034_sphinx_doc_sphinx_8721_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-2936",
+      "scenario_id": "branch_and_verify_fin_finqa_016_vrtx_2006_LEP_INDIRECT_PROMPT_INJECTION_single_origin_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_016_vrtx_2006",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INDIRECT_PROMPT_INJECTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INDIRECT_PROMPT_INJECTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_fin_finqa_016_vrtx_2006_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-10913",
+      "scenario_id": "branch_and_verify_res_scifact_033_115_44_LEP_INPUT_DISREGARD_single_origin_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_033_115_44",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INPUT_DISREGARD"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INPUT_DISREGARD",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_res_scifact_033_115_44_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-1684",
+      "scenario_id": "branch_and_verify_code_review_swe_066_astropy_astropy_13579_LEP_INPUT_DISREGARD_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_066_astropy_astropy_13579",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INPUT_DISREGARD"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INPUT_DISREGARD",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_code_review_swe_066_astropy_astropy_13579_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-5932",
+      "scenario_id": "branch_and_verify_fin_finqa_137_regn_2010_LEP_MEMORY_POISONING_single_origin_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_137_regn_2010",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "memory_enabled",
+      "lep_codes": [
+        "LEP_MEMORY_POISONING"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_MEMORY_POISONING",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_fin_finqa_137_regn_2010_memory_enabled_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-13432",
+      "scenario_id": "branch_and_verify_res_scifact_134_861_957_LEP_MEMORY_POISONING_single_origin_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_134_861_957",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "memory_enabled",
+      "lep_codes": [
+        "LEP_MEMORY_POISONING"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_MEMORY_POISONING",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_res_scifact_134_861_957_memory_enabled_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-0105",
+      "scenario_id": "branch_and_verify_code_review_swe_003_django_django_11880_LEP_TOOL_RESULT_CORRUPTION_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_003_django_django_11880",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_TOOL_RESULT_CORRUPTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_TOOL_RESULT_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_code_review_swe_003_django_django_11880_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-2880",
+      "scenario_id": "branch_and_verify_fin_finqa_014_nke_2015_LEP_TOOL_RESULT_CORRUPTION_single_origin_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_014_nke_2015",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_TOOL_RESULT_CORRUPTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_TOOL_RESULT_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_fin_finqa_014_nke_2015_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-14760",
+      "scenario_id": "branch_and_verify_res_scifact_187_877_141_LEP_HANDOFF_CORRUPTION_many_to_one_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_187_877_141",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_HANDOFF_CORRUPTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "many_to_one",
+      "lep_code": "LEP_HANDOFF_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_res_scifact_187_877_141_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-2533",
+      "scenario_id": "branch_and_verify_code_review_swe_100_pallets_flask_5014_LEP_HANDOFF_CORRUPTION_many_to_one_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_100_pallets_flask_5014",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_HANDOFF_CORRUPTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "many_to_one",
+      "lep_code": "LEP_HANDOFF_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_code_review_swe_100_pallets_flask_5014_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-5662",
+      "scenario_id": "branch_and_verify_fin_finqa_125_mar_2005_LEP_INDIRECT_PROMPT_INJECTION_many_to_one_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_125_mar_2005",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INDIRECT_PROMPT_INJECTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "many_to_one",
+      "lep_code": "LEP_INDIRECT_PROMPT_INJECTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_fin_finqa_125_mar_2005_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-15381",
+      "scenario_id": "branch_and_verify_res_scifact_212_1091_295_LEP_INDIRECT_PROMPT_INJECTION_many_to_one_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_212_1091_295",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INDIRECT_PROMPT_INJECTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "many_to_one",
+      "lep_code": "LEP_INDIRECT_PROMPT_INJECTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_res_scifact_212_1091_295_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-2410",
+      "scenario_id": "branch_and_verify_code_review_swe_095_pylint_dev_pylint_7277_LEP_INPUT_DISREGARD_many_to_one_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_095_pylint_dev_pylint_7277",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INPUT_DISREGARD"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "many_to_one",
+      "lep_code": "LEP_INPUT_DISREGARD",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_code_review_swe_095_pylint_dev_pylint_7277_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-7764",
+      "scenario_id": "branch_and_verify_fin_finqa_210_hii_2017_LEP_INPUT_DISREGARD_many_to_one_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_210_hii_2017",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INPUT_DISREGARD"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "many_to_one",
+      "lep_code": "LEP_INPUT_DISREGARD",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_fin_finqa_210_hii_2017_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-12408",
+      "scenario_id": "branch_and_verify_res_scifact_093_1323_256_LEP_MEMORY_POISONING_many_to_one_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_093_1323_256",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "memory_enabled",
+      "lep_codes": [
+        "LEP_MEMORY_POISONING"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "many_to_one",
+      "lep_code": "LEP_MEMORY_POISONING",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_res_scifact_093_1323_256_memory_enabled_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-0389",
+      "scenario_id": "branch_and_verify_code_review_swe_014_django_django_10914_LEP_MEMORY_POISONING_many_to_one_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_014_django_django_10914",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "memory_enabled",
+      "lep_codes": [
+        "LEP_MEMORY_POISONING"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "many_to_one",
+      "lep_code": "LEP_MEMORY_POISONING",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_code_review_swe_014_django_django_10914_memory_enabled_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-2981",
+      "scenario_id": "branch_and_verify_fin_finqa_018_holx_2006_LEP_TOOL_RESULT_CORRUPTION_many_to_one_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_018_holx_2006",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_TOOL_RESULT_CORRUPTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "many_to_one",
+      "lep_code": "LEP_TOOL_RESULT_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_fin_finqa_018_holx_2006_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-14662",
+      "scenario_id": "branch_and_verify_res_scifact_183_751_554_LEP_TOOL_RESULT_CORRUPTION_many_to_one_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_183_751_554",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_TOOL_RESULT_CORRUPTION"
+      ],
+      "topology": "branch_and_verify",
+      "propagation_mode": "many_to_one",
+      "lep_code": "LEP_TOOL_RESULT_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_branch_and_verify_res_scifact_183_751_554_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-1642",
+      "scenario_id": "coordinator_workers_code_review_swe_064_astropy_astropy_14539_LEP_HANDOFF_CORRUPTION_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_064_astropy_astropy_14539",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_HANDOFF_CORRUPTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_HANDOFF_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_code_review_swe_064_astropy_astropy_14539_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-9869",
+      "scenario_id": "coordinator_workers_fin_finqa_294_lmt_2015_LEP_HANDOFF_CORRUPTION_single_origin_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_294_lmt_2015",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_HANDOFF_CORRUPTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_HANDOFF_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_fin_finqa_294_lmt_2015_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-15140",
+      "scenario_id": "coordinator_workers_res_scifact_202_404_1356_LEP_INDIRECT_PROMPT_INJECTION_single_origin_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_202_404_1356",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INDIRECT_PROMPT_INJECTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INDIRECT_PROMPT_INJECTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_res_scifact_202_404_1356_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-0971",
+      "scenario_id": "coordinator_workers_code_review_swe_037_sphinx_doc_sphinx_7910_LEP_INDIRECT_PROMPT_INJECTION_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_037_sphinx_doc_sphinx_7910",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INDIRECT_PROMPT_INJECTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INDIRECT_PROMPT_INJECTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_code_review_swe_037_sphinx_doc_sphinx_7910_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-4298",
+      "scenario_id": "coordinator_workers_fin_finqa_070_snps_2006_LEP_INPUT_DISREGARD_single_origin_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_070_snps_2006",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INPUT_DISREGARD"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INPUT_DISREGARD",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_fin_finqa_070_snps_2006_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-14873",
+      "scenario_id": "coordinator_workers_res_scifact_191_1114_1096_LEP_INPUT_DISREGARD_single_origin_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_191_1114_1096",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INPUT_DISREGARD"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_INPUT_DISREGARD",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_res_scifact_191_1114_1096_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-2498",
+      "scenario_id": "coordinator_workers_code_review_swe_098_pylint_dev_pylint_4604_LEP_MEMORY_POISONING_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_098_pylint_dev_pylint_4604",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "memory_enabled",
+      "lep_codes": [
+        "LEP_MEMORY_POISONING"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_MEMORY_POISONING",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_code_review_swe_098_pylint_dev_pylint_4604_memory_enabled_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-4092",
+      "scenario_id": "coordinator_workers_fin_finqa_062_jpm_2017_LEP_MEMORY_POISONING_single_origin_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_062_jpm_2017",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "memory_enabled",
+      "lep_codes": [
+        "LEP_MEMORY_POISONING"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_MEMORY_POISONING",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_fin_finqa_062_jpm_2017_memory_enabled_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-16546",
+      "scenario_id": "coordinator_workers_res_scifact_258_1363_14_LEP_TOOL_RESULT_CORRUPTION_single_origin_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_258_1363_14",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_TOOL_RESULT_CORRUPTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_TOOL_RESULT_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_res_scifact_258_1363_14_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-1615",
+      "scenario_id": "coordinator_workers_code_review_swe_063_astropy_astropy_12907_LEP_TOOL_RESULT_CORRUPTION_single_origin_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_063_astropy_astropy_12907",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_TOOL_RESULT_CORRUPTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "single_origin",
+      "lep_code": "LEP_TOOL_RESULT_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_code_review_swe_063_astropy_astropy_12907_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-3445",
+      "scenario_id": "coordinator_workers_fin_finqa_036_ma_2008_LEP_HANDOFF_CORRUPTION_one_to_many_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_036_ma_2008",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_HANDOFF_CORRUPTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "one_to_many",
+      "lep_code": "LEP_HANDOFF_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_fin_finqa_036_ma_2008_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-13395",
+      "scenario_id": "coordinator_workers_res_scifact_132_1126_1333_LEP_HANDOFF_CORRUPTION_one_to_many_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_132_1126_1333",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_HANDOFF_CORRUPTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "one_to_many",
+      "lep_code": "LEP_HANDOFF_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_res_scifact_132_1126_1333_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-0747",
+      "scenario_id": "coordinator_workers_code_review_swe_028_sympy_sympy_17630_LEP_INDIRECT_PROMPT_INJECTION_one_to_many_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_028_sympy_sympy_17630",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INDIRECT_PROMPT_INJECTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "one_to_many",
+      "lep_code": "LEP_INDIRECT_PROMPT_INJECTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_code_review_swe_028_sympy_sympy_17630_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-3872",
+      "scenario_id": "coordinator_workers_fin_finqa_053_hst_2018_LEP_INDIRECT_PROMPT_INJECTION_one_to_many_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_053_hst_2018",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INDIRECT_PROMPT_INJECTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "one_to_many",
+      "lep_code": "LEP_INDIRECT_PROMPT_INJECTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_fin_finqa_053_hst_2018_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-15349",
+      "scenario_id": "coordinator_workers_res_scifact_210_653_1306_LEP_INPUT_DISREGARD_one_to_many_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_210_653_1306",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INPUT_DISREGARD"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "one_to_many",
+      "lep_code": "LEP_INPUT_DISREGARD",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_res_scifact_210_653_1306_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-1395",
+      "scenario_id": "coordinator_workers_code_review_swe_054_matplotlib_matplotlib_23314_LEP_INPUT_DISREGARD_one_to_many_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_054_matplotlib_matplotlib_23314",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_INPUT_DISREGARD"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "one_to_many",
+      "lep_code": "LEP_INPUT_DISREGARD",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_code_review_swe_054_matplotlib_matplotlib_23314_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-4443",
+      "scenario_id": "coordinator_workers_fin_finqa_076_ms_2013_LEP_MEMORY_POISONING_one_to_many_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_076_ms_2013",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "memory_enabled",
+      "lep_codes": [
+        "LEP_MEMORY_POISONING"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "one_to_many",
+      "lep_code": "LEP_MEMORY_POISONING",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_fin_finqa_076_ms_2013_memory_enabled_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-13718",
+      "scenario_id": "coordinator_workers_res_scifact_145_1101_428_LEP_MEMORY_POISONING_one_to_many_00_lep",
+      "task_family": "research_synthesis",
+      "fixture_id": "res_scifact_145_1101_428",
+      "task_variant": "scifact_claims",
+      "condition": "single_lep",
+      "execution_variant": "memory_enabled",
+      "lep_codes": [
+        "LEP_MEMORY_POISONING"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "one_to_many",
+      "lep_code": "LEP_MEMORY_POISONING",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_res_scifact_145_1101_428_memory_enabled_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-0516",
+      "scenario_id": "coordinator_workers_code_review_swe_019_sympy_sympy_13647_LEP_TOOL_RESULT_CORRUPTION_one_to_many_00_lep",
+      "task_family": "code_review",
+      "fixture_id": "code_review_swe_019_sympy_sympy_13647",
+      "task_variant": "swe_bench_verified",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_TOOL_RESULT_CORRUPTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "one_to_many",
+      "lep_code": "LEP_TOOL_RESULT_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_code_review_swe_019_sympy_sympy_13647_standard_00",
+      "is_baseline": false
+    },
+    {
+      "run_id": "run-4216",
+      "scenario_id": "coordinator_workers_fin_finqa_067_ipg_2018_LEP_TOOL_RESULT_CORRUPTION_one_to_many_00_lep",
+      "task_family": "financial_analysis",
+      "fixture_id": "fin_finqa_067_ipg_2018",
+      "task_variant": "finqa",
+      "condition": "single_lep",
+      "execution_variant": "standard",
+      "lep_codes": [
+        "LEP_TOOL_RESULT_CORRUPTION"
+      ],
+      "topology": "coordinator_workers",
+      "propagation_mode": "one_to_many",
+      "lep_code": "LEP_TOOL_RESULT_CORRUPTION",
+      "repetition_index": 0,
+      "pair_tag": "b_coordinator_workers_fin_finqa_067_ipg_2018_standard_00",
+      "is_baseline": false
+    }
+  ]
+}
