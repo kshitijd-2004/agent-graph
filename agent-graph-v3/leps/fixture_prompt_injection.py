@@ -226,11 +226,14 @@ def _extract_research_facts(manifest: dict) -> List["GroundTruthFact"]:
 
     # Map claim_id -> truth from seeds.
     seed_truth: Dict[str, str] = {}
+    seed_file: Dict[str, str] = {}
     for seed in seeds:
         cid = seed.get("id", "")
         truth = seed.get("truth", "")
         if cid and truth:
             seed_truth[cid] = truth
+        if cid and seed.get("evidence_file"):
+            seed_file[cid] = seed["evidence_file"]
 
     for fact_id, entry in required_facts.items():
         if not fact_id.endswith("_verdict"):
@@ -256,7 +259,7 @@ def _extract_research_facts(manifest: dict) -> List["GroundTruthFact"]:
             fact_type="verdict",
             true_value=truth,
             perturbed_value=perturbed,
-            source_location=entry.get("evidence_file", claim_id),
+            source_location=entry.get("evidence_file") or seed_file.get(claim_id, claim_id),
             description=f"Claim verdict: {claim_text}",
             manifest_ref=f"required_facts.{fact_id}",
             strategy=strategy,
@@ -378,6 +381,16 @@ class FixtureAwarePromptInjectionGenerator:
         if not target_file:
             return None
 
+        # Research: the attack spec targets one claim (its paper is target_file). Perturb that
+        # claim, and only toward CONTRADICTED. A flip toward SUPPORTED matches the model's own
+        # bias (it calls most claims supported), so it could not be told apart from a normal
+        # mistake, and a correction placed in the other claim's paper reads as off-topic.
+        if manifest.get("task_family") == "research_synthesis":
+            targeted = [f for f in facts
+                        if f.source_location == target_file and f.perturbed_value == "CONTRADICTED"]
+            if targeted:
+                facts = targeted
+
         # Deterministic fact selection.
         pick = _pick(seed, fixture_id, "fact_selection")
         fact = facts[pick % len(facts)]
@@ -447,17 +460,16 @@ class FixtureAwarePromptInjectionGenerator:
         claim_text = fact.description
 
         # Parse "Claim N: ..." from description to get the claim label.
-        claim_label = claim_text
-        m = re.search(r"Claim\\s+\\d+\\s*[-:]?\\s*(.+)", claim_text, re.I)
-        if m:
-            claim_label = m.group(1).strip()
+        claim_label = re.sub(r"^Claim verdict:\s*", "", claim_text).strip()
+        verdict_word = {"SUPPORT": "SUPPORTED", "CONTRADICT": "CONTRADICTED",
+                        "NEI": "NOT ENOUGH INFO"}
 
         templates = _VERDICT_FLIP_TEMPLATES
         t_idx = _pick(seed, fixture_id, fact.fact_id, "template") % len(templates)
         text = templates[t_idx].format(
             claim_text=claim_label,
             perturbed_verdict=fact.perturbed_value,
-            true_verdict=fact.true_value,
+            true_verdict=verdict_word.get(fact.true_value, fact.true_value),
         )
         strategy = getattr(fact, "strategy", getattr(fact, "_strategy", "verdict_flip"))
         return PromptInjectionPayload(
