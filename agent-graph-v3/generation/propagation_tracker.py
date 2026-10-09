@@ -134,9 +134,11 @@ class PropagationTracker:
         lineage: PerturbationLineage,
         source_event_id: str = "",
     ) -> None:
-        """Mark a model call whose submitted input contained the delivered artifact."""
-        self.annotate_consumption(event, lineage)
-        event.hidden["propagation_role"] = "input_processing"
+        """A model call whose submitted input contained the delivered artifact.
+        Stopgap: records a tag only and sets no event labels, since the intended labels
+        for this new hook are unknown (the old code had nothing here)."""
+        self._event_to_lineages.setdefault(event.event_id, []).append(self._lineage_id(lineage))
+        event.hidden["input_processing_lep_code"] = lineage.lep_code
         if source_event_id:
             event.hidden["perturbation_source_event"] = source_event_id
 
