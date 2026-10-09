@@ -115,6 +115,31 @@ class PropagationTracker:
             event.event_id, lineage.origin_event_id,
         )
 
+    def annotate_delivery(
+        self,
+        event: TraceEvent,
+        lineage: PerturbationLineage,
+        receiving_agent: str = "",
+    ) -> None:
+        """Mark event as delivering perturbed content into an agent's input (a handoff,
+        tool result or memory read that carries the artifact). Stopgap for the call sites
+        added in 09f1907; same labels the old code set at these points via
+        annotate_consumption, so traces stay comparable to earlier runs."""
+        self.annotate_consumption(event, lineage, receiving_agent)
+        event.hidden["propagation_role"] = "delivery"
+
+    def annotate_input_processing(
+        self,
+        event: TraceEvent,
+        lineage: PerturbationLineage,
+        source_event_id: str = "",
+    ) -> None:
+        """Mark a model call whose submitted input contained the delivered artifact."""
+        self.annotate_consumption(event, lineage)
+        event.hidden["propagation_role"] = "input_processing"
+        if source_event_id:
+            event.hidden["perturbation_source_event"] = source_event_id
+
     def annotate_transformation(
         self,
         event: TraceEvent,
