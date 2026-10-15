@@ -169,6 +169,11 @@ class MemoryPoisoningLEP:
             self._canonical_operator = lep_config.canonical_operator_template
         if not self._canonical_operator:
             self._canonical_operator = "false_fact_insertion"
+        # Persistent poisoning (pilot, AG_MP_PERSIST=1): once a role's write
+        # to a key is poisoned, later writes by that role to the same pool key
+        # keep the poisoned value instead of restoring the correct one.
+        self._poisoned_roles: set = set()
+        self._origin_by_pool_key: Dict[str, str] = {}
 
     # ── Fixture-aware attack config ──────────────────────────────────────────
 
@@ -379,8 +384,39 @@ class MemoryPoisoningLEP:
         """Return all poisoning instances."""
         return list(self._instances)
 
+    # ── Persistent poisoning (pilot) ────────────────────────────────────────
+
+    def _pool(self, task_family: str) -> dict:
+        return self._fixture_attack_config() or self.POISONED_VALUES.get(task_family, {})
+
+    def pool_key_for(self, memory_key: str, task_family: str):
+        return self._match_pool_key(memory_key, self._pool(task_family))
+
+    def note_origin(self, role: str, memory_key: str, task_family: str, event_id: str) -> None:
+        """Remember which role and pool key the fired injection hit."""
+        self._poisoned_roles.add(role)
+        pk = self.pool_key_for(memory_key, task_family)
+        if pk is not None:
+            self._origin_by_pool_key.setdefault(pk, event_id)
+
+    def persistent_value(self, role: str, memory_key: str, task_family: str):
+        """(value, origin_event_id) if this write should stay poisoned, else None.
+
+        No side effects: a re-poisoned write is not a new injection origin, so it
+        is not added to the instance list and is not counted as an origin.
+        """
+        if role not in self._poisoned_roles:
+            return None
+        pk = self.pool_key_for(memory_key, task_family)
+        origin = self._origin_by_pool_key.get(pk)
+        if pk is None or origin is None:
+            return None
+        return self._pool(task_family)[pk]["value"], origin
+
     def reset(self) -> None:
         """Reset state between runs."""
         self._instances.clear()
         self._poisoned_memory.clear()
+        self._poisoned_roles.clear()
+        self._origin_by_pool_key.clear()
         self.matcher.reset()

@@ -577,6 +577,8 @@ class BenchmarkRunner:
             trace.metadata["execution_variant"] = entry.get(
                 "execution_variant", "standard"
             )
+            from generation import pilot_flags
+            trace.metadata["pilot_flags"] = pilot_flags.as_dict()
 
             # Keep incomplete executions for auditing, outside the dataset directory
             # scanned by clean-reference construction and detector training.
