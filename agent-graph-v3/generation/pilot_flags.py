@@ -11,6 +11,10 @@ AG_ID_VARIANT=key_findings
                       attack side: input disregard names the sender's actual
                       findings and tells the receiver not to rely on them. Source
                       access is unchanged.
+AG_BENIGN_VARIANTS=memory_enabled
+                      planning only: emit clean runs just for these execution
+                      variants (comma separated), e.g. the snapshot arm only
+                      needs new memory_enabled clean runs.
 """
 import os
 
@@ -25,6 +29,11 @@ def memory_snapshot() -> bool:
 
 def id_variant() -> str:
     return os.environ.get("AG_ID_VARIANT", "")
+
+
+def benign_variants() -> list:
+    v = os.environ.get("AG_BENIGN_VARIANTS", "")
+    return [x.strip() for x in v.split(",") if x.strip()]
 
 
 def as_dict() -> dict:
