@@ -376,6 +376,10 @@ class BenchmarkManifest:
             ]
             has_memory_lep = any(lep.requires_memory for lep in family_leps)
             variants = ["standard"] + (["memory_enabled"] if has_memory_lep else [])
+            from generation import pilot_flags
+            keep = pilot_flags.benign_variants()
+            if keep:
+                variants = [v for v in variants if v in keep]
 
             for fixture in fixtures:
                 fixture_id = fixture["fixture_id"]
