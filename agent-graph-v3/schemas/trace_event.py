@@ -22,6 +22,7 @@ class TraceEventType(str, Enum):
     LLM_OUTPUT = "llm_output"
     MEMORY_RETRIEVAL = "memory_retrieval"
     MEMORY_WRITE = "memory_write"
+    MEMORY_STATE = "memory_state"
     FINAL_RESPONSE = "final_response"
     PROTOCOL_RECOVERY = "protocol_recovery"
     PROTOCOL_VIOLATION = "protocol_violation"
@@ -39,6 +40,7 @@ class TraceEventType(str, Enum):
             "llm_output": cls.LLM_OUTPUT,
             "memory_retrieval": cls.MEMORY_RETRIEVAL,
             "memory_write": cls.MEMORY_WRITE,
+            "memory_state": cls.MEMORY_STATE,
             "final_response": cls.FINAL_RESPONSE,
             "protocol_recovery": cls.PROTOCOL_RECOVERY,
             "protocol_violation": cls.PROTOCOL_VIOLATION,

@@ -42,6 +42,7 @@ class WorkflowConfig:
     allow_parallel_agents: bool = False
     allow_retries: bool = True
     propagation_mode: str = "single_origin"  # single_origin | one_to_many | many_to_one
+    memory_protocol: str = "write_interception_v1"
 
 
 # Supported enum values for validation
@@ -150,6 +151,7 @@ class ScenarioSpec:
                 "topology": self.workflow_config.topology,
                 "sharing_policy": self.workflow_config.sharing_policy,
                 "memory_mode": self.workflow_config.memory_mode,
+                "memory_protocol": self.workflow_config.memory_protocol,
                 "verification_mode": self.workflow_config.verification_mode,
                 "max_events": self.workflow_config.max_events,
                 "max_agent_turns": self.workflow_config.max_agent_turns,
@@ -183,6 +185,7 @@ class ScenarioSpec:
         wcfg_data = d.get("workflow_config", {})
         wcfg = WorkflowConfig(
             topology=wcfg_data.get("topology", "review_loop"),
+            memory_protocol=wcfg_data.get("memory_protocol", "write_interception_v1"),
             sharing_policy=wcfg_data.get("sharing_policy", "handoff_summary_only"),
             memory_mode=wcfg_data.get("memory_mode", "ephemeral_private"),
             verification_mode=wcfg_data.get("verification_mode", "none"),

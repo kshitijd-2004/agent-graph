@@ -107,6 +107,7 @@ class LEPOrchestrator:
 
         self._active_leps: Dict[str, Any] = {}  # lep_code -> LEP instance
         self._trigger_results: list = []
+        self._evaluation_errors: Dict[str, list] = {}
         # Per-LEP firing state: tracks origins, targets, and occurrence counts
         # for target-aware firing decisions in many-to-one and one-to-many scenarios.
         self._firing_state: Dict[str, LEPFiringState] = {}
@@ -310,6 +311,9 @@ class LEPOrchestrator:
                         code, event_type, getattr(event, 'event_id', '?'), decision.reason,
                     )
             except Exception as e:
+                self._evaluation_errors.setdefault(code, []).append({
+                    "event_id": event.event_id, "reason": str(e),
+                })
                 logger.warning("LEP %s evaluation error: %s", code, e)
         self._trigger_results.append(results)
         return results
@@ -361,6 +365,36 @@ class LEPOrchestrator:
     def get_firing_state(self, lep_code: str) -> Optional[LEPFiringState]:
         """Get the firing state for a LEP, or None if not initialized."""
         return self._firing_state.get(lep_code)
+
+    def unfulfilled_origins(self) -> Dict[str, Any]:
+        """Private runtime evidence for conditional injection targets.
+
+        A supported topology does not guarantee a model-selected boundary.
+        Decisions here are actual evaluations, never a replay of the matcher.
+        A fired trigger alone is not a successful mutation.
+        """
+        pending = {}
+        for code, state in self._firing_state.items():
+            if state.fired_origin_count >= state.max_origins:
+                continue
+            decisions = [result[code] for result in self._trigger_results if code in result]
+            roles = self._origin_roles.get(code)
+            errors = self._evaluation_errors.get(code, [])
+            pending[code] = {
+                "boundary": LEP_BOUNDARY[code],
+                "required_roles": sorted(roles) if roles is not None else None,
+                "realized_roles": sorted(state.fired_targets),
+                "expected": state.max_origins,
+                "actual": state.fired_origin_count,
+                "status": ("evaluation_error" if errors else
+                           "mutation_not_applied" if sum(d.fired for d in decisions)
+                           > state.fired_origin_count else
+                           "target_not_realized" if decisions else "boundary_not_reached"),
+                "decisions": [{"event_id": d.event_id, "fired": d.fired,
+                               "reason": d.reason} for d in decisions],
+                "evaluation_errors": list(errors),
+            }
+        return pending
 
     def validate_firing_configuration(self) -> None:
         """Reject missing/wrong budgets before model inference or evaluation."""
@@ -485,6 +519,7 @@ class LEPOrchestrator:
                 lep.reset()
         self._active_leps.clear()
         self._trigger_results.clear()
+        self._evaluation_errors.clear()
         self._firing_state.clear()
         self._topology_target_stages.clear()
         self._origin_roles.clear()

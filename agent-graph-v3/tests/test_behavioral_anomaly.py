@@ -574,6 +574,15 @@ def test_origin_shared_fact_does_not_explain_unrelated_deviation():
 
 def test_public_analyzer_loads_manifest_and_selects_separate_references(tmp_path):
     import json
+    from admission_support import seal_trace
+    from schemas import ScenarioSpec, WorkflowConfig, LEPConfig
+    def seal(trace):
+        codes = trace.metadata.get('lep_codes', [])
+        spec = ScenarioSpec(scenario_id=trace.trace_id, task_family='financial_analysis',
+            fixture_id='financial_clean', task_variant='test',
+            condition='single_lep' if codes else 'benign', workflow_config=WorkflowConfig(topology='review_loop'),
+            lep_configs=[LEPConfig(code=c, name=c, category='test', description='test', task_family='financial_analysis') for c in codes])
+        return seal_trace(trace, spec)
     traces_dir = tmp_path / "traces"
     traces_dir.mkdir()
     for variant, value in (("standard", GOOD), ("memory_enabled", BAD)):
@@ -581,12 +590,12 @@ def test_public_analyzer_loads_manifest_and_selects_separate_references(tmp_path
                                     execution_variant=variant, task_family="financial_analysis",
                                     fixture_id="financial_clean"):
             trace.trace_id = f"{variant}_{trace.trace_id}"
-            (traces_dir / f"{trace.trace_id}_trace.json").write_text(json.dumps(trace.to_dict()))
+            (traces_dir / f"{trace.trace_id}_trace.json").write_text(json.dumps(seal(trace).to_dict()))
     for code in ("LEP_TOOL_RESULT_CORRUPTION", "LEP_MEMORY_POISONING"):
         events = [action(0, "source", BAD), action(1, "write", BAD, parent=0)]
         events[0].event_labels.is_injection_origin = True
         trace = _mk_lep_trace(code, events, [code], task_family="financial_analysis", fixture_id="financial_clean")
-        (traces_dir / f"{code}_trace.json").write_text(json.dumps(trace.to_dict()))
+        (traces_dir / f"{code}_trace.json").write_text(json.dumps(seal(trace).to_dict()))
     summary = PropagationAnalyzer(tmp_path).analyze()
     assert summary["overall"]["coverage_evaluated_cells"] == 2
     results = {row["lep_code"]: row for row in map(json.loads,

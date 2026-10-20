@@ -119,6 +119,10 @@ class BenchmarkRecord:
     topology: str
     propagation_mode: str
     repetition_index: int
+    attempt_id: str = ""
+    fixture_id: str = ""
+    admission_reason: str = ""
+    memory_protocol: str = "write_interception_v1"
     trace_id: str = ""
     success: bool = False
     dataset_eligible: bool = False
@@ -173,6 +177,10 @@ class BenchmarkRecord:
             "trace_id": self.trace_id,
             "success": self.success,
             "dataset_eligible": self.dataset_eligible,
+            "attempt_id": self.attempt_id,
+            "fixture_id": self.fixture_id,
+            "admission_reason": self.admission_reason,
+            "memory_protocol": self.memory_protocol,
             "termination_reason": self.termination_reason,
             "error": self.error,
             "runtime_seconds": self.runtime_seconds,
@@ -511,7 +519,26 @@ class BenchmarkRunner:
             len(self.manifest.propagation_modes),
         )
 
-        for entry in plan:
+        # Freeze the selected shard before dispatch. Existing plans are immutable.
+        out = Path(self.manifest.output_dir or 'benchmark_output')
+        out.mkdir(parents=True, exist_ok=True)
+        frozen = {'schema': 'agentprop-frozen-plan-v1', 'entries': plan,
+                  'settings': {k: getattr(self.manifest, k) for k in (
+                      'num_repetitions', 'num_benign_repetitions', 'max_events',
+                      'max_agent_turns', 'model_name', 'temperature', 'seed', 'dry_run')}}
+        plan_path = out / 'benchmark_plan.json'
+        if plan_path.exists() and json.loads(plan_path.read_text()) != frozen:
+            raise ValueError('Output directory already contains a different frozen plan')
+        if not plan_path.exists():
+            plan_path.write_text(json.dumps(frozen, indent=2))
+        import uuid
+        for planned in plan:
+            entry = {**planned, 'attempt_id': uuid.uuid4().hex}
+            with (out / 'attempt_starts.jsonl').open('a') as handle:
+                handle.write(json.dumps(entry) + '\n')
+                handle.flush()
+                import os
+                os.fsync(handle.fileno())
             record = self._execute(entry)
             self.results.append(record)
             self._persist_record(record)
@@ -537,6 +564,9 @@ class BenchmarkRunner:
         record = BenchmarkRecord(
             run_id=run_id,
             scenario_id=entry["scenario_id"],
+            attempt_id=entry.get('attempt_id', ''),
+            memory_protocol=entry.get('memory_protocol', 'write_interception_v1'),
+            fixture_id=entry.get('fixture_id', ''),
             task_family=entry["task_family"],
             condition=entry["condition"],
             lep_code=entry.get("lep_code", ""),
@@ -550,6 +580,11 @@ class BenchmarkRunner:
         )
 
         try:
+            if entry.get('memory_protocol') == 'existing_record_poisoning_v1':
+                import hashlib
+                path = Path(self.manifest.fixture_root) / entry['fixture_id'] / 'manifest.json'
+                if hashlib.sha256(path.read_bytes()).hexdigest() != entry.get('fixture_manifest_sha256'):
+                    raise ValueError('Frozen briefing fixture manifest changed')
             wcfg = self._build_workflow_config(entry)
             lep_configs = [self._resolve_lep(c, entry["task_family"]) for c in entry.get("lep_codes", [])]
 
@@ -575,6 +610,9 @@ class BenchmarkRunner:
             short_id = self._short_trace_id(entry)
             result = runner.run(spec, self.manifest.fixture_root, execution_id=short_id)
             trace = result.trace
+            if entry.get('attempt_id'):
+                trace.metadata['attempt_id'] = entry['attempt_id']
+            record.admission_reason = trace.metadata.get('admission', {}).get('reason', '')
 
             # Stamp execution_variant into trace metadata so downstream
             # analysis can group by (fixture_id, topology, execution_variant)
@@ -589,7 +627,8 @@ class BenchmarkRunner:
                 self.manifest.output_dir or Path("benchmark_output")
             ) / ("traces" if result.dataset_eligible else "rejected_traces")
             trace_dir.mkdir(parents=True, exist_ok=True)
-            trace_path = trace_dir / f"{entry['scenario_id']}_trace.json"
+            suffix = ('_' + entry['attempt_id']) if entry.get('attempt_id') else ''
+            trace_path = trace_dir / f"{entry['scenario_id']}{suffix}_trace.json"
             with open(trace_path, "w") as f:
                 json.dump(trace.to_dict(), f, indent=2, default=str)
             record.trace_path = str(trace_path)
@@ -714,11 +753,12 @@ class BenchmarkRunner:
         #                     use clean content, memory LEPs poison it)
         memory_mode = (
             "ephemeral_shared"
-            if entry.get("execution_variant") == "memory_enabled"
+            if entry.get("execution_variant") in ("memory_enabled", "existing_record_poisoning_v1")
             else "ephemeral_private"
         )
         return WorkflowConfig(
             topology=entry.get("topology", "review_loop"),
+            memory_protocol=entry.get("memory_protocol", "write_interception_v1"),
             sharing_policy="handoff_summary_only",
             memory_mode=memory_mode,
             verification_mode="self_check",
@@ -834,7 +874,7 @@ class BenchmarkRunner:
     def _summarize(self) -> dict[str, Any]:
         """Aggregate statistics across all runs."""
         total = len(self.results)
-        failed = sum(1 for r in self.results if r.error)
+        failed = sum(1 for r in self.results if not r.dataset_eligible)
         injection_hits = sum(1 for r in self.results if r.injection_fired)
         consumption_hits = sum(1 for r in self.results if len(r.consumption_event_ids) > 0)
         propagation_hits = sum(1 for r in self.results if len(r.propagation_event_ids) > 0)
@@ -867,7 +907,14 @@ class BenchmarkRunner:
             if r.downstream_failure:
                 m["downstream_failure"] += 1
 
+        from benchmark.attempt_accounting import summarize_attempts, recorded_attempt
+        attempts = [recorded_attempt(r.to_dict()) for r in self.results]
+        plan_path = Path(self.manifest.output_dir or 'benchmark_output') / 'benchmark_plan.json'
+        frozen = json.loads(plan_path.read_text())['entries'] if plan_path.exists() else None
+        accounting = summarize_attempts(attempts, frozen)
         return {
+            'accounting': accounting,
+            'summary_semantics': 'attempts; propagation outcomes require admitted-trace analysis',
             "total_runs": total,
             "successful_runs": total - failed,
             "failed_runs": failed,
@@ -947,7 +994,8 @@ class BenchmarkRunner:
             if actual != expected:
                 mismatches.append(
                     f"{trace_path.name}: expected={expected} actual={actual} "
-                    f"condition={condition} prop_mode={prop_mode} leps={lep_codes}"
+                    f"condition={condition} prop_mode={prop_mode} leps={lep_codes} "
+                    f"termination_reason={meta.get('termination_reason', 'unknown')}"
                 )
 
         with open(mismatches_path, "w") as f:

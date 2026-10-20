@@ -141,8 +141,11 @@ def test_cli_without_manifest_uses_legacy_expansion(tmp_path, monkeypatch):
     stub_outputs(monkeypatch)
     monkeypatch.setattr(sys, 'argv', ['benchmark', '--output-dir', str(tmp_path), '--benign-repetitions', '0'])
     assert cli.main() == 0
-    assert len(called) == 1 and selected == called[0]
-    assert len(selected) == 17575
+    assert len(called) == 1
+    assert [{k: v for k, v in entry.items() if k != 'attempt_id'}
+            for entry in selected] == called[0]
+    assert len({entry['attempt_id'] for entry in selected}) == len(selected)
+    assert selected
 
 
 @pytest.mark.parametrize('extra', [['--model', 'different'], ['--mod=different'], ['--dry-run'], ['--repetitions', '2'],

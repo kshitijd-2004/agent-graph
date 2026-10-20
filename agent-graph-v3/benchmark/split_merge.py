@@ -131,6 +131,7 @@ def merge_outputs(node_dirs: list[Path], output_dir: Path) -> dict[str, Any]:
 
     # --- Merge benchmark_records.jsonl ---
     seen_scenario_ids: set[str] = set()
+    seen_attempt_ids: set[str] = set()
     merged_records_path = output_dir / "benchmark_records.jsonl"
     with open(merged_records_path, "w") as out:
         for node_dir in node_dirs:
@@ -145,9 +146,11 @@ def merge_outputs(node_dirs: list[Path], output_dir: Path) -> dict[str, Any]:
                         continue
                     record = json.loads(line)
                     sid = record.get("scenario_id", "")
-                    if sid in seen_scenario_ids:
+                    identity = record.get('attempt_id') or record.get('trace_id') or sid
+                    if identity in seen_attempt_ids:
                         report["duplicate_scenario_ids"].append(sid)
                     else:
+                        seen_attempt_ids.add(identity)
                         seen_scenario_ids.add(sid)
                         out.write(line + "\n")
                         report["records_merged"] += 1
@@ -189,11 +192,51 @@ def merge_outputs(node_dirs: list[Path], output_dir: Path) -> dict[str, Any]:
             continue
         for trace_file in node_traces.glob("*.json"):
             if trace_file.name in seen_trace_ids:
+                if (traces_dir / trace_file.name).read_bytes() != trace_file.read_bytes():
+                    raise ValueError(f'Conflicting accepted attempt: {trace_file.name}')
                 report["duplicate_scenario_ids"].append(f"trace: {trace_file.name}")
                 continue
             seen_trace_ids.add(trace_file.name)
             shutil.copy2(trace_file, traces_dir / trace_file.name)
             report["traces_merged"] += 1
+
+    # Rejections and starts are part of the experiment, not disposable output.
+    rejected_dir = output_dir / 'rejected_traces'
+    rejected_dir.mkdir(exist_ok=True)
+    for node_dir in node_dirs:
+        for trace_file in (node_dir / 'rejected_traces').glob('*_trace.json'):
+            target = rejected_dir / trace_file.name
+            if target.exists() and target.read_bytes() != trace_file.read_bytes():
+                raise ValueError(f'Conflicting rejected attempt: {trace_file.name}')
+            shutil.copy2(trace_file, target)
+    starts = {}
+    plans = {}
+    all_planned = True
+    for node_dir in node_dirs:
+        path = node_dir / 'attempt_starts.jsonl'
+        if path.exists():
+            for line in path.read_text().splitlines():
+                entry = json.loads(line)
+                starts[entry['attempt_id']] = entry
+        path = node_dir / 'benchmark_plan.json'
+        if not path.exists():
+            all_planned = False
+            continue
+        saved = json.loads(path.read_text())
+        if saved.get('schema') != 'agentprop-frozen-plan-v1':
+            raise ValueError('Unsupported frozen plan')
+        for entry in saved['entries']:
+            sid = entry['scenario_id']
+            if sid in plans and plans[sid] != entry:
+                raise ValueError(f'Conflicting planned slot: {sid}')
+            plans[sid] = entry
+    (output_dir / 'attempt_starts.jsonl').write_text(
+        ''.join(json.dumps(r) + '\n' for r in starts.values()))
+    if all_planned:
+        (output_dir / 'benchmark_plan.json').write_text(json.dumps(
+            {'schema': 'agentprop-frozen-plan-v1', 'entries': list(plans.values())}, indent=2))
+    else:
+        report['warnings'].append('No complete frozen plan; plan coverage is unavailable')
 
     # --- Merge benchmark_summary.json ---
     summaries: list[dict[str, Any]] = []
@@ -209,6 +252,16 @@ def merge_outputs(node_dirs: list[Path], output_dir: Path) -> dict[str, Any]:
         with open(summary_path, "w") as f:
             json.dump(merged_summary, f, indent=2)
         report["summary"] = merged_summary
+
+    # Recompute accounting from attempt records, never average shard rates.
+    from benchmark.attempt_accounting import summarize_attempts, recorded_attempt
+    rows = [recorded_attempt(json.loads(line)) for line in merged_records_path.read_text().splitlines()]
+    accounting = summarize_attempts(rows, list(plans.values()) if all_planned else None)
+    merged_summary = report.get('summary', {})
+    merged_summary['accounting'] = accounting
+    merged_summary['summary_semantics'] = 'attempts; propagation outcomes require admitted-trace analysis'
+    (output_dir / 'benchmark_summary.json').write_text(json.dumps(merged_summary, indent=2))
+    report['summary'] = merged_summary
 
     # --- Validate paired execution_ids ---
     execution_ids: dict[str, list[str]] = {}

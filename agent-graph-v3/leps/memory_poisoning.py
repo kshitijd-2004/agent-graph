@@ -230,6 +230,7 @@ class MemoryPoisoningLEP:
         memory_key: str,
         task_family: str = "financial_analysis",
         variant: str = "false_fact",
+        original_value: Optional[str] = None,
     ) -> MemoryPoisoningResult:
         """Use the fixture's concrete wrong claim, or the legacy value pool."""
         instance_id = f"{self.config.code}_{memory_key}"
@@ -245,17 +246,20 @@ class MemoryPoisoningLEP:
 
         result = MemoryPoisoningResult(
             lep_instance_id=instance_id,
-            fired=True,
+            fired=original_value is None or value != original_value,
             memory_key=memory_key,
             memory_value=value,
-            original_value="",  # No original — this is an insertion
+            original_value=original_value or "",
         )
         self._instances.append(result)
+
+        if not result.fired:
+            return result
 
         # Store poisoned entry
         self._poisoned_memory[memory_key] = {
             "value": value,
-            "original_value": "",
+            "original_value": original_value or "",
             "description": description,
             "instance_id": instance_id,
             "variant": variant,
@@ -318,14 +322,14 @@ class MemoryPoisoningLEP:
     ) -> None:
         """Record that the poisoned memory was written."""
         for instance in self._instances:
-            if instance.memory_key == memory_key and instance.memory_write_event_id is None:
+            if instance.fired and instance.memory_key == memory_key and instance.memory_write_event_id is None:
                 instance.memory_write_event_id = event_id
                 break
 
     def get_origin_event_id(self, memory_key: str) -> str | None:
         """Return the event ID where this key was first poisoned (write or injection origin)."""
         for instance in self._instances:
-            if instance.memory_key == memory_key:
+            if instance.fired and instance.memory_key == memory_key:
                 return instance.memory_write_event_id
         return None
 

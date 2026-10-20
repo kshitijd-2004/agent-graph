@@ -107,10 +107,14 @@ class PropagationResult:
 
     # Context
     num_benign_reference_runs: int = 0
+    attempt_id: str = ""
+    protocol_lifecycle: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "trace_id": self.trace_id,
+            "attempt_id": self.attempt_id,
+            "protocol_lifecycle": self.protocol_lifecycle,
             "task_family": self.task_family,
             "fixture_id": self.fixture_id,
             "topology": self.topology,
@@ -200,9 +204,25 @@ class PropagationAnalyzer:
       - ``propagation_summary.json`` — aggregated statistics
     """
 
-    def __init__(self, output_dir: Path):
+    def __init__(self, output_dir: Path, *, source_dir: Path = None, plan: list = None):
         self.output_dir = Path(output_dir)
-        self.traces_dir = self.output_dir / "traces"
+        self.source_dir = Path(source_dir) if source_dir is not None else self.output_dir
+        self.traces_dir = self.source_dir / "traces"
+        self.source_dirs = sorted(self.source_dir.glob('node_*')) or [self.source_dir]
+        self.plan = plan
+        if self.plan is None:
+            plans = [d / 'benchmark_plan.json' for d in self.source_dirs]
+            if plans and all(p.exists() for p in plans):
+                self.plan = []
+                for path in plans:
+                    data = json.loads(path.read_text())
+                    if data.get('schema') != 'agentprop-frozen-plan-v1':
+                        raise ValueError('Unsupported frozen plan')
+                    self.plan.extend(data['entries'])
+        self.attempts = []
+        self.ingestion_errors = []
+        self.clean_admissions = []
+        self._attempt_by_trace = {}
 
     # ── Public API ────────────────────────────────────────────────────────────
 
@@ -211,7 +231,8 @@ class PropagationAnalyzer:
 
         Returns the summary dict (same content as ``propagation_summary.json``).
         """
-        logger.info("Loading traces from %s", self.traces_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        logger.info("Loading traces from %s", self.source_dir)
         benign_refs, lep_traces = self._load_and_group_traces()
         logger.info(
             "Loaded %d benign reference groups, %d LEP trace groups",
@@ -235,7 +256,8 @@ class PropagationAnalyzer:
             fixture_id, task_family, topology, lep_code, mode = key
 
             # Select appropriate execution variant for this LEP type
-            execution_variant = _select_execution_variant(lep_code)
+            execution_variant = ("existing_record_poisoning_v1" if traces[0].metadata.get("memory_protocol") == "existing_record_poisoning_v1"
+                                 else _select_execution_variant(lep_code))
             ref_key = (fixture_id, topology, execution_variant)
 
             ref = benign_refs.get(ref_key)
@@ -264,20 +286,49 @@ class PropagationAnalyzer:
             coverage["evaluated_cells"] += 1
 
             for trace in traces:
-                result = self._analyze_single_trace(
-                    trace=trace,
-                    benign_ref=ref,
-                    lep_code=lep_code,
-                    propagation_mode=mode,
-                    builder=builder,
-                    fixture_id=fixture_id,
-                )
+                attempt = self._attempt_by_trace[id(trace)]
+                try:
+                    result = self._analyze_single_trace(
+                        trace=trace, benign_ref=ref, lep_code=lep_code,
+                        propagation_mode=mode, builder=builder, fixture_id=fixture_id)
+                except Exception as error:
+                    attempt.update(analysis_status='analysis_failed', analysis_error=str(error))
+                    logger.exception('Analysis failed for %s', trace.trace_id)
+                    continue
+                attempt.update(analysis_status='measured', propagation_occurred=result.propagation_occurred)
                 per_trace_results.append(result)
 
         # Aggregate
         cell_summaries = self._aggregate_by_cell(per_trace_results, benign_refs)
         summary = self._build_summary(per_trace_results, cell_summaries, benign_refs, coverage)
 
+        from benchmark.attempt_accounting import summarize_attempts
+        accounting = summarize_attempts(self.attempts, self.plan)
+        summary['overall'].update(accounting['overall'])
+        # Coverage of the planned experiment is undefined without a frozen plan.
+        summary['overall']['coverage_eligible_cells'] = accounting['overall']['planned_cells']
+        summary['overall']['coverage_fraction'] = accounting['overall']['any_valid_cell_coverage']
+        for key, cell in accounting['by_cell'].items():
+            summary['by_cell'].setdefault(key, {}).update(cell)
+        for field, output_key in [('task_family', 'by_task_family'), ('topology', 'by_topology'),
+                                  ('lep_code', 'by_lep_type'), ('propagation_mode', 'by_propagation_mode')]:
+            names = {c[field] for c in accounting['by_cell'].values()}
+            for name in names:
+                selected = [r for r in self.attempts if r.get(field) == name]
+                slots = [s for s in self.plan if s.get(field) == name] if self.plan is not None else None
+                values = summarize_attempts(selected, slots)['overall']
+                summary[output_key].setdefault(name, {}).update(values)
+        summary['ingestion_errors'] = self.ingestion_errors
+        summary['clean_reference_admission'] = {
+            'examined': len(self.clean_admissions),
+            'admitted': sum(r['status'] == 'admitted' for r in self.clean_admissions),
+        }
+        with (self.output_dir / 'clean_admissions.jsonl').open('w') as handle:
+            for row in self.clean_admissions:
+                handle.write(json.dumps(row) + '\n')
+        with (self.output_dir / 'admission_attempts.jsonl').open('w') as handle:
+            for attempt in self.attempts:
+                handle.write(json.dumps(attempt) + '\n')
         # Write outputs
         self._write_outputs(per_trace_results, cell_summaries, summary)
 
@@ -307,20 +358,61 @@ class PropagationAnalyzer:
         benign_refs: Dict[Tuple[str, str, str], CleanReference] = {}
         lep_traces: Dict[Tuple[str, str, str, str, str], List[Trace]] = {}
 
-        if not self.traces_dir.exists():
-            logger.warning("Traces directory does not exist: %s", self.traces_dir)
-            return benign_refs, lep_traces
-
-        for trace_path in sorted(self.traces_dir.glob("*_trace.json")):
+        from generation.admission import validate_trace
+        from benchmark.attempt_accounting import is_perturbed
+        self.attempts = []
+        self.ingestion_errors = []
+        self.clean_admissions = []
+        self._attempt_by_trace = {}
+        seen = {}
+        paths = sorted(p for d in self.source_dirs for folder in ('traces', 'rejected_traces')
+                       for p in (d / folder).glob('*_trace.json'))
+        for trace_path in paths:
+            data = {}
             try:
-                with open(trace_path) as f:
-                    data = json.load(f)
-            except (json.JSONDecodeError, OSError) as e:
-                logger.warning("Skipping unreadable trace %s: %s", trace_path.name, e)
+                data = json.loads(trace_path.read_text())
+                import hashlib
+                fingerprint = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
+                trace = self._trace_from_dict(data, trace_path)
+            except Exception as error:
+                self.ingestion_errors.append({'path': str(trace_path), 'error': str(error)})
+                meta = data.get('metadata', {}) if isinstance(data, dict) else {}
+                if is_perturbed(meta):
+                    self.attempts.append({**meta,
+                        'attempt_id': meta.get('attempt_id') or data.get('trace_id') or str(trace_path),
+                        'trace_path': str(trace_path), 'status': 'unverifiable',
+                        'reason': 'unverifiable_legacy', 'analysis_status': 'not_admitted',
+                        'propagation_occurred': None, 'admission': {'errors': [str(error)]}})
                 continue
-
-            trace = self._trace_from_dict(data, trace_path)
             meta = trace.metadata
+            identity = meta.get('attempt_id') or trace.trace_id
+            if identity in seen:
+                if fingerprint != seen[identity]:
+                    raise ValueError(f'Conflicting duplicate attempt: {identity}')
+                continue
+            seen[identity] = fingerprint
+            admission = validate_trace(trace)
+            if self.plan is not None and is_perturbed(meta):
+                entry = next((s for s in self.plan if s['scenario_id'] == meta.get('scenario_id')), None)
+                if entry is None or any(k in entry and entry[k] != meta.get(k)
+                        for k in ('fixture_id', 'task_family', 'condition', 'topology', 'propagation_mode', 'lep_codes')):
+                    from generation.admission import Admission
+                    admission = Admission('rejected', 'other_admission_failure', ['frozen plan identity mismatch'])
+            if is_perturbed(meta):
+                row = {k: meta.get(k) for k in ('scenario_id', 'fixture_id', 'task_family',
+                        'condition', 'topology', 'propagation_mode', 'lep_codes', 'termination_reason', 'memory_protocol')}
+                row.update(attempt_id=identity, trace_id=trace.trace_id, trace_path=str(trace_path),
+                           lep_code='+'.join(meta.get('lep_codes', [])),
+                           status=admission.status, reason=admission.reason,
+                           admission=admission.to_dict(), propagation_occurred=None,
+                           analysis_status='insufficient_clean_reference' if admission.admitted else 'not_admitted')
+                self.attempts.append(row)
+                self._attempt_by_trace[id(trace)] = row
+            else:
+                self.clean_admissions.append({'trace_path': str(trace_path),
+                                              **admission.to_dict()})
+            if not admission.admitted:
+                continue
             task_family = meta.get("task_family", "unknown")
             topology = meta.get("topology", "unknown")
             fixture_id = meta.get("fixture_id", "")
@@ -330,7 +422,7 @@ class PropagationAnalyzer:
             repetition_index = meta.get("repetition_index", 0)
             execution_variant = meta.get("execution_variant", "standard")
 
-            if condition == "benign" or not lep_codes:
+            if condition in ("benign", "counterfactual") or not lep_codes:
                 if not fixture_id:
                     logger.error(
                         "Trace %s has no fixture_id in metadata — cannot build clean reference. "
@@ -359,6 +451,40 @@ class PropagationAnalyzer:
                 # a cell or clean reference.
                 cell_key = (fixture_id, task_family, topology, lep_code, prop_mode)
                 lep_traces.setdefault(cell_key, []).append(trace)
+
+        # A started attempt remains in the denominator even if no trace was saved.
+        from benchmark.attempt_accounting import is_perturbed
+        identities = {r['attempt_id'] for r in self.attempts}
+        for directory in self.source_dirs:
+            for filename in ('benchmark_records.jsonl', 'attempt_starts.jsonl'):
+                path = directory / filename
+                if not path.exists():
+                    continue
+                for line in path.read_text().splitlines():
+                    try:
+                        record = json.loads(line)
+                    except ValueError as error:
+                        self.ingestion_errors.append({'path': str(path), 'error': str(error)})
+                        continue
+                    identity = record.get('attempt_id') or record.get('trace_id') or record.get('scenario_id')
+                    if identity in identities or not is_perturbed(record):
+                        continue
+                    identities.add(identity)
+                    term = record.get('termination_reason', '')
+                    infra = term.startswith('backend_')
+                    self.attempts.append({**record, 'attempt_id': identity,
+                        'status': 'rejected' if infra else 'unverifiable',
+                        'reason': 'infrastructure_failure' if infra else 'unverifiable_legacy',
+                        'analysis_status': 'not_admitted', 'propagation_occurred': None,
+                        'admission': {'errors': ['attempt has no readable saved trace']}})
+
+        protocols = {t.metadata.get('memory_protocol', 'write_interception_v1')
+                     for ts in lep_traces.values() for t in ts}
+        protocols.update(r.get('memory_protocol') or 'write_interception_v1' for r in self.attempts)
+        protocols.update(t.metadata.get('memory_protocol', 'write_interception_v1')
+                         for ref in benign_refs.values() for t in ref.traces)
+        if len(protocols) > 1:
+            raise ValueError('Analyze experimental protocols separately; pooling is forbidden')
 
         # Log clean reference stats
         for key, ref in benign_refs.items():
@@ -429,15 +555,49 @@ class PropagationAnalyzer:
             builder=builder,
         )
 
-        # Compute metrics
-        propagation_occurred = len(anomalous_nodes) > 0
+        protocol_lifecycle = {}
+        if trace.metadata.get('memory_protocol') == 'existing_record_poisoning_v1':
+            from generation.existing_record_protocol import evidence
+            facts = evidence(trace)
+            protocol_lifecycle = {k:v for k,v in facts.items() if k != 'record'}
+            protocol_lifecycle['protocol'] = 'existing_record_poisoning_v1'
+            protocol_lifecycle['introduction_actor'] = 'environment'
+            protocol_lifecycle['propagation_origin_role'] = 'coordinator'
+            protocol_lifecycle['storage_mutation_occurred'] = True
+            protocol_lifecycle['coordinator_exposure_occurred'] = True
+            protocol_lifecycle['semantic_endorsement'] = 'unassessed'
+            protocol_lifecycle['coordinator_behavioral_event_ids'] = [
+                n.event_id for n in anomalous_nodes if n.agent_role == 'coordinator']
+            # Storage remains the introduction event, while depth starts at
+            # actual coordinator processing. Exposure alone is never an anomaly.
+            origin_nodes = [n for n in graph.nodes if n.event_id == facts['coordinator_anchor_event_id']]
+            handoffs = [e for e in trace.events
+                if e.agent_role != 'coordinator' and e.event_type == TraceEventType.TOPOLOGY_TRANSITION
+                and facts['fanout_event_id'] in e.depends_on]
+            protocol_lifecycle['worker_handoff_delivery_event_ids'] = [e.event_id for e in handoffs]
+            exposed = [e for e in handoffs if facts['record']['changed'] in
+                       e.observable.get('handoff_summary', '')]
+            processed = [e for e in trace.events if e.event_type == TraceEventType.REASONING
+                and any(x.event_id in e.depends_on and x.agent_role == e.agent_role for x in exposed)
+                and (facts['record']['changed'] in (e.input_text or '') or
+                     json.dumps(facts['record']['changed'])[1:-1] in (e.input_text or ''))]
+            exposed_roles = {e.agent_role for e in processed}
+            protocol_lifecycle['worker_handoff_exposure_event_ids'] = [e.event_id for e in exposed]
+            protocol_lifecycle['worker_processing_event_ids'] = [e.event_id for e in processed]
+            anomalous_nodes = [n for n in anomalous_nodes if n.agent_role in exposed_roles]
+            protocol_lifecycle['downstream_behavioral_event_ids'] = [n.event_id for n in anomalous_nodes]
+            protocol_lifecycle['behavioral_endpoint'] = 'source_excerpt_forwarding_v1'
 
+        # Compute metrics
         event_depth = self._compute_event_depth(graph, origin_nodes, anomalous_nodes)
         handoff_depth = self._compute_handoff_depth(graph, origin_nodes, anomalous_nodes)
         downstream_agents = sorted({
             n.agent_role for n in anomalous_nodes
             if n.agent_role not in origin_roles
         })
+        # Preserve the existing event-descendant endpoint. Agent-hop/anchor
+        # semantics are separate protocol work, not an admission change.
+        propagation_occurred = bool(anomalous_nodes)
 
         # Build anomaly details for output
         anomaly_details: Dict[str, Any] = {}
@@ -454,6 +614,8 @@ class PropagationAnalyzer:
 
         return PropagationResult(
             trace_id=trace.trace_id,
+            attempt_id=trace.metadata.get('attempt_id') or trace.trace_id,
+            protocol_lifecycle=protocol_lifecycle,
             task_family=benign_ref.task_family,
             fixture_id=fixture_id or benign_ref.fixture_id,
             topology=benign_ref.topology,
@@ -508,7 +670,7 @@ class PropagationAnalyzer:
             )
         except Exception as e:
             logger.error("Anomaly detection failed for trace %s: %s", trace.trace_id, e)
-            return []
+            raise
 
         # Collect anomalous event IDs
         anomalous_event_ids = {a.event_id for a in anomalies}
@@ -555,14 +717,11 @@ class PropagationAnalyzer:
         from pathlib import Path
 
         fixture_dir = Path(__file__).parent.parent / "workspace_fixtures" / ref.fixture_id
+        if ref.execution_variant == 'existing_record_poisoning_v1':
+            fixture_dir = Path(__file__).parent.parent / 'experiments/scifact_memory_v1/fixtures' / ref.fixture_id
         manifest_path = fixture_dir / "manifest.json"
-        if manifest_path.exists():
-            try:
-                with open(manifest_path) as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, OSError):
-                pass
-        return {}
+        with open(manifest_path) as f:
+            return json.load(f)
 
     def _find_candidate_anomalous_events(
         self, trace: Trace, benign_ref: CleanReference,
@@ -957,7 +1116,8 @@ class PropagationAnalyzer:
 
             # Determine execution variant from the LEP code and look up
             # the clean reference using (fixture_id, topology, execution_variant).
-            execution_variant = _select_execution_variant(lep_code)
+            execution_variant = ("existing_record_poisoning_v1" if cell_results[0].protocol_lifecycle.get("protocol") == "existing_record_poisoning_v1"
+                                 else _select_execution_variant(lep_code))
             ref_key = (fixture_id, topology, execution_variant)
             ref = benign_refs.get(ref_key)
             num_benign = ref.num_runs if ref else 0
@@ -1121,6 +1281,7 @@ class PropagationAnalyzer:
 
         # CSV
         csv_path = self.output_dir / "propagation_metrics.csv"
+        csv_path.write_text('')
         if per_trace:
             fieldnames = list(per_trace[0].to_dict().keys())
             with open(csv_path, "w", newline="") as f:

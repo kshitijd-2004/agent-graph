@@ -631,6 +631,15 @@ class ScenarioRunner:
         self._backend_diagnostics = {"backend_retry_count": 0}
         try:
             trace = self._execute_scenario(scenario, fixture_root, execution_id)
+            from generation.admission import contract_for, validate_trace
+            trace.metadata['admission_contract'] = contract_for(scenario)
+            protocol = getattr(scenario.workflow_config, 'memory_protocol', 'write_interception_v1')
+            if protocol == 'existing_record_poisoning_v1':
+                trace.schema_version = '3.1.0'
+                trace.metadata['memory_protocol'] = protocol
+                trace.metadata['execution_variant'] = protocol
+                trace.metadata['propagation_anchor_semantics'] = 'coordinator_processing_v1'
+
             trace.metadata["propagation_label_semantics"] = "input_processing_v2"
             trace.metadata.update(self._backend_diagnostics)
             runtime = (datetime.now(timezone.utc) - t0).total_seconds()
@@ -686,6 +695,9 @@ class ScenarioRunner:
             from generation.injection_origins import origin_structure_errors
             origin_errors = origin_structure_errors(trace, scenario)
             eligible = clean_completion and actual == expected and not origin_errors
+            admission = validate_trace(trace, require_accepted=False)
+            trace.metadata['admission'] = admission.to_dict()
+            eligible = admission.admitted
             if scenario.lep_configs and scenario.condition not in ("benign", "counterfactual"):
                 # Admission-only metadata, never added to event observables/features.
                 trace.metadata["origin_validation"] = {"valid": not origin_errors, "errors": origin_errors}
@@ -700,6 +712,9 @@ class ScenarioRunner:
             elif origin_errors and clean_completion:
                 term_reason = "injection_structure_mismatch"
                 trace.metadata["admission_reason"] = "; ".join(origin_errors)
+            elif not eligible and clean_completion:
+                term_reason = 'admission_failed'
+                trace.metadata['admission_reason'] = '; '.join(admission.errors)
             trace.metadata["termination_reason"] = term_reason
             trace.metadata["dataset_eligible"] = eligible
             return RunResult(
@@ -907,6 +922,20 @@ class ScenarioRunner:
         else:
             memory_store = None  # ephemeral_private: stage runner creates per-stage stores
 
+        from generation.existing_record_protocol import PROTOCOL as BRIEFING_PROTOCOL, validate_fixture
+        protocol = getattr(wcfg, 'memory_protocol', 'write_interception_v1')
+        if protocol == BRIEFING_PROTOCOL:
+            if (scenario.task_family != 'research_synthesis' or wcfg.topology != 'coordinator_workers'
+                    or wcfg.propagation_mode != 'one_to_many' or memory_store is None
+                    or scenario.condition not in ('benign', 'single_lep')
+                    or (not scenario.is_benign() and scenario.lep_codes() != ['LEP_MEMORY_POISONING'])):
+                raise ValueError('Unsupported existing-record protocol cell')
+            config = fixture_manifest.get('memory_protocol', {})
+            validate_fixture(config, fixture_dir)
+            memory_store.briefing_config = config
+        elif protocol != 'write_interception_v1':
+            raise ValueError('Unknown memory protocol')
+
         # Configure dry-run backend with LEP-specific trajectory
         if isinstance(self.llm, DryRunBackend):
             mock_target = None
@@ -976,6 +1005,10 @@ class ScenarioRunner:
                     propagation_mode=propagation_mode, topology=topology_id,
                 ))
             orchestrator.validate_firing_configuration()
+
+            if ("LEP_MEMORY_POISONING" in orchestrator.get_all_instances()
+                    and memory_store is None):
+                raise ValueError("MEMORY_POISONING requires shared memory with reachable write boundaries")
 
             logger.info(
                 "Runner: propagation_mode=%s origin_budget=%s topology=%s",
@@ -1103,6 +1136,7 @@ class ScenarioRunner:
         self._backend_diagnostics = stage_runner.backend_diagnostics
 
         final_result = None
+        injection_window_closed = False
         handoff_payloads: List[HandoffPayload] = []
         handoff_event_ids: List[str] = []
 
@@ -1339,6 +1373,13 @@ class ScenarioRunner:
 
             # ── Handle stage termination ─────────────────────────────────
             reason = stage_result.termination_reason
+            if initial_fanout and reason == "handoff" and orchestrator.unfulfilled_origins():
+                # The model chose to fan out without realizing the scheduled
+                # upstream mutation. No future event is a valid O2M origin.
+                # Stop this rejected attempt; do not manufacture a write or
+                # allow a worker/aggregation turn to satisfy the origin budget.
+                injection_window_closed = True
+                break
             if reason == "final":
                 final_result = stage_result
                 # submit_final means the stage is done — do not enqueue
@@ -1711,6 +1752,8 @@ class ScenarioRunner:
                 }
                 if pv_data:
                     meta["protocol_violation"] = pv_data
+                if orchestrator.get_all_instances():
+                    meta["unfulfilled_injections"] = orchestrator.unfulfilled_origins()
                 trace = Trace(
                     trace_id=trace_id,
                     execution_id=execution_id,
@@ -1784,7 +1827,12 @@ class ScenarioRunner:
             "review_finalization_reason": review_finalization_reason,
         }
 
-        if final_result is None:
+        if orchestrator.get_all_instances():
+            trace_metadata["unfulfilled_injections"] = orchestrator.unfulfilled_origins()
+
+        if injection_window_closed:
+            trace_metadata["termination_reason"] = "injection_target_unreachable"
+        elif final_result is None:
             # No stage produced final — mark as max_turns/max_events
             trace_metadata["termination_reason"] = "max_events_reached"
         elif final_result.termination_reason == "final":

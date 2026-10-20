@@ -27,9 +27,25 @@ class MemoryStore:
 
     def __init__(self):
         self._records: Dict[str, MemoryRecord] = {}
+        self.__briefings: Dict[str, str] = {}
         self._documents: List[str] = []
         self._idf: Dict[str, float] = {}
         self._tfidf_matrix: List[Dict[str, float]] = []
+
+    def initialize_briefing(self, record_id: str, value: str) -> None:
+        if self.__briefings:
+            raise ValueError("Briefing already initialized")
+        self.__briefings[record_id] = value
+
+    def commit_briefing(self, record_id: str, expected: str, value: str) -> None:
+        if self.__briefings.get(record_id) != expected:
+            raise ValueError("Briefing version mismatch")
+        self.__briefings[record_id] = value
+
+    def get_briefing(self, record_id: str, *, role: str) -> str:
+        if role != "coordinator":
+            raise PermissionError("Coordinator briefing is scoped to coordinator")
+        return self.__briefings[record_id]
 
     def add(self, record: MemoryRecord) -> None:
         self._records[record.id] = record
@@ -48,6 +64,7 @@ class MemoryStore:
 
     def clear(self) -> None:
         self._records.clear()
+        self.__briefings.clear()
         self._invalidate_index()
 
     def seed_from_workspace(self, workspace_path, tool_executor) -> List[MemoryRecord]:

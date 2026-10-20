@@ -415,7 +415,7 @@ class DependsOnGraphBuilder:
         features = []
         for node in graph.nodes:
             # Event type one-hot
-            et_idx = type_to_idx.get(node.event_type, et_dim - 1)
+            et_idx = type_to_idx.get("memory_write" if node.event_type == "memory_state" else node.event_type, et_dim - 1)
             et_vec = [0.0] * et_dim
             et_vec[et_idx] = 1.0
 
@@ -433,6 +433,8 @@ class DependsOnGraphBuilder:
                 1.0 if node.recovers_from_perturbation else 0.0,
             ]
 
+            if graph.metadata.get('memory_protocol') == 'existing_record_poisoning_v1':
+                pert_vec = [0.0] * pert_dim
             features.append(et_vec + ar_vec + pert_vec)
 
         return torch.tensor(features, dtype=torch.float)
@@ -467,6 +469,8 @@ class DependsOnGraphBuilder:
             else:
                 role = "transfer"
 
+            if graph.metadata.get('memory_protocol') == 'existing_record_poisoning_v1':
+                role = 'transfer'  # topology only; never encode private treatment labels
             pr_idx = pr_to_idx.get(role, pr_to_idx["unknown"])
             pr_vec = [0.0] * pr_dim
             pr_vec[pr_idx] = 1.0

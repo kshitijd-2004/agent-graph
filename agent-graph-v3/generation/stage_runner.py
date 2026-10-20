@@ -17,6 +17,7 @@ Key design:
 from __future__ import annotations
 
 import hashlib
+from generation.admission import mutation_evidence
 import json
 import logging
 import re
@@ -369,6 +370,17 @@ class StageRunner:
             if can_submit_final:
                 available_tools.append("submit_final")
 
+        briefing_events, briefing_prompt, briefing_lineage, briefing_value = [], '', None, ''
+        config = getattr(stage_memory_store, 'briefing_config', None)
+        if config and current_role == 'coordinator' and not getattr(stage_memory_store, 'briefing_delivered', False):
+            from generation.existing_record_protocol import initialize_stage
+            briefing_events, briefing_prompt, briefing_lineage, briefing_value = initialize_stage(
+                stage_memory_store, config, make_evt, not scenario.is_benign(),
+                lep_orchestrator, propagation_tracker)
+            events.extend(briefing_events)
+            system_prompt += briefing_prompt
+            stage_memory_store.briefing_delivered = True
+
         # Reset backend ONCE per stage (not per turn)
         self.llm.reset(
             task=task_prompt,
@@ -398,6 +410,8 @@ class StageRunner:
         # Private provenance for artifacts actually inserted into this context.
         # Generated summaries do not inherit taint merely by ancestry.
         context_artifacts = []
+        if briefing_lineage:
+            context_artifacts.append((briefing_lineage, briefing_events[-1].event_id, briefing_value))
         prior_by_id = {e.event_id: e for e in prior_events}
         incoming_event = prior_by_id.get(incoming_dep_event_id)
 
@@ -545,6 +559,8 @@ class StageRunner:
         # entering the agent's context. Cleared by each reasoning turn.
         # These IDs are written into the depends_on field of subsequent events.
         _pending_deps: List[str] = []
+        if briefing_events:
+            _pending_deps.append(briefing_events[-1].event_id)
         _last_reasoning_event_id: Optional[str] = None
         if incoming_dep_event_id:
             _pending_deps.append(incoming_dep_event_id)
@@ -740,6 +756,9 @@ class StageRunner:
                 output_text=raw_output,
             )
             # ── Causal dependency: reasoning consumes accumulated tool results ──
+            if briefing_prompt:
+                from generation.existing_record_protocol import digest
+                reasoning_evt.hidden['briefing_input_sha256'] = digest(briefing_prompt)
             reasoning_evt.depends_on = _pending_deps.copy()
             _pending_deps.clear()
             _last_reasoning_event_id = reasoning_evt.event_id
@@ -850,6 +869,7 @@ class StageRunner:
                                     corruption, 'canonical_operator', ''
                                 )
                                 tr_evt.hidden["result_changed"] = True
+                                mutation_evidence(tr_evt, code, corruption.original_result, result_text)
                                 tr_evt.hidden["original_hash"] = getattr(
                                     corruption, 'original_hash', ''
                                 )
@@ -1048,9 +1068,14 @@ class StageRunner:
                     if mp_decision and mp_decision.fired:
                         mp_lep = lep_orchestrator.get_lep_instance("LEP_MEMORY_POISONING")
                         if mp_lep:
-                            poison_result = mp_lep.poison(key, scenario.task_family)
+                            poison_result = mp_lep.poison(key, scenario.task_family, original_value=value)
+                            write_was_poisoned = poison_result.fired and stage_memory_store is not None
+
+                        if mp_lep and write_was_poisoned:
+                            write_evt.hidden["original_hash"] = hashlib.sha256(value.encode()).hexdigest()
                             value = poison_result.memory_value
-                            write_was_poisoned = True
+                            write_evt.hidden["perturbed_hash"] = hashlib.sha256(value.encode()).hexdigest()
+                            mutation_evidence(write_evt, "LEP_MEMORY_POISONING", poison_result.original_value, value)
 
                             # Label the injection origin
                             label_injection(write_evt, "LEP_MEMORY_POISONING")
@@ -1391,6 +1416,8 @@ class StageRunner:
                                 # Label the injection on the boundary event
                                 label_injection(hoff_evt, "LEP_HANDOFF_CORRUPTION")
                                 hoff_evt.hidden["corrupted"] = True
+                                mutation_evidence(hoff_evt, "LEP_HANDOFF_CORRUPTION",
+                                                  corruption.original_content, payload.summary)
                                 hoff_evt.hidden["canonical_operator"] = getattr(
                                     corruption, 'canonical_operator', 'material_finding_omission'
                                 )
@@ -1532,6 +1559,9 @@ class StageRunner:
                                 lep_orchestrator.mark_fired_origin(
                                     "LEP_INPUT_DISREGARD", target=current_role
                                 )
+                                mutation_evidence(hoff_evt, "LEP_INPUT_DISREGARD", "",
+                                                  payload.extra["input_disregard"]["instruction"],
+                                                  payload_extra=dict(payload.extra))
                                 label_injection(hoff_evt, "LEP_INPUT_DISREGARD")
                                 if propagation_tracker is not None:
                                     lineage = propagation_tracker.register_origin(

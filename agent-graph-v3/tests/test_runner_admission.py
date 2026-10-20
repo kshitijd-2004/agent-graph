@@ -86,6 +86,11 @@ def event(index, kind):
 def execute_trace(tmp_path, monkeypatch, reason, events, spec=None):
     trace = Trace(trace_id="admission_a", execution_id="admission", variant=TraceVariant.BENIGN,
                   events=events, metadata={"termination_reason": reason})
+    selected = spec or scenario()
+    trace.metadata.update(scenario_id=selected.scenario_id, fixture_id=selected.fixture_id,
+        task_family=selected.task_family, condition=selected.condition,
+        topology=selected.workflow_config.topology, propagation_mode=selected.workflow_config.propagation_mode,
+        lep_codes=[c.code for c in selected.lep_configs])
     runner = ScenarioRunner(output_dir=tmp_path)
     monkeypatch.setattr(runner, "_execute_scenario", lambda *args: trace)
     return runner.run(spec or scenario(), FIXTURES)
@@ -123,7 +128,10 @@ def test_completed_lep_admission_requires_injection_not_correct_answer(tmp_path,
     origin.event_labels.is_injection_origin = injected
     final = event(1, TraceEventType.FINAL_RESPONSE)
     final.output_text = "No issues."  # Fails the code-review oracle; still an admissible completed LEP execution.
-    result = execute_trace(tmp_path, monkeypatch, "completed", [origin, final], spec)
+    from admission_support import seal_trace
+    trace = seal_trace(Trace(trace_id='test', execution_id='test', variant=TraceVariant.MALIGNANT,
+                            events=[origin, final]), spec)
+    result = execute_trace(tmp_path, monkeypatch, "completed", trace.events, spec)
     assert result.dataset_eligible == injected
     assert not result.task_success
 
@@ -205,7 +213,10 @@ def test_exact_origin_admission_and_evaluation(tmp_path, monkeypatch, condition,
     final = event(len(events), TraceEventType.FINAL_RESPONSE)
     final.event_labels.consumes_perturbed_info = True
     final.event_labels.introduces_downstream_failure = True
-    result = execute_trace(tmp_path, monkeypatch, "completed", events + [final], spec)
+    from admission_support import seal_trace
+    trace = seal_trace(Trace(trace_id='test', execution_id='test', variant=TraceVariant.MALIGNANT,
+                            events=events + [final]), spec)
+    result = execute_trace(tmp_path, monkeypatch, "completed", trace.events, spec)
     from schemas.scenario import TOPOLOGY_PROPAGATION_MODES
     supported = mode in TOPOLOGY_PROPAGATION_MODES[topology]
     assert result.dataset_eligible == (actual == expected and supported)

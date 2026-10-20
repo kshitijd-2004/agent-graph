@@ -72,7 +72,7 @@ def _mk_trace(
     lep_codes: list[str] | None = None,
     propagation_mode: str = "single_origin",
 ) -> Trace:
-    return Trace(
+    trace = Trace(
         trace_id=trace_id,
         execution_id=f"exec-{trace_id}",
         variant=TraceVariant.BENIGN if not lep_codes else TraceVariant.MALIGNANT,
@@ -88,6 +88,15 @@ def _mk_trace(
             "propagation_mode": propagation_mode,
         },
     )
+
+    from schemas import ScenarioSpec, WorkflowConfig, LEPConfig
+    from admission_support import seal_trace
+    spec = ScenarioSpec(scenario_id=trace_id, task_family=task_family, fixture_id=fixture_id,
+        task_variant='test', condition=trace.metadata['condition'],
+        workflow_config=WorkflowConfig(topology=topology, propagation_mode=propagation_mode),
+        lep_configs=[LEPConfig(code=c, name=c, category='test', description='test', task_family=task_family)
+                     for c in lep_codes or []])
+    return seal_trace(trace, spec)
 
 
 def _write_trace_json(tmp_path: Path, trace: Trace) -> None:
@@ -450,10 +459,12 @@ class TestSyntheticTwoFixtureRegression:
     LEP, propagation_mode but different benign behavior must produce two
     independent cells and never cross-use clean references."""
 
-    def test_independent_cells_no_cross_reference_use(self, tmp_path: Path):
+    def test_independent_cells_no_cross_reference_use(self, tmp_path: Path, monkeypatch):
         """Fixture A always emits 'output_A'; fixture B always emits 'output_B'.
         LEP injects 'CORRUPTED'.  Each fixture's cell should only flag its
         own downstream events using its own clean reference."""
+        monkeypatch.setattr(PropagationAnalyzer, '_load_fixture_spec',
+                            staticmethod(lambda ref: {'task_family': ref.task_family}))
         # Build clean events for fixture A
         clean_a = [
             _mk_event(0, TraceEventType.TOOL_CALL, output_text="output_A", tool_name="search"),
@@ -474,7 +485,7 @@ class TestSyntheticTwoFixtureRegression:
                     f"{fx}_b_{i:02d}",
                     [deepcopy(e) for e in events],
                     fixture_id=fx,
-                    task_family="shared_family",
+                    task_family="code_review",
                     topology="review_loop",
                     repetition_index=i,
                 )
@@ -487,7 +498,7 @@ class TestSyntheticTwoFixtureRegression:
             lep_events[1].output_text = "CORRUPTED"
             _write_trace_json(tmp_path, _lep_trace(
                 f"{fx}_lep_00", lep_events, "LEP_TOOL_RESULT_CORRUPTION",
-                fixture_id=fx, task_family="shared_family",
+                fixture_id=fx, task_family="code_review",
             ))
 
         analyzer = PropagationAnalyzer(tmp_path)
@@ -512,7 +523,7 @@ class TestSyntheticTwoFixtureRegression:
             trace = call.kwargs["trace"]
             ref = call.kwargs["benign_ref"]
             assert ref.fixture_id == trace.metadata["fixture_id"]
-            assert all(clean.events[2].output_text == trace.events[2].output_text for clean in ref.traces)
+            assert all(clean.events[-1].output_text == trace.events[-1].output_text for clean in ref.traces)
         by_cell = summary["by_cell"]
 
         # Must produce exactly 2 cells (one per fixture)
@@ -541,7 +552,7 @@ class TestSyntheticTwoFixtureRegression:
             for i in range(5):
                 trace = _mk_trace(
                     f"{fx}_b_{i:02d}", [deepcopy(e) for e in events],
-                    fixture_id=fx, task_family="same_family", topology="review_loop",
+                    fixture_id=fx, task_family="code_review", topology="review_loop",
                     repetition_index=i,
                 )
                 _write_trace_json(tmp_path, trace)
