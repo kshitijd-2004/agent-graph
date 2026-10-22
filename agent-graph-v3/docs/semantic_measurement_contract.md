@@ -1,4 +1,11 @@
-# Semantic measurement contract v1
+# Semantic measurement contract v2
+
+The offline production runner and coverage diagnosis are documented in
+[semantic_production_measurement.md](semantic_production_measurement.md).
+Version 2 adds explicit verified-nondelivery decisions, a bounded document
+extractor with uncovered spans, source bundles, and semantic-mutation-backed
+exact-record forwarding evidence. It does not certify general production prose.
+Historical v1 artifacts and the historical v2 evaluator are unchanged.
 
 This opt-in development module is separate from the production propagation
 analyzer, semantic MP dev1, and the historical semantic MP v2 evaluator. It uses

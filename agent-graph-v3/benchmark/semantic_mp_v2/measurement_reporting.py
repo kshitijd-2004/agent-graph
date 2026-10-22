@@ -27,12 +27,23 @@ def summarize_measurements(results):
         }
     profiles = [row['clean_comparison'] for r in results for row in r.get('claim_assessments', [])]
     reasons = Counter(g['reason'] for r in results for ep in r['endpoints'].values() for g in ep.get('gaps', []))
+    gap_traces = Counter(reason for r in results for reason in {
+        g['reason'] for ep in r['endpoints'].values() for g in ep.get('gaps', [])})
+    extractions = [x['result'] for r in results for x in r.get('extractions', {}).values()]
+    extraction_coverage = Counter('complete' if x['complete'] and x['method'].startswith('deterministic')
+        else 'partial' if x['propositions'] else 'failed' for x in extractions)
     return {'version': VERSION, 'development_only': True, 'independent_validation': False,
             'pipeline_configurations': pipeline_configs, 'endpoints': endpoints,
             'claim_comparison_count': len(profiles),
             'clean_comparison_counts': dict(sum((Counter(p['counts']) for p in profiles), Counter())),
             'clean_support_tiers': dict(Counter(p['tier'] for p in profiles)),
             'gap_counts': dict(reasons),
+            'gap_trace_counts': dict(gap_traces),
+            'endpoint_gap_counts': {ep: dict(Counter(g['reason'] for r in results
+                for g in r['endpoints'].get(ep, {}).get('gaps', []))) for ep in endpoint_names},
+            'extraction_coverage': dict(extraction_coverage),
+            'extraction_methods': dict(Counter(x['method'] for x in extractions)),
+            'extraction_counting_unit': 'distinct text within each trace; repeated text across traces is counted again',
             'registry_snapshots': {fingerprint(r['configuration']['registry']): r['configuration']['registry']
                                    for r in results if 'configuration' in r},
             'configuration_hashes': sorted({r['configuration_sha256'] for r in results if 'configuration_sha256' in r}),

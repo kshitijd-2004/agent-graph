@@ -2,7 +2,7 @@
 
 The core accepts trusted, prepared provenance. Real traces must use evaluate_trace,
 which reconstructs delivery and selects context checks without model discretion.
-No production entry point, live transport, or full-dataset scanning is enabled.
+The dedicated offline runner lives in scripts.measure_semantic_propagation.
 """
 from dataclasses import asdict
 import hashlib
@@ -51,7 +51,8 @@ def assess_semantics(*, mutations, behaviors, clean_runs, authoritative, extract
             ids.append(graph.add(claim_id, kind='grounded_claim', depends_on=spans,
                 state='supported' if spans and claim.grounding == 'deterministic_supported' else 'unknown',
                 source=source, proposition=asdict(claim),
-                attribution={'attributed_source': None, 'source_attribution_status': 'unresolved',
+                attribution={'attributed_source': getattr(claim, 'attributed_source', None),
+                    'source_attribution_status': getattr(claim, 'source_attribution_status', 'unresolved'),
                     'agent_commitment': {'asserted': 'endorses', 'rejected': 'rejects', 'quoted': 'reports'}.get(claim.stance, 'unresolved'),
                     'modality': claim.stance if claim.stance in ('hypothetical', 'uncertain') else 'actual'}))
         coverage = graph.add('coverage:' + source, kind='extraction_coverage', depends_on=ids,
@@ -277,7 +278,8 @@ def assess_semantics(*, mutations, behaviors, clean_runs, authoritative, extract
         endpoints[ep]['gaps'] = gaps[ep]
     package = Path(__file__).resolve().parent
     implementation_paths = [package / name for name in (
-        'measurement.py', 'measurement_contract.py', 'measurement_reporting.py', 'extraction.py')]
+        'measurement.py', 'measurement_contract.py', 'measurement_reporting.py', 'extraction.py',
+        'production_rules.py', 'production_extraction.py', 'sources.py')]
     implementation_paths.extend([package.parent / 'semantic_mp/extraction.py',
                                  package.parent / 'memory_delivery_audit.py'])
     configuration = {'contract_version': VERSION, 'alignment_version': ALIGNMENT_VERSION,
@@ -285,7 +287,8 @@ def assess_semantics(*, mutations, behaviors, clean_runs, authoritative, extract
                      'implementation_sha256': {str(p.relative_to(package.parent)): hashlib.sha256(p.read_bytes()).hexdigest()
                                                for p in implementation_paths},
                      'retrieval': 'exhaustive_within_prepared_scope', 'independent_validation': False,
-                     'capabilities': ['direct_semantic_adoption'],
+                     'capabilities': ['direct_semantic_adoption', 'verified_nondelivery_negatives',
+                                      'full_changed_record_forwarding_with_semantic_mutation_proof'],
                      'unsupported': ['general_entailment', 'derived_semantic_consequences', 'required_omission_attribution']}
     return {'version': VERSION, 'development_only': True, 'configuration': configuration,
             'configuration_sha256': fingerprint(configuration), 'endpoints': endpoints,
@@ -381,4 +384,6 @@ def evaluate_trace(trace, clean_traces, *, authoritative_text, extractor, regist
             result['endpoints'][ep] = decision('unknown', 'evidence_insufficient', 'unresolved_delivery_or_retrieval_selection')
     result.update(admission=admission.to_dict(), delivery=delivery, clean_trace_ids=[c.trace_id for c in clean],
                   clean_run_provenance=[{'run_id': r['run_id'], 'trace_id': r['trace_id']} for r in clean_runs])
+    from benchmark.semantic_mp_v2.production_rules import apply_delivery_decisions
+    apply_delivery_decisions(result, trace)
     return result

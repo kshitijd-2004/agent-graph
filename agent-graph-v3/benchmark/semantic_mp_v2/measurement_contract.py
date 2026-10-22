@@ -7,8 +7,8 @@ import json
 from benchmark.behavioral_anomaly import MIN_CLEAN_RUNS_REQUIRED, STABLE_SUPPORT_THRESHOLD
 from benchmark.semantic_mp_v2.extraction import aligned_key, observable_aliases
 
-VERSION = "semantic-measurement-contract-v1"
-ALIGNMENT_VERSION = "explicit-identity-or-unresolved-v1"
+VERSION = "semantic-measurement-contract-v2"
+ALIGNMENT_VERSION = "explicit-identity-or-unresolved-v2"
 
 
 def fingerprint(value):
@@ -46,6 +46,11 @@ def identity_relation(a, b, registry):
     No retrieval cutoff can establish absence.
     """
     left, right = registry.key(a), registry.key(b)
+    # Code symbols are case/punctuation sensitive. Tokenized natural-language
+    # keys must not merge api.foo_bar with api.foo.bar or Widget with widget.
+    if a.predicate == 'code_defect' or b.predicate == 'code_defect':
+        return ('same' if (a.kind, a.subject, a.predicate, a.scope) ==
+                (b.kind, b.subject, b.predicate, b.scope) else 'unresolved')
     if left == right:
         return "same"
     if a.kind != b.kind:
