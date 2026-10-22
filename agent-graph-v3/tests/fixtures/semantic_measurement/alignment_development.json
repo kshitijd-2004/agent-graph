@@ -1,0 +1,104 @@
+{
+  "schema": "semantic-alignment-development-v1",
+  "label_origin": "assistant_authored_development",
+  "independent_validation": false,
+  "rubric_version": "semantic-alignment-review-v1",
+  "cases": [
+    {
+      "id": "financial_alias", "task_family": "financial_analysis", "stratum": "explicit_alias",
+      "task_source": "Acme Corporation (ACME) is the reporting entity.",
+      "left_text": "Acme Corporation debt: 100 USD", "right_text": "ACME debt: 100 USD",
+      "left": {"subject": "Acme Corporation debt", "predicate": "amount", "value": "100", "unit": "usd"},
+      "right": {"subject": "ACME debt", "predicate": "amount", "value": "100", "unit": "usd"},
+      "expected_identity": "same"
+    },
+    {
+      "id": "financial_disjoint", "task_family": "financial_analysis", "stratum": "disjoint_paraphrase",
+      "task_source": "For this report, borrowing obligations and outstanding loans refer to the same debt balance.",
+      "left_text": "Borrowing obligations: 100 USD", "right_text": "Outstanding loans: 100 USD",
+      "left": {"subject": "borrowing obligations", "predicate": "amount", "value": "100", "unit": "usd"},
+      "right": {"subject": "outstanding loans", "predicate": "amount", "value": "100", "unit": "usd"},
+      "expected_identity": "same"
+    },
+    {
+      "id": "financial_near_entity", "task_family": "financial_analysis", "stratum": "near_entity",
+      "task_source": "Acme North and Acme South are separate reporting entities.",
+      "left_text": "Acme North debt: 100 USD", "right_text": "Acme South debt: 100 USD",
+      "left": {"subject": "Acme North debt", "predicate": "amount", "value": "100", "unit": "usd"},
+      "right": {"subject": "Acme South debt", "predicate": "amount", "value": "100", "unit": "usd"},
+      "expected_identity": "different"
+    },
+    {
+      "id": "financial_year", "task_family": "financial_analysis", "stratum": "scope_difference",
+      "task_source": "Report separate fiscal-year debt balances.",
+      "left_text": "Debt (2024): 100 USD", "right_text": "Debt (2025): 100 USD",
+      "left": {"subject": "debt", "predicate": "amount", "value": "100", "unit": "usd", "scope": "2024"},
+      "right": {"subject": "debt", "predicate": "amount", "value": "100", "unit": "usd", "scope": "2025"},
+      "expected_identity": "different"
+    },
+    {
+      "id": "code_disjoint", "task_family": "code_review", "stratum": "disjoint_paraphrase",
+      "task_source": "The download endpoint and file-serving route both name the same /download handler.",
+      "left_text": "The download endpoint permits directory escape.", "right_text": "The file-serving route allows traversal.",
+      "left": {"subject": "download endpoint", "predicate": "path traversal", "value": "present"},
+      "right": {"subject": "file-serving route", "predicate": "path traversal", "value": "present"},
+      "expected_identity": "same"
+    },
+    {
+      "id": "code_near_endpoint", "task_family": "code_review", "stratum": "near_entity",
+      "task_source": "The /download handler and /downloads handler are distinct functions.",
+      "left_text": "Defect in /download: present", "right_text": "Defect in /downloads: present",
+      "left": {"subject": "/download", "predicate": "defect", "value": "present"},
+      "right": {"subject": "/downloads", "predicate": "defect", "value": "present"},
+      "expected_identity": "different"
+    },
+    {
+      "id": "code_version", "task_family": "code_review", "stratum": "scope_difference",
+      "task_source": "Review versions v1 and v2 separately.",
+      "left_text": "Defect in endpoint version v1: present", "right_text": "Defect in endpoint version v2: absent",
+      "left": {"subject": "endpoint", "predicate": "defect", "value": "present", "scope": "version v1"},
+      "right": {"subject": "endpoint", "predicate": "defect", "value": "absent", "scope": "version v2"},
+      "expected_identity": "different"
+    },
+    {
+      "id": "code_polarity", "task_family": "code_review", "stratum": "aligned_contradiction",
+      "task_source": "Both statements concern the same endpoint and code version.",
+      "left_text": "Defect in endpoint: present", "right_text": "Defect in endpoint: absent",
+      "left": {"subject": "endpoint", "predicate": "defect", "value": "present"},
+      "right": {"subject": "endpoint", "predicate": "defect", "value": "absent"},
+      "expected_identity": "same"
+    },
+    {
+      "id": "research_disjoint", "task_family": "research_synthesis", "stratum": "disjoint_paraphrase",
+      "task_source": "The active treatment and intervention arm refer to treatment T in trial A.",
+      "left_text": "The active treatment improved accuracy.", "right_text": "The intervention arm increased accuracy.",
+      "left": {"subject": "active treatment", "predicate": "accuracy effect", "value": "increase"},
+      "right": {"subject": "intervention arm", "predicate": "accuracy effect", "value": "increase"},
+      "expected_identity": "same"
+    },
+    {
+      "id": "research_near_study", "task_family": "research_synthesis", "stratum": "near_entity",
+      "task_source": "Trial A1 and Trial A2 are separate experiments.",
+      "left_text": "Trial A1 supports the claim.", "right_text": "Trial A2 supports the claim.",
+      "left": {"subject": "Trial A1", "predicate": "claim verdict", "value": "supported"},
+      "right": {"subject": "Trial A2", "predicate": "claim verdict", "value": "supported"},
+      "expected_identity": "different"
+    },
+    {
+      "id": "research_reporting", "task_family": "research_synthesis", "stratum": "quotation_commitment",
+      "task_source": "Both passages refer to Claim 1; the second only reports someone else's verdict.",
+      "left_text": "Claim 1: SUPPORTED", "right_text": "Quoted: Claim 1: SUPPORTED",
+      "left": {"subject": "Claim 1", "predicate": "verdict", "value": "supported", "stance": "asserted"},
+      "right": {"subject": "Claim 1", "predicate": "verdict", "value": "supported", "stance": "quoted"},
+      "expected_identity": "same"
+    },
+    {
+      "id": "code_missing_scope", "task_family": "code_review", "stratum": "insufficient_context",
+      "task_source": "Two versions of the endpoint exist. The second statement does not identify its version.",
+      "left_text": "Defect in endpoint v1: present", "right_text": "Defect in endpoint: present",
+      "left": {"subject": "endpoint", "predicate": "defect", "value": "present", "scope": "version v1"},
+      "right": {"subject": "endpoint", "predicate": "defect", "value": "present"},
+      "expected_identity": "unresolved"
+    }
+  ]
+}
