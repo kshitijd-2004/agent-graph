@@ -1,0 +1,128 @@
+{
+  "report_version": "1.0",
+  "generated_at": "2026-09-29T23:55:00Z",
+  "status": "INCOMPLETE - materialization did not reach 300 fixtures",
+  "total_fixtures_expected": 300,
+  "total_fixtures_materialized": 114,
+  "total_fixtures_in_workspace_fixtures_v3": 114,
+  "validation_total_pass": 453,
+  "validation_total_fail": 117,
+  "materialization_scope": {
+    "fixtures_1_100_materialized": 59,
+    "fixtures_101_200_materialized": 55,
+    "fixtures_201_300_materialized": 0,
+    "note": "Materializer stopped at fixture 114; fixtures 115-300 not created"
+  },
+  "validation_results_by_range": {
+    "fixtures_1_100": {
+      "total_pass": 293,
+      "total_fail": 47,
+      "unique_failing_fixtures": 32,
+      "failure_categories": {
+        "patch-concepts_grading": 47,
+        "gold_probe": 15,
+        "paraphrase_probe": 32
+      }
+    },
+    "fixtures_101_114": {
+      "total_pass": 160,
+      "total_fail": 70,
+      "unique_failing_fixtures": 14,
+      "failure_categories": {
+        "workspace_source_grounding": 70,
+        "task_prompt_missing": 70
+      }
+    },
+    "fixtures_115_300": {
+      "note": "Not materialized - no validation data"
+    }
+  },
+  "pre_existing_failing_fixtures_1_100": [
+    "code_review_swe_003_django_django_11880",
+    "code_review_swe_005_django_django_12304",
+    "code_review_swe_007_django_django_15569",
+    "code_review_swe_008_django_django_15741",
+    "code_review_swe_010_django_django_16082",
+    "code_review_swe_011_django_django_16373",
+    "code_review_swe_013_django_django_10880",
+    "code_review_swe_015_django_django_11066",
+    "code_review_swe_022_sympy_sympy_15349",
+    "code_review_swe_023_sympy_sympy_15809",
+    "code_review_swe_028_sympy_sympy_17630",
+    "code_review_swe_033_sphinx_doc_sphinx_9230",
+    "code_review_swe_042_scikit_learn_scikit_learn_14087",
+    "code_review_swe_062_matplotlib_matplotlib_20488",
+    "code_review_swe_063_astropy_astropy_12907",
+    "code_review_swe_067_astropy_astropy_14365",
+    "code_review_swe_068_scikit_learn_scikit_learn_14524",
+    "code_review_swe_069_scikit_learn_scikit_learn_14644",
+    "code_review_swe_070_scikit_learn_scikit_learn_14803",
+    "code_review_swe_071_scikit_learn_scikit_learn_14891",
+    "code_review_swe_072_scikit_learn_scikit_learn_14958",
+    "code_review_swe_073_scikit_learn_scikit_learn_15018",
+    "code_review_swe_074_scikit_learn_scikit_learn_15112",
+    "code_review_swe_075_scikit_learn_scikit_learn_15199",
+    "code_review_swe_076_scikit_learn_scikit_learn_15240",
+    "code_review_swe_077_scikit_learn_scikit_learn_15343",
+    "code_review_swe_078_scikit_learn_scikit_learn_15415",
+    "code_review_swe_079_scikit_learn_scikit_learn_15522",
+    "code_review_swe_080_scikit_learn_scikit_learn_15628",
+    "code_review_swe_081_scikit_learn_scikit_learn_15708",
+    "code_review_swe_082_scikit_learn_scikit_learn_15840",
+    "code_review_swe_083_scikit_learn_scikit_learn_15967"
+  ],
+  "new_failing_fixtures_101_114": [
+    "code_review_swe_101_scikit_learn_scikit_learn_14141",
+    "code_review_swe_102_astropy_astropy_13453",
+    "code_review_swe_103_django_django_10097",
+    "code_review_swe_104_django_django_11119",
+    "code_review_swe_105_django_django_11133",
+    "code_review_swe_106_django_django_11163",
+    "code_review_swe_107_django_django_11299",
+    "code_review_swe_108_django_django_11451",
+    "code_review_swe_109_django_django_11477",
+    "code_review_swe_110_django_django_11603",
+    "code_review_swe_111_django_django_12125",
+    "code_review_swe_112_django_django_12262",
+    "code_review_swe_113_django_django_12419",
+    "code_review_swe_114_django_django_12965"
+  ],
+  "detailed_failure_analysis": {
+    "pre_existing_1_100": {
+      "total_failures": 47,
+      "unique_fixtures": 32,
+      "error_type": "AssertionError",
+      "error_pattern": "found_issues=[] - required issue_1 not matched",
+      "grading_details_example": {
+        "fixture": "code_review_swe_013_django_django_10880",
+        "issue_1": {
+          "matched": false,
+          "location": "function",
+          "concepts_found": [false, true],
+          "coherent_explanation": false
+        }
+      },
+      "root_cause": "Curated gold/paraphrase probes in curated.py do not align with evaluator patch-concept rubric",
+      "category": "patch-concepts grading / gold probe / paraphrase probe",
+      "fixable": false,
+      "recommendation": "Review and update curated.py entries to match current evaluator implementation"
+    },
+    "new_101_114": {
+      "total_failures": 70,
+      "unique_fixtures": 14,
+      "error_type": "KeyError",
+      "error_pattern": "KeyError: 'task_prompt'",
+      "root_cause": "Draft manifests and materializer do not set task_prompt field for fixtures 101+",
+      "category": "workspace/source grounding",
+      "fixable": true,
+      "recommendation": "Add task_prompt to draft manifests and regenerate fixtures 101-300"
+    }
+  },
+  "missing_fixtures_115_300": 186,
+  "next_steps": [
+    "1. Fix task_prompt generation in materializer or draft manifests",
+    "2. Re-materialize fixtures 101-300 with task_prompt field",
+    "3. Re-run validation on complete 300-fixture set",
+    "4. Address pre-existing 32 fixture failures in 1-100 (separate from expansion task)"
+  ]
+}
