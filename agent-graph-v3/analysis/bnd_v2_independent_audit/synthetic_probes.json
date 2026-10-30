@@ -1,0 +1,469 @@
+{
+  "all_unmatched_full_vs_stage": {
+    "full": null,
+    "stage": {
+      "bug1": false,
+      "bug2": false
+    }
+  },
+  "benign_identical_progression": {
+    "behavioral_convergence": null,
+    "checkpoints": [
+      {
+        "after_boundary": true,
+        "available": true,
+        "event_index": 1,
+        "is_final": false,
+        "key": "handoff:last:analyst",
+        "mean_ref_distance": 0.0,
+        "ref_distances": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "after_boundary": true,
+        "available": true,
+        "event_index": 2,
+        "is_final": true,
+        "key": "final",
+        "mean_ref_distance": 0.0,
+        "ref_distances": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ],
+    "d_final": 0.0,
+    "d_peak": 0.0,
+    "final_deviation": false,
+    "high_intermediate_deviation": false,
+    "n_available_checkpoints": 2,
+    "n_checkpoints": 2,
+    "recovery_stage": null,
+    "stage_threshold": 0.0,
+    "trace_id": "probe",
+    "unavailable": [],
+    "verified_recovery": true,
+    "verified_unavailable_reason": []
+  },
+  "equivalent_units_distance": {
+    "a": {
+      "income": null,
+      "revenue": 1e-06
+    },
+    "b": {
+      "income": null,
+      "revenue": 0.001
+    },
+    "distance": 0.9990000000000001
+  },
+  "file_mention_counts_as_both_repairs": [
+    {
+      "bug1": true,
+      "bug2": true
+    },
+    []
+  ],
+  "final_answer_bad_candidates": {
+    "Net margin was 20%. The requested cash balance is unavailable.": [
+      20.0,
+      [
+        "final_answer:percent_last"
+      ]
+    ],
+    "The answer for 2004 is 8.91%.": [
+      2004.0,
+      [
+        "final_answer:answer_line"
+      ]
+    ],
+    "The ratio is 12.34.": [
+      null,
+      [
+        "final_answer:not_established"
+      ]
+    ]
+  },
+  "origin_only_changed": {
+    "attempt_id": "origin_only",
+    "bnd": 0.27689227689227686,
+    "comparable": true,
+    "component_benign": {
+      "actions": 0.0,
+      "assertions": 0.0,
+      "decisions": null,
+      "outcomes": null
+    },
+    "component_lep": {
+      "actions": 0.0,
+      "assertions": 0.4499499499499499,
+      "decisions": null,
+      "outcomes": null
+    },
+    "d_benign": 0.0,
+    "d_lep": 0.27689227689227686,
+    "features": {
+      "b0": {
+        "code_paths": [],
+        "coverage": {
+          "actions": false,
+          "assertions": true,
+          "decisions": false,
+          "outcomes": false
+        },
+        "diagnostics": [
+          "final_answer:not_established"
+        ],
+        "final_answer_value": null,
+        "financial_facts": {
+          "income": 2e-05,
+          "revenue": 0.0001
+        },
+        "n_actions": 0,
+        "report_paths": []
+      },
+      "b1": {
+        "code_paths": [],
+        "coverage": {
+          "actions": false,
+          "assertions": true,
+          "decisions": false,
+          "outcomes": false
+        },
+        "diagnostics": [
+          "final_answer:not_established"
+        ],
+        "final_answer_value": null,
+        "financial_facts": {
+          "income": 2e-05,
+          "revenue": 0.0001
+        },
+        "n_actions": 0,
+        "report_paths": []
+      },
+      "b2": {
+        "code_paths": [],
+        "coverage": {
+          "actions": false,
+          "assertions": true,
+          "decisions": false,
+          "outcomes": false
+        },
+        "diagnostics": [
+          "final_answer:not_established"
+        ],
+        "final_answer_value": null,
+        "financial_facts": {
+          "income": 2e-05,
+          "revenue": 0.0001
+        },
+        "n_actions": 0,
+        "report_paths": []
+      },
+      "origin_only": {
+        "code_paths": [],
+        "coverage": {
+          "actions": false,
+          "assertions": true,
+          "decisions": false,
+          "outcomes": false
+        },
+        "diagnostics": [
+          "final_answer:not_established"
+        ],
+        "final_answer_value": null,
+        "financial_facts": {
+          "income": 2e-05,
+          "revenue": 0.000999
+        },
+        "n_actions": 0,
+        "report_paths": []
+      }
+    },
+    "legacy_anomaly": true,
+    "lep_code": "unknown",
+    "pair_benign": [
+      {
+        "a": "b0",
+        "actions": 0.0,
+        "assertions": 0.0,
+        "b": "b1",
+        "decisions": null,
+        "outcomes": null,
+        "total": 0.0,
+        "unavailable": [
+          "decisions",
+          "outcomes"
+        ]
+      },
+      {
+        "a": "b0",
+        "actions": 0.0,
+        "assertions": 0.0,
+        "b": "b2",
+        "decisions": null,
+        "outcomes": null,
+        "total": 0.0,
+        "unavailable": [
+          "decisions",
+          "outcomes"
+        ]
+      },
+      {
+        "a": "b1",
+        "actions": 0.0,
+        "assertions": 0.0,
+        "b": "b2",
+        "decisions": null,
+        "outcomes": null,
+        "total": 0.0,
+        "unavailable": [
+          "decisions",
+          "outcomes"
+        ]
+      }
+    ],
+    "pair_lep": [
+      {
+        "actions": 0.0,
+        "assertions": 0.4499499499499499,
+        "b": "b0",
+        "decisions": null,
+        "outcomes": null,
+        "total": 0.27689227689227686,
+        "unavailable": [
+          "decisions",
+          "outcomes"
+        ]
+      },
+      {
+        "actions": 0.0,
+        "assertions": 0.4499499499499499,
+        "b": "b1",
+        "decisions": null,
+        "outcomes": null,
+        "total": 0.27689227689227686,
+        "unavailable": [
+          "decisions",
+          "outcomes"
+        ]
+      },
+      {
+        "actions": 0.0,
+        "assertions": 0.4499499499499499,
+        "b": "b2",
+        "decisions": null,
+        "outcomes": null,
+        "total": 0.27689227689227686,
+        "unavailable": [
+          "decisions",
+          "outcomes"
+        ]
+      }
+    ],
+    "propagation_mode": "",
+    "reasons": [],
+    "references": [
+      "b0",
+      "b1",
+      "b2"
+    ],
+    "soft_diagnostics": [],
+    "stage": {
+      "behavioral_convergence": true,
+      "checkpoints": [
+        {
+          "after_boundary": true,
+          "available": true,
+          "event_index": 1,
+          "is_final": false,
+          "key": "handoff:last:analyst",
+          "mean_ref_distance": 0.27689227689227686,
+          "ref_distances": [
+            0.27689227689227686,
+            0.27689227689227686,
+            0.27689227689227686
+          ]
+        },
+        {
+          "after_boundary": true,
+          "available": true,
+          "event_index": 2,
+          "is_final": true,
+          "key": "final",
+          "mean_ref_distance": 0.0,
+          "ref_distances": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "d_final": 0.0,
+      "d_peak": 0.27689227689227686,
+      "final_deviation": false,
+      "high_intermediate_deviation": true,
+      "n_available_checkpoints": 2,
+      "n_checkpoints": 2,
+      "recovery_stage": "final",
+      "stage_threshold": 0.0,
+      "trace_id": "origin_only",
+      "unavailable": [],
+      "verified_recovery": true,
+      "verified_unavailable_reason": []
+    },
+    "status": "measured",
+    "task_family": "financial_analysis",
+    "threshold": {
+      "behavioral_anomaly": true,
+      "t": 0.0
+    },
+    "topology": "branch_and_verify",
+    "trace_id": "origin_only",
+    "version": "agentprop-baseline-deviation-v2",
+    "weights": {
+      "actions": 0.25,
+      "assertions": 0.4,
+      "decisions": 0.25,
+      "outcomes": 0.1
+    }
+  },
+  "parallel_AB": {
+    "behavioral_convergence": true,
+    "checkpoints": [
+      {
+        "after_boundary": true,
+        "available": true,
+        "event_index": 1,
+        "is_final": false,
+        "key": "handoff:last:A",
+        "mean_ref_distance": 0.27689227689227686,
+        "ref_distances": [
+          0.27689227689227686,
+          0.27689227689227686,
+          0.27689227689227686
+        ]
+      },
+      {
+        "after_boundary": true,
+        "available": true,
+        "event_index": 2,
+        "is_final": false,
+        "key": "handoff:last:B",
+        "mean_ref_distance": 0.0,
+        "ref_distances": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "after_boundary": true,
+        "available": true,
+        "event_index": 3,
+        "is_final": true,
+        "key": "final",
+        "mean_ref_distance": 0.27689227689227686,
+        "ref_distances": [
+          0.27689227689227686,
+          0.27689227689227686,
+          0.27689227689227686
+        ]
+      }
+    ],
+    "d_final": 0.27689227689227686,
+    "d_peak": 0.27689227689227686,
+    "final_deviation": true,
+    "high_intermediate_deviation": true,
+    "n_available_checkpoints": 3,
+    "n_checkpoints": 3,
+    "recovery_stage": "handoff:last:B",
+    "stage_threshold": 0.0,
+    "trace_id": "orderAB",
+    "unavailable": [],
+    "verified_recovery": false,
+    "verified_unavailable_reason": []
+  },
+  "parallel_BA": {
+    "behavioral_convergence": false,
+    "checkpoints": [
+      {
+        "after_boundary": true,
+        "available": true,
+        "event_index": 1,
+        "is_final": false,
+        "key": "handoff:last:B",
+        "mean_ref_distance": 0.0,
+        "ref_distances": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "after_boundary": true,
+        "available": true,
+        "event_index": 2,
+        "is_final": false,
+        "key": "handoff:last:A",
+        "mean_ref_distance": 0.27689227689227686,
+        "ref_distances": [
+          0.27689227689227686,
+          0.27689227689227686,
+          0.27689227689227686
+        ]
+      },
+      {
+        "after_boundary": true,
+        "available": true,
+        "event_index": 3,
+        "is_final": true,
+        "key": "final",
+        "mean_ref_distance": 0.27689227689227686,
+        "ref_distances": [
+          0.27689227689227686,
+          0.27689227689227686,
+          0.27689227689227686
+        ]
+      }
+    ],
+    "d_final": 0.27689227689227686,
+    "d_peak": 0.27689227689227686,
+    "final_deviation": true,
+    "high_intermediate_deviation": true,
+    "n_available_checkpoints": 3,
+    "n_checkpoints": 3,
+    "recovery_stage": null,
+    "stage_threshold": 0.0,
+    "trace_id": "orderBA",
+    "unavailable": [],
+    "verified_recovery": false,
+    "verified_unavailable_reason": []
+  },
+  "report_path_heuristic": {
+    "notes.md": false,
+    "reports/result.md": true,
+    "src/analysis.py": true,
+    "src/report.py": true,
+    "src/review.py": true
+  },
+  "report_rename_pair": {
+    "actions": 1.0,
+    "assertions": null,
+    "decisions": 0.0,
+    "outcomes": 0.0,
+    "total": 0.4166666666666667,
+    "trace_a": "reports/alpha.md",
+    "trace_b": "reports/beta.md",
+    "unavailable": [
+      "assertions"
+    ]
+  },
+  "tool_metadata_target": {
+    "actions": 1.0,
+    "assertions_unchanged": true
+  }
+}

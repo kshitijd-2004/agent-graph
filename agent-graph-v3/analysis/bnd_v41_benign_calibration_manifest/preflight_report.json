@@ -1,0 +1,1199 @@
+{
+  "version": "bnd_v41_benign_calibration_preflight_v1",
+  "model_inference_performed": false,
+  "all_good": true,
+  "n_configs": 45,
+  "n_planned_executions": 270,
+  "planned_runs_per_config": [
+    6
+  ],
+  "reps_used": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "plan_settings_checks": {
+    "n_planned_executions": 270,
+    "all_benign": true,
+    "reps_used": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "per_config_counts_ok": true,
+    "planned_runs_per_config": [
+      6
+    ],
+    "dup_configs_without_var": [],
+    "all_configs_have_6": true,
+    "scenario_ids_unique": true,
+    "fixture_hashes_present": true,
+    "model_is_72b_awq": true,
+    "not_qwen3_8b": true,
+    "temp_is_0p4": true,
+    "seed_is_42": true,
+    "backend_vllm": true,
+    "loader_membership_validated": true
+  },
+  "duplicate_fixture_checks": {
+    "n_configs": 45,
+    "dup_config_cells": {},
+    "n_distinct_fixtures": 34,
+    "fixture_reused_across_topologies": 7
+  },
+  "blockers": [],
+  "per_config": {
+    "financial_analysis|fin_finqa_004_ip_2005|review_loop|standard": {
+      "config_id": "financial_analysis|fin_finqa_004_ip_2005|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "actions"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_001_dish_2011|review_loop|memory_enabled": {
+      "config_id": "financial_analysis|fin_finqa_001_dish_2011|review_loop|memory_enabled",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [
+        "final_answer"
+      ],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_030_c_2009|review_loop|standard": {
+      "config_id": "financial_analysis|fin_finqa_030_c_2009|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "actions"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_041_d_2002|review_loop|standard": {
+      "config_id": "financial_analysis|fin_finqa_041_d_2002|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "actions"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_045_pnc_2015|review_loop|standard": {
+      "config_id": "financial_analysis|fin_finqa_045_pnc_2015|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "actions"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_2"
+      ],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_001_dish_2011|branch_and_verify|standard": {
+      "config_id": "financial_analysis|fin_finqa_001_dish_2011|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [
+        "final_answer"
+      ],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_002_cb_2008|branch_and_verify|memory_enabled": {
+      "config_id": "financial_analysis|fin_finqa_002_cb_2008|branch_and_verify|memory_enabled",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [
+        "final_answer"
+      ],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_049_dg_2009|branch_and_verify|standard": {
+      "config_id": "financial_analysis|fin_finqa_049_dg_2009|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "actions"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3"
+      ],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_086_adbe_2013|branch_and_verify|standard": {
+      "config_id": "financial_analysis|fin_finqa_086_adbe_2013|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "actions"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_129_tfx_2018|branch_and_verify|standard": {
+      "config_id": "financial_analysis|fin_finqa_129_tfx_2018|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "actions"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1"
+      ],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_001_dish_2011|coordinator_workers|standard": {
+      "config_id": "financial_analysis|fin_finqa_001_dish_2011|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [
+        "final_answer"
+      ],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_002_cb_2008|coordinator_workers|memory_enabled": {
+      "config_id": "financial_analysis|fin_finqa_002_cb_2008|coordinator_workers|memory_enabled",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "actions"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_088_vno_2012|coordinator_workers|standard": {
+      "config_id": "financial_analysis|fin_finqa_088_vno_2012|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "actions"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_012_grmn_2006|coordinator_workers|standard": {
+      "config_id": "financial_analysis|fin_finqa_012_grmn_2006|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [
+        "final_answer"
+      ],
+      "trace_id_format_ok": true
+    },
+    "financial_analysis|fin_finqa_052_msi_2006|coordinator_workers|standard": {
+      "config_id": "financial_analysis|fin_finqa_052_msi_2006|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "fact_1",
+        "fact_2",
+        "fact_3",
+        "fact_4"
+      ],
+      "decision_required_keys": [
+        "final_answer"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_002_927_1104|review_loop|standard": {
+      "config_id": "research_synthesis|res_scifact_002_927_1104|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_001_647_386|review_loop|memory_enabled": {
+      "config_id": "research_synthesis|res_scifact_001_647_386|review_loop|memory_enabled",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_258_1363_14|review_loop|standard": {
+      "config_id": "research_synthesis|res_scifact_258_1363_14|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_022_840_779|review_loop|standard": {
+      "config_id": "research_synthesis|res_scifact_022_840_779|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_227_1043_783|review_loop|standard": {
+      "config_id": "research_synthesis|res_scifact_227_1043_783|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_001_647_386|branch_and_verify|standard": {
+      "config_id": "research_synthesis|res_scifact_001_647_386|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_014_166_164|branch_and_verify|memory_enabled": {
+      "config_id": "research_synthesis|res_scifact_014_166_164|branch_and_verify|memory_enabled",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_027_1140_954|branch_and_verify|standard": {
+      "config_id": "research_synthesis|res_scifact_027_1140_954|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_002_927_1104|branch_and_verify|standard": {
+      "config_id": "research_synthesis|res_scifact_002_927_1104|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_003_250_1169|branch_and_verify|standard": {
+      "config_id": "research_synthesis|res_scifact_003_250_1169|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_002_927_1104|coordinator_workers|standard": {
+      "config_id": "research_synthesis|res_scifact_002_927_1104|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_001_647_386|coordinator_workers|memory_enabled": {
+      "config_id": "research_synthesis|res_scifact_001_647_386|coordinator_workers|memory_enabled",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_199_955_1047|coordinator_workers|standard": {
+      "config_id": "research_synthesis|res_scifact_199_955_1047|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_027_1140_954|coordinator_workers|standard": {
+      "config_id": "research_synthesis|res_scifact_027_1140_954|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "research_synthesis|res_scifact_090_183_444|coordinator_workers|standard": {
+      "config_id": "research_synthesis|res_scifact_090_183_444|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "decision_required_keys": [
+        "claim_1_verdict",
+        "claim_2_verdict"
+      ],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_006_django_django_14493|review_loop|standard": {
+      "config_id": "code_review|code_review_swe_006_django_django_14493|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_001_django_django_11179|review_loop|memory_enabled": {
+      "config_id": "code_review|code_review_swe_001_django_django_11179|review_loop|memory_enabled",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_063_astropy_astropy_12907|review_loop|standard": {
+      "config_id": "code_review|code_review_swe_063_astropy_astropy_12907|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "issue_1"
+      ],
+      "decision_required_keys": [
+        "issue_1"
+      ],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_042_scikit_learn_scikit_learn_14087|review_loop|standard": {
+      "config_id": "code_review|code_review_swe_042_scikit_learn_scikit_learn_14087|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_043_scikit_learn_scikit_learn_12585|review_loop|standard": {
+      "config_id": "code_review|code_review_swe_043_scikit_learn_scikit_learn_12585|review_loop|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "issue_1"
+      ],
+      "decision_required_keys": [
+        "issue_1"
+      ],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_001_django_django_11179|branch_and_verify|standard": {
+      "config_id": "code_review|code_review_swe_001_django_django_11179|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_002_django_django_11490|branch_and_verify|memory_enabled": {
+      "config_id": "code_review|code_review_swe_002_django_django_11490|branch_and_verify|memory_enabled",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_009_django_django_15814|branch_and_verify|standard": {
+      "config_id": "code_review|code_review_swe_009_django_django_15814|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "issue_1"
+      ],
+      "decision_required_keys": [
+        "issue_1"
+      ],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_011_django_django_16429|branch_and_verify|standard": {
+      "config_id": "code_review|code_review_swe_011_django_django_16429|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "issue_1"
+      ],
+      "decision_required_keys": [
+        "issue_1"
+      ],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_015_django_django_11066|branch_and_verify|standard": {
+      "config_id": "code_review|code_review_swe_015_django_django_11066|branch_and_verify|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "issue_1"
+      ],
+      "decision_required_keys": [
+        "issue_1"
+      ],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_001_django_django_11179|coordinator_workers|standard": {
+      "config_id": "code_review|code_review_swe_001_django_django_11179|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_002_django_django_11490|coordinator_workers|memory_enabled": {
+      "config_id": "code_review|code_review_swe_002_django_django_11490|coordinator_workers|memory_enabled",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_008_django_django_15741|coordinator_workers|standard": {
+      "config_id": "code_review|code_review_swe_008_django_django_15741|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "assertions",
+        "decisions",
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [
+        "issue_1"
+      ],
+      "decision_required_keys": [
+        "issue_1"
+      ],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_003_django_django_11880|coordinator_workers|standard": {
+      "config_id": "code_review|code_review_swe_003_django_django_11880|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    },
+    "code_review|code_review_swe_023_sympy_sympy_15809|coordinator_workers|standard": {
+      "config_id": "code_review|code_review_swe_023_sympy_sympy_15809|coordinator_workers|standard",
+      "reference_files_present": true,
+      "references_single_cell": true,
+      "cell_fixture_matches": true,
+      "cell_topology_matches": true,
+      "cell_variant_matches": true,
+      "reference_shape_agree": true,
+      "perturbed_comparable": true,
+      "perturbed_comparable_reasons": [],
+      "perturbed_structural_ok": true,
+      "component_mask": [
+        "actions",
+        "outcomes"
+      ],
+      "component_mask_valid": true,
+      "required_keys": [],
+      "decision_required_keys": [],
+      "trace_id_format_ok": true
+    }
+  }
+}
