@@ -1,0 +1,192 @@
+[
+  {
+    "check": "manifest schema",
+    "ok": true,
+    "detail": "agentprop-readiness-selection-v1"
+  },
+  {
+    "check": "scenario count == 7812",
+    "ok": true,
+    "detail": "7812"
+  },
+  {
+    "check": "scenario_id unique",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "run_id unique",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "execution_ready is False",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "blocker recorded",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "load_plan_manifest resolves all",
+    "ok": true,
+    "detail": "7812 entries"
+  },
+  {
+    "check": "loaded identities identical",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "all referenced fixtures exist on disk",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "check": "all fixture manifest hashes match live tree",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "check": "audit rows agree with planner identities",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "check": "seed == 42",
+    "ok": true,
+    "detail": "42"
+  },
+  {
+    "check": "temperature == 0.4",
+    "ok": true,
+    "detail": "0.4"
+  },
+  {
+    "check": "num_repetitions == 1",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "num_benign_repetitions == 3",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "max_events == 300",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "max_agent_turns == 80",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "dry_run is False",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "backend_name == vllm",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "model matches production",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "vllm_url matches sbatch PORT",
+    "ok": true,
+    "detail": "http://127.0.0.1:8001/v1"
+  },
+  {
+    "check": "all rows write_interception_v1",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "no ERP rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "execution variants only standard/memory_enabled",
+    "ok": true,
+    "detail": "['memory_enabled', 'standard']"
+  },
+  {
+    "check": "LEP codes are the 5 canonical",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "clean rows carry no LEP",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "MP rows use memory_enabled variant",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "non-MP perturbed rows use standard variant",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "no manifest row regenerates an on-disk accepted trace",
+    "ok": true,
+    "detail": "0 overlaps"
+  },
+  {
+    "check": "761 legacy unverifiable scenario_ids identified",
+    "ok": true,
+    "detail": "761"
+  },
+  {
+    "check": "legacy unverifiable excluded from rerun",
+    "ok": true,
+    "detail": "0 overlaps"
+  },
+  {
+    "check": "ERP (briefing_v1) fixtures absent from rerun",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "check": "ERP fixture hashes absent from rerun manifest",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "check": "_short_trace_id unique across selection",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "check": "attempt_id generated fresh per execution (uuid4)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "check": "split_plan covers all 100 tasks",
+    "ok": true,
+    "detail": "100 used"
+  },
+  {
+    "check": "split total == 7812",
+    "ok": true,
+    "detail": "7812"
+  },
+  {
+    "check": "every task has both clean and perturbed work",
+    "ok": true,
+    "detail": ""
+  }
+]
