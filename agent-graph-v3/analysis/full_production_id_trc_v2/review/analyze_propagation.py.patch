@@ -1,0 +1,22 @@
+--- /u/kdhande/agent-graph/agent-graph-v3/analysis/id_trc_v2_development/baseline_code/analyze_propagation.py
++++ scripts/analyze_propagation.py
+@@ -4,7 +4,7 @@
+ import logging
+ from pathlib import Path
+ 
+-from benchmark.production_propagation import ProductionPropagationAnalyzer, VERSION
++from benchmark.production_propagation import ProductionPropagationAnalyzer, VERSION, CORRECTED_VERSION
+ 
+ 
+ def main(argv=None):
+@@ -12,8 +12,8 @@
+     parser.add_argument('--source-dir', type=Path, required=True,
+                         help='Consolidated traces/ and rejected_traces/, or a root of node_* shards')
+     parser.add_argument('--output-dir', type=Path, required=True, help='New, separate output directory')
+-    parser.add_argument('--detector-version', choices=[VERSION, 'legacy'], default=VERSION,
+-                        help='Versioned suite: HC baseline-relative v1, IPI evidence v2, others legacy')
++    parser.add_argument('--detector-version', choices=[VERSION, CORRECTED_VERSION, 'legacy'], default=VERSION,
++                        help='agentprop-id-trc-v2 corrects ID/TRC; both versioned suites retain HC baseline-relative v1, IPI evidence v2, and legacy MP')
+     parser.add_argument('--fixture-root', type=Path, help='Defaults to repository workspace_fixtures')
+     parser.add_argument('--inventory-only', action='store_true', help='Discover, deduplicate, admit, and group references without detection')
+     args = parser.parse_args(argv)

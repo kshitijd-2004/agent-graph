@@ -1,0 +1,127 @@
+--- /u/kdhande/agent-graph/agent-graph-v3/analysis/id_trc_v2_development/baseline_code/production_propagation.py
++++ benchmark/production_propagation.py
+@@ -16,11 +16,13 @@
+ 
+ from benchmark import evidence_propagation as ipi
+ from benchmark import hc_baseline_relative as hc
++from benchmark import id_trc_v2
+ from benchmark.propagation_analysis import PropagationAnalyzer, PropagationResult
+ 
+ LOG = logging.getLogger(__name__)
+ ROOT = Path(__file__).resolve().parents[1]
+ VERSION = 'agentprop-hc-ipi-v1'
++CORRECTED_VERSION = id_trc_v2.VERSION
+ DETECTORS = {
+     'LEP_HANDOFF_CORRUPTION': hc.VERSION,
+     'LEP_INDIRECT_PROMPT_INJECTION': ipi.VERSION,
+@@ -89,9 +91,9 @@
+ def summarize(rows):
+     counts = Counter(r['classification'] for r in rows)
+     n = len(rows)
+-    return {'measured': n, **{s: counts[s] for s in ('positive', 'negative', 'unknown')},
++    return {'measured': n, **{s: counts[s] for s in ('positive', 'negative', 'unknown', 'incomparable')},
+             'detector_positive_fraction': counts['positive'] / n if n else None,
+-            'positive_fraction_denominator': 'all measured, including detector unknowns',
++            'positive_fraction_denominator': 'all measured, including detector unknowns and incomparable controls',
+             'candidate_positives': sum(r['endpoint_kind'] == 'propagation_candidate' and r['classification'] == 'positive' for r in rows),
+             'legacy_positives': sum(r['endpoint_kind'] == 'legacy_detection' and r['classification'] == 'positive' for r in rows),
+             'independently_validated_propagation_probability': None,
+@@ -101,10 +103,10 @@
+ 
+ 
+ class ProductionPropagationAnalyzer(PropagationAnalyzer):
+-    """Reuse standard ingestion/admission/analysis; dispatch only HC and IPI."""
++    """Reuse standard ingestion/admission; dispatch versioned LEP detectors."""
+ 
+     def __init__(self, source_dir, output_dir, *, detector_version=VERSION, fixture_root=None, plan=None):
+-        if detector_version not in (VERSION, 'legacy'):
++        if detector_version not in (VERSION, CORRECTED_VERSION, 'legacy'):
+             raise ValueError(f'Unknown detector suite: {detector_version}')
+         directories = discover_sources(source_dir)
+         output = Path(output_dir).resolve()
+@@ -132,6 +134,8 @@
+         self.source_dirs, self.plan = directories, plan
+         self.detector_version = detector_version
+         self.detectors = {k: 'legacy' if detector_version == 'legacy' else v for k, v in DETECTORS.items()}
++        if detector_version == CORRECTED_VERSION:
++            self.detectors.update({id_trc_v2.ID: CORRECTED_VERSION, id_trc_v2.TRC: CORRECTED_VERSION})
+         self.fixture_root = Path(fixture_root).resolve() if fixture_root else ROOT / 'workspace_fixtures'
+         self.inventory = []
+         self._inputs = {}
+@@ -225,6 +229,20 @@
+                       'anomalous_event_ids': result.anomalous_event_ids, 'anomaly_details': result.anomaly_details,
+                       'recovery_events': [], 'final_answer_impact': 'not_assessed'}
+             controls = benign_ref.traces
++        elif version == CORRECTED_VERSION:
++            controls = benign_ref.traces
++            spec = self._load_fixture_spec(benign_ref)
++            clean_ref = self._to_behavioral_clean_ref(benign_ref)
++            graph = builder.build(trace, benign_ref.topology, benign_ref.task_family, strict=False)
++            if lep_code == id_trc_v2.ID:
++                key = (version, tuple(t.file_path for t in controls))
++                if key not in self._profiles:
++                    self._profiles[key] = id_trc_v2.branch_reference(controls, clean_ref)
++                report = id_trc_v2.analyze_id(trace, controls, spec, clean_ref, graph, prepared=self._profiles[key])
++            else:
++                report = id_trc_v2.analyze_trc(trace, controls, spec, clean_ref, graph)
++            result = self._candidate_metrics(trace, benign_ref, lep_code, propagation_mode, report)
++            result.num_benign_reference_runs = len(controls)
+         else:
+             controls = benign_ref.traces[:3]
+             if len(controls) != 3 or any(t.metadata.get('repetition_index') is None for t in controls):
+@@ -252,7 +270,7 @@
+         native = report['status']
+         classification = 'negative' if native == 'no_detected_effect' else native
+         decision = {'classification': classification, 'detector_status': native,
+-                    'detector_version': version, 'detector_suite': self.detector_version,
++                    'detector_version': version, 'detector_suite': (VERSION if self.detector_version == CORRECTED_VERSION and lep_code not in (id_trc_v2.ID, id_trc_v2.TRC) else self.detector_version),
+                     'endpoint_kind': 'legacy_detection' if version == 'legacy' else 'propagation_candidate',
+                     'independently_validated': False,
+                     'final_answer_impact': report.get('final_answer_impact', report.get('final_impact', 'not_assessed')),
+@@ -261,6 +279,10 @@
+                     'graph_repairs': report.get('graph_repairs', []),
+                     'trace_path': trace.file_path, 'trace_sha256': self._inputs[trace.file_path]['sha256'],
+                     'clean_references': [self._reference(t) for t in controls]}
++        if version == CORRECTED_VERSION:
++            decision.update(clean_reference_comparability=report['clean_reference_comparability'],
++                            lifecycle=report.get('lifecycle', {}), detector_coverage=report['coverage'],
++                            transient_propagation=report['transient_propagation'], persistent_effect=report['persistent_effect'])
+         self._decisions[aid] = decision
+         self._attempt_by_trace[id(trace)].update(detector_version=version, detector_classification=classification,
+                                                  endpoint_kind=decision['endpoint_kind'])
+@@ -299,7 +321,7 @@
+         rows = [{**r.to_dict(), **self._decisions[r.attempt_id]} for r in per_trace]
+         # A binary compatibility field must never silently turn unknowns into negatives.
+         for row in rows:
+-            if row['classification'] == 'unknown':
++            if row['classification'] in ('unknown', 'incomparable'):
+                 row['propagation_occurred'] = None
+         write_jsonl(self.output_dir / 'propagation_metrics.jsonl', rows)
+         write_csv(self.output_dir / 'propagation_metrics.csv', rows)
+@@ -322,7 +344,7 @@
+         clean_admission = summary['clean_reference_admission']
+         summary.clear()
+         summary.update(detector_suite=self.detector_version, detectors=self.detectors,
+-            interpretation='HC/IPI positives are research candidates. Fractions are detector outputs, not independently validated probabilities.',
++            interpretation='Mixed versioned detectors: positives are research candidates or legacy detections. Fractions are not independently validated propagation probabilities.',
+             negative_definition='No detected effect within supported evidence; not a verified causal negative.',
+             overall=summarize(rows), **groups,
+             admission={'overall': overall_admission, 'by_cell': admission_cells},
+@@ -330,7 +352,7 @@
+         # The shared loop serializes attempt accounting before this output hook.
+         # Preserve unknown in the public binary compatibility field there too.
+         for row in self.attempts:
+-            if row.get('detector_classification') == 'unknown':
++            if row.get('detector_classification') in ('unknown', 'incomparable'):
+                 row['propagation_occurred'] = None
+         write_jsonl(self.output_dir / 'admission_attempts.jsonl', self.attempts)
+         write_json(self.output_dir / 'propagation_summary.json', summary)
+@@ -342,7 +364,7 @@
+                 'benchmark/evidence_propagation.py', 'benchmark/hc_baseline_relative.py',
+                 'benchmark/behavioral_anomaly.py', 'benchmark/attempt_accounting.py',
+                 'generation/admission.py', 'generation/injection_origins.py', 'generation/event_graph_builder.py',
+-                'scripts/analyze_propagation.py']
++                'scripts/analyze_propagation.py', 'benchmark/id_trc_v2.py']
+         write_json(self.output_dir / 'run_manifest.json', {
+             'state': state, 'detector_suite': self.detector_version, 'detectors': self.detectors,
+             'source_dir': str(self.source_dir), 'source_directories': [str(d) for d in self.source_dirs],
