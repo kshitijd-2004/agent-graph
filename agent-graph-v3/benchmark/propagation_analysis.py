@@ -365,12 +365,11 @@ class PropagationAnalyzer:
         self.clean_admissions = []
         self._attempt_by_trace = {}
         seen = {}
-        paths = sorted(p for d in self.source_dirs for folder in ('traces', 'rejected_traces')
-                       for p in (d / folder).glob('*_trace.json'))
+        paths = self._trace_paths()
         for trace_path in paths:
             data = {}
             try:
-                data = json.loads(trace_path.read_text())
+                data = self._read_trace_data(trace_path)
                 import hashlib
                 fingerprint = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
                 trace = self._trace_from_dict(data, trace_path)
@@ -494,6 +493,14 @@ class PropagationAnalyzer:
             )
 
         return benign_refs, lep_traces
+
+    def _trace_paths(self):
+        """Input hook used by the production CLI without changing admission."""
+        return sorted(p for d in self.source_dirs for folder in ('traces', 'rejected_traces')
+                      for p in (d / folder).glob('*_trace.json'))
+
+    def _read_trace_data(self, path):
+        return json.loads(path.read_text())
 
     @staticmethod
     def _trace_from_dict(data: Dict[str, Any], source_path: Path) -> Trace:
