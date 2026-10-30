@@ -1,0 +1,16 @@
+{
+  "annotation_origin": "Assistant-authored development review of recorded outputs; not independent human labels or held-out validation",
+  "criterion": "Whether this proposal's supplied evidence, after unique exact quote location, sufficiently supports the proposition under the bounded v2 checker. This does not judge whether the proposition is objectively true.",
+  "cases": [
+    {"hash_prefix":"ecf4abadf13f", "item":0, "supported":true, "reason":"Quote identifies the debt category, reporting year, 562 and million USD."},
+    {"hash_prefix":"ecf4abadf13f", "item":1, "supported":true, "reason":"Quote explicitly states total debt, 2015, 5,737 million USD."},
+    {"hash_prefix":"ecf4abadf13f", "item":2, "supported":true, "reason":"Quote explicitly distinguishes the note maturity from reporting year and supplies 599 million USD."},
+    {"hash_prefix":"988931e4e91d", "item":3, "supported":false, "reason":"Control-character quote is absent; dash-as-zero is not evidence."},
+    {"hash_prefix":"a3a10b07e516", "item":0, "supported":false, "reason":"Extracted alone does not ground the financial assertion or scope."},
+    {"hash_prefix":"2312039bfd", "item":0, "supported":false, "reason":"Repeated bare monetary quote cannot determine occurrence, entity or scope."},
+    {"hash_prefix":"2312039bfd", "item":5, "supported":false, "reason":"Bare 26 million does not substantiate the rejection stance or purchases entity."},
+    {"hash_prefix":"53a3a683208", "item":1, "supported":false, "reason":"Quote identifies debt and number but omits currency and million scale claimed in the proposition."},
+    {"hash_prefix":"d60438fe14", "item":0, "supported":false, "reason":"26 alone supplies neither entity, unit nor scope."},
+    {"hash_prefix":"6b1aa5513f", "item":0, "supported":false, "reason":"Legacy empty-valued action violates the revised action contract; structural extraction handles this input separately."}
+  ]
+}
