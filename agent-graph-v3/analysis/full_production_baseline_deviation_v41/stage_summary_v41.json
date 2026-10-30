@@ -1,0 +1,92 @@
+{
+ "correction_episodes_total": 321,
+ "corrections_with_recorded_path": 251,
+ "d_action_history": {
+  "max": 0.672716,
+  "mean": 0.102413,
+  "median": 0.0625,
+  "min": 0.0,
+  "n": 6908,
+  "p10": 0.0,
+  "p25": 0.0,
+  "p75": 0.166667,
+  "p90": 0.270833
+ },
+ "d_final_output": {
+  "max": 1.0,
+  "mean": 0.171337,
+  "median": 0.0,
+  "min": 0.0,
+  "n": 6908,
+  "p10": 0.0,
+  "p25": 0.0,
+  "p75": 0.333333,
+  "p90": 0.577778
+ },
+ "d_peak": {
+  "max": 1.0,
+  "mean": 0.211872,
+  "median": 0.166667,
+  "min": 0.0,
+  "n": 5063,
+  "p10": 0.0,
+  "p25": 0.0,
+  "p75": 0.333333,
+  "p90": 0.512821
+ },
+ "denominator": "comparable traces only (P4 fixed population)",
+ "dependency_supported_correction": {
+  "false": 50,
+  "n_present": 245,
+  "none": 8898,
+  "true": 195
+ },
+ "final_threshold": {
+  "max": 1.0,
+  "mean": 0.131307,
+  "median": 0.0,
+  "min": 0.0,
+  "n": 6711,
+  "p10": 0.0,
+  "p25": 0.0,
+  "p75": 0.0,
+  "p90": 0.5
+ },
+ "high_intermediate_deviation": {
+  "false": 3365,
+  "n_present": 4900,
+  "none": 4243,
+  "true": 1535
+ },
+ "n_comparable": 9143,
+ "note": "V4.1 recovery split: observed correction requires a genuine initial departure + an observed same-key change + matched benign support; dependency-supported correction additionally requires a REAL recorded dependency path (never \"final is later by construction\").  Relapse is examined on every episode and is never inferred from an aggregate final deviation.  Causal LEP attribution is not emitted.",
+ "observed_correction": {
+  "false": 2760,
+  "n_present": 3005,
+  "none": 6138,
+  "true": 245
+ },
+ "persistent_final_deviation": {
+  "false": 5313,
+  "n_present": 6711,
+  "none": 2432,
+  "true": 1398
+ },
+ "relapse": {
+  "false": 244,
+  "n_present": 245,
+  "none": 8898,
+  "true": 1
+ },
+ "stage_threshold": {
+  "max": 1.0,
+  "mean": 0.178118,
+  "median": 0.049848,
+  "min": 0.0,
+  "n": 4900,
+  "p10": 0.0,
+  "p25": 0.0,
+  "p75": 0.307692,
+  "p90": 0.5
+ }
+}

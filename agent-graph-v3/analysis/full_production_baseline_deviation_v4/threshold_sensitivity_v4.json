@@ -1,0 +1,52 @@
+{
+ "R0_legacy_Dlep_gt_T": {
+  "flagged": 2555,
+  "fraction": 0.279449,
+  "n_comparable": 9143,
+  "unevaluable": 580
+ },
+ "R1_bnd_gt_0": {
+  "flagged": 3247,
+  "fraction": 0.355135,
+  "n_comparable": 9143,
+  "unevaluable": 580
+ },
+ "R2_bnd_gt_0p05": {
+  "flagged": 2081,
+  "fraction": 0.227606,
+  "n_comparable": 9143,
+  "unevaluable": 580
+ },
+ "R3_Dlep_gt_T_plus_0p05": {
+  "flagged": 1767,
+  "fraction": 0.193263,
+  "n_comparable": 9143,
+  "unevaluable": 0
+ },
+ "R4_Dlep_gt_T_plus_0p10": {
+  "flagged": 1488,
+  "fraction": 0.162747,
+  "n_comparable": 9143,
+  "unevaluable": 0
+ },
+ "R5_Dlep_gt_T_times_1p25": {
+  "flagged": 2269,
+  "fraction": 0.248168,
+  "n_comparable": 9143,
+  "unevaluable": 0
+ },
+ "near_threshold": {
+  "n_abs_bnd_le_0p01_v3_rule": 3084,
+  "n_comparable": 9143,
+  "n_near_threshold_dlep": 2218,
+  "n_unevaluable": 580,
+  "note": "V4 corrects the V3 closure report, which labeled abs(BND) <= .01 as \"near_threshold\" (2,938); the distance-to-threshold of the flag rule is abs(D_LEP - T) (V3 actual: 2,068 on the frozen ledger).",
+  "rule": "abs(D_LEP - T) <= 0.01"
+ },
+ "zero_T": {
+  "n_all_reference_cells": 3508,
+  "n_zero_T_reference_cells": 734,
+  "n_zero_T_rows": 2514,
+  "note": "A trace row and a benign-reference cell are different units: many LEP traces share one reference cell.  V3's \"2,390 zero_T_cells\" mixed the two; V4 reports rows and unique reference cells separately."
+ }
+}

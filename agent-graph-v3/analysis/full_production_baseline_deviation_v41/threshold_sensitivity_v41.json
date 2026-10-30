@@ -1,0 +1,56 @@
+{
+ "R0_legacy_Dlep_gt_T": {
+  "flagged": 2502,
+  "fraction": 0.273652,
+  "n_comparable": 9143,
+  "unevaluable": 590
+ },
+ "R1_bnd_gt_0": {
+  "flagged": 3195,
+  "fraction": 0.349448,
+  "n_comparable": 9143,
+  "unevaluable": 590
+ },
+ "R2_bnd_gt_0p05": {
+  "flagged": 2033,
+  "fraction": 0.222356,
+  "n_comparable": 9143,
+  "unevaluable": 590
+ },
+ "R3_Dlep_gt_T_plus_0p05": {
+  "flagged": 1721,
+  "fraction": 0.188231,
+  "n_comparable": 9143,
+  "unevaluable": 590
+ },
+ "R4_Dlep_gt_T_plus_0p10": {
+  "flagged": 1452,
+  "fraction": 0.15881,
+  "n_comparable": 9143,
+  "unevaluable": 590
+ },
+ "R5_Dlep_gt_T_times_1p25": {
+  "flagged": 2226,
+  "fraction": 0.243465,
+  "n_comparable": 9143,
+  "unevaluable": 590
+ },
+ "near_threshold": {
+  "n_abs_bnd_le_0p01_v3_rule": 3153,
+  "n_comparable": 9143,
+  "n_near_threshold_dlep": 2277,
+  "n_unevaluable": 590,
+  "note": "V4.1 preserves the calculable benign threshold T even when D_LEP is unavailable (V4 erased it: the audit's 2,514 stored zero-T rows vs 2,604 calculable); the flag is None, not False, when either side is missing.",
+  "rule": "abs(D_LEP - T) <= 0.01"
+ },
+ "threshold_availability": {
+  "n_t_calculable": 9142,
+  "n_t_preserved_with_dlep_unavailable": 589
+ },
+ "zero_T": {
+  "n_all_reference_cells": 3647,
+  "n_zero_T_reference_cells": 754,
+  "n_zero_T_rows": 2667,
+  "note": "A trace row and a benign-reference cell are different units: many LEP traces share one reference cell.  Both counts are emitted under explicit labels."
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "created": {
+  "dropped_v1_to_v2": 56,
+  "expect_drop": true,
+  "n_audit": 78,
+  "n_found_in_ledgers": 78,
+  "retained": 22
+ },
+ "denominator_note": "created=78 + suppressed=32 audit flips; NOT a share of the overall rate.",
+ "note": "V2 removes the ground-truth rescale; the audit's \"created\" flags (present only because of the rescale) are expected to drop.  \"Suppressed\" flags are informational.  Counts are recomputed on the frozen ledgers, not assumed.",
+ "suppressed": {
+  "dropped_v1_to_v2": 0,
+  "expect_drop": false,
+  "n_audit": 32,
+  "n_found_in_ledgers": 32,
+  "retained": 17
+ }
+}
