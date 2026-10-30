@@ -1,0 +1,45 @@
+{
+ "stage_1_attempted": 3480,
+ "stage_1_pct_of_total": 100.0,
+ "stage_2_trace_evidence_usable": 3480,
+ "stage_3_injection_origin_event_present": 1957,
+ "stage_3b_injection_never_fired": 1523,
+ "stage_4_verified_mutation": 1673,
+ "stage_4b_origin_event_without_mutation_evidence": 284,
+ "stage_5_mutated_persisted_to_read_window": 1568,
+ "stage_6_poison_record_retrieved": 1300,
+ "stage_7_exposed_to_agent_payload_verified": 1300,
+ "stage_7b_exposed_intermediate_only": 30,
+ "stage_8_exposed_to_final_answer_agent": 1270,
+ "stage_9_mutated_and_exposed_intersection": 1091,
+ "stage_9b_exposed_without_verified_mutation": 209,
+ "stage_10_analyzer_measured_propagated": 8,
+ "stage_11_measured_propagation_among_mutated_and_exposed": 6,
+ "poison_text_verbatim_in_final_output": 0,
+ "rates": {
+  "P_attempted_has_trace_evidence": 100.0,
+  "P_injection_fired_given_attempt": 56.24,
+  "P_verified_mutation_given_attempt": 48.07,
+  "P_verified_mutation_given_injection_fired": 85.49,
+  "P_persisted_given_verified_mutation": 93.72,
+  "P_retrieved_given_persisted": 82.91,
+  "P_retrieved_given_verified_mutation": 77.7,
+  "P_final_agent_exposure_given_verified_mutation": 75.91,
+  "P_final_agent_exposure_given_any_exposure": 97.69,
+  "P_measured_propagation_given_any_exposure": 1.39,
+  "P_measured_propagation_given_mutated_and_exposed": 1.22,
+  "P_measured_propagation_given_analysis_ready": 0.92
+ },
+ "non_exposed_attribution": {
+  "infrastructure_failure_no_injection": 1190,
+  "read_but_poison_not_returned": 477,
+  "injection_target_unreachable": 276,
+  "mutated_but_never_read": 105,
+  "origin_event_mutation_unverified_and_not_retrieved": 75,
+  "injection_count_mismatch": 57
+ },
+ "non_exposed_total": 2180,
+ "non_exposed_reason": {
+  "attribution_is_exact_partition": true
+ }
+}
