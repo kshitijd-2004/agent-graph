@@ -82,6 +82,14 @@ def discover(source: Path):
             LOG.warning('unparseable trace %s: %s', path.name, exc)
             continue
         fixture = m.get('fixture_id')
+        # Reference pools are keyed on (fixture, topology, execution_variant)
+        # ONLY.  Propagation mode is a LEP-side property and NOT a control
+        # identity axis: benign traces contain no LEP, so their mode labels
+        # (all single_origin in the current population) must not disqualify
+        # them as controls for many_to_one / one_to_many LEPs.  Structural
+        # compatibility is enforced downstream by the execution-shape gate in
+        # ``bd.select_compatible_references``; a mode-label match is neither
+        # required nor sufficient.
         cell = (fixture, m.get('topology'), m.get('execution_variant', 'standard'))
         if m.get('condition') in ('benign', 'counterfactual') or not m.get('lep_codes'):
             rep = m.get('repetition_index')
@@ -101,12 +109,20 @@ def discover(source: Path):
         lep.append({'path': str(path), 'fixture': fixture, 'topology': cell[1],
                     'execution_variant': cell[2], 'task_family': m.get('task_family'),
                     'lep_code': (m.get('lep_codes') or [None])[0],
-                    'propagation_mode': m.get('propagation_mode'),
+                    # Normalize to the same default the benign reference-cell
+                    # key uses, so a trace lacking the field degrades to
+                    # single_origin on both sides of the lookup.
+                    'propagation_mode': m.get('propagation_mode', 'single_origin'),
                     'attempt_id': m.get('attempt_id')})
     references = {}
     for cell, reps in sorted(benign.items()):
-        ordered = [reps[r] for r in sorted(reps)[:3]]
-        references[cell] = {'repetitions': sorted(reps)[:3], 'paths': ordered,
+        all_ordered = [reps[r] for r in sorted(reps)]
+        references[cell] = {'repetitions': sorted(reps)[:3], 'paths': all_ordered[:3],
+                            # Full deterministic candidate pool for the cell: the
+                            # measurement step shape-filters this per LEP (see
+                            # bd.select_compatible_references) so a mode-free pool
+                            # can carry controls for every compatible LEP structure.
+                            'pool_paths': all_ordered,
                             'complete': len(reps) >= 3,
                             'extra': max(0, len(reps) - 3)}
     return references, lep, dict(skipped)
@@ -157,8 +173,17 @@ def _feature_payload(feats: 'bd.Features') -> dict:
 
 
 def measure_chunk(chunk: dict) -> list:
-    """Measure one cell group: refs loaded once, spec cached per worker."""
-    refs = [read_json(p) for p in chunk['ref_paths']]
+    """Measure one cell group: candidate pool loaded once, spec cached per worker.
+
+    Per LEP, the benign reference set is chosen by
+    ``bd.select_compatible_references`` — hard identity + execution-shape
+    compatibility — from the cell's full candidate pool.  Propagation mode is
+    deliberately not a selection axis; the structural arbiter is.  If fewer
+    than three compatible references exist the LEP is reported
+    non-comparable for reference shortage, never padded with an incompatible
+    control.
+    """
+    pool = [read_json(p) for p in (chunk.get('pool_paths') or chunk.get('ref_paths') or [])]
     result_rows = []
     for rec in chunk['lep_records']:
         try:
@@ -168,6 +193,7 @@ def measure_chunk(chunk: dict) -> list:
                                 'reasons': [str(exc)]})
             continue
         spec, spec_sha = _load_spec(chunk['spec_root'], rec['fixture'])
+        refs = bd.select_compatible_references(lep, pool)
         result = bd.score_bnd(lep, refs, spec, chunk['weights'])
         lep_feats = bd.extract_features(lep, spec)
         features_map = {lep.get('trace_id', ''): _feature_payload(lep_feats)}
@@ -181,6 +207,8 @@ def measure_chunk(chunk: dict) -> list:
         payload['spec_available'] = spec is not None
         payload['reference_complete'] = chunk['reference_complete']
         payload['reference_repetitions'] = chunk['reference_repetitions']
+        payload['reference_pool_size'] = len(pool)
+        payload['references_selected'] = len(refs)
         result_rows.append(payload)
     return result_rows
 
@@ -364,7 +392,13 @@ def main(argv=None):
     if args.limit:
         lep_records = lep_records[:args.limit]
 
-    # Deterministic chunking: one chunk per reference group (refs load once).
+    # Deterministic chunking: one chunk per reference group (pool loads once).
+    # LEPs are keyed on (fixture, topology, execution_variant) — propagation
+    # mode is NOT an identity axis.  Every LEP in a group shares one candidate
+    # pool; the measurement step shape-filters that pool per LEP (hard identity
+    # + execution structure), so a mode-free pool serves single_origin,
+    # many_to_one, and one_to_many LEPs alike, and structurally incompatible
+    # controls are never mixed in.
     cells_by_key = {}
     for rec in lep_records:
         key = (rec['fixture'], rec['topology'], rec['execution_variant'])
@@ -374,8 +408,10 @@ def main(argv=None):
     for key in ordered_cells:
         ref_entry = references.get(key)
         if ref_entry is None:
-            ref_entry = {'paths': [], 'complete': False, 'repetitions': []}
+            ref_entry = {'paths': [], 'complete': False, 'repetitions': [],
+                         'pool_paths': []}
         chunk = {'ref_paths': ref_entry['paths'],
+                 'pool_paths': ref_entry.get('pool_paths', ref_entry['paths']),
                  'reference_complete': ref_entry['complete'],
                  'reference_repetitions': ref_entry['repetitions'],
                  'lep_records': cells_by_key[key],

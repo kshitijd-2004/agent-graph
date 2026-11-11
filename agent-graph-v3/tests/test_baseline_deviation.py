@@ -28,10 +28,10 @@ def _cell(fixture='fx', fam='financial_analysis', variant='standard', rep=0,
                                                  'propagation_mode': pm}}}}}
 
 
-def _ev(eid, etype, role='', tool=None, args=None, out=''):
+def _ev(eid, etype, role='', tool=None, args=None, out='', depends=None):
     return {'event_id': str(eid), 'event_index': int(eid), 'event_type': etype,
             'agent_role': role, 'tool_name': tool, 'tool_arguments': args,
-            'output_text': out, 'depends_on': []}
+            'output_text': out, 'depends_on': depends or []}
 
 
 def fin_trace(trace_id, facts, extra_lines=(), ans='', path='documents/report.md',
@@ -69,6 +69,45 @@ FANS = {'answer': 12.27}
 def triple(variant='standard', rep_offset=0, **kw):
     return [fin_trace(f'fx.{rep + rep_offset}.std.benign__a', F2, variant=variant,
                       rep=rep + rep_offset, **kw) for rep in range(3)]
+
+
+# ── execution-shape (structural arbiter) builders ───────────────────────────
+# The existing builders emit no topology_transition events, so every trace has
+# an empty shape and the structural arbiter is inert.  These add recorded
+# scheduling skeletons so we can exercise select_compatible_references' shape
+# gate and the worker-first / coordinator-first distinction.
+
+# worker-first branch_and_verify: two workers start, each hands off to a verifier
+WORKER_FIRST = {'initial_roles': ['worker_a', 'worker_b'],
+                'transfers': [('worker_a', 'verifier'), ('worker_b', 'verifier')]}
+# coordinator-first coordinator_workers: a coordinator starts, fans out to workers
+COORD_FIRST = {'initial_roles': ['coordinator'],
+               'transfers': [('coordinator', 'worker_a'), ('coordinator', 'worker_b')]}
+
+
+def _tt_events(initial_roles, transfers):
+    """topology_transition events reproducing a given shape dict."""
+    events, eid, last = [], 0, {}
+    for r in initial_roles:
+        events.append(_ev(eid, 'topology_transition', role=r, depends=[]))
+        last[r] = str(eid)
+        eid += 1
+    for src, dst in transfers:
+        dep = last.get(src)
+        events.append(_ev(eid, 'topology_transition', role=dst,
+                          depends=[dep] if dep else []))
+        last[dst] = str(eid)
+        eid += 1
+    return events
+
+
+def struct_trace(trace_id, shape, *, fixture='fx', fam='financial_analysis',
+                 variant='standard', rep=0, cond='benign', parallel=False,
+                 topology='branch_and_verify', pm='many_to_one'):
+    base = _cell(fixture=fixture, fam=fam, variant=variant, rep=rep, cond=cond,
+                 parallel=parallel, top=topology, pm=pm)
+    return {'trace_id': trace_id, 'metadata': base['metadata'],
+            'events': _tt_events(shape['initial_roles'], shape['transfers'])}
 
 
 # ── scenario suite ──────────────────────────────────────────────────────────
@@ -361,6 +400,145 @@ def test_code_review_action_alignment():
                               'code_review')
     assert d3.actions > 0.0
     assert d3.outcomes > 0.0
+
+
+# ── structural-arbiter / reference-selection regressions ───────────────────
+# These target the shared select_compatible_references + is_comparable that the
+# V4.1 driver consumes.  They pin the exact requirement: compatibility is
+# decided on HARD identity + execution_shape BEFORE the final 3 are chosen;
+# propagation mode is NOT a criterion.
+
+
+def test_A_m2o_worker_first_reuses_sopm_single_origin_refs():
+    # many_to_one LEP, worker-first branch_and_verify.  The reference pool is
+    # single_origin benigns with the SAME worker-first shape (as in production:
+    # M2O == SO shape).  Mode differs; shape agrees -> all 3 selected.
+    lep = struct_trace('lep', WORKER_FIRST, pm='many_to_one')
+    pool = [struct_trace(f'b{r}', WORKER_FIRST, rep=r, pm='single_origin')
+            for r in range(3)]
+    refs = bd.select_compatible_references(lep, pool)
+    assert len(refs) == 3
+    assert bd.is_comparable(lep, refs)['comparable'] is True
+
+
+def test_B_o2m_coordinator_first_vs_worker_first_incompatible():
+    # one_to_many LEP, coordinator-first.  Pool is worker-first SO benigns
+    # (the only SO benigns that exist).  Shapes differ -> 0 selected.  This is
+    # the guard against making O2M comparable to worker-first SO controls.
+    lep = struct_trace('lep', COORD_FIRST, pm='one_to_many',
+                       topology='coordinator_workers')
+    pool = [struct_trace(f'b{r}', WORKER_FIRST, rep=r, pm='single_origin',
+                         topology='coordinator_workers')
+            for r in range(3)]
+    refs = bd.select_compatible_references(lep, pool)
+    assert refs == []
+    assert bd.is_comparable(lep, refs)['comparable'] is False
+
+
+def test_C_o2m_coordinator_first_matches_coordinator_first_refs():
+    # Same coordinator-first LEP, but the pool is coordinator-first benigns
+    # (regardless of their mode label).  Shape agrees -> 3 selected,
+    # comparable.
+    lep = struct_trace('lep', COORD_FIRST, pm='one_to_many',
+                       topology='coordinator_workers')
+    pool = [struct_trace(f'b{r}', COORD_FIRST, rep=r, pm='single_origin',
+                         topology='coordinator_workers')
+            for r in range(3)]
+    refs = bd.select_compatible_references(lep, pool)
+    assert len(refs) == 3
+    assert bd.is_comparable(lep, refs)['comparable'] is True
+
+
+def test_D_two_compatible_refs_stay_incomparable():
+    # Worker-first LEP, but the pool only has 2 worker-first refs (the 921
+    # reference-shortage population).  2 selected < 3 -> not comparable.  This
+    # pins "do not bypass the three-reference requirement".
+    lep = struct_trace('lep', WORKER_FIRST, pm='many_to_one')
+    pool = [struct_trace(f'b{r}', WORKER_FIRST, rep=r, pm='single_origin')
+            for r in range(2)]
+    refs = bd.select_compatible_references(lep, pool)
+    assert len(refs) == 2
+    gate = bd.is_comparable(lep, refs)
+    assert gate['comparable'] is False
+    assert gate['reasons'] == ['need_at_least_3_benign_references:2']
+
+
+def test_D_real_m2o_pool_empty_stays_incomparable():
+    # A REAL many_to_one (M2O) standard trace whose benign cell has ZERO
+    # controls: the revised mode-free pool still cannot reach 3 shape-compatible
+    # refs, so it stays incomparable under the corrected selection (it never
+    # falls back to structurally-incompatible controls to reach 3).  Skips
+    # silently when the production tree is absent (e.g. CI).
+    import glob as _glob
+    import json as _json
+    import os as _os
+    from collections import defaultdict
+    source = _glob.glob('analysis/full_production_consolidated/source/traces/*_trace.json')
+    if not source:
+        pytest.skip('production tree not present')
+    target = ('code_review_swe_097_pylint_dev_pylint_7080'
+              '.bv.LEP_HANDOFF_CORRUPTION.many_to_one.00.std__b')
+    lep = None
+    benign_by_cell = defaultdict(list)
+    for p in sorted(source):
+        d = _json.loads(open(p, 'rb').read())
+        m = d.get('metadata') or {}
+        if d.get('trace_id') == target:
+            lep = d
+        if m.get('condition') in ('benign', 'counterfactual') or not m.get('lep_codes'):
+            if m.get('repetition_index') is not None:
+                cell = (m.get('fixture_id'), m.get('topology'),
+                        m.get('execution_variant', 'standard') or 'standard')
+                benign_by_cell[cell].append(d)
+    if lep is None:
+        pytest.skip(f'target M2O trace not present: {target}')
+    m = lep['metadata']
+    assert m.get('propagation_mode') == 'many_to_one', 'test premise: a real M2O LEP'
+    pool = benign_by_cell[(m.get('fixture_id'), m.get('topology'),
+                           m.get('execution_variant', 'standard') or 'standard')]
+    # Premise pinned: this cell is a pool-empty (or <3-compat) shortage case, so
+    # the revised selection legitimately cannot make it comparable.
+    refs = bd.select_compatible_references(lep, pool)
+    assert len(refs) < 3, f'expected a shortage cell, got {len(refs)} refs'
+    gate = bd.is_comparable(lep, refs)
+    assert gate['comparable'] is False
+    assert gate['reasons'][0] == f'need_at_least_3_benign_references:{len(refs)}'
+    # And no structurally-incompatible control was force-matched to reach 3.
+    assert all(bd.execution_shape(r) == bd.execution_shape(lep) for r in refs)
+
+
+def test_E_mixed_pool_selects_only_structure_matching():
+    # A cell that mixes worker-first and coordinator-first benigns (same
+    # fixture).  Each LEP must select only the 3 matching ITS structure —
+    # never a mix, and never fall back to the other flavor to reach 3.
+    pool = ([struct_trace(f'wf{r}', WORKER_FIRST, rep=r, pm='single_origin')
+             for r in range(3)]
+            + [struct_trace(f'cf{r}', COORD_FIRST, rep=r, pm='single_origin')
+               for r in range(3)])
+
+    wf_lep = struct_trace('lep_wf', WORKER_FIRST, pm='many_to_one')
+    wf_refs = bd.select_compatible_references(wf_lep, pool)
+    assert len(wf_refs) == 3
+    assert all(bd.execution_shape(r) == WORKER_FIRST for r in wf_refs)
+
+    cf_lep = struct_trace('lep_cf', COORD_FIRST, pm='one_to_many',
+                          topology='coordinator_workers')
+    cf_pool = [struct_trace(f'cf{r}', COORD_FIRST, rep=r, pm='single_origin',
+                            topology='coordinator_workers') for r in range(3)]
+    cf_refs = bd.select_compatible_references(cf_lep, cf_pool)
+    assert len(cf_refs) == 3
+    assert all(bd.execution_shape(r) == COORD_FIRST for r in cf_refs)
+
+
+def test_G_hard_identity_rejected_even_when_shape_matches():
+    # A candidate that matches the LEP's shape but differs on a HARD identity
+    # field must be rejected even though the structure agrees.  Three
+    # different-fixture refs (same shape) -> 0 selected.
+    lep = struct_trace('lep', WORKER_FIRST, pm='many_to_one', fixture='fx')
+    pool = [struct_trace(f'b{r}', WORKER_FIRST, rep=r, pm='single_origin',
+                         fixture='other_fixture') for r in range(3)]
+    refs = bd.select_compatible_references(lep, pool)
+    assert refs == []
 
 
 if __name__ == '__main__':

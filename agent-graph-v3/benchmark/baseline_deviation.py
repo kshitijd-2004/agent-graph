@@ -681,10 +681,20 @@ def pairwise_distance(fa: Features, fb: Features, fam: str,
 
 HARD_IDENTITY_FIELDS = ('fixture_id', 'task_family', 'task_variant', 'topology', 'parallel')
 # Soft: reported as diagnostics, never hard gates.  Propagation mode is a
-# scenario-level property of the LEP condition; benign references are run
-# single-origin only, so a many_to_one/one_to_many LEP against single_origin
-# references is the expected matched population, not an identity mismatch
-# (the execution-shape gate catches genuinely incompatible structures).
+# scenario-level property of the LEP condition and is deliberately NOT a
+# control-identity axis: benign references contain no LEP, so a many_to_one /
+# one_to_many LEP against single_origin references is the expected matched
+# population.  Reference selection keys the candidate pool on
+# (fixture, topology, execution_variant) only, then lets the execution-shape
+# gate (the structural arbiter) decide compatibility — a mode-label match is
+# neither required nor sufficient.
+#
+# Known soft-model/runtime gap (reported, not gated): production benigns mix
+# model_name/seed/temperature between present values and None (e.g.
+# Qwen2.5-72B-AWQ reps against None-model reps within one reference cell).
+# No present-vs-present model conflict exists in the current population, so
+# keeping these fields soft preserves every existing comparison; they are
+# surfaced as diagnostics rather than promoted to hard gates.
 SOFT_IDENTITY_FIELDS = ('execution_variant', 'model_name', 'temperature', 'seed',
                        'propagation_mode')
 
@@ -768,6 +778,45 @@ def is_comparable(lep: Dict[str, Any], refs: Sequence[Dict[str, Any]],
         'population_ok': population_ok,
         'structural_ok': structural_ok,
     }
+
+
+def select_compatible_references(lep: Dict[str, Any],
+                                 candidate_refs: Sequence[Dict[str, Any]],
+                                 n: int = 3) -> List[Dict[str, Any]]:
+    """Deterministically select up to ``n`` benign references compatible with ``lep``.
+
+    A candidate is compatible when it (a) matches the LEP on every HARD identity
+    field and (b) shares the LEP's recorded execution structure
+    (``execution_shape``).  Structural compatibility is established on EACH
+    candidate BEFORE the final ``n`` are chosen — never a first-``n``-then-test
+    order.  Propagation mode is deliberately NOT a criterion: it is a LEP-side
+    property and benign controls are single-origin by construction, so a
+    many_to_one / one_to_many LEP may validly reuse single_origin references
+    that match on the structural arbiter (see ``SOFT_IDENTITY_FIELDS``).
+
+    Ordering is deterministic: surviving candidates are ranked by
+    ``repetition_index`` (the ``discover()`` first-distinct-reps policy) with
+    trace_id as a stable tie-breaker, then the first ``n`` are returned.  The
+    caller still gates on ``len(refs) >= 3`` (see ``is_comparable``); this
+    helper returns however many compatible candidates exist, possibly fewer.
+    """
+    lep_cell = trace_cell(lep)
+    lep_shape = execution_shape(lep)
+    survivors: List[Dict[str, Any]] = []
+    for cand in candidate_refs:
+        cand_cell = trace_cell(cand)
+        hard = [f for f in HARD_IDENTITY_FIELDS if lep_cell.get(f) != cand_cell.get(f)]
+        if hard:
+            continue
+        if execution_shape(cand) != lep_shape:
+            continue
+        survivors.append(cand)
+    survivors.sort(key=lambda t: (
+        (t.get('metadata') or {}).get('repetition_index') is None,
+        (t.get('metadata') or {}).get('repetition_index') or 0,
+        t.get('trace_id') or '',
+    ))
+    return survivors[:n]
 
 
 # ── BND scoring ──────────────────────────────────────────────────────────────

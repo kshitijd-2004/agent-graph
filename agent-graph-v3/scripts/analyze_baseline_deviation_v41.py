@@ -42,6 +42,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
+from benchmark import baseline_deviation as bd
 from benchmark import baseline_deviation_v41 as bdv41
 from scripts.analyze_baseline_deviation import discover, read_json, read_jsonl, sha
 
@@ -82,8 +83,15 @@ def _load_spec(spec_root: str, fixture_id):
 
 
 def measure_chunk(chunk: dict) -> list:
-    """Measure one cell group under V4.1; refs loaded once, spec cached."""
-    refs = [read_json(p) for p in chunk['ref_paths']]
+    """Measure one cell group under V4.1; pool loaded once, spec cached.
+
+    Per LEP the benign reference set is chosen by
+    ``bd.select_compatible_references`` (hard identity + execution-shape
+    compatibility) from the cell's full candidate pool.  Propagation mode is
+    deliberately not a selection axis; the structural arbiter is.  Fewer than
+    three compatible references => reported non-comparable, never padded.
+    """
+    pool = [read_json(p) for p in (chunk.get('pool_paths') or chunk.get('ref_paths') or [])]
     rows = []
     for rec in chunk['lep_records']:
         try:
@@ -93,6 +101,7 @@ def measure_chunk(chunk: dict) -> list:
                          'status': 'unparseable_lep', 'reasons': [str(exc)]})
             continue
         spec, spec_sha = _load_spec(chunk['spec_root'], rec['fixture'])
+        refs = bd.select_compatible_references(lep, pool)
         out = bdv41.measure_configuration_v4(lep, refs, spec, chunk['weights'])
         out['status'] = 'measured'
         out['attempt_id'] = rec['attempt_id'] or out.get('trace_id')
@@ -100,6 +109,8 @@ def measure_chunk(chunk: dict) -> list:
         out['spec_available'] = spec is not None
         out['reference_complete'] = chunk['reference_complete']
         out['reference_repetitions'] = chunk['reference_repetitions']
+        out['reference_pool_size'] = len(pool)
+        out['references_selected'] = len(refs)
         rows.append(out)
     return rows
 
@@ -628,6 +639,14 @@ def main(argv=None):
                         default=Path('analysis/full_production_id_trc_v2'))
     parser.add_argument('--limit', type=int, default=None)
     parser.add_argument('--task-families', default=None)
+    parser.add_argument('--execution-variant', default=None,
+                        help='Restrict the LEP population to one execution_variant '
+                             '(e.g. standard). The reference pools are already keyed '
+                             'on execution_variant, so a standard LEP never draws on '
+                             'memory_enabled controls; this only trims the LEP set.')
+    parser.add_argument('--exclude-lep', default=None,
+                        help='Comma-separated lep_codes to exclude from the LEP '
+                             'population (e.g. LEP_MEMORY_POISONING). Default: none.')
     parser.add_argument('--workers', type=int, default=24)
     args = parser.parse_args(argv)
 
@@ -642,10 +661,21 @@ def main(argv=None):
     if args.task_families:
         allow = set(args.task_families.split(','))
         lep_records = [r for r in lep_records if r['task_family'] in allow]
+    if args.execution_variant:
+        keep = {v.strip() for v in args.execution_variant.split(',') if v.strip()}
+        lep_records = [r for r in lep_records if r['execution_variant'] in keep]
+    if args.exclude_lep:
+        excl = {c.strip() for c in args.exclude_lep.split(',') if c.strip()}
+        lep_records = [r for r in lep_records if r['lep_code'] not in excl]
     if args.limit:
         lep_records = lep_records[:args.limit]
 
     weights = bdv41.ComponentWeights()
+    # LEPs keyed on (fixture, topology, execution_variant) — propagation mode
+    # is NOT an identity axis.  Each LEP shares a mode-free candidate pool and
+    # is shape-filtered individually, so single_origin / many_to_one /
+    # one_to_many LEPs all resolve the same pool and structurally incompatible
+    # controls are never mixed.
     cells_by_key = defaultdict(list)
     for rec in lep_records:
         cells_by_key[(rec['fixture'], rec['topology'],
@@ -653,8 +683,10 @@ def main(argv=None):
     chunks = []
     for key in sorted(cells_by_key):
         ref_entry = (references.get(key)
-                     or {'paths': [], 'complete': False, 'repetitions': []})
+                     or {'paths': [], 'complete': False, 'repetitions': [],
+                         'pool_paths': []})
         chunks.append({'ref_paths': ref_entry['paths'],
+                       'pool_paths': ref_entry.get('pool_paths', ref_entry['paths']),
                        'reference_complete': ref_entry['complete'],
                        'reference_repetitions': ref_entry['repetitions'],
                        'lep_records': cells_by_key[key],
