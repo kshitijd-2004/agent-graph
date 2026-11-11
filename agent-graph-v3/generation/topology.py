@@ -111,6 +111,33 @@ class TopologyConfig:
             return self.get_stage(role)
         return None
 
+    def is_coordinator_first(self) -> bool:
+        """True when the initial stage is a decompose/fan-out coordinator that
+        is also the fan-in merge target for its own branches.
+
+        The coordinator_workers topology has this shape: ``stages[0]`` is the
+        coordinator, which delegates to N workers (outgoing fan-out) and then
+        aggregates their returns (incoming fan-in).  Because of that shape the
+        scheduler MUST run the coordinator's *first* visit before any worker —
+        delegation precedes aggregation.  The fan-in gate that would otherwise
+        hold the coordinator on its initial visit (treating the worker-return
+        edges as prerequisites) must be bypassed for that single first visit.
+
+        This is a property of the *topology*, not of the LEP propagation mode:
+        benign and single-origin runs must start coordinator-first exactly as
+        one_to_many runs do.  No current topology other than
+        coordinator_workers has stages[0] with both a multi-way fan-out and a
+        multi-way fan-in, so this leaves review_loop / branch_and_verify
+        scheduling untouched.
+        """
+        if not self.stages:
+            return False
+        first = self.stages[0]
+        return (
+            len(self.get_outgoing_handoffs(first.agent_role)) > 1
+            and len(self.get_incoming_handoffs(first.agent_role)) > 1
+        )
+
 
 def _build_registry() -> Dict[str, callable]:
     """Return {topology_id: builder_fn}."""

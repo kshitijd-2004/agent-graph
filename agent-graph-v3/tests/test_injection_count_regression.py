@@ -302,7 +302,10 @@ def test_handoff_execution_and_shared_inputs(tmp_path, monkeypatch, mode, topolo
     assert result.dataset_eligible, result.trace.metadata
     assert len(origins(result)) == (expected if injected else 0)
     if mode != "one_to_many":
-        assert calls[0][0].agent_role == ("specialist_a" if topology == "coordinator_workers" else "researcher")
+        # Coordinator-workers is always coordinator-first (delegation before
+        # any worker), independent of propagation mode. branch_and_verify
+        # opens on its first branch/producer stage.
+        assert calls[0][0].agent_role == ("coordinator" if topology == "coordinator_workers" else "researcher")
         return
     assert [stage.agent_role for stage, _, _ in calls] == [
         "coordinator", "specialist_a", "specialist_b", "synthesizer", "coordinator"]

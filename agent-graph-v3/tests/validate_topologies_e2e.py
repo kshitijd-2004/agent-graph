@@ -395,37 +395,62 @@ def _check_coordinator_workers_chain(trace, topology):
                 "injection TOOL_RESULT"
             )
 
-    # Find coordinator's topology_transition and first reasoning (match by agent_role)
-    coord_transition = None
-    coord_first_reasoning = None
+    # ── Coordinator-first scheduling invariant ─────────────────────────
+    # coordinator_workers now ALWAYS begins with the coordinator, regardless
+    # of propagation mode: the first coordinator visit is a *delegation* turn
+    # (no worker has returned yet, so it has no worker-handoff dependency),
+    # and a LATER aggregation visit is the first coordinator transition whose
+    # depends_on references a worker's AGENT_HANDOFF.
+    worker_handoff_ids = {
+        e.event_id for e in trace.events
+        if e.agent_role in ("specialist_a", "specialist_b", "synthesizer")
+        and e.event_type == TraceEventType.AGENT_HANDOFF
+    }
+
+    # 1) Delegation precedes workers: the FIRST coordinator transition must
+    #    have NO worker-handoff dependency (workers have not run yet).
+    coord_first_transition = None
     for e in trace.events:
         if (e.agent_role == "coordinator"
                 and e.event_type == TraceEventType.TOPOLOGY_TRANSITION):
-            coord_transition = e
-        if (e.agent_role == "coordinator"
-                and e.event_type == TraceEventType.REASONING
-                and coord_first_reasoning is None):
-            coord_first_reasoning = e
+            coord_first_transition = e
+            break
 
-    if coord_transition is None:
+    if coord_first_transition is None:
         issues.append("Coordinator did NOT receive topology_transition")
-    else:
-        # Coordinator's transition must depend on ALL worker handoffs
-        coord_deps = coord_transition.depends_on or []
-        if a_handoff and a_handoff.event_id not in coord_deps:
-            issues.append(
-                "Coordinator topology_transition does NOT depend on "
-                "specialist_a's AGENT_HANDOFF event_id"
-            )
+    elif set(coord_first_transition.depends_on or []) & worker_handoff_ids:
+        issues.append(
+            "Coordinator's FIRST transition depends on a worker AGENT_HANDOFF "
+            "— workers ran before delegation (worker-first order, NOT "
+            "coordinator-first)"
+        )
 
-    if coord_first_reasoning is None:
-        issues.append("Coordinator did NOT emit any REASONING event")
+    # 2) Aggregation visit: the first coordinator transition that DOES
+    #    reference a worker handoff must depend on ALL worker handoffs.
+    coord_agg_transition = None
+    for e in trace.events:
+        if (e.agent_role == "coordinator"
+                and e.event_type == TraceEventType.TOPOLOGY_TRANSITION
+                and set(e.depends_on or []) & worker_handoff_ids):
+            coord_agg_transition = e
+            break
+
+    if coord_agg_transition is None:
+        issues.append(
+            "Coordinator's aggregation transition does NOT depend on any "
+            "worker AGENT_HANDOFF"
+        )
     else:
-        if a_handoff and not _reachable(coord_first_reasoning.event_id, a_handoff.event_id):
-            issues.append(
-                "Coordinator's first REASONING does NOT depend on "
-                "specialist_a's AGENT_HANDOFF"
-            )
+        agg_deps = set(coord_agg_transition.depends_on or [])
+        for e in trace.events:
+            if (e.agent_role == "specialist_a"
+                    and e.event_type == TraceEventType.AGENT_HANDOFF):
+                if e.event_id not in agg_deps:
+                    issues.append(
+                        "Coordinator aggregation transition does NOT depend on "
+                        "specialist_a's AGENT_HANDOFF event_id"
+                    )
+                break
 
     # Verify specialist_b did NOT depend on specialist_a's handoff (match by agent_role)
     b_first_reasoning = None

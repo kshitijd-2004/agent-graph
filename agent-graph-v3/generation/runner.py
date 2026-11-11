@@ -1176,10 +1176,16 @@ class ScenarioRunner:
             # ── Fan-in check: merge BEFORE emitting the transition event ──────
             # so that transition.depends_on can reference all branch event IDs.
             incoming_rules = topology.get_incoming_handoffs(current_stage.agent_role)
-            # The O2M entry turn produces the fan-out artifact; its incoming
-            # worker edges are return edges, required only on later visits.
+            # Coordinator-first topologies (coordinator_workers) run their
+            # initial stage as a *delegation* turn before any worker: the
+            # coordinator's incoming worker-return (fan-in) edges are
+            # prerequisites only for its LATER aggregation visits, not for the
+            # very first one.  Bypass the fan-in gate for that single first
+            # visit, derived from the topology's own structure — NOT from the
+            # LEP propagation mode — so benign and single-origin runs start
+            # coordinator-first exactly as one_to_many runs do.
             initial_fanout = (
-                wcfg.propagation_mode == "one_to_many"
+                topology.is_coordinator_first()
                 and current_stage.stage_id == topology.stages[0].stage_id
                 and not stage_run_counts
             )
@@ -1373,11 +1379,18 @@ class ScenarioRunner:
 
             # ── Handle stage termination ─────────────────────────────────
             reason = stage_result.termination_reason
-            if initial_fanout and reason == "handoff" and orchestrator.unfulfilled_origins():
-                # The model chose to fan out without realizing the scheduled
-                # upstream mutation. No future event is a valid O2M origin.
-                # Stop this rejected attempt; do not manufacture a write or
-                # allow a worker/aggregation turn to satisfy the origin budget.
+            if (wcfg.propagation_mode == "one_to_many"
+                    and initial_fanout and reason == "handoff"
+                    and orchestrator.unfulfilled_origins()):
+                # O2M-specific: the entry-turn origin MUST be the upstream
+                # coordinator.  If the model delegated without realizing the
+                # scheduled upstream mutation, no later (worker/aggregation)
+                # event is a valid O2M origin.  Stop this rejected attempt.
+                #
+                # Gated on one_to_many deliberately: in single_origin /
+                # many_to_one the origin targets a downstream worker, so the
+                # coordinator's first-visit handoff with unfulfilled origins is
+                # normal and must NOT close the injection window.
                 injection_window_closed = True
                 break
             if reason == "final":
