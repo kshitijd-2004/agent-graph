@@ -6,8 +6,11 @@
 # Arms that reuse the original v3 clean runs have BENIGN=0.
 FAMS="pmf pmr psf psr pif pir"
 FULL="fsf fsr fsc fif fir fic"
-# fss: research MP with the "sources" poison (no verdict stated); compared with fsr clean runs
-EXTRA="fss"
+# Research rerun after the attack text fix (no verdict in memory poisoning or tool corruption payloads):
+#   fmn: memory poisoning, same switches as fsr, compared with fsr clean runs
+#   ftr: tool corruption, plain v3 workflow, compared with the main run research clean runs
+#   fss: memory poisoning forced to the "sources" entry (kept for reference)
+EXTRA="fmn ftr"
 NJOBS=1
 FIXSTEP=15
 SNAP="AG_MP_PERSIST=1 AG_MEMORY_SNAPSHOT=1 AG_BENIGN_VARIANTS=memory_enabled"
@@ -28,6 +31,8 @@ case "$1" in
   fif) FAMILY=financial_analysis; FIXGLOB=$FINGLOB; FIXSTEP=1; NJOBS=1; BENIGN=0; LEPS=LEP_INPUT_DISREGARD; PILOT_ENV="AG_ID_VARIANT=key_findings" ;;
   fir) FAMILY=research_synthesis; FIXGLOB=$RESGLOB; FIXSTEP=1; NJOBS=1; BENIGN=0; LEPS=LEP_INPUT_DISREGARD; PILOT_ENV="AG_ID_VARIANT=key_findings" ;;
   fic) FAMILY=code_review;        FIXGLOB=$CRGLOB;  FIXSTEP=1; NJOBS=1; BENIGN=0; LEPS=LEP_INPUT_DISREGARD; PILOT_ENV="AG_ID_VARIANT=key_findings" ;;
+  fmn) FAMILY=research_synthesis; FIXGLOB=$RESGLOB; FIXSTEP=1; NJOBS=1; BENIGN=0; LEPS=LEP_MEMORY_POISONING; PILOT_ENV="AG_MP_PERSIST=1 AG_MEMORY_SNAPSHOT=1" ;;
+  ftr) FAMILY=research_synthesis; FIXGLOB=$RESGLOB; FIXSTEP=1; NJOBS=1; BENIGN=0; LEPS=LEP_TOOL_RESULT_CORRUPTION; PILOT_ENV="" ;;
   fss) FAMILY=research_synthesis; FIXGLOB=$RESGLOB; FIXSTEP=1; NJOBS=1; BENIGN=0; LEPS=LEP_MEMORY_POISONING; PILOT_ENV="AG_MP_PERSIST=1 AG_MEMORY_SNAPSHOT=1 AG_MP_POOL_KEY=sources" ;;
   "") ;;
   *) return 1 ;;
