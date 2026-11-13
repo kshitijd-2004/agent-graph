@@ -11,6 +11,12 @@ AG_ID_VARIANT=key_findings
                       attack side: input disregard names the sender's actual
                       findings and tells the receiver not to rely on them. Source
                       access is unchanged.
+AG_MP_POOL_KEY=sources
+                      attack side: memory poisoning always uses this entry of the
+                      fixture's memory_poisoning pool (e.g. "sources", which swaps
+                      which paper backs which claim but states no verdict),
+                      whatever key the agent wrote. Ignored if the fixture has no
+                      such entry.
 AG_BENIGN_VARIANTS=memory_enabled
                       planning only: emit clean runs just for these execution
                       variants (comma separated), e.g. the snapshot arm only
@@ -31,6 +37,10 @@ def id_variant() -> str:
     return os.environ.get("AG_ID_VARIANT", "")
 
 
+def mp_pool_key() -> str:
+    return os.environ.get("AG_MP_POOL_KEY", "")
+
+
 def benign_variants() -> list:
     v = os.environ.get("AG_BENIGN_VARIANTS", "")
     return [x.strip() for x in v.split(",") if x.strip()]
@@ -38,4 +48,4 @@ def benign_variants() -> list:
 
 def as_dict() -> dict:
     return {"mp_persist": mp_persist(), "memory_snapshot": memory_snapshot(),
-            "id_variant": id_variant()}
+            "id_variant": id_variant(), "mp_pool_key": mp_pool_key()}

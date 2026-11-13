@@ -6,6 +6,8 @@
 # Arms that reuse the original v3 clean runs have BENIGN=0.
 FAMS="pmf pmr psf psr pif pir"
 FULL="fsf fsr fsc fif fir fic"
+# fss: research MP with the "sources" poison (no verdict stated); compared with fsr clean runs
+EXTRA="fss"
 NJOBS=1
 FIXSTEP=15
 SNAP="AG_MP_PERSIST=1 AG_MEMORY_SNAPSHOT=1 AG_BENIGN_VARIANTS=memory_enabled"
@@ -26,6 +28,7 @@ case "$1" in
   fif) FAMILY=financial_analysis; FIXGLOB=$FINGLOB; FIXSTEP=1; NJOBS=1; BENIGN=0; LEPS=LEP_INPUT_DISREGARD; PILOT_ENV="AG_ID_VARIANT=key_findings" ;;
   fir) FAMILY=research_synthesis; FIXGLOB=$RESGLOB; FIXSTEP=1; NJOBS=1; BENIGN=0; LEPS=LEP_INPUT_DISREGARD; PILOT_ENV="AG_ID_VARIANT=key_findings" ;;
   fic) FAMILY=code_review;        FIXGLOB=$CRGLOB;  FIXSTEP=1; NJOBS=1; BENIGN=0; LEPS=LEP_INPUT_DISREGARD; PILOT_ENV="AG_ID_VARIANT=key_findings" ;;
+  fss) FAMILY=research_synthesis; FIXGLOB=$RESGLOB; FIXSTEP=1; NJOBS=1; BENIGN=0; LEPS=LEP_MEMORY_POISONING; PILOT_ENV="AG_MP_PERSIST=1 AG_MEMORY_SNAPSHOT=1 AG_MP_POOL_KEY=sources" ;;
   "") ;;
   *) return 1 ;;
 esac

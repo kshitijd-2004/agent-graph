@@ -219,6 +219,10 @@ class MemoryPoisoningLEP:
         unexpected key still gets a realistic wrong fact rather than a
         generic disclaimer an agent can ignore.
         """
+        from generation import pilot_flags
+        forced = pilot_flags.mp_pool_key()
+        if forced and forced in task_pool:
+            return forced
         if memory_key in task_pool:
             return memory_key
         k = (memory_key or "").lower()
