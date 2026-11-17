@@ -108,6 +108,43 @@ def _order(trace):
             if e.event_type == TraceEventType.TOPOLOGY_TRANSITION]
 
 
+# The EXACT structural extraction BND V4.1 applies (benchmark/baseline_deviation.py,
+# re-exported unchanged into baseline_deviation_v41 via `import baseline_deviation as bd`).
+# A regression that re-introduces a serial relay changes execution_shape and is caught here.
+from benchmark.baseline_deviation import execution_shape as _bnd_execution_shape
+
+
+def _cw_shape(trace):
+    """BND V4.1 execution_shape of a CW trace, as a comparable canonical dict.
+
+    Canonical fan-out/fan-in == coordinator is the only root, every worker's
+    transition depends_on the coordinator's delegation artifact, the
+    coordinator's aggregation depends_on all three workers, and there is NO
+    worker-to-worker edge (sp_b must not depend on sp_a).
+    """
+    return _bnd_execution_shape(trace.to_dict())
+
+
+def _assert_canonical_cw_shape(shape):
+    transfers = set(shape["transfers"])
+    assert shape["initial_roles"] == ["coordinator"], (
+        f"canonical CW must root at the coordinator, got {shape['initial_roles']}"
+    )
+    for worker in ("specialist_a", "specialist_b", "synthesizer"):
+        assert ("coordinator", worker) in transfers, (
+            f"worker {worker} must consume the coordinator's artifact (fan-out), "
+            f"transfers={sorted(transfers)}"
+        )
+        assert (worker, "coordinator") in transfers, (
+            f"worker {worker} must hand back to the coordinator (fan-in)"
+        )
+    # No unintended worker-to-worker relay: the whole point of the fix.
+    for a, b in (("specialist_a", "specialist_b"), ("specialist_b", "synthesizer")):
+        assert (a, b) not in transfers, (
+            f"worker-to-worker relay {a}->{b} present — CW is not canonical fan-out"
+        )
+
+
 def _build(mode, target=None):
     builder = ScenarioBuilder(seed=42)
     cfg = ScenarioBuildConfig(
@@ -242,24 +279,70 @@ def test_o2m_workers_share_one_coordinator_artifact():
         )
 
 
-def test_single_origin_workers_do_not_share_artifact():
+def test_single_origin_workers_share_one_coordinator_artifact():
+    # Canonical CW topology holds in EVERY mode. A single_origin CW run must
+    # record the SAME fan-out DAG as one_to_many: all three workers consume
+    # the coordinator's one delegation artifact (no worker-to-worker relay).
+    # Before the fix this test asserted the opposite (distinct deps / relay),
+    # which is the incorrect serial behavior that was removed.
     result, order, _ = _run("single_origin", "worker:specialist_a")
     events = result.trace.events
+    by_id = {e.event_id: e for e in events}
+    coord_handoffs = [e for e in events
+                      if e.agent_role == "coordinator"
+                      and e.event_type == TraceEventType.AGENT_HANDOFF]
+    assert coord_handoffs, "coordinator did not emit a delegation handoff"
+    artifact_id = coord_handoffs[0].event_id
     first_worker_trans = {}
     for e in events:
         if e.event_type == TraceEventType.TOPOLOGY_TRANSITION and e.agent_role in (
                 "specialist_a", "specialist_b", "synthesizer"):
             first_worker_trans.setdefault(e.agent_role, e)
-    deps_sets = [set(e.depends_on or []) for e in first_worker_trans.values()]
-    # Distinct: each worker takes its own branch handoff (no shared read).
-    a, b = deps_sets[0], deps_sets[1]
-    assert a != b, (
-        "single_origin workers received identical handoff dependencies — "
-        "looks like O2M shared-artifact leakage into the SO path"
-    )
+    assert len(first_worker_trans) == 3
+    for role, e in first_worker_trans.items():
+        assert e.depends_on and artifact_id in e.depends_on, (
+            f"{role} did not consume the shared coordinator artifact in "
+            f"single_origin mode (canonical CW fan-out broken; serial relay "
+            f"leaked back in): deps={e.depends_on}"
+        )
 
 
-# ── Other topologies unchanged (NOT coordinator-first) ─────────────────────
+# ── Canonical CW topology holds in EVERY mode (BND V4.1 execution_shape) ────
+# The user's requirement: benign, single_origin, and one_to_many CW executions
+# must all record the SAME canonical fan-out/fan-in DAG. Verified with the exact
+# extraction BND V4.1 applies (benchmark.baseline_deviation.execution_shape),
+# so any drift back to a serial relay is caught by the BND-compat logic itself.
+
+
+@pytest.mark.parametrize("mode,target", [
+    ("single_origin", None),                    # benign CW
+    ("single_origin", "worker:specialist_a"),    # SO LEP
+    ("one_to_many", "upstream:coordinator"),     # O2M LEP
+])
+def test_cw_canonical_shape_per_mode(mode, target):
+    result, _, _ = _run(mode, target)
+    assert result.runner_success, result.error
+    _assert_canonical_cw_shape(_cw_shape(result.trace))
+
+
+def test_cw_all_modes_share_one_canonical_shape():
+    """benign, single_origin LEP, and one_to_many LEP must produce the SAME
+    execution_shape (the canonical DAG). This is the regression guard for
+    'propagation_mode must affect perturbation delivery only, never topology'."""
+    shapes = [_cw_shape(_run(m, t)[0].trace) for m, t in (
+        ("single_origin", None),
+        ("single_origin", "worker:specialist_a"),
+        ("one_to_many", "upstream:coordinator"),
+    )]
+    ref = shapes[0]
+    for i, s in enumerate(shapes[1:], start=1):
+        assert s == ref, (
+            f"CW mode index {i} execution_shape differs from canonical:\n"
+            f"  canonical: {ref}\n  got:       {s}\n"
+            "propagation_mode leaked into the recorded workflow topology"
+        )
+    # and it must actually be the canonical fan-out (not some other shared shape)
+    _assert_canonical_cw_shape(ref)
 
 
 def test_is_coordinator_first_is_topologiespecific():

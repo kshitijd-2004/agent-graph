@@ -1223,7 +1223,21 @@ class ScenarioRunner:
             shared = None
             # Resolve shared inputs from the incoming edge, not the last stage
             # executed: sibling workers overwrite the rolling handoff state.
-            if (wcfg.propagation_mode == "one_to_many"
+            #
+            # GATED ON THE TOPOLOGY, NOT THE LEP PROPAGATION MODE.
+            # Every coordinator_workers execution must follow the canonical
+            # fan-out/fan-in topology: the coordinator decomposes once and every
+            # worker consumes that single coordinator-derived artifact. No
+            # worker-to-worker relay (specialist_b must NOT receive
+            # specialist_a's report) may enter the clean information flow, in
+            # ANY of the CW modes — benign, single_origin, or one_to_many.
+            # ``propagation_mode`` only governs where a LEP perturbation is
+            # delivered; it never changes the workflow DAG. The gate is
+            # ``is_coordinator_first()`` (topology-derived, True only for
+            # coordinator_workers today) so review_loop / branch_and_verify —
+            # which have no multi-way coordinator fan-out — keep their own
+            # rolling-handoff recording untouched.
+            if (topology.is_coordinator_first()
                     and current_stage.stage_id != topology.exit_stage):
                 for rule in incoming_rules:
                     payload = branch_handoffs.get(rule.from_stage)
@@ -1662,13 +1676,17 @@ class ScenarioRunner:
                     if dest:
                         enqueue(dest)
 
-                # ── O2M shared-artifact semantics ─────────────────────────────
-                # In one_to_many mode, the coordinator's handoff is a single
-                # artifact consumed by all workers. Store it so each worker
-                # receives the SAME payload (not independent copies).
-                # This ensures a LEP corruption on the artifact propagates
-                # to every worker, modeling the "shared read" semantics.
-                if (wcfg.propagation_mode == "one_to_many"
+                # ── coordinator shared-artifact semantics (canonical CW) ─────
+                # In EVERY coordinator_workers mode the coordinator's handoff
+                # is a single artifact consumed by all workers. Store it so
+                # each worker receives the SAME coordinator-derived payload
+                # (not a relay of a sibling's report), recording the canonical
+                # fan-out DAG: coordinator -> {sp_a, sp_b, synth}. This also
+                # means a LEP corruption on the artifact propagates to every
+                # worker (the "shared read" semantics), in all modes.
+                # Gated on the topology, not the LEP propagation_mode: mode
+                # must only affect perturbation delivery, never the topology.
+                if (topology.is_coordinator_first()
                         and len(outgoing_rules) > 1
                         and raw_payload is not None):
                     shared_artifact_id = f"shared:{current_stage.agent_role}:{raw_payload.event_id}"
