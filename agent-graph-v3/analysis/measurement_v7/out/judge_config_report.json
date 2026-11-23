@@ -1,0 +1,91 @@
+{
+  "availability": {
+    "config_required": [],
+    "detected": {
+      "anthropic": {
+        "base_url_host": "api.opusmax.pro",
+        "configured": true,
+        "credential_var": "ANTHROPIC_AUTH_TOKEN"
+      },
+      "openai_compatible": {
+        "base_url_host": null,
+        "configured": false,
+        "credential_var": null
+      }
+    },
+    "judges": {
+      "judge_a": {
+        "base_url_host": "api.opusmax.pro",
+        "cache_dir": "/u/kdhande/agent-graph/agent-graph-v3/analysis/measurement_v7/judges/out/judge_a_cache",
+        "configured": true,
+        "credential_var": "ANTHROPIC_AUTH_TOKEN",
+        "family": "claude_opus",
+        "inference_params": {
+          "deterministic": true,
+          "max_tokens": 4096,
+          "seed": null,
+          "temperature": 0.0
+        },
+        "model": "claude-opus-5-5",
+        "name": "judge_a",
+        "provider": "anthropic"
+      },
+      "judge_b": {
+        "base_url_host": "api.opusmax.pro",
+        "cache_dir": "/u/kdhande/agent-graph/agent-graph-v3/analysis/measurement_v7/judges/out/judge_b_cache",
+        "configured": true,
+        "credential_var": "ANTHROPIC_AUTH_TOKEN",
+        "family": "claude_sonnet",
+        "inference_params": {
+          "deterministic": true,
+          "max_tokens": 4096,
+          "seed": null,
+          "temperature": 0.0
+        },
+        "model": "claude-sonnet-5-5",
+        "name": "judge_b",
+        "provider": "anthropic",
+        "substitution_note": "GPT-6 (the preferred judge_b family) is not reachable on this relay: its catalog is 29 Claude models and gpt-*/o* identifiers return model_not_found (probed 2026-11-23).  judge_b runs a DISTINCT second model (claude-sonnet-5-5) on the same relay.  Agreement numbers from this configuration are two-model, same-relay agreement \u2014 NOT two-vendor (Claude vs GPT) agreement, and must be labelled as such.  Setting OPENAI_API_KEY restores the gpt config automatically."
+      }
+    },
+    "runnable": [
+      "judge_a",
+      "judge_b"
+    ]
+  },
+  "judge_config": {
+    "judge_a": {
+      "base_url_host": "api.opusmax.pro",
+      "cache_dir": "/u/kdhande/agent-graph/agent-graph-v3/analysis/measurement_v7/judges/out/judge_a_cache",
+      "configured": true,
+      "credential_var": "ANTHROPIC_AUTH_TOKEN",
+      "family": "claude_opus",
+      "inference_params": {
+        "deterministic": true,
+        "max_tokens": 4096,
+        "seed": null,
+        "temperature": 0.0
+      },
+      "model": "claude-opus-5-5",
+      "name": "judge_a",
+      "provider": "anthropic"
+    },
+    "judge_b": {
+      "base_url_host": "api.opusmax.pro",
+      "cache_dir": "/u/kdhande/agent-graph/agent-graph-v3/analysis/measurement_v7/judges/out/judge_b_cache",
+      "configured": true,
+      "credential_var": "ANTHROPIC_AUTH_TOKEN",
+      "family": "claude_sonnet",
+      "inference_params": {
+        "deterministic": true,
+        "max_tokens": 4096,
+        "seed": null,
+        "temperature": 0.0
+      },
+      "model": "claude-sonnet-5-5",
+      "name": "judge_b",
+      "provider": "anthropic",
+      "substitution_note": "GPT-6 (the preferred judge_b family) is not reachable on this relay: its catalog is 29 Claude models and gpt-*/o* identifiers return model_not_found (probed 2026-11-23).  judge_b runs a DISTINCT second model (claude-sonnet-5-5) on the same relay.  Agreement numbers from this configuration are two-model, same-relay agreement \u2014 NOT two-vendor (Claude vs GPT) agreement, and must be labelled as such.  Setting OPENAI_API_KEY restores the gpt config automatically."
+    }
+  }
+}

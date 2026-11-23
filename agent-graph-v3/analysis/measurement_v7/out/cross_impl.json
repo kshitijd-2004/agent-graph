@@ -1,0 +1,113 @@
+{
+  "n_common": 16767,
+  "per_implementation_m1": {
+    "frozen": {
+      "count": 4150,
+      "rate": 0.24750998986103656
+    },
+    "v6": {
+      "count": 5035,
+      "rate": 0.30029224071092026
+    },
+    "v7": {
+      "count": 5016,
+      "rate": 0.2991590624440866
+    }
+  },
+  "positive_dependent_only_on_zero_threshold": {
+    "frozen": {
+      "count": 3380,
+      "rate": 0.20158644957356714
+    },
+    "v6": {
+      "count": 3777,
+      "rate": 0.2252639112542494
+    },
+    "v7": {
+      "count": 3732,
+      "rate": 0.22258006799069602
+    }
+  },
+  "per_dimension_rates": {
+    "frozen": {
+      "assertions": {
+        "count": 2036,
+        "rate": 0.12142899743543865
+      },
+      "decisions": {
+        "count": 1563,
+        "rate": 0.09321882268742172
+      },
+      "actions": {
+        "count": 2096,
+        "rate": 0.12500745512017652
+      },
+      "outcomes": {
+        "count": 573,
+        "rate": 0.03417427088924673
+      }
+    },
+    "v6": {
+      "assertions": {
+        "count": 2452,
+        "rate": 0.14623963738295462
+      },
+      "decisions": {
+        "count": 2379,
+        "rate": 0.14188584719985686
+      },
+      "actions": {
+        "count": 2446,
+        "rate": 0.14588179161448084
+      },
+      "outcomes": {
+        "count": 1301,
+        "rate": 0.07759289079739966
+      }
+    },
+    "v7": {
+      "assertions": {
+        "count": 2431,
+        "rate": 0.14498717719329635
+      },
+      "decisions": {
+        "count": 2347,
+        "rate": 0.1399773364346633
+      },
+      "actions": {
+        "count": 2446,
+        "rate": 0.14588179161448084
+      },
+      "outcomes": {
+        "count": 1281,
+        "rate": 0.0764000715691537
+      }
+    }
+  },
+  "pairwise_m1_disagreement": {
+    "frozen_vs_v6": {
+      "count": 3605,
+      "rate": 0.21500566589133416
+    },
+    "frozen_vs_v7": {
+      "count": 3562,
+      "rate": 0.21244110455060536
+    },
+    "v6_vs_v7": {
+      "count": 309,
+      "rate": 0.018429057076400072
+    }
+  },
+  "m4_matched": {
+    "v6": {
+      "count": 421,
+      "rate": 0.025108844754577444
+    },
+    "v7": {
+      "count": 430,
+      "rate": 0.025645613407288124
+    },
+    "caveat": "perturbation-associated, not causal"
+  },
+  "note": "zero-threshold-only counts are how many union positives rest ENTIRELY on dimensions whose benign threshold is exactly 0 \u2014 i.e. \"any nonzero difference\", not \"an unusually large difference\".  theta_d=0 is NOT changed here; it is only reported."
+}

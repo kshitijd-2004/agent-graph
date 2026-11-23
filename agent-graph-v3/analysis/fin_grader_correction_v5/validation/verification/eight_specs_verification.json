@@ -1,0 +1,104 @@
+{
+  "task": "Verify the 8 unresolved Tier-2 specification candidates against source documents and spec-internal arithmetic",
+  "method": "For each spec: (1) recompute answer from the 4 required_facts; (2) compare to declared answer.value; (3) locate the governing table/line in documents/report.md (and call_transcript.md where present); (4) judge whether the declared unit matches the true dimension.",
+  "specs": [
+    {
+      "fid": "fin_finqa_029_v_2009",
+      "question": "what is the average payment volume per transaction of visa inc?",
+      "facts": {"payments_volume": 2727, "total_transactions": 56.7},
+      "declared_value": 48.0952, "declared_unit": "USD millions",
+      "arithmetic": "2727 / 56.7 = 48.0952 (exact match to declared value)",
+      "doc_evidence": "report.md line 9: 'Visa Inc.<sup>(1)</sup> | $2,727 | $4,346 | 56.7 | 1,717' under table header 'Payments Volume (billions) ... Total Transactions (billions)'. The source figures are in BILLIONS; the ratio is a dollar amount per transaction ($48.095/txn), NOT a quantity in millions.",
+      "verdict": "UNIT DEFECT",
+      "detail": "Answer dimension is USD-per-transaction (a plain dollar amount). Declared 'USD millions' makes the frozen extractor divide 48.095 by 1e6 -> 4.8e-05. Correct unit: 'USD per transaction' (scale factor 1.0).",
+      "fix": {"field": "answer.unit", "from": "USD millions", "to": "USD per transaction (dimension-1 dollar amount; scale factor 1.0)"}
+    },
+    {
+      "fid": "fin_finqa_043_swks_2007",
+      "question": "what is the net change in pension liability balance from september 2006 to september 2007?",
+      "facts": {"pension_adjustment": 159, "sfas158_initial": 226},
+      "declared_value": 385.0, "declared_unit": "USD thousands",
+      "arithmetic": "159 + 226 = 385 (exact). Cross-check from the balance column of the same table: balance Sep 29 2006 = -599; balance Sep 28 2007 = -214; -214 - (-599) = +385. Consistent.",
+      "doc_evidence": "report.md: 'Accumulated comprehensive loss presented in the financial statements consists of adjustments to the company's minimum pension liability as follows (in thousands):' table rows: 'Balance as of September 30, 2005 (1,137)' ... 'Balance as of September 29, 2006 $(599)' ... 'Pension adjustment 159' ... 'Adjustment to initially apply SFAS 158 226' ... 'Balance as of September 28, 2007 $(214)'.",
+      "verdict": "VALID SPEC",
+      "detail": "Genuine currency delta in thousands of USD; declared unit 'USD thousands' is correct. No correction. (My earlier dimensional scan flagged this only by a coincidental pct_change_100 match; the label 'net change ... in thousands' is currency, not dimensionless.)",
+      "fix": null
+    },
+    {
+      "fid": "fin_finqa_050_hum_2016",
+      "question": "in 2014 what was the number of shares issued a dividend in millions?",
+      "facts": {"total_amount_2014": 170.0, "amount_per_share_2014": 1.1},
+      "declared_value": 154.5454, "declared_unit": "USD millions",
+      "arithmetic": "170 / 1.1 = 154.5455 ~= 154.5454 (match within 5e-4)",
+      "doc_evidence": "report.md Dividends table: '2014 | $1.10 | $170' with header 'Amount per Share | Total Amount (in millions)'. 170 million USD / $1.10 per share = 154.545 million shares.",
+      "verdict": "UNIT DEFECT",
+      "detail": "Answer dimension is a share count in millions, not currency. Declared 'USD millions' makes the extractor divide 154.5454 by 1e6. Correct unit: 'millions of shares' (scale factor 1.0).",
+      "fix": {"field": "answer.unit", "from": "USD millions", "to": "millions of shares (count; scale factor 1.0)"}
+    },
+    {
+      "fid": "fin_finqa_051_dre_2008",
+      "question": "what is the net income per common share in 2007?",
+      "facts": {"basic_net_income_2008": 217692.0, "weighted_avg_shares_2008": 139255.0},
+      "declared_value": 1.5633, "declared_unit": "USD thousands",
+      "arithmetic": "217692 / 139255 = 1.5633 (exact, both in thousands -> result is in plain dollars)",
+      "doc_evidence": "report.md: 'Basic net income available for common shareholders $56,616 | $217,692 | $145,095' and 'Weighted average number of common shares outstanding 146,915 | 139,255 | 134,883' (in thousands). Label says 'in 2007' but the matching column is the 2008 one; minor label-year inconsistency, value itself is consistent.",
+      "verdict": "UNIT DEFECT",
+      "detail": "Answer dimension is USD per share (dollars, not thousands). Declared 'USD thousands' makes the extractor divide 1.5633 by 1e3 -> 0.00156. Correct unit: 'USD per share' (scale factor 1.0).",
+      "fix": {"field": "answer.unit", "from": "USD thousands", "to": "USD per share (scale factor 1.0)"}
+    },
+    {
+      "fid": "fin_finqa_116_stt_2007",
+      "question": "what is the number of outstanding shares based on the eps, (in millions)?",
+      "facts": {"net_income": 838.0, "basic_eps": 2.53},
+      "declared_value": 331.2253, "declared_unit": "USD millions",
+      "arithmetic": "838 / 2.53 = 331.2253 (exact; net income in $M / EPS in $/share -> millions of shares)",
+      "doc_evidence": "report.md: 'Net income as reported $838' and 'Basic-as reported $2.53' from the SFAS 128 pro forma table; doc text confirms 'Basic earnings per share is calculated by dividing net income ... by the weighted-average number of common shares outstanding'.",
+      "verdict": "UNIT DEFECT",
+      "detail": "Answer dimension is millions of shares, not currency. Declared 'USD millions' makes the extractor divide 331.2253 by 1e6. Correct unit: 'millions of shares' (scale factor 1.0).",
+      "fix": {"field": "answer.unit", "from": "USD millions", "to": "millions of shares (count; scale factor 1.0)"}
+    },
+    {
+      "fid": "fin_finqa_210_hii_2017",
+      "question": "what was the return on total assets during 2014?",
+      "facts": {"net_earnings_2014": 338.0, "total_assets_2014": 6239.0},
+      "declared_value": 0.0542, "declared_unit": "USD millions",
+      "arithmetic": "338 / 6239 = 0.054175 ~= 0.0542 (match)",
+      "doc_evidence": "report.md: 'Net earnings (loss) ... 338' and 'Total assets ... 6,239' (year ended December 31, 2014 column; both in $M).",
+      "verdict": "UNIT DEFECT",
+      "detail": "ROA is dimensionless. Declared 'USD millions' makes the extractor read 0.0542e-6. Correct unit: 'dimensionless' (scale factor 1.0), or 'percent' with value 5.42.",
+      "fix": {"field": "answer.unit", "from": "USD millions", "to": "dimensionless (scale factor 1.0)"}
+    },
+    {
+      "fid": "fin_finqa_219_adi_2015",
+      "question": "what is the total fair value of the total restricted stock units outstanding at october 31, 2015?",
+      "facts": {"rsu_outstanding_thousands": 2698.0, "rsu_wavg_fv_per_share": 47.59},
+      "declared_value": 56.6926, "declared_unit": "USD thousands",
+      "arithmetic": "The question requires MULTIPLICATION: 2698 (thousands of units) x $47.59/unit = $128,397.8 thousand. The declared value 56.6926 = 2698 / 47.59, i.e. the spec generator computed the INVERSE operation. The two do NOT agree.",
+      "doc_evidence": "report.md RSU table: 'Restricted stock units outstanding at October 31, 2015 | 2,698 | $47.59'. call_transcript.md: 'Management highlighted ... of 2,698 and ... of 47.59 (USD thousands). Analysts asked: what is the total fair value ...?' Total fair value = 2,698,000 units x $47.59 = $128.40M.",
+      "verdict": "VALUE BUG (not a unit bug)",
+      "detail": "answer.value is arithmetically wrong: it divides where the question multiplies. Correct value: 128397.8 (USD thousands) or 128.3978 (USD millions). Declared unit 'USD thousands' is itself fine. NOTE: the fixture's own call_transcript mis-annotates the per-share figure as '(USD thousands)' - a generation artifact; the per-share figure is USD/share. This spec must NOT enter the corrected-unit manifest; it needs a value correction (and value_strings update) or exclusion.",
+      "fix": {"field": "answer.value", "from": 56.6926, "to": 128397.8, "also": "value_strings: ['128,397.8', '128.4 million']"}
+    },
+    {
+      "fid": "fin_finqa_292_abmd_2007",
+      "question": "how much of the total contractual commitments are current?",
+      "facts": {"total_obligations": 14090.0, "current_lt_1yr": 8381.0},
+      "declared_value": 0.5948, "declared_unit": "USD thousands",
+      "arithmetic": "8381 / 14090 = 0.5948 (exact; the 'in thousands' unit cancels in the fraction)",
+      "doc_evidence": "report.md: 'the following table (in thousands) summarizes our contractual obligations' - 'Total Obligations | $14,090 | $8,381 | $3,441 | $1,652 | $616' (Less than 1 Year = 8,381).",
+      "verdict": "UNIT DEFECT",
+      "detail": "Answer dimension is a fraction (dimensionless). Declared 'USD thousands' makes the extractor read 0.5948e-3. Correct unit: 'dimensionless (fraction)' (scale factor 1.0), or 'percent' with value 59.48.",
+      "fix": {"field": "answer.unit", "from": "USD thousands", "to": "dimensionless (fraction; scale factor 1.0)"}
+    }
+  ],
+  "summary": {
+    "unit_defects_confirmed": ["fin_finqa_029_v_2009", "fin_finqa_050_hum_2016", "fin_finqa_051_dre_2008", "fin_finqa_116_stt_2007", "fin_finqa_210_hii_2017", "fin_finqa_292_abmd_2007"],
+    "value_bugs_new": ["fin_finqa_219_adi_2015"],
+    "valid_no_change": ["fin_finqa_043_swks_2007"],
+    "notes": [
+      "The prior '37 suspected' set = 29 label-unambiguous dimensionless/pct-in-currency + these 8. After this verification: 35 confirmed unit defects (29 + 6), 1 answer-value bug (219), 2 remain valid (043, and fin_finqa_180_fis_2016 which was a coincidental dimensional-scan false positive - a genuine signed currency delta 'difference ... in millions').",
+      "fin_finqa_051's label says 'in 2007' but the GT value matches the 2008 column - cosmetic label-year bug, no value impact.",
+      "fin_finqa_219's doc annotation '(USD thousands)' on a per-share figure is a fixture-generation artifact that would also confuse human annotators; flagged for the annotation guide."
+    ]
+  }
+}

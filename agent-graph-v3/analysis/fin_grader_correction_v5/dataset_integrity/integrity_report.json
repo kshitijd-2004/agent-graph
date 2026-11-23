@@ -1,0 +1,102 @@
+{
+ "checks": {
+  "task_total_1375": {
+   "ok": true,
+   "detail": "1375 tasks"
+  },
+  "dev_tasks_600": {
+   "ok": true,
+   "detail": "600"
+  },
+  "sealed_tasks_775": {
+   "ok": true,
+   "detail": "775"
+  },
+  "task_role_split_consistent": {
+   "ok": true,
+   "detail": "0 mismatches"
+  },
+  "sealed_fixtures_51": {
+   "ok": true,
+   "detail": "51"
+  },
+  "dev_fixtures_249_in_split": {
+   "ok": true,
+   "detail": "249 in split; task-list sample touches 225 (non-empty subset, expected)"
+  },
+  "fixture_disjoint": {
+   "ok": true,
+   "detail": "0 overlap"
+  },
+  "manifest_sealed_51": {
+   "ok": true,
+   "detail": "51"
+  },
+  "manifest_dev_249": {
+   "ok": true,
+   "detail": "249"
+  },
+  "manifest_disjoint": {
+   "ok": true,
+   "detail": "manifest held/dev disjoint"
+  },
+  "task_set_matches_manifest": {
+   "ok": true,
+   "detail": "task-list sealed set & split dev sets equal split_manifest fixture sets"
+  },
+  "no_dup_task_traceids": {
+   "ok": true,
+   "detail": "0 dups: []"
+  },
+  "all_trace_paths_exist": {
+   "ok": true,
+   "detail": "0 missing: []"
+  },
+  "spec_mapping_correct": {
+   "ok": true,
+   "detail": "0 bad: []"
+  },
+  "dup_ids_flagged": {
+   "ok": true,
+   "detail": "manifest=['fin_finqa_020_ilmn_2007.bv.LEP_TOOL_RESULT_CORRUPTION.many_to_one.00.std__b', 'fin_finqa_130_awk_2017.bv.LEP_INDIRECT_PROMPT_INJECTION.many_to_one.00.std__b', 'fin_finqa_280_lly_2008.rl.LEP_INDIRECT_PROMPT_INJECTION.single_origin.00.std__b'] flagged=['fin_finqa_020_ilmn_2007.bv.LEP_TOOL_RESULT_CORRUPTION.many_to_one.00.std__b', 'fin_finqa_130_awk_2017.bv.LEP_INDIRECT_PROMPT_INJECTION.many_to_one.00.std__b', 'fin_finqa_280_lly_2008.rl.LEP_INDIRECT_PROMPT_INJECTION.single_origin.00.std__b']"
+  },
+  "dup_excluded_from_lep_pop": {
+   "ok": true,
+   "detail": "0 dup LEP rows leaked into pop: []"
+  },
+  "benign_treatment_correct": {
+   "ok": true,
+   "detail": "0 bad benign rows"
+  },
+  "perturbed_have_lep_code": {
+   "ok": true,
+   "detail": "0 missing lep"
+  },
+  "non_scalar_excluded_from_tasks": {
+   "ok": true,
+   "detail": "0 no-answer executions leaked into task list: []"
+  },
+  "non_scalar_flagged_not_deleted": {
+   "ok": true,
+   "detail": "32 no-answer LEP rows (expect 32), stratum-flagged=True; these are EXCLUDED from scalar acceptance, not deleted"
+  },
+  "value_bug_219_flagged": {
+   "ok": true,
+   "detail": "12 LEP rows, stratum=value_bug_219=True"
+  },
+  "value_bug_219_in_manifest": {
+   "ok": true,
+   "detail": "value_bugs in manifest: ['fin_finqa_219_adi_2015']"
+  }
+ },
+ "failures": [],
+ "totals": {
+  "records": 6539,
+  "lep_execution_deduped": 4403,
+  "benign_reference": 2133,
+  "tasks_total": 1375,
+  "sealed_tasks": 775,
+  "dev_tasks": 600
+ },
+ "all_passed": true
+}

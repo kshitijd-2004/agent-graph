@@ -1,0 +1,118 @@
+{
+  "n": 16773,
+  "dimension_divergence_rate": {
+    "assertions": 0.14618732486734634,
+    "decisions": 0.1418947117391045,
+    "actions": 0.1459488463602218,
+    "outcomes": 0.07756513444225839
+  },
+  "dimension_divergence_count": {
+    "assertions": 2452,
+    "decisions": 2380,
+    "actions": 2448,
+    "outcomes": 1301
+  },
+  "dimension_evaluable_count": {
+    "assertions": 12707,
+    "decisions": 12779,
+    "actions": 16773,
+    "outcomes": 12068
+  },
+  "dimension_unavailable_count": {
+    "assertions": 4066,
+    "decisions": 3994,
+    "actions": 0,
+    "outcomes": 4705
+  },
+  "union_divergence_count": 5037,
+  "union_divergence_rate": 0.3003040600965838,
+  "union_zero_threshold_only_count": 3777,
+  "dimension_overlap_count": {
+    "assertions&decisions": 1979,
+    "assertions&actions": 452,
+    "assertions&outcomes": 835,
+    "decisions&actions": 457,
+    "decisions&outcomes": 891,
+    "actions&outcomes": 269
+  },
+  "trigger_combinations": {
+    "actions": 1822,
+    "assertions,decisions": 984,
+    "assertions,decisions,outcomes": 630,
+    "assertions": 347,
+    "outcomes": 280,
+    "decisions": 226,
+    "assertions,decisions,actions": 208,
+    "assertions,decisions,actions,outcomes": 157,
+    "decisions,outcomes": 83,
+    "actions,outcomes": 82,
+    "assertions,actions": 78,
+    "decisions,actions": 71,
+    "assertions,outcomes": 39,
+    "decisions,actions,outcomes": 21,
+    "assertions,actions,outcomes": 9
+  },
+  "skipped": {},
+  "m4": {
+    "n_rows": 16773,
+    "n_m3_supported": 1647,
+    "class_counts": {
+      "mixed_or_unavailable": 246,
+      "persistent_correct": 416,
+      "degraded": 421,
+      "persistent_failure": 516,
+      "improved": 48
+    },
+    "class_rates_over_m3": {
+      "mixed_or_unavailable": 0.1493624772313297,
+      "persistent_correct": 0.25258044930176077,
+      "degraded": 0.25561627200971465,
+      "persistent_failure": 0.3132969034608379,
+      "improved": 0.029143897996357013
+    },
+    "M4_historical_count": 954,
+    "M4_historical_rate": 0.05687712394920408,
+    "M4_matched_count": 421,
+    "M4_matched_rate": 0.025099862874858405,
+    "M4_matched_fraction_of_M4": 0.4412997903563941,
+    "M4_matched_rate_over_m3": 0.25561627200971465,
+    "by_tier": {
+      "verified": {
+        "degraded": 115,
+        "mixed_or_unavailable": 75,
+        "persistent_correct": 50,
+        "persistent_failure": 102,
+        "improved": 4
+      },
+      "plausible": {
+        "mixed_or_unavailable": 171,
+        "persistent_correct": 366,
+        "persistent_failure": 414,
+        "improved": 44,
+        "degraded": 306
+      }
+    },
+    "M4_matched_by_tier": {
+      "verified": 115,
+      "plausible": 306
+    },
+    "M4_historical_by_tier": {
+      "verified": 292,
+      "plausible": 891
+    },
+    "caveat": "M4-matched is perturbation-ASSOCIATED degradation, not proof of causation: benign references are separate executions, not counterfactuals of the same run."
+  },
+  "historical_comparison": {
+    "n": 16773,
+    "M1_v6_union": 5037,
+    "M1_v6_rate": 0.3003040600965838,
+    "M1_frozen": 4150,
+    "M1_frozen_rate": 0.24742145114171585,
+    "M1_disagreements": 3607,
+    "M4_frozen": 1213,
+    "M4_historical_v6": 954,
+    "M4_matched": 421
+  },
+  "aggregation": "mean",
+  "n_rows": 16773
+}

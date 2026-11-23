@@ -1,0 +1,432 @@
+{
+  "benign_control_population": {
+    "definition": "Every trace_id appearing in any frame row's reference_set. These are the controls the benign thresholds are calibrated from.",
+    "grade_distribution_frozen": {
+      "correct": 2499,
+      "incorrect": 3699,
+      "ungradeable": 1989
+    },
+    "n_unique_referenced_benign_executions": 8187
+  },
+  "component_A_representative": {
+    "benign_allocation": {
+      "code_review": {
+        "correct": {
+          "n_population": 689,
+          "n_taken": 7
+        },
+        "incorrect": {
+          "n_population": 2050,
+          "n_taken": 17
+        }
+      },
+      "financial_analysis": {
+        "correct": {
+          "n_population": 473,
+          "n_taken": 5
+        },
+        "incorrect": {
+          "n_population": 289,
+          "n_taken": 3
+        },
+        "ungradeable": {
+          "n_population": 1980,
+          "n_taken": 16
+        }
+      },
+      "research_synthesis": {
+        "correct": {
+          "n_population": 1337,
+          "n_taken": 11
+        },
+        "incorrect": {
+          "n_population": 1360,
+          "n_taken": 12
+        },
+        "ungradeable": {
+          "n_population": 9,
+          "n_taken": 1
+        }
+      }
+    },
+    "description": "Stratified SRSWOR over the frame, stratified by (task_family x M1_status); benign component stratified by (task_family x frozen benign grade). Inclusion probabilities are per stratum N_h/n_h and are recorded on every unit.",
+    "lep_allocation": {
+      "code_review": {
+        "frozen_neg_v6_neg": {
+          "inclusion_probability": 0.006081668114682885,
+          "n_population": 3453,
+          "n_taken": 21
+        },
+        "frozen_neg_v6_pos": {
+          "inclusion_probability": 0.006986027944111776,
+          "n_population": 1002,
+          "n_taken": 7
+        },
+        "frozen_pos_v6_neg": {
+          "inclusion_probability": 0.008108108108108109,
+          "n_population": 370,
+          "n_taken": 3
+        },
+        "frozen_pos_v6_pos": {
+          "inclusion_probability": 0.00684931506849315,
+          "n_population": 730,
+          "n_taken": 5
+        }
+      },
+      "financial_analysis": {
+        "frozen_neg_v6_neg": {
+          "inclusion_probability": 0.00594930160372478,
+          "n_population": 3866,
+          "n_taken": 23
+        },
+        "frozen_neg_v6_pos": {
+          "inclusion_probability": 0.006934812760055479,
+          "n_population": 721,
+          "n_taken": 5
+        },
+        "frozen_pos_v6_neg": {
+          "inclusion_probability": 0.007827788649706457,
+          "n_population": 511,
+          "n_taken": 4
+        },
+        "frozen_pos_v6_pos": {
+          "inclusion_probability": 0.007326007326007326,
+          "n_population": 546,
+          "n_taken": 4
+        }
+      },
+      "research_synthesis": {
+        "frozen_neg_v6_neg": {
+          "inclusion_probability": 0.005888125613346418,
+          "n_population": 3057,
+          "n_taken": 18
+        },
+        "frozen_neg_v6_pos": {
+          "inclusion_probability": 0.007633587786259542,
+          "n_population": 524,
+          "n_taken": 4
+        },
+        "frozen_pos_v6_neg": {
+          "inclusion_probability": 0.008350730688935281,
+          "n_population": 479,
+          "n_taken": 4
+        },
+        "frozen_pos_v6_pos": {
+          "inclusion_probability": 0.0066050198150594455,
+          "n_population": 1514,
+          "n_taken": 10
+        }
+      }
+    },
+    "population_weight_eligible": true
+  },
+  "component_B_targeted": {
+    "benign_predicates": [
+      {
+        "description": "A benign execution that used no tool at all (action dimension undefined against it)",
+        "name": "no_tool_use"
+      },
+      {
+        "description": "A benign execution with a repeated (role, tool, target) key (multiplicity >= 3)",
+        "name": "heavy_retry"
+      },
+      {
+        "description": "A benign execution in the top decile by event count",
+        "name": "many_events"
+      },
+      {
+        "description": "A benign execution whose final answer is not extractable",
+        "name": "no_final_answer"
+      }
+    ],
+    "benign_stratum_sizes": {
+      "code_review": {
+        "heavy_retry": 157,
+        "many_events": 124,
+        "no_final_answer": 2739
+      },
+      "financial_analysis": {
+        "heavy_retry": 1,
+        "many_events": 55,
+        "no_final_answer": 2742
+      },
+      "research_synthesis": {
+        "many_events": 802,
+        "no_final_answer": 2706
+      }
+    },
+    "description": "Error-enriched selection. Each stratum is a documented predicate over the frame; units are taken round-robin across predicates with a fixed seeded permutation. Units satisfying several predicates record all of them.",
+    "population_weight_eligible": false,
+    "predicates": [
+      {
+        "description": "Frozen and v6 disagree on the four-dimensional union (M1)",
+        "name": "frozen_v6_m1_disagreement"
+      },
+      {
+        "description": "Frozen M1 positive resting ONLY on dimensions with theta_d == 0",
+        "name": "zero_threshold_positive"
+      },
+      {
+        "description": "Frozen M1 positive with at least one dimension whose theta_d > 0",
+        "name": "nonzero_threshold_positive"
+      },
+      {
+        "description": "v6 union positive where every triggered dimension has theta_d == 0",
+        "name": "v6_zero_threshold_ony"
+      },
+      {
+        "description": "An observed assertion value flips SUPPORTED<->CONTRADICTED between the frozen and v6 extractors",
+        "name": "polarity_inversion"
+      },
+      {
+        "description": "An observed assertion or decision has a DIFFERENT value under the two extractors",
+        "name": "extractor_value_differs"
+      },
+      {
+        "description": "An assertion key has a DIFFERENT observation STATE under the two extractors",
+        "name": "extractor_state_differs"
+      },
+      {
+        "description": "A required fact, verdict or stance is AMBIGUOUS under either extractor",
+        "name": "ambiguous_answer"
+      },
+      {
+        "description": "The FINAL DELIVERABLE for this family is not extractable under either extractor (financial: final answer; research: claim verdicts; code: issue stances)",
+        "name": "answer_unavailable"
+      },
+      {
+        "description": "The frozen extractor observed some but not all of the family deliverable items (partial extraction, the state that most easily masquerades as a behavioral difference)",
+        "name": "partial_deliverable_extraction"
+      },
+      {
+        "description": "Every per-dimension distance is unavailable for the LEP side",
+        "name": "all_dimensions_unevaluable"
+      },
+      {
+        "description": "At least one but not all per-dimension distances are unavailable",
+        "name": "dimension_partially_unevaluable"
+      },
+      {
+        "description": "A (role, tool, target) action key is repeated within one trace, giving the action dimension a retry-blind structure",
+        "name": "retry_or_duplicate_actions"
+      },
+      {
+        "description": "The assertions and decisions dimensions disagree on divergence (the double-counting / separation concern)",
+        "name": "assertions_decisions_disagree"
+      },
+      {
+        "description": "v6 M4-matched: perturbation-ASSOCIATED task degradation against a benign reference that succeeded",
+        "name": "m4_matched_degraded"
+      },
+      {
+        "description": "M3-supported LEP failure on a fixture where the benign references also failed (the documented M4 over-statement class)",
+        "name": "m4_persistent_failure"
+      },
+      {
+        "description": "The frozen pipeline emitted two distinct rows sharing one trace_id",
+        "name": "unresolved_duplicate_id"
+      },
+      {
+        "description": "The downstream artifact records the perturbation as not delivered",
+        "name": "delivery_unverified"
+      },
+      {
+        "description": "No dependency-supported downstream reach",
+        "name": "not_m3_supported"
+      }
+    ],
+    "stratum_sizes": {
+      "code_review": {
+        "answer_unavailable": 4148,
+        "assertions_decisions_disagree": 491,
+        "delivery_unverified": 174,
+        "dimension_partially_unevaluable": 5212,
+        "extractor_state_differs": 3107,
+        "extractor_value_differs": 635,
+        "frozen_v6_m1_disagreement": 1372,
+        "m4_matched_degraded": 70,
+        "m4_persistent_failure": 4,
+        "nonzero_threshold_positive": 368,
+        "not_m3_supported": 4576,
+        "partial_deliverable_extraction": 68,
+        "retry_or_duplicate_actions": 3266,
+        "unresolved_duplicate_id": 6,
+        "v6_zero_threshold_ony": 1216,
+        "zero_threshold_positive": 732
+      },
+      "financial_analysis": {
+        "ambiguous_answer": 4626,
+        "answer_unavailable": 3925,
+        "assertions_decisions_disagree": 646,
+        "delivery_unverified": 537,
+        "dimension_partially_unevaluable": 4949,
+        "extractor_state_differs": 4797,
+        "extractor_value_differs": 2955,
+        "frozen_v6_m1_disagreement": 1232,
+        "m4_matched_degraded": 24,
+        "m4_persistent_failure": 31,
+        "nonzero_threshold_positive": 281,
+        "not_m3_supported": 5284,
+        "retry_or_duplicate_actions": 3229,
+        "unresolved_duplicate_id": 6,
+        "v6_zero_threshold_ony": 895,
+        "zero_threshold_positive": 776
+      },
+      "research_synthesis": {
+        "ambiguous_answer": 552,
+        "answer_unavailable": 28,
+        "assertions_decisions_disagree": 391,
+        "delivery_unverified": 484,
+        "dimension_partially_unevaluable": 278,
+        "extractor_state_differs": 639,
+        "extractor_value_differs": 768,
+        "frozen_v6_m1_disagreement": 1003,
+        "m4_matched_degraded": 327,
+        "m4_persistent_failure": 481,
+        "nonzero_threshold_positive": 121,
+        "not_m3_supported": 4051,
+        "polarity_inversion": 265,
+        "retry_or_duplicate_actions": 3169,
+        "v6_zero_threshold_ony": 1666,
+        "zero_threshold_positive": 1872
+      }
+    },
+    "warning": "Targeted strata are deliberately over-sampled. The pooled rate over B is NOT a population estimate and must never be reported as one. Every report in this framework separates A and B."
+  },
+  "constraints_respected": {
+    "no_impossible_combinations": "empty strata are reported as size 0, never forced",
+    "no_memory_poisoning": true,
+    "note": "LEP_MEMORY_POISONING and memory-enabled variants are absent from this corpus (verified: 0 traces with a MEMORY_POISONING lep_code, 0 non-standard execution_variant), so nothing had to be excluded.",
+    "only_four_retained_leps": true
+  },
+  "counts": {
+    "A_representative": 180,
+    "B_targeted": 120,
+    "achieved_m1_frozen_pos": {
+      "benign": {
+        "n_positive": 0,
+        "n_units": 120,
+        "n_with_verdict": 0,
+        "rate": null
+      },
+      "lep": {
+        "n_positive": 64,
+        "n_units": 180,
+        "n_with_verdict": 180,
+        "rate": 0.35555555555555557
+      },
+      "representative_lep_only": {
+        "n_positive": 30,
+        "n_units": 108,
+        "n_with_verdict": 108,
+        "rate": 0.2777777777777778
+      }
+    },
+    "achieved_m1_v6_pos": {
+      "benign": {
+        "n_positive": 0,
+        "n_units": 120,
+        "n_with_verdict": 0,
+        "rate": null
+      },
+      "lep": {
+        "n_positive": 71,
+        "n_units": 180,
+        "n_with_verdict": 180,
+        "rate": 0.39444444444444443
+      },
+      "representative_lep_only": {
+        "n_positive": 35,
+        "n_units": 108,
+        "n_with_verdict": 108,
+        "rate": 0.32407407407407407
+      }
+    },
+    "benign": 120,
+    "by_family": {
+      "code_review": 100,
+      "financial_analysis": 100,
+      "research_synthesis": 100
+    },
+    "by_family_and_kind": {
+      "code_review|benign": 40,
+      "code_review|lep": 60,
+      "financial_analysis|benign": 40,
+      "financial_analysis|lep": 60,
+      "research_synthesis|benign": 40,
+      "research_synthesis|lep": 60
+    },
+    "by_lep": {
+      "HANDOFF_CORRUPTION": 32,
+      "INDIRECT_PROMPT_INJECTION": 62,
+      "INPUT_DISREGARD": 50,
+      "TOOL_RESULT_CORRUPTION": 36
+    },
+    "by_propagation_mode": {
+      "many_to_one": 37,
+      "one_to_many": 41,
+      "single_origin": 222
+    },
+    "by_topology": {
+      "branch_and_verify": 99,
+      "coordinator_workers": 120,
+      "review_loop": 81
+    },
+    "lep": 180,
+    "targeted_predicate_membership": {
+      "all_dimensions_unevaluable": 0,
+      "ambiguous_answer": 22,
+      "answer_unavailable": 31,
+      "assertions_decisions_disagree": 13,
+      "delivery_unverified": 3,
+      "dimension_partially_unevaluable": 43,
+      "extractor_state_differs": 38,
+      "extractor_value_differs": 27,
+      "frozen_v6_m1_disagreement": 20,
+      "m4_matched_degraded": 7,
+      "m4_persistent_failure": 7,
+      "nonzero_threshold_positive": 10,
+      "not_m3_supported": 48,
+      "partial_deliverable_extraction": 2,
+      "polarity_inversion": 3,
+      "retry_or_duplicate_actions": 43,
+      "unresolved_duplicate_id": 2,
+      "v6_zero_threshold_ony": 31,
+      "zero_threshold_positive": 24
+    },
+    "total_units": 300
+  },
+  "design_version": "measurement-validation-v1",
+  "frame": {
+    "n_ambiguous_trace_ids": 6,
+    "n_measurement_rows": 16773,
+    "n_unique_trace_ids": 16767,
+    "not_the_same_population_as": [
+      "analysis/bnd_v41_cw_swe200_provisional/run_merged (frozen module 6f0f7ff3; 10,057 comparable rows, a different module revision and a different trace staging)",
+      "the 17,937 staged LEP traces of the consolidated corpus (includes the 1,164 non-comparable rows)",
+      "the 26,965 staged trace files (includes 9,028 benign executions that are controls, not measurements)"
+    ],
+    "population_definition": "The 16,773 comparable LEP measurement rows of the consolidated BND V4.1 run: rows whose reference pool satisfied the frozen comparability gate (>=3 structurally compatible benign references sharing one fixture/topology/cell). 1,164 of the 17,937 staged LEP traces are NOT comparable and are outside this frame.",
+    "source": "analysis/consolidated_20261121_bnd_v41"
+  },
+  "reproducibility": {
+    "frame_rows": 16773,
+    "note": "Component A is reproducible from the frame alone: strata are sorted before the seeded draw, and the draw uses an explicit Mersenne-Twister stream rather than random.sample's implementation details.",
+    "reproducible_command": "python3.11 analysis/measurement_validation/scripts/sample_validation.py",
+    "seed": 20261122
+  },
+  "seeds": {
+    "seed": 20261122,
+    "seed_blind_order_A": 20261126,
+    "seed_blind_order_B": 20261127,
+    "seed_bootstrap": 20261128,
+    "seed_pairs": 20261125,
+    "seed_rep_benign": 20261123,
+    "seed_rep_leps": 20261122,
+    "seed_targeted": 20261124
+  },
+  "weight_semantics": {
+    "A_representative": "design_weight = 1/pi is a population weight; weighted estimates over component A generalise to the 16,773-row frame",
+    "B_targeted": "design_weight is a within-bucket draw weight ONLY. Component B is selected on outcome-dependent predicates, so it is NOT population-estimable; population_estimable=False on every component-B row. Pooling A and B and weighting the union would be biased and must not be done."
+  }
+}

@@ -1,0 +1,338 @@
+{
+  "partition": "dev",
+  "reference": "ai_adjudicated (NOT human ground truth)",
+  "implementations": {
+    "frozen": {
+      "research_synthesis": {
+        "n_units": 60,
+        "n_items": 120,
+        "n_judgeable_items": 104,
+        "n_ref_observed": 104,
+        "n_ref_absent": 0,
+        "n_excluded_unresolved": 16,
+        "state_coverage_pred": 1.0,
+        "state_agreement_overall": 0.8666666666666667,
+        "state_agreement_judged": 1.0,
+        "precision_value": 1.0,
+        "recall_value_over_observed": 1.0,
+        "f1_value": 1.0,
+        "value_ci": {
+          "p": 1.0,
+          "lo": 0.9643786456275479,
+          "hi": 1.0,
+          "n": 104,
+          "k": 104,
+          "method": "wilson"
+        },
+        "error_taxonomy": {
+          "ref_unresolved_excluded": 16
+        },
+        "note": "unavailable/unresolved references excluded from precision/recall, never counted as negatives; AI-adjudicated reference, not human ground truth",
+        "component_A_weighted_value_accuracy": {
+          "estimate": 1.0,
+          "method": "design_weighted + fixture_cluster_bootstrap",
+          "lo": 1.0,
+          "hi": 1.0,
+          "n_valid_replicates": 2000
+        }
+      },
+      "code_review": {
+        "n_units": 52,
+        "n_items": 55,
+        "n_judgeable_items": 1,
+        "n_ref_observed": 1,
+        "n_ref_absent": 0,
+        "n_excluded_unresolved": 54,
+        "state_coverage_pred": 0.34545454545454546,
+        "state_agreement_overall": 0.6727272727272727,
+        "state_agreement_judged": 1.0,
+        "precision_value": 0.0,
+        "recall_value_over_observed": 0.0,
+        "f1_value": null,
+        "value_ci": {
+          "p": 0.0,
+          "lo": 0.0,
+          "hi": 0.7934506856227626,
+          "n": 1,
+          "k": 0,
+          "method": "wilson"
+        },
+        "error_taxonomy": {
+          "value_mismatch": 1,
+          "ref_unresolved_excluded": 54,
+          "pred_unavailable": 36
+        },
+        "note": "unavailable/unresolved references excluded from precision/recall, never counted as negatives; AI-adjudicated reference, not human ground truth",
+        "component_A_weighted_value_accuracy": {
+          "estimate": 0.0,
+          "method": "design_weighted + fixture_cluster_bootstrap",
+          "lo": 0.0,
+          "hi": 0.0,
+          "n_valid_replicates": 1268
+        }
+      },
+      "financial_analysis": {
+        "n_units": 64,
+        "n_items": 64,
+        "n_judgeable_items": 32,
+        "n_ref_observed": 28,
+        "n_ref_absent": 4,
+        "n_excluded_unresolved": 32,
+        "state_coverage_pred": 0.375,
+        "state_agreement_overall": 0.390625,
+        "state_agreement_judged": 0.3125,
+        "precision_value": 0.125,
+        "recall_value_over_observed": 0.14285714285714285,
+        "f1_value": 0.13333333333333333,
+        "value_ci": {
+          "p": 0.125,
+          "lo": 0.04970134387480073,
+          "hi": 0.2806830548165022,
+          "n": 32,
+          "k": 4,
+          "method": "wilson"
+        },
+        "error_taxonomy": {
+          "ref_unresolved_excluded": 29,
+          "pred_unavailable_vs_ref_observed": 18,
+          "pred_unavailable": 40,
+          "value_mismatch": 6,
+          "pred_unavailable_vs_ref_absent": 4,
+          "ref_ambiguous": 3
+        },
+        "note": "unavailable/unresolved references excluded from precision/recall, never counted as negatives; AI-adjudicated reference, not human ground truth",
+        "component_A_weighted_value_accuracy": {
+          "estimate": 0.6512559183275576,
+          "method": "design_weighted + fixture_cluster_bootstrap",
+          "lo": 0.2051580861931886,
+          "hi": 1.0,
+          "n_valid_replicates": 1997
+        }
+      }
+    },
+    "v6": {
+      "research_synthesis": {
+        "n_units": 60,
+        "n_items": 120,
+        "n_judgeable_items": 104,
+        "n_ref_observed": 104,
+        "n_ref_absent": 0,
+        "n_excluded_unresolved": 16,
+        "state_coverage_pred": 0.9083333333333333,
+        "state_agreement_overall": 0.7916666666666666,
+        "state_agreement_judged": 0.9038461538461539,
+        "precision_value": 0.7884615384615384,
+        "recall_value_over_observed": 0.7884615384615384,
+        "f1_value": 0.7884615384615384,
+        "value_ci": {
+          "p": 0.7884615384615384,
+          "lo": 0.7004245425871797,
+          "hi": 0.855947752967175,
+          "n": 104,
+          "k": 82,
+          "method": "wilson"
+        },
+        "error_taxonomy": {
+          "ref_unresolved_excluded": 16,
+          "value_mismatch": 12,
+          "pred_unavailable_vs_ref_observed": 10,
+          "pred_unavailable": 11
+        },
+        "note": "unavailable/unresolved references excluded from precision/recall, never counted as negatives; AI-adjudicated reference, not human ground truth",
+        "component_A_weighted_value_accuracy": {
+          "estimate": 0.8971136066064097,
+          "method": "design_weighted + fixture_cluster_bootstrap",
+          "lo": 0.7933280064952583,
+          "hi": 0.9737015294058827,
+          "n_valid_replicates": 2000
+        }
+      },
+      "code_review": {
+        "n_units": 52,
+        "n_items": 55,
+        "n_judgeable_items": 1,
+        "n_ref_observed": 1,
+        "n_ref_absent": 0,
+        "n_excluded_unresolved": 54,
+        "state_coverage_pred": 0.8727272727272727,
+        "state_agreement_overall": 0.14545454545454545,
+        "state_agreement_judged": 1.0,
+        "precision_value": 0.0,
+        "recall_value_over_observed": 0.0,
+        "f1_value": null,
+        "value_ci": {
+          "p": 0.0,
+          "lo": 0.0,
+          "hi": 0.7934506856227626,
+          "n": 1,
+          "k": 0,
+          "method": "wilson"
+        },
+        "error_taxonomy": {
+          "value_mismatch": 1,
+          "ref_unresolved_excluded": 54,
+          "pred_unavailable": 7
+        },
+        "note": "unavailable/unresolved references excluded from precision/recall, never counted as negatives; AI-adjudicated reference, not human ground truth",
+        "component_A_weighted_value_accuracy": {
+          "estimate": 0.0,
+          "method": "design_weighted + fixture_cluster_bootstrap",
+          "lo": 0.0,
+          "hi": 0.0,
+          "n_valid_replicates": 1268
+        }
+      },
+      "financial_analysis": {
+        "n_units": 64,
+        "n_items": 64,
+        "n_judgeable_items": 32,
+        "n_ref_observed": 28,
+        "n_ref_absent": 4,
+        "n_excluded_unresolved": 32,
+        "state_coverage_pred": 0.625,
+        "state_agreement_overall": 0.28125,
+        "state_agreement_judged": 0.53125,
+        "precision_value": 0.3125,
+        "recall_value_over_observed": 0.35714285714285715,
+        "f1_value": 0.3333333333333333,
+        "value_ci": {
+          "p": 0.3125,
+          "lo": 0.17952541633609734,
+          "hi": 0.4856667830095541,
+          "n": 32,
+          "k": 10,
+          "method": "wilson"
+        },
+        "error_taxonomy": {
+          "ref_unresolved_excluded": 29,
+          "pred_unavailable_vs_ref_observed": 10,
+          "pred_unavailable": 24,
+          "value_mismatch": 7,
+          "value_uncomparable": 3,
+          "ref_ambiguous": 3,
+          "pred_unavailable_vs_ref_absent": 1
+        },
+        "note": "unavailable/unresolved references excluded from precision/recall, never counted as negatives; AI-adjudicated reference, not human ground truth",
+        "component_A_weighted_value_accuracy": {
+          "estimate": 0.5791464241792453,
+          "method": "design_weighted + fixture_cluster_bootstrap",
+          "lo": 0.30022894312627163,
+          "hi": 0.8657760063327615,
+          "n_valid_replicates": 2000
+        }
+      }
+    },
+    "v7": {
+      "research_synthesis": {
+        "n_units": 60,
+        "n_items": 120,
+        "n_judgeable_items": 104,
+        "n_ref_observed": 104,
+        "n_ref_absent": 0,
+        "n_excluded_unresolved": 16,
+        "state_coverage_pred": 0.9083333333333333,
+        "state_agreement_overall": 0.7916666666666666,
+        "state_agreement_judged": 0.9038461538461539,
+        "precision_value": 0.8173076923076923,
+        "recall_value_over_observed": 0.8173076923076923,
+        "f1_value": 0.8173076923076923,
+        "value_ci": {
+          "p": 0.8173076923076923,
+          "lo": 0.7322037581041858,
+          "hi": 0.8798057670056043,
+          "n": 104,
+          "k": 85,
+          "method": "wilson"
+        },
+        "error_taxonomy": {
+          "ref_unresolved_excluded": 16,
+          "value_mismatch": 9,
+          "pred_unavailable_vs_ref_observed": 10,
+          "pred_unavailable": 11
+        },
+        "note": "unavailable/unresolved references excluded from precision/recall, never counted as negatives; AI-adjudicated reference, not human ground truth",
+        "component_A_weighted_value_accuracy": {
+          "estimate": 0.9413010225018714,
+          "method": "design_weighted + fixture_cluster_bootstrap",
+          "lo": 0.8770911554227214,
+          "hi": 0.986769026657558,
+          "n_valid_replicates": 2000
+        }
+      },
+      "code_review": {
+        "n_units": 52,
+        "n_items": 55,
+        "n_judgeable_items": 1,
+        "n_ref_observed": 1,
+        "n_ref_absent": 0,
+        "n_excluded_unresolved": 54,
+        "state_coverage_pred": 0.7636363636363637,
+        "state_agreement_overall": 0.10909090909090909,
+        "state_agreement_judged": 1.0,
+        "precision_value": 0.0,
+        "recall_value_over_observed": 0.0,
+        "f1_value": null,
+        "value_ci": {
+          "p": 0.0,
+          "lo": 0.0,
+          "hi": 0.7934506856227626,
+          "n": 1,
+          "k": 0,
+          "method": "wilson"
+        },
+        "error_taxonomy": {
+          "value_mismatch": 1,
+          "ref_unresolved_excluded": 54,
+          "pred_unavailable": 13
+        },
+        "note": "unavailable/unresolved references excluded from precision/recall, never counted as negatives; AI-adjudicated reference, not human ground truth",
+        "component_A_weighted_value_accuracy": {
+          "estimate": 0.0,
+          "method": "design_weighted + fixture_cluster_bootstrap",
+          "lo": 0.0,
+          "hi": 0.0,
+          "n_valid_replicates": 1268
+        }
+      },
+      "financial_analysis": {
+        "n_units": 64,
+        "n_items": 64,
+        "n_judgeable_items": 32,
+        "n_ref_observed": 28,
+        "n_ref_absent": 4,
+        "n_excluded_unresolved": 32,
+        "state_coverage_pred": 0.625,
+        "state_agreement_overall": 0.28125,
+        "state_agreement_judged": 0.53125,
+        "precision_value": 0.3125,
+        "recall_value_over_observed": 0.35714285714285715,
+        "f1_value": 0.3333333333333333,
+        "value_ci": {
+          "p": 0.3125,
+          "lo": 0.17952541633609734,
+          "hi": 0.4856667830095541,
+          "n": 32,
+          "k": 10,
+          "method": "wilson"
+        },
+        "error_taxonomy": {
+          "ref_unresolved_excluded": 29,
+          "pred_unavailable_vs_ref_observed": 10,
+          "pred_unavailable": 24,
+          "value_mismatch": 7,
+          "value_uncomparable": 3,
+          "ref_ambiguous": 3,
+          "pred_unavailable_vs_ref_absent": 1
+        },
+        "note": "unavailable/unresolved references excluded from precision/recall, never counted as negatives; AI-adjudicated reference, not human ground truth",
+        "component_A_weighted_value_accuracy": {
+          "estimate": 0.5791464241792453,
+          "method": "design_weighted + fixture_cluster_bootstrap",
+          "lo": 0.30022894312627163,
+          "hi": 0.8657760063327615,
+          "n_valid_replicates": 2000
+        }
+      }
+    }
+  }
+}

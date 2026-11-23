@@ -1,0 +1,216 @@
+{
+ "meta": {
+  "interval_method": "one-sided 95% Wilson (z=1.96); Clopper-Pearson exact used as cross-check only",
+  "N_sealed": 775,
+  "corrections_vs_previous": [
+   "C-1 denominators made explicit (fixed 775 gating vs conditional diagnostic)",
+   "C-2 power relabeled as P(pass|true rate) with cutoff fixed by threshold; the prior \"power at threshold ~97-98%\" was the gate's own strictness at the boundary, not classical power",
+   "C-3 rare-class feasibility recomputed with the selected one-sided Wilson at actual sealed n; prior min_n=73 used a mismatched two-sided interval",
+   "C-4 overlap policy: G5 disjoint-in-reporting from G1-G3; no summed errors"
+  ],
+  "cp_crosscheck": {
+   "g1_kmax_775_wilson": 26,
+   "g1_kmax_775_cp": 0,
+   "g2_kmax_775_wilson": 96,
+   "g2_kmax_775_cp": 0,
+   "g3_kmax_775_wilson": 61,
+   "g3_kmax_775_cp": 0
+  }
+ },
+ "global_gates": {
+  "G1": {
+   "gate": "G1_false_correct",
+   "numerator": "rows grader-correct & reference-not-correct (FP_correct)",
+   "denominator_gating": "N_sealed = 775 (fixed, pre-registered)",
+   "denominator_diagnostic": "n_grader_correct (conditional FP rate)",
+   "threshold": 0.05,
+   "test": "one-sided 95% Wilson UB(FP/775) <= 0.05",
+   "kmax_fixed_775": 26,
+   "kmax_diagnostic": {
+    "350": 9,
+    "400": 11,
+    "450": 13,
+    "500": 15,
+    "565": 18
+   },
+   "pass_profile_fixed_denominator": {
+    "0.000": {
+     "P_pass_given_true_rate": 1.0,
+     "P_fail_given_true_rate": 0.0
+    },
+    "0.020": {
+     "P_pass_given_true_rate": 0.9954,
+     "P_fail_given_true_rate": 0.0046
+    },
+    "0.050": {
+     "P_pass_given_true_rate": 0.0174,
+     "P_fail_given_true_rate": 0.9826
+    },
+    "0.075": {
+     "P_pass_given_true_rate": 0.0,
+     "P_fail_given_true_rate": 1.0
+    },
+    "0.100": {
+     "P_pass_given_true_rate": 0.0,
+     "P_fail_given_true_rate": 1.0
+    },
+    "0.150": {
+     "P_pass_given_true_rate": 0.0,
+     "P_fail_given_true_rate": 1.0
+    }
+   }
+  },
+  "G2": {
+   "gate": "G2_false_incorrect",
+   "numerator": "rows grader-incorrect & reference-not-incorrect (FN_incorrect)",
+   "denominator_gating": "N_sealed = 775 (fixed, pre-registered)",
+   "denominator_diagnostic": "n_grader_incorrect (conditional FN rate)",
+   "threshold": 0.15,
+   "test": "one-sided 95% Wilson UB(FN/775) <= 0.15",
+   "kmax_fixed_775": 96,
+   "pass_profile_fixed_denominator": {
+    "0.000": {
+     "P_pass_given_true_rate": 1.0,
+     "P_fail_given_true_rate": 0.0
+    },
+    "0.050": {
+     "P_pass_given_true_rate": 1.0,
+     "P_fail_given_true_rate": 0.0
+    },
+    "0.100": {
+     "P_pass_given_true_rate": 0.9866,
+     "P_fail_given_true_rate": 0.0134
+    },
+    "0.150": {
+     "P_pass_given_true_rate": 0.0214,
+     "P_fail_given_true_rate": 0.9786
+    },
+    "0.225": {
+     "P_pass_given_true_rate": 0.0,
+     "P_fail_given_true_rate": 1.0
+    },
+    "0.300": {
+     "P_pass_given_true_rate": 0.0,
+     "P_fail_given_true_rate": 1.0
+    },
+    "0.450": {
+     "P_pass_given_true_rate": 0.0,
+     "P_fail_given_true_rate": 1.0
+    }
+   }
+  },
+  "G3": {
+   "gate": "G3_false_ungradeable",
+   "numerator": "rows reference-determinate & grader-ungreadeable (false-NG)",
+   "denominator_gating": "N_sealed = 775 (fixed, pre-registered)",
+   "denominator_diagnostic": "n_reference_determinate (conditional false-NG rate)",
+   "threshold": 0.1,
+   "test": "one-sided 95% Wilson UB(falseNG/775) <= 0.10",
+   "kmax_fixed_775": 61,
+   "pass_profile_fixed_denominator": {
+    "0.000": {
+     "P_pass_given_true_rate": 1.0,
+     "P_fail_given_true_rate": 0.0
+    },
+    "0.050": {
+     "P_pass_given_true_rate": 0.9998,
+     "P_fail_given_true_rate": 0.0002
+    },
+    "0.100": {
+     "P_pass_given_true_rate": 0.0248,
+     "P_fail_given_true_rate": 0.9752
+    },
+    "0.150": {
+     "P_pass_given_true_rate": 0.0,
+     "P_fail_given_true_rate": 1.0
+    },
+    "0.200": {
+     "P_pass_given_true_rate": 0.0,
+     "P_fail_given_true_rate": 1.0
+    },
+    "0.300": {
+     "P_pass_given_true_rate": 0.0,
+     "P_fail_given_true_rate": 1.0
+    }
+   }
+  },
+  "G4": {
+   "gate": "G4_appropriate_abstention",
+   "numerator": "rows reference-should-abstain & grader-abstain",
+   "denominator_gating": "n_reference_should_abstain (ENDGENOUS; min-n guard n>=30)",
+   "threshold": 0.9,
+   "test": "one-sided 95% Wilson LB(abstain/n_ref_abstain) >= 0.90; if n_ref_abstain < 30 -> report descriptive only (NOT certifiable)",
+   "note": "n_ref_abstain is unknown until annotation; sealed-set class ceiling for omission is 20 (flag_tool_only + G_NO_NUMBER), so the min-n guard will likely bind: pre-registered as descriptive-only unless reference should-abstain count >= 30.",
+   "max_errors_for_lb90_by_n": {
+    "30": {
+     "n": 30,
+     "min_hits_to_pass": null,
+     "max_miss_to_pass": null
+    },
+    "40": {
+     "n": 40,
+     "min_hits_to_pass": 40,
+     "max_miss_to_pass": 0
+    },
+    "50": {
+     "n": 50,
+     "min_hits_to_pass": 50,
+     "max_miss_to_pass": 0
+    },
+    "75": {
+     "n": 75,
+     "min_hits_to_pass": 73,
+     "max_miss_to_pass": 2
+    },
+    "105": {
+     "n": 105,
+     "min_hits_to_pass": 101,
+     "max_miss_to_pass": 4
+    }
+   }
+  },
+  "G5": {
+   "gate": "G5_gradeability_accuracy",
+   "numerator": "rows where grader 3-class verdict == reference verdict",
+   "denominator_gating": "N_sealed = 775 (fixed)",
+   "threshold": 0.9,
+   "test": "one-sided 95% Wilson LB(agree/775) >= 0.90  (equiv. UB(disagree/775) <= 0.10)",
+   "kmax_disagree_775": 61,
+   "note": "G5 error set OVERLAPS G1-G3 (a false-correct row also breaks 3-class agreement). G5 is reported separately and is NEVER summed with G1-G3."
+  },
+  "G6": {
+   "gate": "G6_transition_matrix",
+   "role": "diagnostic only (no threshold); required in the acceptance report",
+   "rows": "frozen task_grade x corrected verdict x reference verdict"
+  }
+ },
+ "rare_class_gates_option_A": {
+  "sign": {
+   "n_sealed": 44,
+   "relaxed_threshold": 0.15,
+   "interval_method": "one-sided 95% Wilson",
+   "ub_at_0_errors": 0.0803,
+   "max_observed_errors_to_certify_15pct": 1,
+   "certifiable_at_relaxed_gate": true,
+   "if_not_certifiable": ""
+  },
+  "trc_adopt": {
+   "n_sealed": 34,
+   "relaxed_threshold": 0.15,
+   "interval_method": "one-sided 95% Wilson",
+   "ub_at_0_errors": 0.1015,
+   "max_observed_errors_to_certify_15pct": 1,
+   "certifiable_at_relaxed_gate": true,
+   "if_not_certifiable": ""
+  },
+  "omission": {
+   "n_sealed": 20,
+   "relaxed_threshold": 0.15,
+   "interval_method": "one-sided 95% Wilson",
+   "ub_at_0_errors": 0.1611,
+   "max_observed_errors_to_certify_15pct": null,
+   "certifiable_at_relaxed_gate": false,
+   "if_not_certifiable": "report as NOT CERTIFIABLE, descriptive only; do NOT relax further"
+  }
+ }
+}

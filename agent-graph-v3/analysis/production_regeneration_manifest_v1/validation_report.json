@@ -1,0 +1,99 @@
+{
+ "manifest_path": "analysis/production_regeneration_manifest_v1/regeneration_manifest.json",
+ "schema": "agentprop-readiness-selection-v1",
+ "n_scenarios": 5818,
+ "load_plan_manifest_validation": {
+  "result": "PASS",
+  "method": "benchmark.plan_manifest.load_plan_manifest(manifest, base) read-only against working-tree build_plan()",
+  "note": "All 5818 scenarios resolved with exact field agreement; settings round-trip OK; no execution performed."
+ },
+ "phase7_checks": {
+  "1_unique_scenarios": {
+   "pass": true,
+   "count": 5818
+  },
+  "2_within_canonical_matrix": {
+   "pass": true,
+   "note": "all 5818 in intended standard matrix (verified subset of canonical_plan.json)"
+  },
+  "3_no_memory_poisoning": {
+   "pass": true
+  },
+  "4_no_memory_enabled": {
+   "pass": true
+  },
+  "5_cw_benign_corrected_protocol": {
+   "pass": true,
+   "note": "all CW benign use corrected coordinator-first scheduler; SO-labeled compatible rep"
+  },
+  "6_cw_so_lep_corrected_protocol": {
+   "pass": true
+  },
+  "7_o2m_accepted_preserved": {
+   "pass": true,
+   "note": "16 O2M in set are all missing-accepted (16); 2796 accepted O2M preserved, not rescheduled"
+  },
+  "8_m2o_reuses_so_benign": {
+   "pass": true,
+   "note": "M2O BvV reuses the same standard benign reference set; Category D deduplicated with SO need"
+  },
+  "9_only_missing_reps_other_topologies": {
+   "pass": true,
+   "note": "C=370 RL + D=395 BvV missing reps only"
+  },
+  "10_no_unresolved_injection_delivery_bug": {
+   "pass": true,
+   "note": "40 M2O TRC flagged highest-risk; partial-injection repair reported in injection_mismatch_audit/IMPLEMENTATION_REPORT.md"
+  },
+  "11_fixture_ids_and_hashes": {
+   "pass": true,
+   "note": "703 fixtures, all manifest.json present, SHA-256 recorded in fixture_manifest_sha256"
+  },
+  "12_model_runtime_settings_match_production": {
+   "pass": true,
+   "note": "Qwen/Qwen2.5-72B-Instruct-AWQ, vLLM, seed 42, temp 0.4, max_events 300, max_agent_turns 80, LEP reps 1, benign reps 3"
+  },
+  "13_loadable_by_existing_loader": {
+   "pass": true,
+   "note": "load_plan_manifest PASS"
+  },
+  "14_frozen_production_and_bnd_unchanged": {
+   "pass": true,
+   "note": "only files written are under analysis/production_regeneration_manifest_v1/"
+  },
+  "15_no_slurm_jobs_submitted": {
+   "pass": true,
+   "note": "no sbatch/srun/salloc; no vLLM; no inference; no trace regeneration"
+  }
+ },
+ "category_counts": {
+  "A": 2109,
+  "B_single_origin": 2812,
+  "B_o2m_missing": 16,
+  "C": 370,
+  "D": 395,
+  "E": 116,
+  "total": 5818
+ },
+ "by_topology": {
+  "branch_and_verify": 485,
+  "coordinator_workers": 4937,
+  "review_loop": 396
+ },
+ "by_task_family": {
+  "code_review": 787,
+  "financial_analysis": 2406,
+  "research_synthesis": 2625
+ },
+ "by_propagation_mode": {
+  "single_origin": 5737,
+  "many_to_one": 65,
+  "one_to_many": 16
+ },
+ "by_historical_status": {
+  "rejected_only": 1235,
+  "never_attempted": 87,
+  "accepted": 4496
+ },
+ "blocked_scenarios": 0
+}

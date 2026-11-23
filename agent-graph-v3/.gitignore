@@ -7,3 +7,10 @@ out/
 .eggs/
 dist/
 build/
+# Oversized derived detector/baseline evidence dumps (>100 MB GitHub limit);
+# kept on disk locally, excluded from Git. Reproducible from committed detector
+# code + run_manifest/output_hashes pins in each directory.
+/analysis/consolidated_20261121_bnd_v41/bnd_v41_run/bnd_v41_per_trace.jsonl
+/analysis/full_production_id_trc_v3/detector_evidence.jsonl
+/analysis/full_production_propagation/detector_evidence.jsonl
+/analysis/production_pipeline_integration/reproduction/detector_evidence.jsonl

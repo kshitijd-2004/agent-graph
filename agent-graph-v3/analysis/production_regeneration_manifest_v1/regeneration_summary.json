@@ -1,0 +1,55 @@
+{
+ "generated": "2026-11-10",
+ "schema": "agentprop-readiness-selection-v1",
+ "executable_by": "python -m benchmark --plan-manifest analysis/production_regeneration_manifest_v1/regeneration_manifest.json",
+ "total_regeneration_executions": 5818,
+ "deduplication": "canonical identity (fixture,topology,execution_variant,lep,mode,rep); 0 duplicates",
+ "memory_excluded": {
+  "LEP_MEMORY_POISONING_scenarios": 0,
+  "memory_enabled_variants": 0
+ },
+ "categories": {
+  "A_coordinator_workers_benign": 2109,
+  "B_coordinator_workers_single_origin_lep": 2812,
+  "B_o2m_missing_one_to_many_lep": 16,
+  "C_review_loop_benign_missing": 370,
+  "D_branch_and_verify_benign_missing": 395,
+  "E_non_cw_lep_missing": 116
+ },
+ "category_subtotals_note": "B total = B_coordinator_workers_single_origin_lep + B_o2m_missing_one_to_many_lep",
+ "preserved": {
+  "coordinator_workers_one_to_many_lep_accepted": 2796,
+  "note": "O2M LEP accepted traces are preserved, NOT regenerated; only the 16 O2M LEPs lacking an accepted execution are scheduled."
+ },
+ "by_topology": {
+  "branch_and_verify": 485,
+  "coordinator_workers": 4937,
+  "review_loop": 396
+ },
+ "by_task_family": {
+  "code_review": 787,
+  "financial_analysis": 2406,
+  "research_synthesis": 2625
+ },
+ "by_lep_type": {
+  "BENIGN": 2874,
+  "LEP_TOOL_RESULT_CORRUPTION": 760,
+  "LEP_INDIRECT_PROMPT_INJECTION": 732,
+  "LEP_HANDOFF_CORRUPTION": 728,
+  "LEP_INPUT_DISREGARD": 724
+ },
+ "by_propagation_mode": {
+  "single_origin": 5737,
+  "many_to_one": 65,
+  "one_to_many": 16
+ },
+ "by_historical_status": {
+  "rejected_only": 1235,
+  "never_attempted": 87,
+  "accepted": 4496
+ },
+ "executable_vs_blocked": {
+  "executable": 5818,
+  "blocked": 0
+ }
+}

@@ -1,0 +1,131 @@
+{
+ "n_total": 4409,
+ "n_excluded": 44,
+ "excluded_by_basis": {
+  "value_bug_excluded": 12,
+  "no_answer_key": 32
+ },
+ "frozen_grade": {
+  "failure": 532,
+  "correct": 747,
+  "not_gradeable": 3130
+ },
+ "v5_frozen_mapped_among_gradable": {
+  "correct": 2178,
+  "not_gradeable": 675,
+  "failure": 1512
+ },
+ "v5_extraction_status_among_gradable": {
+  "observed": 3690,
+  "unavailable": 437,
+  "ambiguous": 234,
+  "refused": 4
+ },
+ "frozen_ng_total_gradable_set": 3086,
+ "central_question": {
+  "frozen_ng": 3086,
+  "v5_newly_gradeable": 2483,
+  "v5_newly_correct": 1249,
+  "v5_newly_failure": 1234,
+  "v5_still_ungradeable": 603,
+  "still_ng_reasons": {
+   "unavailable": 420,
+   "multiple_competing_answer_positions": 173,
+   "refused": 4,
+   "competing_readings_signalled": 3,
+   "no_answer_position_context": 3
+  },
+  "pct_of_frozen_ng_rescued": 0.8046
+ },
+ "transition_matrix_frozen_to_v5": {
+  "correct->correct": 694,
+  "correct->failure": 21,
+  "correct->not_gradeable": 32,
+  "failure->correct": 235,
+  "failure->failure": 257,
+  "failure->not_gradeable": 40,
+  "not_gradeable->correct": 1249,
+  "not_gradeable->failure": 1234,
+  "not_gradeable->not_gradeable": 603
+ },
+ "sensitivity_full_4409": {
+  "frozen": {
+   "failure_rate_best_all_ng_correct": 0.1207,
+   "failure_rate_worst_all_ng_failure": 0.8306,
+   "observed_gradable_only": 0.1207
+  },
+  "v5": {
+   "failure_rate_best_all_ng_correct": 0.3429,
+   "failure_rate_worst_all_ng_failure": 0.496,
+   "observed_gradable_only": 0.3429
+  }
+ },
+ "by_lep_gradable_set": {
+  "LEP_HANDOFF_CORRUPTION": {
+   "total": 1101,
+   "frozen_ng": 776,
+   "v5_ng": 163,
+   "v5_correct": 587,
+   "v5_failure": 351,
+   "v5_rescued": 631
+  },
+  "LEP_INDIRECT_PROMPT_INJECTION": {
+   "total": 1089,
+   "frozen_ng": 770,
+   "v5_ng": 169,
+   "v5_correct": 489,
+   "v5_failure": 431,
+   "v5_rescued": 625
+  },
+  "LEP_INPUT_DISREGARD": {
+   "total": 1101,
+   "frozen_ng": 756,
+   "v5_ng": 162,
+   "v5_correct": 591,
+   "v5_failure": 348,
+   "v5_rescued": 611
+  },
+  "LEP_TOOL_RESULT_CORRUPTION": {
+   "total": 1074,
+   "frozen_ng": 784,
+   "v5_ng": 181,
+   "v5_correct": 511,
+   "v5_failure": 382,
+   "v5_rescued": 616
+  }
+ },
+ "by_mode": {
+  "many_to_one": {
+   "total": 1174,
+   "frozen_ng": 763,
+   "v5_ng": 72
+  },
+  "one_to_many": {
+   "total": 392,
+   "frozen_ng": 242,
+   "v5_ng": 24
+  },
+  "single_origin": {
+   "total": 2799,
+   "frozen_ng": 2081,
+   "v5_ng": 579
+  }
+ },
+ "by_topology": {
+  "branch_and_verify": {
+   "total": 2370,
+   "frozen_ng": 1538,
+   "v5_ng": 144
+  },
+  "coordinator_workers": {
+   "total": 798,
+   "frozen_ng": 490,
+   "v5_ng": 56
+  },
+  "review_loop": {
+   "total": 1197,
+   "frozen_ng": 1058,
+   "v5_ng": 475
+  }
+ }
+}

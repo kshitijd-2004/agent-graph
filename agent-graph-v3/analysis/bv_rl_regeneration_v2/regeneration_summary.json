@@ -1,0 +1,270 @@
+{
+ "generated": "2026-11-12",
+ "schema": "agentprop-readiness-selection-v1",
+ "scope": "branch_and_verify + review_loop only; coordinator_workers excluded",
+ "total_regeneration_executions": 1064,
+ "categories": {
+  "P1_benign_missing_rep": 765,
+  "P2_attacked_missing_accepted": 116,
+  "P3_accepted_structure_invalid": 183
+ },
+ "memory_excluded": {
+  "LEP_MEMORY_POISONING_scenarios": 0,
+  "memory_enabled_variants": 0
+ },
+ "deduplication": "by scenario_id; P1/P2/P3 disjoint by construction",
+ "by_topology": {
+  "branch_and_verify": 578,
+  "review_loop": 486
+ },
+ "by_task_family": {
+  "code_review": 71,
+  "financial_analysis": 475,
+  "research_synthesis": 518
+ },
+ "by_lep_type": {
+  "BENIGN": 765,
+  "LEP_TOOL_RESULT_CORRUPTION": 53,
+  "LEP_INDIRECT_PROMPT_INJECTION": 209,
+  "LEP_HANDOFF_CORRUPTION": 19,
+  "LEP_INPUT_DISREGARD": 18
+ },
+ "by_propagation_mode": {
+  "single_origin": 999,
+  "many_to_one": 65
+ },
+ "by_historical_status": {
+  "rejected_only": 820,
+  "accepted": 183,
+  "never_attempted": 61
+ },
+ "shard_plan": {
+  "target_shards": 24,
+  "method": "split_plan(plan, node, N) \u2014 the actual runtime sharder (md5 pair_tag % N)",
+  "cost_model": {
+   "observed_pilot": {
+    "branch_and_verify": {
+     "median_s": 27.7,
+     "p95_s": 50.8,
+     "max_s": 51.0
+    },
+    "review_loop": {
+     "median_s": 62.4,
+     "p95_s": 212.8,
+     "max_s": 221.8
+    },
+    "note": "RL p95/max driven by 2 truncation-prone fixtures; population contains only 3 such RL rows"
+   },
+   "median_per_scenario_s": {
+    "branch_and_verify": 28,
+    "review_loop": 62
+   },
+   "conservative_per_scenario_s": {
+    "branch_and_verify": 51,
+    "review_loop": 130
+   },
+   "vllm_startup_s": 600
+  },
+  "wall_time_recommended_min": 105,
+  "wall_time_rationale": "01:45:00 covers the conservative-model worst shard (93m) with 12m headroom; expected worst is 51m (median model)",
+  "executions_min": 20,
+  "executions_max": 59,
+  "wall_max_s_median_model": 3102,
+  "wall_max_s_conservative": 5584,
+  "all_within_recommended_limit": true,
+  "shards": [
+   {
+    "shard": 0,
+    "executions": 38,
+    "review_loop": 23,
+    "branch_and_verify": 15,
+    "est_wall_s_median_model": 2446,
+    "est_wall_s_conservative": 4355
+   },
+   {
+    "shard": 1,
+    "executions": 50,
+    "review_loop": 16,
+    "branch_and_verify": 34,
+    "est_wall_s_median_model": 2544,
+    "est_wall_s_conservative": 4414
+   },
+   {
+    "shard": 2,
+    "executions": 41,
+    "review_loop": 24,
+    "branch_and_verify": 17,
+    "est_wall_s_median_model": 2564,
+    "est_wall_s_conservative": 4587
+   },
+   {
+    "shard": 3,
+    "executions": 44,
+    "review_loop": 14,
+    "branch_and_verify": 30,
+    "est_wall_s_median_model": 2308,
+    "est_wall_s_conservative": 3950
+   },
+   {
+    "shard": 4,
+    "executions": 47,
+    "review_loop": 24,
+    "branch_and_verify": 23,
+    "est_wall_s_median_model": 2732,
+    "est_wall_s_conservative": 4893
+   },
+   {
+    "shard": 5,
+    "executions": 39,
+    "review_loop": 19,
+    "branch_and_verify": 20,
+    "est_wall_s_median_model": 2338,
+    "est_wall_s_conservative": 4090
+   },
+   {
+    "shard": 6,
+    "executions": 59,
+    "review_loop": 25,
+    "branch_and_verify": 34,
+    "est_wall_s_median_model": 3102,
+    "est_wall_s_conservative": 5584
+   },
+   {
+    "shard": 7,
+    "executions": 37,
+    "review_loop": 18,
+    "branch_and_verify": 19,
+    "est_wall_s_median_model": 2248,
+    "est_wall_s_conservative": 3909
+   },
+   {
+    "shard": 8,
+    "executions": 34,
+    "review_loop": 16,
+    "branch_and_verify": 18,
+    "est_wall_s_median_model": 2096,
+    "est_wall_s_conservative": 3598
+   },
+   {
+    "shard": 9,
+    "executions": 49,
+    "review_loop": 20,
+    "branch_and_verify": 29,
+    "est_wall_s_median_model": 2652,
+    "est_wall_s_conservative": 4679
+   },
+   {
+    "shard": 10,
+    "executions": 48,
+    "review_loop": 19,
+    "branch_and_verify": 29,
+    "est_wall_s_median_model": 2590,
+    "est_wall_s_conservative": 4549
+   },
+   {
+    "shard": 11,
+    "executions": 44,
+    "review_loop": 22,
+    "branch_and_verify": 22,
+    "est_wall_s_median_model": 2580,
+    "est_wall_s_conservative": 4582
+   },
+   {
+    "shard": 12,
+    "executions": 44,
+    "review_loop": 25,
+    "branch_and_verify": 19,
+    "est_wall_s_median_model": 2682,
+    "est_wall_s_conservative": 4819
+   },
+   {
+    "shard": 13,
+    "executions": 36,
+    "review_loop": 24,
+    "branch_and_verify": 12,
+    "est_wall_s_median_model": 2424,
+    "est_wall_s_conservative": 4332
+   },
+   {
+    "shard": 14,
+    "executions": 48,
+    "review_loop": 14,
+    "branch_and_verify": 34,
+    "est_wall_s_median_model": 2420,
+    "est_wall_s_conservative": 4154
+   },
+   {
+    "shard": 15,
+    "executions": 54,
+    "review_loop": 24,
+    "branch_and_verify": 30,
+    "est_wall_s_median_model": 2928,
+    "est_wall_s_conservative": 5250
+   },
+   {
+    "shard": 16,
+    "executions": 20,
+    "review_loop": 9,
+    "branch_and_verify": 11,
+    "est_wall_s_median_model": 1466,
+    "est_wall_s_conservative": 2331
+   },
+   {
+    "shard": 17,
+    "executions": 51,
+    "review_loop": 20,
+    "branch_and_verify": 31,
+    "est_wall_s_median_model": 2708,
+    "est_wall_s_conservative": 4781
+   },
+   {
+    "shard": 18,
+    "executions": 42,
+    "review_loop": 25,
+    "branch_and_verify": 17,
+    "est_wall_s_median_model": 2626,
+    "est_wall_s_conservative": 4717
+   },
+   {
+    "shard": 19,
+    "executions": 44,
+    "review_loop": 21,
+    "branch_and_verify": 23,
+    "est_wall_s_median_model": 2546,
+    "est_wall_s_conservative": 4503
+   },
+   {
+    "shard": 20,
+    "executions": 58,
+    "review_loop": 23,
+    "branch_and_verify": 35,
+    "est_wall_s_median_model": 3006,
+    "est_wall_s_conservative": 5375
+   },
+   {
+    "shard": 21,
+    "executions": 37,
+    "review_loop": 17,
+    "branch_and_verify": 20,
+    "est_wall_s_median_model": 2214,
+    "est_wall_s_conservative": 3830
+   },
+   {
+    "shard": 22,
+    "executions": 57,
+    "review_loop": 26,
+    "branch_and_verify": 31,
+    "est_wall_s_median_model": 3080,
+    "est_wall_s_conservative": 5561
+   },
+   {
+    "shard": 23,
+    "executions": 43,
+    "review_loop": 18,
+    "branch_and_verify": 25,
+    "est_wall_s_median_model": 2416,
+    "est_wall_s_conservative": 4215
+   }
+  ]
+ }
+}

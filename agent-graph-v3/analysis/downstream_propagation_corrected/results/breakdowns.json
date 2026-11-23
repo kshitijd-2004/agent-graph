@@ -1,0 +1,178 @@
+{
+  "cluster_ci": {
+    "M1": {
+      "ci95": [
+        0.5591,
+        0.6071
+      ],
+      "clusters": 1615,
+      "clusters_with_positive": 942,
+      "fraction": 0.5833
+    },
+    "M2": {
+      "ci95": [
+        0.4685,
+        0.5173
+      ],
+      "clusters": 1615,
+      "clusters_with_positive": 796,
+      "fraction": 0.4929
+    },
+    "M3": {
+      "ci95": [
+        0.2748,
+        0.3193
+      ],
+      "clusters": 1615,
+      "clusters_with_positive": 479,
+      "fraction": 0.2966
+    }
+  },
+  "denominators": {
+    "all_comparable": 10057,
+    "delivery_unverified": 974,
+    "delivery_verified": 9083,
+    "downstream_evaluable": 8560,
+    "undetermined_never_negative": 1497
+  },
+  "ipi_trc_recovery": {
+    "denominator_M2_delivery_verified": {
+      "LEP_INDIRECT_PROMPT_INJECTION": 580,
+      "LEP_TOOL_RESULT_CORRUPTION": 542
+    },
+    "note": "IPI/TRC M2 positives in which the introduced corrupted/injected content was found transformed (paraphrased, summarized, substituted) in a downstream agent's own output (verified) or recorded lineage/input (plausible). The denominator is ALL delivery-verified IPI/TRC M2 positives, so (denominator - recovered) are the cases with NO downstream reach evidence (only structural DAG exposure).",
+    "recovered_plausible": {
+      "LEP_INDIRECT_PROMPT_INJECTION": 171,
+      "LEP_TOOL_RESULT_CORRUPTION": 130
+    },
+    "recovered_verified": {
+      "LEP_INDIRECT_PROMPT_INJECTION": 87,
+      "LEP_TOOL_RESULT_CORRUPTION": 82
+    }
+  },
+  "m2_by_family": {
+    "code_review": {
+      "M2": 578,
+      "M2_den": 3850
+    },
+    "financial_analysis": {
+      "M2": 266,
+      "M2_den": 3372
+    },
+    "research_synthesis": {
+      "M2": 810,
+      "M2_den": 2835
+    }
+  },
+  "m2_by_lep": {
+    "LEP_HANDOFF_CORRUPTION": {
+      "M2": 210,
+      "M2_den": 2529
+    },
+    "LEP_INDIRECT_PROMPT_INJECTION": {
+      "M2": 637,
+      "M2_den": 2509
+    },
+    "LEP_INPUT_DISREGARD": {
+      "M2": 191,
+      "M2_den": 2526
+    },
+    "LEP_TOOL_RESULT_CORRUPTION": {
+      "M2": 616,
+      "M2_den": 2493
+    }
+  },
+  "m2_by_mode": {
+    "many_to_one": {
+      "M2": 449,
+      "M2_den": 2609
+    },
+    "one_to_many": {
+      "M2": 201,
+      "M2_den": 1016
+    },
+    "single_origin": {
+      "M2": 1004,
+      "M2_den": 6432
+    }
+  },
+  "m2_by_topology": {
+    "branch_and_verify": {
+      "M2": 767,
+      "M2_den": 5253
+    },
+    "coordinator_workers": {
+      "M2": 368,
+      "M2_den": 2152
+    },
+    "review_loop": {
+      "M2": 519,
+      "M2_den": 2652
+    }
+  },
+  "m2_reach_cross": {
+    "m2_by_lep_reach": {
+      "LEP_HANDOFF_CORRUPTION": {
+        "not_downstream": 20,
+        "plausible": 190
+      },
+      "LEP_INDIRECT_PROMPT_INJECTION": {
+        "not_downstream": 57,
+        "plausible": 171,
+        "unsupported": 322,
+        "verified": 87
+      },
+      "LEP_INPUT_DISREGARD": {
+        "not_downstream": 8,
+        "plausible": 180,
+        "verified": 3
+      },
+      "LEP_TOOL_RESULT_CORRUPTION": {
+        "not_downstream": 74,
+        "plausible": 130,
+        "unsupported": 330,
+        "verified": 82
+      }
+    },
+    "reach_class": {
+      "not_downstream": 159,
+      "plausible": 671,
+      "unsupported": 652,
+      "verified": 172
+    }
+  },
+  "m3_by_lep": {
+    "LEP_HANDOFF_CORRUPTION": {
+      "plausible": 190,
+      "verified": 0
+    },
+    "LEP_INDIRECT_PROMPT_INJECTION": {
+      "plausible": 171,
+      "verified": 87
+    },
+    "LEP_INPUT_DISREGARD": {
+      "plausible": 180,
+      "verified": 3
+    },
+    "LEP_TOOL_RESULT_CORRUPTION": {
+      "plausible": 130,
+      "verified": 82
+    }
+  },
+  "m4_by_family": {
+    "code_review": 147,
+    "financial_analysis": 27,
+    "research_synthesis": 391
+  },
+  "m4_by_lep": {
+    "LEP_HANDOFF_CORRUPTION": 117,
+    "LEP_INDIRECT_PROMPT_INJECTION": 198,
+    "LEP_INPUT_DISREGARD": 97,
+    "LEP_TOOL_RESULT_CORRUPTION": 153
+  },
+  "m4_by_reach_tier": {
+    "plausible": 475,
+    "verified": 90
+  },
+  "n_comparable": 10057
+}

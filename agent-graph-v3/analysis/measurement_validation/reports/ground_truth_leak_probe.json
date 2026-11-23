@@ -1,0 +1,9 @@
+{
+  "leaked": [],
+  "method": "canary differential: replace every GT-VALUE field with a canary (task-side label/unit kept), extract, and compare against the value-stripped extraction; any difference or canary echo in the output means a GT-value field influenced extraction",
+  "n_leaked": 0,
+  "n_traces_probed": 25,
+  "n_vacuous": 0,
+  "note": "A probe is VACUOUS when no GT-value field exists in the spec to canary: it cannot detect a leak and must not be read as a pass.  The probe tests GT-VALUE invariance; a dependence on a task-side field (unit/label) is legitimate and is kept identical on both arms, so it cannot produce a false positive.",
+  "result": "PASS"
+}

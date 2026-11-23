@@ -1,0 +1,38 @@
+{
+  "agent_executions": 0,
+  "candidate_depth_definition": "Supported detector evidence paths, including verified artifact edges; no second legacy graph filter.",
+  "code_sha256": {
+    "benchmark/attempt_accounting.py": "e6bf4b5580919510cb0264276518f8294c22d2187003a6b67131d6244d048ffd",
+    "benchmark/behavioral_anomaly.py": "02a7c035c9d1b6d861e94b453e021fa67bd6e8fed3e0edffaed0030d611ee9d7",
+    "benchmark/evidence_propagation.py": "c0d2a84a8e09a3e66ad9cff4647b06cb762a6340a960459c72ee685d25ee30b2",
+    "benchmark/hc_baseline_relative.py": "3b321112b7b185436bcbde40813bce6a86eae67312261dc5162cc21a42853553",
+    "benchmark/production_propagation.py": "63e8b8a086dbde9a6276b9e9c2bbc52617bef3121f34b449800fbaaf7680d5a2",
+    "benchmark/propagation_analysis.py": "8783dd96c954def16f88aad8bb8127d072c576cd178a148195ba3630e38e99da",
+    "generation/admission.py": "215a461a04186f52c2b86364ff3e5dbf89246551c90963a45da7df21c5ac18f7",
+    "generation/event_graph_builder.py": "453badc67bcaffff2337faae1004a89a6af1a6c151421b173d2da038c0110913",
+    "generation/injection_origins.py": "2d360673a6fa9a667e07850068f12992c498687ea50d9b6aa376593a093d078a",
+    "scripts/analyze_propagation.py": "b4f7be151c7bcfd3dba87f8d0a4f909e36b01d9952373cd1e0ef891d557233eb"
+  },
+  "detector_suite": "agentprop-hc-ipi-v1",
+  "detectors": {
+    "LEP_HANDOFF_CORRUPTION": "hc-baseline-relative-v1.0",
+    "LEP_INDIRECT_PROMPT_INJECTION": "hc-ipi-evidence-v2.0",
+    "LEP_INPUT_DISREGARD": "legacy",
+    "LEP_MEMORY_POISONING": "legacy",
+    "LEP_TOOL_RESULT_CORRUPTION": "legacy"
+  },
+  "external_model_calls": 0,
+  "fixture_root": "/u/kdhande/agent-graph/agent-graph-v3/workspace_fixtures",
+  "identical_attempt_copies": 0,
+  "independent_validation": false,
+  "input_files": 37761,
+  "inventory_sha256": "3450c94d403292f7c8d06821ead9de2f45b9a734d64ebe16018fd04687614ece",
+  "plan": null,
+  "reference_selection": "First admitted attempt in sorted source-path order per fixture/topology/variant/repetition. HC/IPI use first three distinct repetitions; legacy retains original reference policy.",
+  "source_dir": "/u/kdhande/agent-graph/agent-graph-v3/analysis/full_production_consolidated/source",
+  "source_directories": [
+    "/u/kdhande/agent-graph/agent-graph-v3/analysis/full_production_consolidated/source"
+  ],
+  "state": "inventory_only",
+  "support_input_sha256": {}
+}

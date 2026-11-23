@@ -1,0 +1,235 @@
+{
+  "label": "ai_judge_agreement",
+  "independence_caveat": "TWO-MODEL, SAME-RELAY AGREEMENT: judge_b is a distinct model on the same relay (no GPT endpoint was reachable), per the recorded substitution_note.  These agreement numbers measure model convergence, NOT two-vendor independence, and NOT correctness.",
+  "extraction": {
+    "n_aligned_items": 300,
+    "n_items_disagreement": 142,
+    "disagreement_rate": 0.47333333333333333,
+    "field_level_raw_agreement": {
+      "agreement": 0.525,
+      "n": 400,
+      "n_agree": 210,
+      "label": "ai_judge_agreement"
+    },
+    "field_level_cohen_kappa": {
+      "n": 400,
+      "po": 0.525,
+      "pe": 0.3729625,
+      "label": "ai_judge_agreement",
+      "kappa": 0.24246954926938188
+    },
+    "field_level_krippendorff_alpha": {
+      "label": "ai_judge_agreement",
+      "n_units": 400,
+      "n_values": 800,
+      "level": "nominal",
+      "alpha": 0.23934120665206915
+    },
+    "numeric_answer_agreement": {
+      "n_numeric": 0,
+      "n_numeric_agree": 0,
+      "numeric_agreement": null,
+      "rel_tol": 0.05,
+      "label": "ai_judge_agreement"
+    },
+    "disagreement_rate_by_family": {
+      "code_review": {
+        "n": 100,
+        "n_dis": 22,
+        "rate": 0.22
+      },
+      "financial_analysis": {
+        "n": 100,
+        "n_dis": 74,
+        "rate": 0.74
+      },
+      "research_synthesis": {
+        "n": 100,
+        "n_dis": 46,
+        "rate": 0.46
+      }
+    }
+  },
+  "pair": {
+    "n_aligned_groups": 150,
+    "per_dimension": {
+      "assertions": {
+        "n_member_judgments": 596,
+        "raw_agreement": {
+          "agreement": 0.5218120805369127,
+          "n": 596,
+          "n_agree": 311,
+          "label": "ai_judge_agreement"
+        },
+        "cohen_kappa": {
+          "n": 596,
+          "po": 0.5218120805369127,
+          "pe": 0.4728728435656052,
+          "label": "ai_judge_agreement",
+          "kappa": 0.09284142616051771
+        },
+        "krippendorff_alpha": {
+          "label": "ai_judge_agreement",
+          "n_units": 596,
+          "n_values": 1192,
+          "level": "nominal",
+          "alpha": 0.09351290288983061
+        },
+        "confusion": {
+          "unavailable->unavailable": 202,
+          "unavailable->no": 119,
+          "no->unavailable": 118,
+          "no->no": 108,
+          "ambiguous->unavailable": 10,
+          "yes->unavailable": 9,
+          "unavailable->ambiguous": 6,
+          "unavailable->yes": 6,
+          "no->ambiguous": 6,
+          "no->yes": 5,
+          "yes->no": 3,
+          "ambiguous->yes": 1,
+          "ambiguous->no": 1,
+          "yes->ambiguous": 1,
+          "ambiguous->ambiguous": 1
+        },
+        "n_dimensions_disagreed": 81,
+        "dimension_disagreement_rate": 0.54
+      },
+      "decisions": {
+        "n_member_judgments": 596,
+        "raw_agreement": {
+          "agreement": 0.4966442953020134,
+          "n": 596,
+          "n_agree": 296,
+          "label": "ai_judge_agreement"
+        },
+        "cohen_kappa": {
+          "n": 596,
+          "po": 0.4966442953020134,
+          "pe": 0.46519300932390434,
+          "label": "ai_judge_agreement",
+          "kappa": 0.05880866654033225
+        },
+        "krippendorff_alpha": {
+          "label": "ai_judge_agreement",
+          "n_units": 596,
+          "n_values": 1192,
+          "level": "nominal",
+          "alpha": 0.05904598376176173
+        },
+        "confusion": {
+          "unavailable->unavailable": 170,
+          "unavailable->no": 136,
+          "no->no": 126,
+          "no->unavailable": 119,
+          "no->yes": 9,
+          "no->ambiguous": 7,
+          "unavailable->ambiguous": 6,
+          "ambiguous->no": 6,
+          "ambiguous->unavailable": 5,
+          "unavailable->yes": 5,
+          "yes->unavailable": 5,
+          "yes->ambiguous": 1,
+          "yes->no": 1
+        },
+        "n_dimensions_disagreed": 83,
+        "dimension_disagreement_rate": 0.5533333333333333
+      },
+      "actions": {
+        "n_member_judgments": 596,
+        "raw_agreement": {
+          "agreement": 0.6711409395973155,
+          "n": 596,
+          "n_agree": 400,
+          "label": "ai_judge_agreement"
+        },
+        "cohen_kappa": {
+          "n": 596,
+          "po": 0.6711409395973155,
+          "pe": 0.465147966307824,
+          "label": "ai_judge_agreement",
+          "kappa": 0.38514011411247023
+        },
+        "krippendorff_alpha": {
+          "label": "ai_judge_agreement",
+          "n_units": 596,
+          "n_values": 1192,
+          "level": "nominal",
+          "alpha": 0.3839080702458182
+        },
+        "confusion": {
+          "no->no": 278,
+          "yes->yes": 122,
+          "no->unavailable": 53,
+          "no->yes": 48,
+          "yes->no": 38,
+          "unavailable->no": 28,
+          "unavailable->yes": 21,
+          "yes->unavailable": 5,
+          "ambiguous->yes": 3
+        },
+        "n_dimensions_disagreed": 71,
+        "dimension_disagreement_rate": 0.47333333333333333
+      },
+      "outcomes": {
+        "n_member_judgments": 596,
+        "raw_agreement": {
+          "agreement": 0.5067114093959731,
+          "n": 596,
+          "n_agree": 302,
+          "label": "ai_judge_agreement"
+        },
+        "cohen_kappa": {
+          "n": 596,
+          "po": 0.5067114093959731,
+          "pe": 0.4217011621098149,
+          "label": "ai_judge_agreement",
+          "kappa": 0.1470005500898155
+        },
+        "krippendorff_alpha": {
+          "label": "ai_judge_agreement",
+          "n_units": 596,
+          "n_values": 1192,
+          "level": "nominal",
+          "alpha": 0.1473903356587164
+        },
+        "confusion": {
+          "unavailable->unavailable": 167,
+          "no->no": 119,
+          "no->unavailable": 113,
+          "unavailable->no": 106,
+          "unavailable->yes": 18,
+          "yes->yes": 15,
+          "ambiguous->unavailable": 14,
+          "yes->unavailable": 11,
+          "no->yes": 8,
+          "ambiguous->no": 7,
+          "yes->no": 6,
+          "unavailable->ambiguous": 5,
+          "no->ambiguous": 3,
+          "yes->ambiguous": 2,
+          "ambiguous->yes": 1,
+          "ambiguous->ambiguous": 1
+        },
+        "n_dimensions_disagreed": 86,
+        "dimension_disagreement_rate": 0.5733333333333334
+      }
+    },
+    "reference_set_usable_agreement": {
+      "raw": {
+        "agreement": 0.5666666666666667,
+        "n": 150,
+        "n_agree": 85,
+        "label": "ai_judge_agreement"
+      },
+      "kappa": {
+        "n": 150,
+        "po": 0.5666666666666667,
+        "pe": 0.4653333333333333,
+        "label": "ai_judge_agreement",
+        "kappa": 0.18952618453865339
+      }
+    },
+    "note": "per-member dimensional judgments aligned on member index"
+  }
+}

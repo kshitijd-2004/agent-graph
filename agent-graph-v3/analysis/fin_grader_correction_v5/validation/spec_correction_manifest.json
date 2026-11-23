@@ -1,0 +1,122 @@
+{
+ "version": "specrev-1 (proposed, not applied)",
+ "confirmed_unit_defects": [
+  "fin_finqa_002_cb_2008",
+  "fin_finqa_011_aal_2015",
+  "fin_finqa_020_ilmn_2007",
+  "fin_finqa_028_mo_2014",
+  "fin_finqa_029_v_2009",
+  "fin_finqa_032_blk_2014",
+  "fin_finqa_035_maa_2015",
+  "fin_finqa_037_vlo_2011",
+  "fin_finqa_042_ups_2007",
+  "fin_finqa_050_hum_2016",
+  "fin_finqa_051_dre_2008",
+  "fin_finqa_057_nws_2016",
+  "fin_finqa_068_cdns_2016",
+  "fin_finqa_084_bdx_2018",
+  "fin_finqa_102_stz_2006",
+  "fin_finqa_106_hii_2015",
+  "fin_finqa_107_amt_2003",
+  "fin_finqa_113_fbhs_2017",
+  "fin_finqa_116_stt_2007",
+  "fin_finqa_150_blk_2012",
+  "fin_finqa_159_swks_2011",
+  "fin_finqa_169_mas_2010",
+  "fin_finqa_172_jpm_2010",
+  "fin_finqa_194_vtr_2003",
+  "fin_finqa_200_mmm_2007",
+  "fin_finqa_210_hii_2017",
+  "fin_finqa_218_stt_2008",
+  "fin_finqa_244_blk_2012",
+  "fin_finqa_249_uaa_2016",
+  "fin_finqa_256_gis_2018",
+  "fin_finqa_264_rsg_2009",
+  "fin_finqa_266_pkg_2006",
+  "fin_finqa_269_fis_2007",
+  "fin_finqa_270_aon_2015",
+  "fin_finqa_292_abmd_2007"
+ ],
+ "proposed_unit_fixes": {
+  "fin_finqa_020_ilmn_2007": "percent (net margin; value 0.0474 = x100 form)",
+  "fin_finqa_029_v_2009": "USD per transaction (value 48.0952)",
+  "fin_finqa_037_vlo_2011": "dimensionless ratio (value 0.0409)",
+  "fin_finqa_050_hum_2016": "millions of shares (value 154.5454)",
+  "fin_finqa_051_dre_2008": "USD per share (value 1.5633)",
+  "fin_finqa_116_stt_2007": "millions of shares (value 331.2253)",
+  "fin_finqa_210_hii_2017": "dimensionless (value 0.0542)",
+  "fin_finqa_292_abmd_2007": "dimensionless fraction (value 0.5948)"
+ },
+ "value_bugs": [
+  {
+   "fid": "fin_finqa_219_adi_2015",
+   "declared_value": 56.6926,
+   "correct_value": 128397.8,
+   "correct_unit": "USD thousands",
+   "operation_in_bug": "2698 / 47.59 (division) instead of 2698 * 47.59 (multiplication)",
+   "recommendation": "EXCLUDE from corrected grading population; re-issue spec as follow-up",
+   "evidence": {
+    "fid": "fin_finqa_219_adi_2015",
+    "question": "what is the total fair value of the total restricted stock units outstanding at october 31, 2015?",
+    "facts": {
+     "rsu_outstanding_thousands": 2698.0,
+     "rsu_wavg_fv_per_share": 47.59
+    },
+    "declared_value": 56.6926,
+    "declared_unit": "USD thousands",
+    "arithmetic": "The question requires MULTIPLICATION: 2698 (thousands of units) x $47.59/unit = $128,397.8 thousand. The declared value 56.6926 = 2698 / 47.59, i.e. the spec generator computed the INVERSE operation. The two do NOT agree.",
+    "doc_evidence": "report.md RSU table: 'Restricted stock units outstanding at October 31, 2015 | 2,698 | $47.59'. call_transcript.md: 'Management highlighted ... of 2,698 and ... of 47.59 (USD thousands). Analysts asked: what is the total fair value ...?' Total fair value = 2,698,000 units x $47.59 = $128.40M.",
+    "verdict": "VALUE BUG (not a unit bug)",
+    "detail": "answer.value is arithmetically wrong: it divides where the question multiplies. Correct value: 128397.8 (USD thousands) or 128.3978 (USD millions). Declared unit 'USD thousands' is itself fine. NOTE: the fixture's own call_transcript mis-annotates the per-share figure as '(USD thousands)' - a generation artifact; the per-share figure is USD/share. This spec must NOT enter the corrected-unit manifest; it needs a value correction (and value_strings update) or exclusion.",
+    "fix": {
+     "field": "answer.value",
+     "from": 56.6926,
+     "to": 128397.8,
+     "also": "value_strings: ['128,397.8', '128.4 million']"
+    }
+   }
+  }
+ ],
+ "verified_valid_no_change": [
+  "fin_finqa_043_swks_2007",
+  "fin_finqa_180_fis_2016"
+ ],
+ "no_answer_key_excluded": [
+  "financial_clean",
+  "financial_version_conflict"
+ ],
+ "negative_gt_specs_sign_is_intended": [
+  "fin_finqa_005_abc_2005",
+  "fin_finqa_027_gs_2012",
+  "fin_finqa_058_mas_2012",
+  "fin_finqa_066_rsg_2014",
+  "fin_finqa_090_pm_2015",
+  "fin_finqa_094_ppg_2018",
+  "fin_finqa_097_aptv_2014",
+  "fin_finqa_104_alle_2016",
+  "fin_finqa_131_zbh_2007",
+  "fin_finqa_134_sna_2013",
+  "fin_finqa_139_aap_2016",
+  "fin_finqa_145_gs_2012",
+  "fin_finqa_161_bll_2006",
+  "fin_finqa_174_rsg_2013",
+  "fin_finqa_180_fis_2016",
+  "fin_finqa_184_ecl_2016",
+  "fin_finqa_232_sna_2012",
+  "fin_finqa_250_ups_2015",
+  "fin_finqa_261_cmcsa_2015",
+  "fin_finqa_289_cme_2010"
+ ],
+ "counts": {
+  "confirmed_unit_defects": 35,
+  "value_bugs": 1,
+  "verified_valid": 2,
+  "no_answer": 2,
+  "negative_gt": 20
+ },
+ "notes": [
+  "180_fis_2016 was flagged by the dimensional scan but verified valid (genuine -1.0 M currency delta; 106-107).",
+  "051_dre_2008 has a cosmetic label-year bug (says 2007, values from 2008 column); no value impact.",
+  "219 adi call_transcript mis-annotates a per-share figure as \"(USD thousands)\" - flagged for annotators."
+ ]
+}

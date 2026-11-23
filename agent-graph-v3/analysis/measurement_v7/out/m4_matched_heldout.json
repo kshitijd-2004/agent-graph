@@ -1,0 +1,49 @@
+{
+  "n_rows": 2124,
+  "n_m3_supported": 235,
+  "class_counts": {
+    "mixed_or_unavailable": 49,
+    "persistent_correct": 54,
+    "degraded": 46,
+    "improved": 10,
+    "persistent_failure": 76
+  },
+  "class_rates_over_m3": {
+    "mixed_or_unavailable": 0.20851063829787234,
+    "persistent_correct": 0.2297872340425532,
+    "degraded": 0.19574468085106383,
+    "improved": 0.0425531914893617,
+    "persistent_failure": 0.32340425531914896
+  },
+  "M4_historical_count": 122,
+  "M4_historical_rate": 0.05743879472693032,
+  "M4_matched_count": 46,
+  "M4_matched_rate": 0.021657250470809793,
+  "M4_matched_fraction_of_M4": 0.3770491803278688,
+  "M4_matched_rate_over_m3": 0.19574468085106383,
+  "by_tier": {
+    "verified": {
+      "degraded": 12,
+      "persistent_correct": 4,
+      "persistent_failure": 11,
+      "mixed_or_unavailable": 16
+    },
+    "plausible": {
+      "mixed_or_unavailable": 33,
+      "persistent_correct": 50,
+      "degraded": 34,
+      "improved": 10,
+      "persistent_failure": 65
+    }
+  },
+  "M4_matched_by_tier": {
+    "verified": 12,
+    "plausible": 34
+  },
+  "M4_historical_by_tier": {
+    "verified": 39,
+    "plausible": 132
+  },
+  "caveat": "M4-matched is perturbation-ASSOCIATED degradation, not causation: benign references are separate executions, not counterfactuals.  Persistent benign failures are NOT perturbation-caused degradation and are reported separately.",
+  "partition": "heldout"
+}

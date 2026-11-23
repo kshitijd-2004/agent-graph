@@ -1,0 +1,110 @@
+{
+  "n": 3126,
+  "dimension_divergence_rate": {
+    "assertions": 0.1327575175943698,
+    "decisions": 0.12987843889955214,
+    "actions": 0.16858605246321176,
+    "outcomes": 0.06557901471529111
+  },
+  "dimension_divergence_count": {
+    "assertions": 415,
+    "decisions": 406,
+    "actions": 527,
+    "outcomes": 205
+  },
+  "dimension_evaluable_count": {
+    "assertions": 2219,
+    "decisions": 2247,
+    "actions": 3126,
+    "outcomes": 2182
+  },
+  "dimension_unavailable_count": {
+    "assertions": 907,
+    "decisions": 879,
+    "actions": 0,
+    "outcomes": 944
+  },
+  "union_divergence_count": 955,
+  "union_divergence_rate": 0.3055022392834293,
+  "union_zero_threshold_only_count": 696,
+  "dimension_overlap_count": {
+    "assertions&decisions": 337,
+    "assertions&actions": 86,
+    "assertions&outcomes": 123,
+    "decisions&actions": 92,
+    "decisions&outcomes": 136,
+    "actions&outcomes": 54
+  },
+  "trigger_combinations": {
+    "actions": 405,
+    "assertions,decisions": 179,
+    "assertions,decisions,outcomes": 86,
+    "assertions": 61,
+    "outcomes": 50,
+    "assertions,decisions,actions": 38,
+    "decisions": 37,
+    "assertions,decisions,actions,outcomes": 34,
+    "decisions,actions": 16,
+    "actions,outcomes": 16,
+    "assertions,actions": 14,
+    "decisions,outcomes": 12,
+    "decisions,actions,outcomes": 4,
+    "assertions,outcomes": 3
+  },
+  "skipped": {},
+  "n_rows": 3126,
+  "aggregation": "mean",
+  "version": "v7_dev",
+  "policy": {
+    "research_polarity": "rubric"
+  },
+  "m4": {
+    "n_rows": 3126,
+    "n_m3_supported": 322,
+    "class_counts": {
+      "persistent_correct": 72,
+      "degraded": 71,
+      "mixed_or_unavailable": 61,
+      "improved": 9,
+      "persistent_failure": 109
+    },
+    "class_rates_over_m3": {
+      "persistent_correct": 0.2236024844720497,
+      "degraded": 0.2204968944099379,
+      "mixed_or_unavailable": 0.18944099378881987,
+      "improved": 0.027950310559006212,
+      "persistent_failure": 0.3385093167701863
+    },
+    "M4_historical_count": 181,
+    "M4_historical_rate": 0.05790147152911068,
+    "M4_matched_count": 71,
+    "M4_matched_rate": 0.022712731925783748,
+    "M4_matched_fraction_of_M4": 0.39226519337016574,
+    "M4_matched_rate_over_m3": 0.2204968944099379,
+    "by_tier": {
+      "verified": {
+        "degraded": 17,
+        "mixed_or_unavailable": 12,
+        "persistent_correct": 8,
+        "persistent_failure": 26,
+        "improved": 1
+      },
+      "plausible": {
+        "persistent_correct": 64,
+        "mixed_or_unavailable": 49,
+        "degraded": 54,
+        "improved": 8,
+        "persistent_failure": 83
+      }
+    },
+    "M4_matched_by_tier": {
+      "verified": 17,
+      "plausible": 54
+    },
+    "M4_historical_by_tier": {
+      "verified": 55,
+      "plausible": 186
+    },
+    "caveat": "M4-matched is perturbation-ASSOCIATED degradation, not proof of causation: benign references are separate executions, not counterfactuals of the same run."
+  }
+}

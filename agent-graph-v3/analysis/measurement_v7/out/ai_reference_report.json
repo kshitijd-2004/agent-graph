@@ -1,0 +1,29 @@
+{
+  "extraction": {
+    "n_units": 300,
+    "item_provenance": {
+      "ai_agreed": 149,
+      "ai_adjudicated": 75,
+      "ai_unresolved": 177,
+      "judge_invalid": 0
+    },
+    "partition_split": {
+      "dev": 176,
+      "heldout": 124
+    }
+  },
+  "pair": {
+    "n_groups": 150,
+    "excluded_unusable_refsets": 65,
+    "union_ref": {
+      "positive": 63,
+      "negative": 21,
+      "null": 66
+    },
+    "partition_split": {
+      "dev": 93,
+      "heldout": 57
+    }
+  },
+  "provenance_caveat": "AI-adjudicated reference (two judges + third-model adjudication), NOT human ground truth.  Judge B was a distinct same-relay model (no GPT endpoint reachable); see the judge config substitution_note."
+}

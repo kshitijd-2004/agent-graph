@@ -1,0 +1,45 @@
+{
+ "submitted": "2026-11-18T16:5x:xx",
+ "cluster": "DeltaAI (slurm 25.11.8)",
+ "jobs": [
+  {
+   "slurm_job_id": 3627515,
+   "array": "0-63",
+   "label": "bndv41-cw-def",
+   "sbatch": "analysis/bnd_v41_cw_swe200_regeneration_audit/slurm/bndv41_cw_default.sbatch",
+   "manifest": "analysis/bnd_v41_cw_swe200_regeneration_audit/cw_regen_fanout_default_manifest.json",
+   "fixture_root": "workspace_fixtures",
+   "n_exec": 672,
+   "n_shards": 64,
+   "wall_limit": "00:50:00",
+   "output_root": "production_run/bndv41_cw_default_regen/node_<i>/"
+  },
+  {
+   "slurm_job_id": 3627516,
+   "array": "0-31",
+   "label": "bndv41-v3-gap",
+   "sbatch": "analysis/bnd_v41_cw_swe200_regeneration_audit/slurm/bndv41_v3_gap.sbatch",
+   "manifest": "analysis/bnd_v41_cw_swe200_regeneration_audit/v3_manifest.json",
+   "fixture_root": "workspace_fixtures_v3",
+   "n_exec": 278,
+   "n_shards": 32,
+   "wall_limit": "00:40:00",
+   "output_root": "production_run/bndv41_v3_gap_regen/node_<i>/"
+  }
+ ],
+ "related_pending_job": {
+  "slurm_job_id": 3600260,
+  "array": "0-23",
+  "note": "pending bvrl-regen (branch_and_verify+review_loop, 1064 execs, default root); covers 745 of the 758 bv/rl benigns; its 11 SWE-bench gap cells are covered by job 3627516."
+ },
+ "exclusions_verified": [
+  "all entries condition=benign",
+  "all entries execution_variant=standard (memory_enabled cohorts absent)",
+  "LEP_MEMORY_POISONING absent (asserted per-shard in sbatch preflight)"
+ ],
+ "no_overwrite_guarantee": [
+  "output roots bndv41_cw_default_regen / bndv41_v3_gap_regen were created new (verified absent pre-submit)",
+  "new benign rep indices strictly above existing pool reps (0/937 collisions)",
+  "all source directories read-only; no manifest, trace, or analysis artifact modified"
+ ]
+}

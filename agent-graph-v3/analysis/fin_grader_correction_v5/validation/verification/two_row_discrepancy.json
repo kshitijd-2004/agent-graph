@@ -1,0 +1,19 @@
+{
+ "resolution": "3130 ledger NG rows = 3128 unique trace IDs + 2 duplicated NG rows (fin_finqa_020_ilmn_2007 -> B_SCALE_FIXABLE; fin_finqa_280_lly_2008 -> A_STRICT_CORRECT; both double-counted by the frozen ledger; fin_finqa_130_awk_2017 is also duplicated but graded \"failure\" so it is not in the NG set). Adding the 2 dup rows back to the unique per-bucket counts reproduces the prior audit final_cat exactly (A=1514,B=358,C=59,F=1155,G=12,E=32=3130). There is NO regex A<->B drift; the apparent +1 A / -1 B was the lly dup. All flags are computed on unique trace IDs (dedup invariant C6).",
+ "unique_buckets": {
+  "F_WRONG_VALUE_STATED": 1155,
+  "B_SCALE_FIXABLE": 357,
+  "A_STRICT_CORRECT": 1513,
+  "C_SIGN_MISMATCH": 59,
+  "G_NO_NUMBER_IN_FINAL": 12,
+  "E_NO_SPEC": 32
+ },
+ "ledger_buckets": {
+  "F_WRONG_VALUE_STATED": 1155,
+  "B_SCALE_FIXABLE": 358,
+  "A_STRICT_CORRECT": 1514,
+  "C_SIGN_MISMATCH": 59,
+  "G_NO_NUMBER_IN_FINAL": 12,
+  "E_NO_SPEC": 32
+ }
+}

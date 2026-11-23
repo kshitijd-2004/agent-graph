@@ -1,0 +1,56 @@
+{
+ "global_gates_on_sealed_N775": {
+  "false_correct_5pct": {
+   "kmax": 26,
+   "power@5%": 0.983,
+   "power@3%": 0.986,
+   "power@2%": 0.987
+  },
+  "false_incorrect_15pct": {
+   "kmax": 96,
+   "power@15%": 0.979,
+   "power@20%": 0.975
+  },
+  "false_ungradeable_10pct": {
+   "kmax": 61,
+   "power@10%": 0.975,
+   "power@15%": 0.979
+  },
+  "gradeability_acc_10pct_fail": {
+   "kmax": 61
+  }
+ },
+ "per_class_95pct_feasibility": {
+  "sign": {
+   "sealed_n": 44,
+   "ub_0err": 0.0803,
+   "certifiable_95pct": false,
+   "min_n_for_95pct": 73
+  },
+  "trc_adopt": {
+   "sealed_n": 34,
+   "ub_0err": 0.1015,
+   "certifiable_95pct": false,
+   "min_n_for_95pct": 73
+  },
+  "omission": {
+   "sealed_n": 20,
+   "ub_0err": 0.1611,
+   "certifiable_95pct": false,
+   "min_n_for_95pct": 73
+  },
+  "scale": {
+   "sealed_n": 105,
+   "ub_0err": 0.0353,
+   "certifiable_95pct": true,
+   "min_n_for_95pct": 106
+  },
+  "multi_cand": {
+   "sealed_n": 564,
+   "ub_0err": 0.0068,
+   "certifiable_95pct": true,
+   "min_n_for_95pct": null
+  }
+ },
+ "min_n_note": "Rule-of-three: to certify error-rate<=5% at 95% one-sided requires n>=60 (UB(0) of n=60 is 6.02%; of n=59 6.11%)"
+}

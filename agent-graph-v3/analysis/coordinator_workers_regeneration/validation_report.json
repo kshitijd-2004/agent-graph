@@ -1,0 +1,69 @@
+{
+  "generated": "2026-11-10",
+  "artifact": "analysis/coordinator_workers_regeneration/filtered_manifest.json",
+  "source_manifest": "analysis/production_regeneration_manifest_v1/regeneration_manifest.json",
+  "source_manifest_sha256": "a043deb929636891e607cbf6552a444d6435accfbdc031bcf46adf1e6e6ef2b6",
+  "filtered_manifest_sha256": "2deea21751a363155cc0f9adcb1dddc1a70df7410d5a126c81f435ee4f916f31",
+  "unmodified_source": "manifest v1 files untouched; filtered manifest is a new directory",
+  "execution_counts": {
+    "total": 4937,
+    "coordinator_workers_benign": 2109,
+    "coordinator_workers_single_origin_lep": 2812,
+    "coordinator_workers_one_to_many_lep": 16,
+    "by_task_family": {
+      "code_review": 716,
+      "financial_analysis": 2114,
+      "research_synthesis": 2107
+    },
+    "by_lep": {
+      "LEP_HANDOFF_CORRUPTION": 709,
+      "LEP_INDIRECT_PROMPT_INJECTION": 706,
+      "LEP_INPUT_DISREGARD": 706,
+      "LEP_TOOL_RESULT_CORRUPTION": 707
+    }
+  },
+  "requirements": {
+    "1_identities_preserved": {
+      "pass": true,
+      "method": "field-by-field comparison of all 4,937 entries against source manifest v1 (run_id/scenario_id/pair_tag/fixture hashes/settings byte-identical; fixture_manifest_sha256 map copied verbatim, all 703)"
+    },
+    "2_fixtures_resolve": {
+      "pass": true,
+      "method": "SHA-256 of workspace_fixtures/<fx>/manifest.json for all 703 fixtures matches recorded fixture_manifest_sha256 (0 unresolved)",
+      "detail": "manifest_provenance.json:fixture_resolution"
+    },
+    "3_coordinator_first_scheduler": {
+      "pass": true,
+      "method": "all 4,937 entries have topology=coordinator_workers; scheduler fix 860c820 (topology.is_coordinator_first() bypass, generation/runner.py:1187-1192) is present in the working tree; tests/test_scheduler_coordinator_first.py 14/14 PASS on the current tree"
+    },
+    "4_memory_excluded": {
+      "pass": true,
+      "method": "asserted: no execution_variant != standard and no MEMORY_POISONING LEP in the 4,937 entries; source manifest v1 already excludes memory (memory_excluded counts = 0 in regeneration_summary.json)"
+    },
+    "5_no_mode_specific_benign_controls": {
+      "pass": true,
+      "method": "all 2,109 CW benign entries (= 703 fixtures x 3 benign reps) carry propagation_mode=single_origin exactly as the planner emits them; no mode-matched O2M benign control is added by this batch, and the uncommitted O2M-matched-benign diff in benchmark/benchmark_runner.py is NOT adopted - the batch executes the frozen 4,937-entry selection only"
+    },
+    "6_no_duplicates": {
+      "pass": true,
+      "method": "canonical identity (fixture,topology,execution_variant,lep,mode,rep), run_id, and scenario_id uniqueness all hold; 0 duplicates"
+    },
+    "7_runner_executes_filtered_manifest_only": {
+      "pass": true,
+      "method": "benchmark.plan_manifest.load_plan_manifest() resolved all 4,937 entries against working-tree build_plan() with exact field agreement; runner.run(plan=selected_plan) executes len(selected)=4937 and never the expanded matrix; split_plan across 64 shards unions back to 4,937 (shard sizes 46-108), so --run-node/--num-nodes shard correctly"
+    },
+    "8_runner_code_matches_pilot_scheduler_fix": {
+      "pass": true,
+      "method": "pilot traces (job 3576184, 2026-11-10 21:51-21:53) postdate commit 860c820 (20:38:56); no commit touched generation/ or benchmark/benchmark_runner.py after the pilot; all 3 pilot traces start coordinator-first (role order coordinator -> specialists -> synthesizer)"
+    }
+  },
+  "swe_200_exclusion": {
+    "status": "vacuously satisfied",
+    "method": "swe fixtures in the 703 population are numbered 001-100 only; swe_101..swe_300 exist only in workspace_fixtures_v3 (300 entries) and are NOT in the original population. 0 coordinator_workers executions use a swe_101..swe_300 fixture. A regex pattern 'swe_(101..300)_' matched only code_review_swe_100_... as a prefix artifact, which is fixture swe_100 (in-range, NOT excluded)."
+  },
+  "output_isolation": {
+    "traces": "production_run/coordinator_workers_regeneration/node_<shard>/",
+    "note": "separate from production_run/node_* (historical 160 shards) and any SWE-200 output"
+  },
+  "not_done": "no jobs submitted, no vLLM started, no inference executed, source manifest unmodified"
+}

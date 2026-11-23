@@ -1,0 +1,47 @@
+{
+  "n_rows": 2124,
+  "prefix": "v7_heldout",
+  "variants": {
+    "theta_zero_valid": {
+      "n": 2124,
+      "positive": 665,
+      "zero_only_dependent": 0
+    },
+    "theta_zero_unfireable": {
+      "n": 2124,
+      "positive": 180,
+      "zero_only_dependent": 0
+    },
+    "theta_floored_0.01": {
+      "n": 2124,
+      "positive": 660,
+      "zero_only_dependent": 0
+    },
+    "theta_floored_0.05": {
+      "n": 2124,
+      "positive": 657,
+      "zero_only_dependent": 0
+    },
+    "theta_floored_0.1": {
+      "n": 2124,
+      "positive": 629,
+      "zero_only_dependent": 0
+    },
+    "theta_floored_0.25": {
+      "n": 2124,
+      "positive": 580,
+      "zero_only_dependent": 0
+    }
+  },
+  "baseline_positive_count": 665,
+  "baseline_positive_rate": 0.3130885122410546,
+  "positive_dependent_only_on_zero_threshold": 485,
+  "fraction_of_positives_zero_only": 0.7293233082706767,
+  "note": "theta_d=0 is NOT changed in the primary measurement; these are separately named sensitivity analyses.  Floor choice is a calibration decision on the dev partition only; held-out is evaluated once against the frozen variants, without further tuning.",
+  "FLOOR_GRID": [
+    0.01,
+    0.05,
+    0.1,
+    0.25
+  ]
+}

@@ -1,0 +1,222 @@
+{
+  "partition": "dev",
+  "reference": "ai_adjudicated pair reference (NOT human ground truth)",
+  "implementations": {
+    "frozen": {
+      "partition": "dev",
+      "per_dimension": {
+        "assertions": {
+          "n_evaluable": 13,
+          "n_excluded_or_unavailable": 41,
+          "tp": 0,
+          "fp": 2,
+          "fn": 1,
+          "tn": 10,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "fpr": 0.16666666666666666,
+          "fnr": 1.0
+        },
+        "decisions": {
+          "n_evaluable": 17,
+          "n_excluded_or_unavailable": 37,
+          "tp": 0,
+          "fp": 1,
+          "fn": 1,
+          "tn": 15,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "fpr": 0.0625,
+          "fnr": 1.0
+        },
+        "actions": {
+          "n_evaluable": 49,
+          "n_excluded_or_unavailable": 5,
+          "tp": 15,
+          "fp": 0,
+          "fn": 11,
+          "tn": 23,
+          "precision": 1.0,
+          "recall": 0.5769230769230769,
+          "f1": 0.7317073170731707,
+          "fpr": 0.0,
+          "fnr": 0.4230769230769231
+        },
+        "outcomes": {
+          "n_evaluable": 17,
+          "n_excluded_or_unavailable": 37,
+          "tp": 1,
+          "fp": 0,
+          "fn": 3,
+          "tn": 13,
+          "precision": 1.0,
+          "recall": 0.25,
+          "f1": 0.4,
+          "fpr": 0.0,
+          "fnr": 0.75
+        }
+      },
+      "union": {
+        "n_evaluable": 36,
+        "n_excluded_or_unavailable": 18,
+        "tp": 18,
+        "fp": 2,
+        "fn": 8,
+        "tn": 8,
+        "precision": 0.9,
+        "recall": 0.6923076923076923,
+        "f1": 0.7826086956521738,
+        "n_ref_positive": 26,
+        "positives_relying_exclusively_on_zero_threshold": 12,
+        "zero_only_fraction_of_positives": 0.46153846153846156,
+        "note": "positives flagged where EVERY triggering dimension has theta_d == 0; theta_d=0 is NOT changed, only quantified"
+      }
+    },
+    "v6": {
+      "partition": "dev",
+      "per_dimension": {
+        "assertions": {
+          "n_evaluable": 13,
+          "n_excluded_or_unavailable": 41,
+          "tp": 0,
+          "fp": 2,
+          "fn": 1,
+          "tn": 10,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "fpr": 0.16666666666666666,
+          "fnr": 1.0
+        },
+        "decisions": {
+          "n_evaluable": 17,
+          "n_excluded_or_unavailable": 37,
+          "tp": 0,
+          "fp": 2,
+          "fn": 1,
+          "tn": 14,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "fpr": 0.125,
+          "fnr": 1.0
+        },
+        "actions": {
+          "n_evaluable": 49,
+          "n_excluded_or_unavailable": 5,
+          "tp": 16,
+          "fp": 2,
+          "fn": 10,
+          "tn": 21,
+          "precision": 0.8888888888888888,
+          "recall": 0.6153846153846154,
+          "f1": 0.7272727272727274,
+          "fpr": 0.08695652173913043,
+          "fnr": 0.38461538461538464
+        },
+        "outcomes": {
+          "n_evaluable": 17,
+          "n_excluded_or_unavailable": 37,
+          "tp": 1,
+          "fp": 1,
+          "fn": 3,
+          "tn": 12,
+          "precision": 0.5,
+          "recall": 0.25,
+          "f1": 0.3333333333333333,
+          "fpr": 0.07692307692307693,
+          "fnr": 0.75
+        }
+      },
+      "union": {
+        "n_evaluable": 36,
+        "n_excluded_or_unavailable": 18,
+        "tp": 19,
+        "fp": 3,
+        "fn": 7,
+        "tn": 7,
+        "precision": 0.8636363636363636,
+        "recall": 0.7307692307692307,
+        "f1": 0.7916666666666666,
+        "n_ref_positive": 26,
+        "positives_relying_exclusively_on_zero_threshold": 14,
+        "zero_only_fraction_of_positives": 0.5384615384615384,
+        "note": "positives flagged where EVERY triggering dimension has theta_d == 0; theta_d=0 is NOT changed, only quantified"
+      }
+    },
+    "v7": {
+      "partition": "dev",
+      "per_dimension": {
+        "assertions": {
+          "n_evaluable": 13,
+          "n_excluded_or_unavailable": 41,
+          "tp": 0,
+          "fp": 2,
+          "fn": 1,
+          "tn": 10,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "fpr": 0.16666666666666666,
+          "fnr": 1.0
+        },
+        "decisions": {
+          "n_evaluable": 17,
+          "n_excluded_or_unavailable": 37,
+          "tp": 0,
+          "fp": 2,
+          "fn": 1,
+          "tn": 14,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "fpr": 0.125,
+          "fnr": 1.0
+        },
+        "actions": {
+          "n_evaluable": 49,
+          "n_excluded_or_unavailable": 5,
+          "tp": 16,
+          "fp": 2,
+          "fn": 10,
+          "tn": 21,
+          "precision": 0.8888888888888888,
+          "recall": 0.6153846153846154,
+          "f1": 0.7272727272727274,
+          "fpr": 0.08695652173913043,
+          "fnr": 0.38461538461538464
+        },
+        "outcomes": {
+          "n_evaluable": 17,
+          "n_excluded_or_unavailable": 37,
+          "tp": 1,
+          "fp": 1,
+          "fn": 3,
+          "tn": 12,
+          "precision": 0.5,
+          "recall": 0.25,
+          "f1": 0.3333333333333333,
+          "fpr": 0.07692307692307693,
+          "fnr": 0.75
+        }
+      },
+      "union": {
+        "n_evaluable": 36,
+        "n_excluded_or_unavailable": 18,
+        "tp": 19,
+        "fp": 3,
+        "fn": 7,
+        "tn": 7,
+        "precision": 0.8636363636363636,
+        "recall": 0.7307692307692307,
+        "f1": 0.7916666666666666,
+        "n_ref_positive": 26,
+        "positives_relying_exclusively_on_zero_threshold": 14,
+        "zero_only_fraction_of_positives": 0.5384615384615384,
+        "note": "positives flagged where EVERY triggering dimension has theta_d == 0; theta_d=0 is NOT changed, only quantified"
+      }
+    }
+  }
+}

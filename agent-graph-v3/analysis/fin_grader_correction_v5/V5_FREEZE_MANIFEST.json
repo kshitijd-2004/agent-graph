@@ -1,0 +1,67 @@
+{
+ "version": "v5-freeze-1",
+ "freeze_timestamp_utc": "2026-11-20T17:30:16Z",
+ "git_commit": "93985e59d5fb0c07599f928c42faadb3ee3a3578",
+ "extractor": {
+  "path": "benchmark/fin_answer_v5.py",
+  "sha256": "bad72ffc6d3b539dba54be0a457e4f5af2139555f5fbf51f1e31859db4faf3c6",
+  "lines": 596
+ },
+ "specification_overlay": {
+  "path": "analysis/fin_grader_correction_v5/fin_spec_revised/fin_spec_revised.py",
+  "sha256": "9e00f83f69e71186ca224a507fac87c769e12fd100101a66cb59e740c5462851",
+  "corrections_path": "analysis/fin_grader_correction_v5/fin_spec_revised/corrections.json",
+  "corrections_sha256": "f036f357460bc13cabc296ccc3a2af4b9c4337d1bfa3bcf2af6fb01f7c222872",
+  "version": "specrev-1",
+  "corrections": {
+   "confirmed_unit_defects": 35,
+   "value_corrections": 1,
+   "value_bugs_excluded": 1,
+   "no_answer_excluded": 2,
+   "negative_gt_intentional": 20,
+   "verified_valid": 2
+  }
+ },
+ "regression_tests": {
+  "cases_path": "analysis/fin_grader_correction_v5/regression/regression_cases.jsonl",
+  "cases_sha256": "5d43b0c9749670afe98837cd7eff3578b340ff43a34541ff428cf6aff434099c",
+  "runner_path": "analysis/fin_grader_correction_v5/regression/run_regression.py",
+  "runner_sha256": "9141a0c967815ac66b64fbc8ed560ccefa6e98dbfa9d72e14150a6b44e36647a",
+  "total_cases": 28,
+  "passed": 28,
+  "failed": 0
+ },
+ "grading_configuration": {
+  "tolerance": "absolute 0.02 unless overridden by spec",
+  "relative_guard": "max(tol, 1e-6 * |GT|)",
+  "rounding_equivalence": "extracted == round(GT, agent_stated_decimals)",
+  "ambiguity_abstention": "hedge cue + multiple strong candidates (score >= 3)",
+  "revision_resolution": "latest revision wins (max start position)"
+ },
+ "population_rules": {
+  "total_financial_lep": 4409,
+  "unique_trace_ids": 4406,
+  "duplicate_ids": 3,
+  "excluded_no_answer": 32,
+  "excluded_value_bug": 12,
+  "scalar_gradeable": 4365,
+  "frozen_not_gradeable": 3130,
+  "frozen_not_gradeable_gradable_set": 3086
+ },
+ "validation": {
+  "split_manifest": "analysis/fin_grader_correction_v5/validation/split_manifest.json",
+  "dev_tasks": 600,
+  "held_out_tasks": 775,
+  "held_out_fixtures": 51,
+  "held_out_financial_fixtures": 51,
+  "acceptance_gates": {
+   "G1_false_correct_rate": "<= 5%",
+   "G2_false_incorrect_rate": "<= 15%",
+   "G3_false_ungradeable_rate": "<= 10%",
+   "G4_appropriate_abstention": ">= 90%",
+   "G5_gradeability_accuracy": ">= 90%"
+  }
+ },
+ "immutable_after_freeze": true,
+ "notes": "Frozen for held-out acceptance. No changes to extraction logic, spec corrections, or grading thresholds after this point."
+}

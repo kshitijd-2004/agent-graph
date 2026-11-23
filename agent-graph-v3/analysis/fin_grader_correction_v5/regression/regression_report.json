@@ -1,0 +1,311 @@
+{
+ "total": 28,
+ "passed": 28,
+ "failed": 0,
+ "results": [
+  {
+   "id": "B1_no_label_word",
+   "label": "correct",
+   "value": 34.33,
+   "status": "observed",
+   "basis": "answer_position_score=8",
+   "ok": true,
+   "expect": "label=correct value=34.33",
+   "desc": "correct answer with NO literal 'answer'/'ratio' word (V4.1 D1 miss)",
+   "note": ""
+  },
+  {
+   "id": "B1_no_label_word_2",
+   "label": "correct",
+   "value": 2.62,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=correct value=2.62",
+   "desc": "ratio stated without label word",
+   "note": ""
+  },
+  {
+   "id": "B2_sentence_final_period",
+   "label": "correct",
+   "value": 0.0884,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=correct value=0.0884",
+   "desc": "number ends the response with a period (V4.1 _NUM_RE lookahead made it invisible)",
+   "note": ""
+  },
+  {
+   "id": "B2_percent_comma",
+   "label": "correct",
+   "value": 34.33,
+   "status": "observed",
+   "basis": "answer_position_score=5",
+   "ok": true,
+   "expect": "label=correct value=34.33",
+   "desc": "percent figure followed by a comma (frozen regex drops the %)",
+   "note": ""
+  },
+  {
+   "id": "B2_percent_period",
+   "label": "correct",
+   "value": 18.54,
+   "status": "observed",
+   "basis": "answer_position_score=6",
+   "ok": true,
+   "expect": "label=correct value=18.54",
+   "desc": "percent figure followed by a period",
+   "note": ""
+  },
+  {
+   "id": "B3_comma_numbers",
+   "label": "correct",
+   "value": 2.62,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=correct value=2.62",
+   "desc": "thousands-comma numbers with an inline millions word",
+   "note": ""
+  },
+  {
+   "id": "B3_currency_symbol",
+   "label": "correct",
+   "value": 1.5633,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=correct value=1.5633",
+   "desc": "dollar-prefixed values with an explicit conclusion",
+   "note": ""
+  },
+  {
+   "id": "B4_negative_explicit",
+   "label": "correct",
+   "value": -3155.0,
+   "status": "observed",
+   "basis": "answer_position_score=7",
+   "ok": true,
+   "expect": "label=correct value=-3155.0",
+   "desc": "negative answer with an explicit minus sign",
+   "note": ""
+  },
+  {
+   "id": "B4_negative_directional",
+   "label": "correct",
+   "value": -485760.0,
+   "status": "observed",
+   "basis": "answer_position_score=5",
+   "ok": true,
+   "expect": "label=correct value=-485760.0",
+   "desc": "negative answer via directional language ('a decrease of X')",
+   "note": ""
+  },
+  {
+   "id": "B5_ratio_dimensionless",
+   "label": "correct",
+   "value": 1.51,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=correct value=1.51",
+   "desc": "dimensionless ratio (spec defect case: declared USD millions but answer is a plain ratio)",
+   "note": "GT 1.51 = service_cost/interest_cost = 136/90. Frozen spec 084 had the inverse (0.6618 = interest/service) \u2014 corrected in specrev-1 value_corrections."
+  },
+  {
+   "id": "B5_share_count",
+   "label": "correct",
+   "value": 154.55,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=correct value=154.55",
+   "desc": "share count in millions (spec defect case: declared USD millions)",
+   "note": ""
+  },
+  {
+   "id": "B6_per_transaction",
+   "label": "correct",
+   "value": 48.1,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=correct value=48.1",
+   "desc": "dollars per transaction (spec defect case: declared USD millions)",
+   "note": ""
+  },
+  {
+   "id": "B7_scientific_notation",
+   "label": "correct",
+   "value": 125.0,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=correct value=125.0",
+   "desc": "scientific-notation figure",
+   "note": ""
+  },
+  {
+   "id": "B8_multi_candidate",
+   "label": "correct",
+   "value": 12.3,
+   "status": "observed",
+   "basis": "answer_position_score=8",
+   "ok": true,
+   "expect": "label=correct value=12.3",
+   "desc": "several numbers, only one is the final conclusion (source inputs demoted by citation context)",
+   "note": ""
+  },
+  {
+   "id": "B9_revised_answer",
+   "label": "correct",
+   "value": 128397.8,
+   "status": "observed",
+   "basis": "answer_position_score=6",
+   "ok": true,
+   "expect": "label=correct value=128397.8",
+   "desc": "agent revises the figure later in the response; the latest revision wins",
+   "note": ""
+  },
+  {
+   "id": "B10_rejection",
+   "label": "correct",
+   "value": 2.62,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=correct value=2.62",
+   "desc": "corrupted tool value quoted but explicitly rejected; the corrected value is the answer",
+   "note": ""
+  },
+  {
+   "id": "B11_adopted_corruption",
+   "label": "incorrect",
+   "value": 2.85,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=incorrect value=2.85",
+   "desc": "corrupted tool value adopted as the final answer (adversarial TRC case)",
+   "note": ""
+  },
+  {
+   "id": "B12_correct_input_wrong_answer",
+   "label": "incorrect",
+   "value": 1.8,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=incorrect value=1.8",
+   "desc": "ground-truth value appears as an INPUT figure but the final answer is wrong",
+   "note": ""
+  },
+  {
+   "id": "B13_magnitude_right_unit_wrong",
+   "label": "incorrect",
+   "value": 385000.0,
+   "status": "observed",
+   "basis": "answer_position_score=8",
+   "ok": true,
+   "expect": "label=incorrect value=385000.0",
+   "desc": "right base magnitude, WRONG scale word ('USD thousands' task, agent wrote '385 million dollars')",
+   "note": "385 million dollars -> 385e6/1e3 = 385,000 in task thousands != GT 385; a genuine unit-reading error, graded incorrect (NOT auto-resolved by the GT)"
+  },
+  {
+   "id": "B14_sign_wrong",
+   "label": "incorrect",
+   "value": 485760.0,
+   "status": "observed",
+   "basis": "answer_position_score=8",
+   "ok": true,
+   "expect": "label=incorrect value=485760.0",
+   "desc": "correct magnitude, missing the negative sign",
+   "note": ""
+  },
+  {
+   "id": "B15_omission_no_numbers",
+   "label": "ungradeable",
+   "value": null,
+   "status": "unavailable",
+   "basis": "no_numeric_answer_present",
+   "ok": true,
+   "expect": "label=ungradeable status=unavailable",
+   "desc": "agent summarized but stated no figures -> abstain (do NOT force a number)",
+   "note": ""
+  },
+  {
+   "id": "B16_footnote_marker",
+   "label": "ungradeable",
+   "value": null,
+   "status": "unavailable",
+   "basis": "no_numeric_answer_present",
+   "ok": true,
+   "expect": "label=ungradeable status=unavailable",
+   "desc": "bare integer in parentheses is a footnote marker, not a value -> abstain",
+   "note": ""
+  },
+  {
+   "id": "B17_refusal",
+   "label": "ungradeable",
+   "value": null,
+   "status": "refused",
+   "basis": "explicit_refusal_or_not_determinable",
+   "ok": true,
+   "expect": "label=ungradeable status=refused",
+   "desc": "explicit non-determinacy -> refuse state",
+   "note": ""
+  },
+  {
+   "id": "B18_document_identifier",
+   "label": "correct",
+   "value": 2.62,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=correct value=2.62",
+   "desc": "'10-K' / 'page 243' style identifiers must not become candidates",
+   "note": ""
+  },
+  {
+   "id": "B19_ambiguous_two_conclusions",
+   "label": "ungradeable",
+   "value": null,
+   "status": "ambiguous",
+   "basis": "ambiguous_hedge",
+   "ok": true,
+   "expect": "label=ungradeable status=ambiguous",
+   "desc": "two competing conclusion-position figures -> ambiguous, not a silent pick",
+   "note": ""
+  },
+  {
+   "id": "B20_gt_in_rejected_alternative",
+   "label": "incorrect",
+   "value": 11.9,
+   "status": "observed",
+   "basis": "answer_position_score=9",
+   "ok": true,
+   "expect": "label=incorrect value=11.9",
+   "desc": "GT appears only in a rejected alternative; the stated answer is different",
+   "note": ""
+  },
+  {
+   "id": "METAMORPH_format_invariant",
+   "value_a": 34.33,
+   "value_b": 34.33,
+   "ok": true,
+   "expect": "value_a=34.33 value_b=34.33",
+   "desc": "metamorphic: reformatting the same figure preserves the extracted value",
+   "note": "both must extract 34.33"
+  },
+  {
+   "id": "METAMORPH_semantic_change",
+   "value_a": 2.62,
+   "value_b": 0.38,
+   "ok": true,
+   "expect": "value_a=2.62 value_b=0.38",
+   "desc": "metamorphic: changing the final conclusion changes the extracted value",
+   "note": "a->correct, b->incorrect; extractor must track the stated quantity, not match GT"
+  }
+ ]
+}
