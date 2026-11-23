@@ -149,6 +149,35 @@ def test_source_artifact_reflects_omission_only_if_full_source_copy():
     assert run(t, cs, CODE)['status'] == 'unknown'
 
 
+def test_module_basename_function_that_is_a_real_symbol_is_retained():
+    """A `function` that equals its file's module basename is still a valid target
+    when that exact name is genuinely defined in the source (e.g. `timesince`)."""
+    before = 'def timesince(value, arg=None):\n    return value\n\nOTHER = 1\n'
+    after = 'OTHER = 1\n'
+    spec = {'task_family': 'code_review',
+            'required_issues': [{'function': 'timesince', 'location': 'timesince.py'}],
+            'attack': {'tool_result': {'operator': 'partial_omission', 'target_file': 'timesince.py'}}}
+    boundary = {'source_path': 'timesince.py', 'before': before, 'after': after}
+    changes, diagnostic = v.code_changes(boundary, spec)
+    assert any(c['qualified_name'] == 'timesince' for c in changes.values())
+    assert not any('module_basename_not_symbol' in r for r in diagnostic['reasons'])
+
+
+def test_module_basename_function_that_is_not_a_symbol_is_dropped():
+    """A bare module basename that is not a defined source element (an authoring
+    artifact) is not a trackable target and is excluded from target matching."""
+    before = 'class Config:\n    x = 1\n'
+    after = 'class Config:\n    y = 1\n'
+    spec = {'task_family': 'code_review',
+            'required_issues': [{'function': 'widgets', 'location': 'widgets.py'}],
+            'attack': {'tool_result': {'operator': 'partial_omission', 'target_file': 'widgets.py'}}}
+    boundary = {'source_path': 'widgets.py', 'before': before, 'after': after}
+    changes, diagnostic = v.code_changes(boundary, spec)
+    assert not changes
+    assert 'module_basename_not_symbol:widgets' in diagnostic['reasons']
+    assert diagnostic['target_hints'] == []
+
+
 def test_function_body_change_requires_actual_source_use():
     after = GOOD.replace('cache.clear()', 'pass')
     t, cs = trc_case(CODE, GOOD, after)

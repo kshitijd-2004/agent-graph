@@ -121,8 +121,23 @@ def code_changes(boundary, spec):
         diagnostic['reasons'].append('source_parse_failed')
         return {}, diagnostic
     diagnostic['status'] = 'parsed'
-    targets = {i['function'] for i in spec.get('required_issues', [])
-               if i.get('function') and i.get('location') == boundary['source_path']}
+    # An issue's `function` sometimes holds the bare module basename (an
+    # authoring artifact) rather than a real identifier. A bare name that equals
+    # its file's module basename is not a trackable target unless that exact
+    # name is genuinely defined in the source (e.g. `timesince`, `__init__`).
+    base = boundary['source_path'].rsplit('/', 1)[-1].split('.', 1)[0]
+    bare_segments = {q.split('.')[-1] for q in before}
+    def is_symbol(name):
+        return name in before or name.split('.')[-1] in bare_segments
+    targets = set()
+    for issue in spec.get('required_issues', []):
+        fn = issue.get('function')
+        if not fn or issue.get('location') != boundary['source_path']:
+            continue
+        if fn == base and not is_symbol(fn):
+            diagnostic['reasons'].append('module_basename_not_symbol:' + fn)
+            continue
+        targets.add(fn)
     # Older specs can record the target only in the attack's finding. This is
     # an identifier hint, never an asserted source state or adoption endpoint.
     finding = spec.get('attack', {}).get('memory_poisoning', {}).get('bug_findings', {})

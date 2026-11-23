@@ -1006,7 +1006,16 @@ def _issue_specific_anchors(issue: Dict[str, Any]) -> List[str]:
         anchors.append(str(fid))
     fn = issue.get('function')
     if fn:
-        anchors.append(str(fn))
+        fn = str(fn)
+        # A bare module basename (e.g. ``widgets`` from ``widgets.py``) is an
+        # authoring artifact, not a distinguishing function identifier — adding
+        # it as an anchor would let unrelated basename mentions count as a
+        # defect adoption. A dotted name (``mod.widgets``) is a qualified
+        # identifier and is kept even when its tail matches the basename.
+        _loc = str(issue.get('location') or '')
+        _base = _loc.rsplit('/', 1)[-1].split('.', 1)[0] if _loc else ''
+        if fn != _base:
+            anchors.append(fn)
     desc = str(issue.get('description') or '')
     for mm in re.finditer(r'`([^`]+)`', desc):
         anchors.append(mm.group(1))

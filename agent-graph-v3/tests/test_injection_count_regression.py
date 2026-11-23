@@ -199,6 +199,32 @@ def test_remapped_exit_is_resolved_by_stage_identity():
     assert intended_origin_roles(cfg, topology, "many_to_one") == {"researcher", "analyst"}
 
 
+@pytest.mark.parametrize("code", [TRC, IPI, "LEP_HANDOFF_CORRUPTION", "LEP_INPUT_DISREGARD"])
+def test_unbound_cw_single_origin_pinned_to_first_worker(code):
+    """After the canonical CW topology fix the coordinator runs and reads first, so an
+    unbound single-origin LEP must still originate at a WORKER (as pre-fix), never at the
+    coordinator.  Pins to the first worker stage for every unbound single-origin LEP."""
+    from generation.injection_origins import remap_task_roles
+    topo = remap_task_roles(get_topology("coordinator_workers", defaultdict(str)), "code_review")
+    assert topo.is_coordinator_first()
+    worker = next(s for s in topo.stages if s.stage_type == "execute")
+    cfg = BenchmarkRunner._resolve_lep(None, code, "code_review")
+    assert cfg.topology_target is None
+    assert intended_origin_roles(cfg, topo, "single_origin") == {worker.agent_role}
+    # O2M must stay at the upstream coordinator, unaffected by the worker pin.
+    assert intended_origin_roles(cfg, topo, "one_to_many") == {
+        topo.stage_by_id[topo.exit_stage].agent_role}
+
+
+def test_explicit_cw_worker_target_still_overrides_pin():
+    from generation.injection_origins import remap_task_roles
+    topo = remap_task_roles(get_topology("coordinator_workers", defaultdict(str)), "code_review")
+    cfg = BenchmarkRunner._resolve_lep(None, TRC, "code_review")
+    cfg.topology_target = "worker:specialist_b"
+    assert intended_origin_roles(cfg, topo, "single_origin") == {"specialist_b"}
+
+
+
 def test_scoped_occurrences_are_independent():
     event = TraceEvent(trace_id="t", event_id="0", event_index=0, timestamp="", event_type=TraceEventType.TOOL_RESULT)
     matcher = TriggerMatcher()

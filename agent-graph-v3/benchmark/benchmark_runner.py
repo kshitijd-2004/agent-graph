@@ -404,6 +404,15 @@ class BenchmarkManifest:
                         continue
 
                     # ── Benign entries: one per variant × benign_rep ───────────
+                    # Single-origin benigns are emitted for every topology (the
+                    # existing default).  For topologies that also permit
+                    # one_to_many (coordinator_workers), we emit an ADDITIONAL
+                    # one_to_many benign per (variant, rep).  The O2M benign runs
+                    # the coordinator-first schedule (initial_fanout bypass in
+                    # the runner) so its execution shape matches the O2M LEP
+                    # traces it will serve as a BND reference for.  Distinct
+                    # scenario_id / pair_tag / trace_id keep it from colliding
+                    # with the SO benign or leaking into the SO reference pool.
                     for variant in variants:
                         for rep in range(self.num_benign_repetitions):
                             pair_tag = (
@@ -428,6 +437,36 @@ class BenchmarkManifest:
                                 "is_baseline": True,
                             })
                             idx += 1
+
+                            # O2M-matched benign: only for topologies whose
+                            # allowed modes include one_to_many.  Emitted with
+                            # propagation_mode="one_to_many" so the runner's
+                            # initial_fanout bypass makes it coordinator-first.
+                            if "one_to_many" in allowed_modes:
+                                o2m_pair_tag = (
+                                    f"b_{topology}_{fixture_id}_"
+                                    f"{variant}_{rep:02d}_one_to_many"
+                                )
+                                plan.append({
+                                    "run_id": f"run-{idx:04d}",
+                                    "scenario_id": (
+                                        f"{topology}_{fixture_id}_"
+                                        f"{variant}_{rep:02d}_one_to_many_benign"
+                                    ),
+                                    "task_family": task_family,
+                                    "fixture_id": fixture_id,
+                                    "task_variant": task_variant,
+                                    "condition": "benign",
+                                    "execution_variant": variant,
+                                    "lep_codes": [],
+                                    "topology": topology,
+                                    "propagation_mode": "one_to_many",
+                                    "lep_code": "",
+                                    "repetition_index": rep,
+                                    "pair_tag": o2m_pair_tag,
+                                    "is_baseline": True,
+                                })
+                                idx += 1
 
                     # ── LEP entries: one per LEP × mode × rep ────────────────
                     lep_mode_combos = [
@@ -810,7 +849,13 @@ class BenchmarkRunner:
 
         if lep_code:
             return f"{fixture}.{topo}.{lep_code}.{mode}.{rep}.{variant_short}"
-        return f"{fixture}.{topo}.{rep}.{variant_short}.benign"
+        # Benign trace ids omit propagation mode by default so the frozen
+        # single-origin id space stays stable.  A non-single-origin benign
+        # (e.g. the O2M-matched control) must not collide with the SO benign
+        # for the same (fixture, rep, variant), so insert the mode token.
+        if mode == "single_origin":
+            return f"{fixture}.{topo}.{rep}.{variant_short}.benign"
+        return f"{fixture}.{topo}.{mode}.{rep}.{variant_short}.benign"
 
     def _resolve_lep(self, code: str, task_family: str = "") -> LEPConfig:
         # Build lookup from tasks.registry at call time (cheap, cached)

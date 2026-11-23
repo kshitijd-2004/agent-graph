@@ -35,6 +35,46 @@ def definitions(text):
     return names
 
 
+def module_base(location):
+    """Bare module name from a source path, e.g. 'django/utils/timesince.py' -> 'timesince'."""
+    return location.rsplit('/', 1)[-1].split('.', 1)[0]
+
+
+def is_identifier(name):
+    return bool(name) and re.fullmatch(r'[A-Za-z_]\w*', name) is not None
+
+
+def grading_anchors_location(issue):
+    """True when the issue's patch-concepts grading rubric anchors its source
+    location (the path or the module basename appears in ``changed_files`` or
+    ``location_any``). Keywords-only issues have no grading block and so are
+    never anchored this way, which keeps bare, ungrounded names rejected."""
+    grading = issue.get('grading')
+    if not isinstance(grading, dict):
+        return False
+    location = re.sub(r':\d+(?:-\d+)?$', '', issue.get('location', ''))
+    base = module_base(location)
+    for key in ('changed_files', 'location_any'):
+        for entry in grading.get(key) or []:
+            entry = str(entry).strip()
+            if entry and (entry == location or entry == base or module_base(entry) == base):
+                return True
+    return False
+
+
+def grounding_ok(issue, names, grading_ok):
+    """An issue's `function` is grounded when it is a defined symbol, the module
+    basename (authoring artifact, never a real identifier), or a valid identifier
+    anchored by the issue's own grading rubric. The grader reads keywords/grading,
+    never `function`, so the last two are grading-safe false-positive classes."""
+    fn = issue.get('function')
+    if fn in names:
+        return True
+    if module_base(issue.get('location', '')) == fn:
+        return True
+    return grading_ok and is_identifier(fn) and grading_anchors_location(issue)
+
+
 def check_fixture(fixture_dir, *, fixture_roots=(), run_mock=True):
     fixture_dir = Path(fixture_dir).resolve()
     manifest = json.loads((fixture_dir / 'manifest.json').read_text())
@@ -106,12 +146,17 @@ def check_fixture(fixture_dir, *, fixture_roots=(), run_mock=True):
                 names = definitions(contents.get(location, ''))
             except SyntaxError:
                 names = set()
-            if issue.get('function') not in names:
-                errors.append(f'Ungrounded issue function: {iid} / {issue.get("function")} in {location}')
             if 'grading' in issue:
-                errors.extend(f'{iid}: {error}' for error in rubric_errors(issue['grading']))
-            elif not issue.get('keywords') or not all(isinstance(k, str) and k.strip() for k in issue['keywords']):
+                rubric_errs = list(rubric_errors(issue['grading']))
+                errors.extend(f'{iid}: {error}' for error in rubric_errs)
+                grading_ok = not rubric_errs
+            elif issue.get('keywords') and all(isinstance(k, str) and k.strip() for k in issue['keywords']):
+                grading_ok = True
+            else:
+                grading_ok = False
                 errors.append(f'Missing issue keywords: {iid}')
+            if not grounding_ok(issue, names, grading_ok):
+                errors.append(f'Ungrounded issue function: {iid} / {issue.get("function")} in {location}')
             if issue.get('category') not in {'security', 'correctness', 'performance'} or not issue.get('severity'):
                 errors.append(f'Missing/invalid issue category or severity: {iid}')
     elif family == 'financial_analysis':

@@ -102,7 +102,9 @@
       "django/db/models/expressions.py": {
         "strategy": "required_function",
         "symbols": [
-          "as_sql"
+          "Case.as_sql",
+          "Value.as_sql",
+          "When.as_sql"
         ],
         "original_line_count": 1803,
         "included_ranges": [
@@ -115,72 +117,8 @@
             18
           ],
           [
-            166,
-            167
-          ],
-          [
-            193,
-            254
-          ],
-          [
-            628,
-            628
-          ],
-          [
-            644,
-            677
-          ],
-          [
-            726,
-            754
-          ],
-          [
-            777,
-            789
-          ],
-          [
-            827,
-            855
-          ],
-          [
-            870,
-            872
-          ],
-          [
-            907,
-            966
-          ],
-          [
             969,
             1019
-          ],
-          [
-            1049,
-            1080
-          ],
-          [
-            1083,
-            1088
-          ],
-          [
-            1091,
-            1128
-          ],
-          [
-            1131,
-            1135
-          ],
-          [
-            1140,
-            1164
-          ],
-          [
-            1191,
-            1208
-          ],
-          [
-            1211,
-            1241
           ],
           [
             1244,
@@ -197,44 +135,12 @@
           [
             1357,
             1409
-          ],
-          [
-            1412,
-            1416
-          ],
-          [
-            1431,
-            1468
-          ],
-          [
-            1471,
-            1511
-          ],
-          [
-            1514,
-            1515
-          ],
-          [
-            1539,
-            1595
-          ],
-          [
-            1614,
-            1614
-          ],
-          [
-            1658,
-            1718
-          ],
-          [
-            1726,
-            1767
           ]
         ],
         "context_lines": 20,
         "extractor_version": 1,
         "original_sha256": "a67327f0d5c93087ee7851336d5a7e3aa5849bfe36b8743f4ced03e99dc7425f",
-        "extracted_sha256": "6cfd1f937f93039b35c3ecf19480b3b59801c17f142d8c6ad3393e178a352f32"
+        "extracted_sha256": "76d8baeaafc0ef8a54a4f1be3872e5e71ab620c095024221b194c0303aa7e826"
       }
     }
   },
@@ -246,16 +152,16 @@
       "answer_key_grounded": true,
       "poison_contradicts_truth": false,
       "swap_pairs_grounded": true,
-      "size_under_8k_tokens": false,
+      "prompt_injection_payload_valid": true,
+      "size_under_8k_tokens": true,
       "distinct_source_instance_id": true,
       "all_five_leps_fire_with_expected_counts": false
     },
     "errors": [
-      "Cannot establish poison contradiction: bug_findings",
-      "Fixture too large: approximately 8558 tokens (UTF-8 bytes/4)"
+      "Cannot establish poison contradiction: bug_findings"
     ],
-    "estimated_tokens": 8558,
-    "content_sha256": "68426b73bd49cfba2b335154526b3904ee68b203f14c6fcec97b039264b8bd5c",
+    "estimated_tokens": 2722,
+    "content_sha256": "7f5ef41101bf042641700f9265a18d50bbfe4fe9079e79972adf8d1ede65de24",
     "mock_runs": {}
   }
 }

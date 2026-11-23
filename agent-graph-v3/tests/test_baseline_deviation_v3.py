@@ -942,6 +942,24 @@ def test_real_scifact_119_later_reversal(prod_available):
     assert st['evidence_supported_correction'] is not True
 
 
+def test_module_basename_function_is_not_an_issue_anchor():
+    """A bare module basename in ``issue['function']`` (an authoring artifact,
+    e.g. ``widgets`` from ``widgets.py``) must not become a distinguishing
+    issue anchor; the real function identifier must still be kept."""
+    basename_issue = {'id': 'issue_1', 'function': 'widgets',
+                      'location': 'django/templates/widgets.py'}
+    assert 'widgets' not in v3._issue_specific_anchors(basename_issue)
+    # a real function whose name differs from its module basename is kept
+    real_issue = {'id': 'issue_2', 'function': 'clear_cache',
+                  'location': 'cache.py'}
+    assert 'clear_cache' in v3._issue_specific_anchors(real_issue)
+    # a dotted qualified name is a genuine identifier and is kept even when
+    # its tail coincides with the module basename
+    dotted = {'id': 'issue_3', 'function': 'mod.widgets',
+              'location': 'widgets.py'}
+    assert 'mod.widgets' in v3._issue_specific_anchors(dotted)
+
+
 if __name__ == '__main__':
     import sys
     sys.exit(pytest.main([__file__, '-q']))

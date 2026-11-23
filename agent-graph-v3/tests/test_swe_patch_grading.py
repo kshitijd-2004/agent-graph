@@ -7,8 +7,12 @@ from benchmark.behavioral_anomaly import extract_code_review_issue_presence
 from evaluators.task_evaluators.patch_review import match_patch_review, rubric_errors
 from generation.runner import ScenarioRunner
 from schemas import Trace, TraceEvent, TraceEventType, TraceVariant
-from scripts.swebench_materializer.grading.build import with_grading
-from scripts.swebench_materializer.grading.curated import ROWS
+# The on-disk rubrics are attached by build.with_grading from the reviewed
+# rubrics (build.ROWS = load_reviewed_rubrics()), so those reviewed rows are the
+# source of truth for gold/paraphrase/incorrect probes. The curated module's
+# auto-generated filler rows for indexes 101+ no longer match the reviewed
+# concepts, so they must not be used as the grading reference.
+from scripts.swebench_materializer.grading.build import with_grading, ROWS
 from scripts.swebench_materializer.grading.validate import DRAFTS, ROOT, evaluate_answer
 
 FIXTURES = sorted((ROOT / 'workspace_fixtures_v3').glob('code_review_swe_*/manifest.json'))

@@ -747,5 +747,19 @@ def test_v41_action_isolation_preserved():
     assert sx.d_action_history is not None and sx.d_action_history > 0.0
 
 
+def test_module_basename_function_is_not_an_issue_anchor():
+    """A bare module basename in ``issue['function']`` must not become a
+    distinguishing V4.1 issue anchor, while a real function name is kept."""
+    basename_issue = {'id': 'issue_1', 'function': 'widgets',
+                      'location': 'django/templates/widgets.py'}
+    assert 'widgets' not in v41._issue_specific_anchors(basename_issue)
+    real_issue = {'id': 'issue_2', 'function': 'clear_cache',
+                  'location': 'cache.py'}
+    assert 'clear_cache' in v41._issue_specific_anchors(real_issue)
+    dotted = {'id': 'issue_3', 'function': 'mod.widgets',
+              'location': 'widgets.py'}
+    assert 'mod.widgets' in v41._issue_specific_anchors(dotted)
+
+
 if __name__ == '__main__':
     sys.exit(pytest.main([__file__, '-q']))

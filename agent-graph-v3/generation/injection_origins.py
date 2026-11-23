@@ -50,6 +50,19 @@ def intended_origin_roles(config, topology, mode):
         # Canonical single-origin defaults: producer, branch A, or worker A.
         stage_id = "security_worker" if topology.topology_id == "coordinator_workers" else "researcher"
         return {topology.stage_by_id[stage_id].agent_role}
+    if topology.is_coordinator_first():
+        # Canonical single-origin origin for a coordinator-first topology is the
+        # FIRST WORKER, never the coordinator.  Under the canonical fan-out
+        # schedule the coordinator runs and reads first, so an unbound
+        # ("fire on any stage") single-origin LEP would otherwise originate at
+        # the coordinator — a change from the pre-fix worker-first runs.  Pin
+        # it to the first worker stage (TOPOLOGY_TARGETS:
+        # coordinator_workers -> worker_a) so the single-origin origin stays at
+        # the worker, as before the topology fix.  one_to_many / many_to_one
+        # are handled above and never reach this branch.
+        worker_stage = next((s for s in topology.stages if s.stage_type == "execute"), None)
+        if worker_stage is not None:
+            return {worker_stage.agent_role}
     return None
 
 
