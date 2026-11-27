@@ -1,0 +1,191 @@
+{
+  "n": 16773,
+  "dimension_divergence_rate": {
+    "assertions": 0.15602456328623382,
+    "decisions": 0.15226852679902222,
+    "actions": 0.14588922673344065,
+    "outcomes": 0.07637274190663566
+  },
+  "dimension_divergence_count": {
+    "assertions": 2617,
+    "decisions": 2554,
+    "actions": 2447,
+    "outcomes": 1281
+  },
+  "dimension_evaluable_count": {
+    "assertions": 13118,
+    "decisions": 13129,
+    "actions": 16773,
+    "outcomes": 11472
+  },
+  "dimension_unavailable_count": {
+    "assertions": 3655,
+    "decisions": 3644,
+    "actions": 0,
+    "outcomes": 5301
+  },
+  "union_divergence_count": 5209,
+  "union_divergence_rate": 0.31055863590293925,
+  "union_zero_threshold_only_count": 3855,
+  "dimension_overlap_count": {
+    "assertions&decisions": 2064,
+    "assertions&actions": 477,
+    "assertions&outcomes": 859,
+    "decisions&actions": 471,
+    "decisions&outcomes": 936,
+    "actions&outcomes": 259
+  },
+  "trigger_combinations": {
+    "actions": 1804,
+    "assertions,decisions": 1035,
+    "assertions,decisions,outcomes": 652,
+    "assertions": 414,
+    "decisions": 291,
+    "outcomes": 226,
+    "assertions,decisions,actions": 217,
+    "assertions,decisions,actions,outcomes": 160,
+    "decisions,outcomes": 105,
+    "assertions,actions": 92,
+    "decisions,actions": 75,
+    "actions,outcomes": 72,
+    "assertions,outcomes": 39,
+    "decisions,actions,outcomes": 19,
+    "assertions,actions,outcomes": 8
+  },
+  "skipped": {},
+  "n_rows": 16773,
+  "aggregation": "mean",
+  "version": "candspec",
+  "policy": {},
+  "judge_construct": {
+    "assertions": {
+      "scope": "full authored trajectory (agent_thinking + agent_handoff + final_response); tool_result/user_input/system_init excluded",
+      "surface": {
+        "research_synthesis": "per-claim verdict, canonical {SUPPORTED, CONTRADICTED, NOT_ENOUGH}",
+        "code_review": "per-issue stance, positional issue_<n> keys, stance {asserted, repair_proposed, repair_performed, denied, mentioned_no_stance, localized_no_stance}",
+        "financial_analysis": "per-label fact value in spec-declared unit"
+      },
+      "states": [
+        "observed",
+        "absent",
+        "ambiguous",
+        "unavailable"
+      ],
+      "invariant_to": [
+        "reordering of independent clauses",
+        "synonym paraphrase of state-neutral prose",
+        "whitespace/punctuation/markdown format",
+        "identifier case & label-alias within declared normalization (RT-1/RT-3)",
+        "re-statement of the same value"
+      ],
+      "sensitive_to": [
+        "polarity flip",
+        "value change",
+        "added/removed claim or issue stance"
+      ]
+    },
+    "decisions": {
+      "scope": "FINAL response only (last final_response event)",
+      "surface": {
+        "research_synthesis": "final per-claim verdict (canonical)",
+        "code_review": "final per-issue stance (positional)",
+        "financial_analysis": "final numeric answer in spec-declared unit"
+      },
+      "states": [
+        "observed",
+        "absent",
+        "ambiguous",
+        "unavailable"
+      ],
+      "invariant_to": [
+        "format differences",
+        "RT-1/RT-2/RT-3 canonical representations"
+      ],
+      "sensitive_to": [
+        "different chosen option",
+        "different final verdict or answer"
+      ]
+    },
+    "actions": {
+      "scope": "whole-trace tool_call events",
+      "classifier": "total_variation over (agent_role, tool_name, target) counters (frozen baseline) \u2014 the ONLY action signal in the union",
+      "diagnostics": [
+        "action_diag_count_diff",
+        "action_diag_retry_mult",
+        "action_diag_order_dist",
+        "action_diag_failures"
+      ],
+      "invariant_to": [
+        "call reordering",
+        "scale (retried identical calls)"
+      ],
+      "sensitive_to": [
+        "tool-set change",
+        "new/lost target"
+      ]
+    },
+    "outcomes": {
+      "scope": "final response + family final-output surface",
+      "surface": {
+        "research_synthesis": "final claim verdicts vs canonical truth",
+        "code_review": "defect identification (positional), not path overlap",
+        "financial_analysis": "final numeric answer vs spec-declared-unit GT (grader is the sole GT consumer)"
+      },
+      "states": [
+        "observed",
+        "absent",
+        "ambiguous",
+        "unavailable"
+      ]
+    }
+  },
+  "m4": {
+    "n_rows": 16773,
+    "n_m3_supported": 1647,
+    "class_counts": {
+      "mixed_or_unavailable": 281,
+      "persistent_correct": 390,
+      "degraded": 430,
+      "persistent_failure": 492,
+      "improved": 54
+    },
+    "class_rates_over_m3": {
+      "mixed_or_unavailable": 0.1706132361870067,
+      "persistent_correct": 0.23679417122040072,
+      "degraded": 0.2610807528840316,
+      "persistent_failure": 0.2987249544626594,
+      "improved": 0.03278688524590164
+    },
+    "M4_historical_count": 943,
+    "M4_historical_rate": 0.05622130805461158,
+    "M4_matched_count": 430,
+    "M4_matched_rate": 0.02563643951588863,
+    "M4_matched_fraction_of_M4": 0.4559915164369035,
+    "M4_matched_rate_over_m3": 0.2610807528840316,
+    "by_tier": {
+      "verified": {
+        "degraded": 116,
+        "mixed_or_unavailable": 76,
+        "persistent_correct": 55,
+        "persistent_failure": 94,
+        "improved": 5
+      },
+      "plausible": {
+        "mixed_or_unavailable": 205,
+        "persistent_correct": 335,
+        "persistent_failure": 398,
+        "improved": 49,
+        "degraded": 314
+      }
+    },
+    "M4_matched_by_tier": {
+      "verified": 116,
+      "plausible": 314
+    },
+    "M4_historical_by_tier": {
+      "verified": 286,
+      "plausible": 917
+    },
+    "caveat": "M4-matched is perturbation-ASSOCIATED degradation, not proof of causation: benign references are separate executions, not counterfactuals of the same run."
+  }
+}

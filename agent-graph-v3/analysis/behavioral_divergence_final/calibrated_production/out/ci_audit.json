@@ -1,0 +1,35 @@
+{
+ "artifact": "out/ci_audit.json",
+ "m1": {
+  "point": 0.3003040600965838,
+  "wilson95_descriptive": [
+   0.2934133280807206,
+   0.307286242430289
+  ],
+  "cluster_bootstrap95_correct_resample": [
+   0.288012,
+   0.312541,
+   0.3003040600965838
+  ],
+  "cluster_bootstrap95_stored_bernoulli_share_reproduced": [
+   0.0,
+   0.611111
+  ],
+  "cluster_bootstrap95_stored_in_production_cis_v6": [
+   0.0,
+   0.6111111111111112,
+   0.3003040600965838
+  ],
+  "diagnostics": {
+   "n_fixtures": 903,
+   "n_rows": 16773,
+   "cluster_size_min": 8,
+   "cluster_size_max": 21,
+   "cluster_size_mean": 18.57,
+   "empirical_mean_resampled_fixtures_per_replicate_bernoulli": 1.0,
+   "note": "Bernoulli-at-row-share: each fixture resampled w.p. its share of all rows -> E[#resampled fixtures] = sum_k (n_k/N_total) = 1.0 of 903 (measured 1.000).  Each replicate pools ~1 resampled fixture (avg ~15-20 rows, mostly a single LEP+topology), so the replicate rate is either 0 (no positive fixture drawn) or a near-single-fixture rate -> the stored [0.0, 0.6111]. This is a RESAMPLING-UNIT DEFECT, not a valid cluster CI. The correct resample-the-fixture bootstrap resamples all 903 fixtures w/r each replicate."
+  },
+  "verdict": "the stored [0.0, 0.6111] is an IMPLEMENTATION DEFECT (resampling unit: Bernoulli at per-cluster row-share collapses to ~1 resampled fixture/replicate). The correct resample-the-cluster bootstrap is reported above; the wide stored interval is NOT a legitimate statistical consequence and is superseded."
+ },
+ "cluster_stats_note": "The downstream_results summary.json already carries a cluster-BINOMIAL CI (fraction of clusters containing >=1 positive, e.g. M1 [0.605, 0.6413] over 2729 clusters) \u2014 a DIFFERENT, valid cluster-aware estimate.  The stored m1_fixture_cluster_bootstrap95 is the row-level rate over a degenerate resampling; the two are reported separately."
+}

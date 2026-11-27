@@ -1,0 +1,117 @@
+{
+ "n_frame": 16773,
+ "rule": {
+  "null": "p3",
+  "q": 0.98,
+  "pool": "family",
+  "floor": 0.0,
+  "name": "p3_q98_f0_family"
+ },
+ "m1": {
+  "union_orig": 5037,
+  "union_cal": 943,
+  "union_cal_state": {
+   "pos": 943,
+   "neg": 15830,
+   "unavail": 0
+  },
+  "union_orig_zero_only": 3777,
+  "union_cal_zero_only": 0,
+  "dims_orig": {
+   "assertions": 2452,
+   "decisions": 2380,
+   "actions": 2448,
+   "outcomes": 1301
+  },
+  "dims_cal": {
+   "assertions": 478,
+   "decisions": 408,
+   "actions": 442,
+   "outcomes": 0
+  },
+  "dim_eval_orig": {
+   "assertions": 12707,
+   "decisions": 12779,
+   "actions": 16773,
+   "outcomes": 12068
+  },
+  "dim_eval_cal": {
+   "assertions": 13392,
+   "decisions": 13454,
+   "actions": 16773,
+   "outcomes": 12630
+  },
+  "dim_unavail_orig": {
+   "assertions": 4066,
+   "decisions": 3994,
+   "actions": 0,
+   "outcomes": 4705
+  },
+  "dim_unavail_cal": {
+   "assertions": 3381,
+   "decisions": 3319,
+   "actions": 0,
+   "outcomes": 4143
+  },
+  "b2b_fpr_num": 1430,
+  "b2b_fpr_den": 50319,
+  "b2b_dims": {
+   "assertions": 375,
+   "decisions": 366,
+   "actions": 998,
+   "outcomes": 0
+  },
+  "b2b_union_note": "denominator is CONSTRUCTED p3 probe observations (3 per cell), NOT independent benign executions",
+  "orig_pos_cal_pos": 687,
+  "orig_pos_cal_neg": 4350,
+  "orig_pos_cal_unavail": 0,
+  "orig_neg_cal_pos": 256,
+  "orig_neg_cal_neg": 11480,
+  "orig_neg_cal_unavail": 0,
+  "trigger_profiles_cal": {
+   "actions": 424,
+   "assertions": 108,
+   "assertions,decisions": 352,
+   "assertions,decisions,actions": 15,
+   "decisions": 41,
+   "assertions,actions": 3
+  },
+  "pairwise_overlap_cal": {
+   "assertions+decisions": 367,
+   "assertions+actions": 18,
+   "decisions+actions": 15
+  }
+ },
+ "m2": {
+  "cross_agent": 3052,
+  "cross_agent_nonzero": 1031,
+  "cross_agent_cal_true": 732,
+  "cross_agent_cal_false": 16041,
+  "cross_agent_cal_undetermined": 0,
+  "cal_reasons": {
+   "negative": 16041,
+   "inter": 443,
+   "final": 289
+  },
+  "diagnostic_m2_orig_AND_m1_cal": 446,
+  "note": "m2_cross_agent_cal = True/False/None where None = undetermined (a cross-agent checkpoint structure exists but no pooled checkpoint \u03b8) \u2014 NEVER counted as a negative.  The m2_cross_agent original is the frozen frame field (injection-boundary-gated, role-gated)."
+ },
+ "m3": {
+  "supported": 1647,
+  "verified": 346,
+  "plausible": 1301,
+  "unsupported": 1215,
+  "not_downstream": 13911,
+  "matched": 421,
+  "m3_matched_note": "M3-matched = dependency-supported (verified or plausible reach) AND LEP graded incorrect AND >=1 compatible benign reference graded correct.  ASSOCIATIONAL, not causal; ungradeable executions are never counted as failures."
+ },
+ "m4_class_counts": {
+  "not_m3_supported": 15126,
+  "mixed_or_unavailable": 246,
+  "persistent_correct": 416,
+  "degraded": 421,
+  "persistent_failure": 516,
+  "improved": 48
+ },
+ "m4_matched_denominator": 1647
+}

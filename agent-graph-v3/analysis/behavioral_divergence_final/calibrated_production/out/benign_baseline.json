@@ -1,0 +1,64 @@
+{
+ "artifact": "out/benign_baseline.json",
+ "grader_version": {
+  "module": "analysis/measurement_v6/graders.py (v6 GT-boundary graders: grade_financial / grade_research / grade_code)",
+  "sha256": "60ca288ab57772bd256c7d187bf34e814c5bf8b63f490111dead215c7f8ba89c",
+  "vocabulary": "raw {correct, incorrect, ungradeable}; the production.py baseline counts g in (failure, incorrect) \u2014 'incorrect' being the v6 raw value for task failure.",
+  "source_artifacts": [
+   "analysis/measurement_v6/out/per_trace_v6.jsonl",
+   "analysis/consolidated_20261121_bnd_v41/downstream_results/per_trace.jsonl"
+  ]
+ },
+ "reconciliation": {
+  "stored_34pct_convention": "reference-APPEARANCE-WEITED over graded benign refs: each of the 16,773 frame rows contributes its 3 reference-set entries to the numerator/denominator.  39,058 = sum of graded appearances across families (exceeds 26,965 traces because a benign trace shared by K LEP rows in the same cell is counted K times).  This is quantity (4) below.",
+  "per_family": {
+   "code_review": {
+    "unique_benign_executions": 2739,
+    "unique_benign_gradeable": 2179,
+    "unique_benign_failure": 226,
+    "unique_benign_failure_rate": 0.10371730151445617,
+    "reference_appearances": 13365,
+    "appearance_failure": 1293,
+    "appearance_failure_rate": 0.09674523007856341,
+    "reference_appearance_total_incl_ungradeable": 16665,
+    "appearance_ungradeable": 3300
+   },
+   "financial_analysis": {
+    "unique_benign_executions": 2742,
+    "unique_benign_gradeable": 1443,
+    "unique_benign_failure": 438,
+    "unique_benign_failure_rate": 0.30353430353430355,
+    "reference_appearances": 9107,
+    "appearance_failure": 2662,
+    "appearance_failure_rate": 0.29230262435489185,
+    "reference_appearance_total_incl_ungradeable": 16932,
+    "appearance_ungradeable": 7825
+   },
+   "research_synthesis": {
+    "unique_benign_executions": 2706,
+    "unique_benign_gradeable": 2679,
+    "unique_benign_failure": 1532,
+    "unique_benign_failure_rate": 0.5718551698394924,
+    "reference_appearances": 16586,
+    "appearance_failure": 9519,
+    "appearance_failure_rate": 0.5739177619679248,
+    "reference_appearance_total_incl_ungradeable": 16722,
+    "appearance_ungradeable": 136
+   }
+  },
+  "total": {
+   "unique_benign_executions": 8187,
+   "unique_gradeable": 6301,
+   "unique_failure": 2196,
+   "unique_failure_rate": 0.34851610855419773,
+   "total_reference_appearances": 50319,
+   "appearance_ungradeable": 11261,
+   "appearance_graded": 39058,
+   "appearance_failure": 13474,
+   "appearance_failure_rate": 0.3449741410210456,
+   "appearance_denominator_identity": "3 refs x 16,773 rows = 50,319 total appearances (== the B2B null denominator); graded appearances 39058; ungradeable appearances 11261.  50,319 = 39058 + 11261."
+  },
+  "note": "The 34.50% figure = 13,474/39,058 graded reference-appearances = quantity (4).  The UNIQUE-execution failure rate (quantity 3) is the honest no-perturbation baseline and is reported alongside.  Neither is causal (benign refs are separate executions).  The corrected unique baseline is the one to cite; the appearance-weighted 34.50% is retained only for provenance."
+ },
+ "conditional_on_grader_audit": "These baseline numbers use the CURRENT v6 grader artifacts (per_trace_v6.jsonl benign_grades).  The separate task-correctness audit is ongoing; if its corrected grades are finalized, the baseline must be recomputed from those.  The graders are NOT modified here."
+}

@@ -1,0 +1,18 @@
+{
+ "date": "2026-11-24",
+ "repin": "fingerprints_v6 -> v7",
+ "moved_vs_v6": [
+  "analysis/behavioral_divergence_final/FROZEN_PROTOCOL.md"
+ ],
+ "pinned_new": [
+  "production.py",
+  "report.py"
+ ],
+ "justification": {
+  "analysis/behavioral_divergence_final/production.py": "CORRECTNESS FIX (verification-workflow material finding): benign no-LEP failure baseline matched g==failure against the raw grader vocabulary {correct,incorrect,ungradeable} -> string-mismatch gave 0.0% everywhere; now counts g in (failure, incorrect), confirmed per-family against the ledger normalized m4_detail (code 1293 / fin 2662 / res 9519; 34.50% of 39058 graded). Context-only task-degradation figure; no gate depends on it; selection unchanged.",
+  "analysis/behavioral_divergence_final/report.py": "presentation-layer fixes: M4 overstatement ratio computed from the summary (1213/421=2.9x for v6, was hardcoded ~2.3x); threshold-sensitivity + LEP-code sections labeled with actual partition+kernel provenance; G5 FPR line uses the selected implementation kernel artifact",
+  "analysis/behavioral_divergence_final/FROZEN_PROTOCOL.md": "S6 change log: correctness-fix entry; re-pin closing paragraph now documents the standing latest-repin rule (v7); stale seal paths corrected to seal/fingerprints.json"
+ },
+ "gates.py": "BYTE-IDENTICAL to the original seal (acceptance criteria unchanged)",
+ "candidate_module_set": "23 files, byte-identical to the ORIGINAL seal (verified)"
+}

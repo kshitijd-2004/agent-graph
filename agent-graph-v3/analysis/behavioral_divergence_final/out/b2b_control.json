@@ -1,0 +1,64 @@
+{
+  "population": "heldout P1 frame rows with >=2 benign references (fixture-disjoint from dev; S13 convention: probe = refs[0] benign, refs = the other benigns)",
+  "n_population": 5204,
+  "by_family": {
+    "code_review": 1569,
+    "financial_analysis": 1864,
+    "research_synthesis": 1771
+  },
+  "note": "FPR = union fires on a pure-negative population; uncalibratable probes excluded from both numerator and denominator (never a negative)",
+  "gate_G5_threshold": 0.05,
+  "elapsed_s": 270.6,
+  "candspec": {
+    "n_evaluable": 5204,
+    "n_fired": 1659,
+    "fpr": 0.318793235972329,
+    "wilson95": [
+      0.30626970481047,
+      0.3315840941404039
+    ],
+    "fired_dimensions": {
+      "assertions": 443,
+      "decisions": 402,
+      "actions": 1223,
+      "outcomes": 245
+    }
+  },
+  "v6": {
+    "n_evaluable": 5204,
+    "n_fired": 1657,
+    "fpr": 0.31840891621829365,
+    "wilson95": [
+      0.3058897290241245,
+      0.3311959973900599
+    ],
+    "fired_dimensions": {
+      "assertions": 445,
+      "decisions": 436,
+      "actions": 1223,
+      "outcomes": 253
+    }
+  },
+  "v7": {
+    "n_evaluable": 5204,
+    "n_fired": 1597,
+    "fpr": 0.3068793235972329,
+    "wilson95": [
+      0.2944951078968561,
+      0.31954844241664154
+    ],
+    "fired_dimensions": {
+      "assertions": 385,
+      "decisions": 348,
+      "actions": 1223,
+      "outcomes": 245
+    }
+  },
+  "frozen": {
+    "n_evaluable": 0,
+    "n_fired": 0,
+    "fpr": null,
+    "wilson95": null,
+    "fired_dimensions": "unavailable (V4.1 whole-trace flag, no per-dim evaluable)"
+  }
+}

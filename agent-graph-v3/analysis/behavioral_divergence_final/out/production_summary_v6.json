@@ -1,0 +1,1715 @@
+{
+  "implementation": "v6",
+  "ledger": "/u/kdhande/agent-graph/agent-graph-v3/analysis/measurement_v6/out/per_trace_v6.jsonl",
+  "denominators": {
+    "n_ledger_rows": 16773,
+    "n_comparable_frame": 16773,
+    "note": "ledger covers the P1 frame; frame comparability is the frozen gate; P0/P2/P3 sizes are re-derived in corpus_inventory()"
+  },
+  "behavioral_divergence": {
+    "union_m1_count": 5037,
+    "union_m1_rate": 0.3003040600965838,
+    "dimension_rates": {
+      "assertions": 0.14618732486734634,
+      "decisions": 0.1418947117391045,
+      "actions": 0.1459488463602218,
+      "outcomes": 0.07756513444225839
+    },
+    "dimension_counts": {
+      "assertions": 2452,
+      "decisions": 2380,
+      "actions": 2448,
+      "outcomes": 1301
+    },
+    "dimension_evaluable": {
+      "assertions": 12707,
+      "decisions": 12779,
+      "actions": 16773,
+      "outcomes": 12068
+    },
+    "dimension_unknown": {
+      "assertions": 4066,
+      "decisions": 3994,
+      "actions": 0,
+      "outcomes": 4705
+    },
+    "dimension_zero_threshold_only": {
+      "assertions": 2340,
+      "decisions": 2282,
+      "outcomes": 1293,
+      "actions": 1319
+    },
+    "trigger_combinations_top": {
+      "actions": 1822,
+      "assertions,decisions": 984,
+      "assertions,decisions,outcomes": 630,
+      "assertions": 347,
+      "outcomes": 280,
+      "decisions": 226,
+      "assertions,decisions,actions": 208,
+      "assertions,decisions,actions,outcomes": 157,
+      "decisions,outcomes": 83,
+      "actions,outcomes": 82,
+      "assertions,actions": 78,
+      "decisions,actions": 71
+    },
+    "pairwise_overlaps_among_union_positives": {
+      "assertions+decisions": 1979,
+      "assertions+outcomes": 835,
+      "decisions+outcomes": 891,
+      "assertions+actions": 452,
+      "decisions+actions": 457,
+      "actions+outcomes": 269
+    },
+    "zero_threshold_only_positives": 3777,
+    "note": "union = logical OR of the four per-dimension indicators; no weighted composite. Missing dimensions are unknowns, never negatives (spec \u00a70.2.3)."
+  },
+  "downstream_propagation": {
+    "M2_cross_agent_all": 3052,
+    "M2_cross_agent_nonzero_threshold": 1031,
+    "M3_supported": 1647,
+    "M3_verified": 346,
+    "M3_plausible": 1301,
+    "M4_historical": 1213,
+    "M4_matched": 421,
+    "M4_matched_denominator": 1647,
+    "M4_class_counts": {
+      "not_m3_supported": 15126,
+      "mixed_or_unavailable": 246,
+      "persistent_correct": 416,
+      "degraded": 421,
+      "persistent_failure": 516,
+      "improved": 48
+    },
+    "note": "M2/M3/M4-historical are the FRAME (frozen) definitions reused verbatim; M4-matched is this implementation's five-way class. All associational, not causal."
+  },
+  "task_degradation": {
+    "M4_matched": 421,
+    "M4_matched_rate_of_M3_supported": 0.25561627200971465,
+    "M4_historical": 1213,
+    "benign_failure_baseline": {
+      "code_review": {
+        "rate": 0.09674523007856341,
+        "k": 1293,
+        "n_graded": 13365
+      },
+      "financial_analysis": {
+        "rate": 0.29230262435489185,
+        "k": 2662,
+        "n_graded": 9107
+      },
+      "research_synthesis": {
+        "rate": 0.5739177619679248,
+        "k": 9519,
+        "n_graded": 16586
+      }
+    },
+    "note": "M4-matched = LEP failure AND >=1 compatible benign reference graded correct. Benign failures on the same fixture are NOT perturbation-caused; persistent failure is reported separately (M4 class counts)."
+  },
+  "confidence_intervals": {
+    "m1": {
+      "point": 0.3003040600965838,
+      "wilson95": [
+        0.2934133280807206,
+        0.307286242430289
+      ],
+      "n": 16773
+    },
+    "m1_fixture_cluster_bootstrap95": [
+      0.0,
+      0.6111111111111112,
+      0.3003040600965838
+    ],
+    "assertions": {
+      "point": 0.14618732486734634,
+      "wilson95": [
+        0.14092172248714593,
+        0.15161495498638358
+      ],
+      "den": 16773
+    },
+    "decisions": {
+      "point": 0.1418947117391045,
+      "wilson95": [
+        0.13669592031085465,
+        0.14725749669896165
+      ],
+      "den": 16773
+    },
+    "actions": {
+      "point": 0.1459488463602218,
+      "wilson95": [
+        0.14068691371055395,
+        0.15137291595943594
+      ],
+      "den": 16773
+    },
+    "outcomes": {
+      "point": 0.07756513444225839,
+      "wilson95": [
+        0.07361313768636642,
+        0.0817105843186371
+      ],
+      "den": 16773
+    },
+    "m4_matched": {
+      "point": 0.25561627200971465,
+      "wilson95": [
+        0.23513521044501934,
+        0.2772346808796669
+      ],
+      "denominator": "M3-supported",
+      "n": 1647
+    },
+    "benign_failure_code_review": {
+      "point": 0.09674523007856341,
+      "wilson95": [
+        0.09184880132494067,
+        0.10187340466029013
+      ],
+      "n_graded": 13365,
+      "note": "benign no-LEP grade rates, per family; context only, never a causal claim"
+    },
+    "benign_failure_financial_analysis": {
+      "point": 0.29230262435489185,
+      "wilson95": [
+        0.2830506010219569,
+        0.3017297930751974
+      ],
+      "n_graded": 9107,
+      "note": "benign no-LEP grade rates, per family; context only, never a causal claim"
+    },
+    "benign_failure_research_synthesis": {
+      "point": 0.5739177619679248,
+      "wilson95": [
+        0.5663757647445833,
+        0.5814255271530757
+      ],
+      "n_graded": 16586,
+      "note": "benign no-LEP grade rates, per family; context only, never a causal claim"
+    }
+  },
+  "cross_implementation_m1_disagreement": {
+    "candspec": {
+      "n_common": 16767,
+      "m1_disagreements": 604,
+      "rate": 0.03602314069302797
+    },
+    "v7": {
+      "n_common": 16767,
+      "m1_disagreements": 309,
+      "rate": 0.018429057076400072
+    }
+  },
+  "breakdowns": {
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/many_to_one": {
+      "n": 301,
+      "m1": 148,
+      "m2": 52,
+      "m3_supported": 11,
+      "m4_matched": 6,
+      "dims": {
+        "assertions": 79,
+        "decisions": 60,
+        "actions": 48,
+        "outcomes": 87
+      }
+    },
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/single_origin": {
+      "n": 301,
+      "m1": 104,
+      "m2": 18,
+      "m3_supported": 5,
+      "m4_matched": 2,
+      "dims": {
+        "assertions": 72,
+        "decisions": 28,
+        "actions": 29,
+        "outcomes": 21
+      }
+    },
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/one_to_many": {
+      "n": 290,
+      "m1": 146,
+      "m2": 120,
+      "m3_supported": 19,
+      "m4_matched": 9,
+      "dims": {
+        "assertions": 69,
+        "decisions": 53,
+        "actions": 81,
+        "outcomes": 67
+      }
+    },
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/single_origin": {
+      "n": 197,
+      "m1": 84,
+      "m2": 57,
+      "m3_supported": 22,
+      "m4_matched": 7,
+      "dims": {
+        "assertions": 53,
+        "decisions": 26,
+        "actions": 40,
+        "outcomes": 27
+      }
+    },
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/review_loop/single_origin": {
+      "n": 299,
+      "m1": 155,
+      "m2": 120,
+      "m3_supported": 24,
+      "m4_matched": 9,
+      "dims": {
+        "assertions": 55,
+        "decisions": 35,
+        "actions": 80,
+        "outcomes": 71
+      }
+    },
+    "code_review/LEP_HANDOFF_CORRUPTION/branch_and_verify/many_to_one": {
+      "n": 300,
+      "m1": 56,
+      "m2": 13,
+      "m3_supported": 12,
+      "m4_matched": 2,
+      "dims": {
+        "assertions": 24,
+        "decisions": 26,
+        "actions": 27,
+        "outcomes": 7
+      }
+    },
+    "code_review/LEP_HANDOFF_CORRUPTION/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_HANDOFF_CORRUPTION/branch_and_verify/single_origin": {
+      "n": 301,
+      "m1": 57,
+      "m2": 10,
+      "m3_supported": 10,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 29,
+        "decisions": 28,
+        "actions": 26,
+        "outcomes": 3
+      }
+    },
+    "code_review/LEP_HANDOFF_CORRUPTION/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_HANDOFF_CORRUPTION/coordinator_workers/one_to_many": {
+      "n": 292,
+      "m1": 93,
+      "m2": 71,
+      "m3_supported": 69,
+      "m4_matched": 8,
+      "dims": {
+        "assertions": 36,
+        "decisions": 31,
+        "actions": 47,
+        "outcomes": 16
+      }
+    },
+    "code_review/LEP_HANDOFF_CORRUPTION/coordinator_workers/single_origin": {
+      "n": 200,
+      "m1": 47,
+      "m2": 35,
+      "m3_supported": 35,
+      "m4_matched": 6,
+      "dims": {
+        "assertions": 25,
+        "decisions": 17,
+        "actions": 22,
+        "outcomes": 10
+      }
+    },
+    "code_review/LEP_HANDOFF_CORRUPTION/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_HANDOFF_CORRUPTION/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_HANDOFF_CORRUPTION/review_loop/single_origin": {
+      "n": 299,
+      "m1": 78,
+      "m2": 40,
+      "m3_supported": 39,
+      "m4_matched": 6,
+      "dims": {
+        "assertions": 28,
+        "decisions": 29,
+        "actions": 50,
+        "outcomes": 16
+      }
+    },
+    "code_review/LEP_INPUT_DISREGARD/branch_and_verify/many_to_one": {
+      "n": 301,
+      "m1": 68,
+      "m2": 15,
+      "m3_supported": 15,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 29,
+        "decisions": 28,
+        "actions": 35,
+        "outcomes": 4
+      }
+    },
+    "code_review/LEP_INPUT_DISREGARD/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_INPUT_DISREGARD/branch_and_verify/single_origin": {
+      "n": 301,
+      "m1": 66,
+      "m2": 10,
+      "m3_supported": 10,
+      "m4_matched": 1,
+      "dims": {
+        "assertions": 31,
+        "decisions": 32,
+        "actions": 36,
+        "outcomes": 6
+      }
+    },
+    "code_review/LEP_INPUT_DISREGARD/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_INPUT_DISREGARD/coordinator_workers/one_to_many": {
+      "n": 291,
+      "m1": 78,
+      "m2": 76,
+      "m3_supported": 73,
+      "m4_matched": 3,
+      "dims": {
+        "assertions": 34,
+        "decisions": 27,
+        "actions": 44,
+        "outcomes": 9
+      }
+    },
+    "code_review/LEP_INPUT_DISREGARD/coordinator_workers/single_origin": {
+      "n": 199,
+      "m1": 63,
+      "m2": 58,
+      "m3_supported": 58,
+      "m4_matched": 4,
+      "dims": {
+        "assertions": 25,
+        "decisions": 27,
+        "actions": 33,
+        "outcomes": 6
+      }
+    },
+    "code_review/LEP_INPUT_DISREGARD/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_INPUT_DISREGARD/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_INPUT_DISREGARD/review_loop/single_origin": {
+      "n": 292,
+      "m1": 90,
+      "m2": 60,
+      "m3_supported": 57,
+      "m4_matched": 7,
+      "dims": {
+        "assertions": 28,
+        "decisions": 24,
+        "actions": 53,
+        "outcomes": 19
+      }
+    },
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/many_to_one": {
+      "n": 301,
+      "m1": 73,
+      "m2": 45,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 20,
+        "decisions": 23,
+        "actions": 51,
+        "outcomes": 4
+      }
+    },
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/single_origin": {
+      "n": 301,
+      "m1": 68,
+      "m2": 27,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 26,
+        "decisions": 28,
+        "actions": 40,
+        "outcomes": 4
+      }
+    },
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/one_to_many": {
+      "n": 292,
+      "m1": 106,
+      "m2": 81,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 38,
+        "decisions": 36,
+        "actions": 62,
+        "outcomes": 15
+      }
+    },
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/single_origin": {
+      "n": 199,
+      "m1": 56,
+      "m2": 48,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 23,
+        "decisions": 16,
+        "actions": 35,
+        "outcomes": 7
+      }
+    },
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/review_loop/single_origin": {
+      "n": 298,
+      "m1": 96,
+      "m2": 54,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 31,
+        "decisions": 30,
+        "actions": 63,
+        "outcomes": 19
+      }
+    },
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/many_to_one": {
+      "n": 299,
+      "m1": 95,
+      "m2": 41,
+      "m3_supported": 28,
+      "m4_matched": 10,
+      "dims": {
+        "assertions": 35,
+        "decisions": 39,
+        "actions": 46,
+        "outcomes": 32
+      }
+    },
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/single_origin": {
+      "n": 302,
+      "m1": 87,
+      "m2": 42,
+      "m3_supported": 27,
+      "m4_matched": 4,
+      "dims": {
+        "assertions": 32,
+        "decisions": 31,
+        "actions": 39,
+        "outcomes": 22
+      }
+    },
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/one_to_many": {
+      "n": 302,
+      "m1": 87,
+      "m2": 14,
+      "m3_supported": 5,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 25,
+        "decisions": 21,
+        "actions": 62,
+        "outcomes": 11
+      }
+    },
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/single_origin": {
+      "n": 199,
+      "m1": 53,
+      "m2": 14,
+      "m3_supported": 7,
+      "m4_matched": 1,
+      "dims": {
+        "assertions": 13,
+        "decisions": 7,
+        "actions": 32,
+        "outcomes": 9
+      }
+    },
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/single_origin": {
+      "n": 303,
+      "m1": 99,
+      "m2": 20,
+      "m3_supported": 11,
+      "m4_matched": 2,
+      "dims": {
+        "assertions": 32,
+        "decisions": 38,
+        "actions": 64,
+        "outcomes": 11
+      }
+    },
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/branch_and_verify/many_to_one": {
+      "n": 302,
+      "m1": 47,
+      "m2": 15,
+      "m3_supported": 11,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 25,
+        "decisions": 21,
+        "actions": 24,
+        "outcomes": 4
+      }
+    },
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/branch_and_verify/single_origin": {
+      "n": 302,
+      "m1": 57,
+      "m2": 16,
+      "m3_supported": 13,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 24,
+        "decisions": 24,
+        "actions": 27,
+        "outcomes": 8
+      }
+    },
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/coordinator_workers/one_to_many": {
+      "n": 302,
+      "m1": 74,
+      "m2": 7,
+      "m3_supported": 7,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 20,
+        "decisions": 18,
+        "actions": 46,
+        "outcomes": 7
+      }
+    },
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/coordinator_workers/single_origin": {
+      "n": 217,
+      "m1": 42,
+      "m2": 13,
+      "m3_supported": 13,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 9,
+        "decisions": 10,
+        "actions": 28,
+        "outcomes": 5
+      }
+    },
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/review_loop/single_origin": {
+      "n": 302,
+      "m1": 70,
+      "m2": 10,
+      "m3_supported": 8,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 26,
+        "decisions": 25,
+        "actions": 45,
+        "outcomes": 7
+      }
+    },
+    "financial_analysis/LEP_INPUT_DISREGARD/branch_and_verify/many_to_one": {
+      "n": 302,
+      "m1": 53,
+      "m2": 15,
+      "m3_supported": 14,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 21,
+        "decisions": 22,
+        "actions": 27,
+        "outcomes": 1
+      }
+    },
+    "financial_analysis/LEP_INPUT_DISREGARD/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_INPUT_DISREGARD/branch_and_verify/single_origin": {
+      "n": 302,
+      "m1": 45,
+      "m2": 22,
+      "m3_supported": 20,
+      "m4_matched": 1,
+      "dims": {
+        "assertions": 22,
+        "decisions": 20,
+        "actions": 21,
+        "outcomes": 1
+      }
+    },
+    "financial_analysis/LEP_INPUT_DISREGARD/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_INPUT_DISREGARD/coordinator_workers/one_to_many": {
+      "n": 302,
+      "m1": 57,
+      "m2": 8,
+      "m3_supported": 8,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 16,
+        "decisions": 13,
+        "actions": 41,
+        "outcomes": 5
+      }
+    },
+    "financial_analysis/LEP_INPUT_DISREGARD/coordinator_workers/single_origin": {
+      "n": 217,
+      "m1": 35,
+      "m2": 12,
+      "m3_supported": 12,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 10,
+        "decisions": 9,
+        "actions": 20,
+        "outcomes": 3
+      }
+    },
+    "financial_analysis/LEP_INPUT_DISREGARD/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_INPUT_DISREGARD/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_INPUT_DISREGARD/review_loop/single_origin": {
+      "n": 302,
+      "m1": 62,
+      "m2": 5,
+      "m3_supported": 5,
+      "m4_matched": 1,
+      "dims": {
+        "assertions": 26,
+        "decisions": 20,
+        "actions": 34,
+        "outcomes": 4
+      }
+    },
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/many_to_one": {
+      "n": 283,
+      "m1": 67,
+      "m2": 55,
+      "m3_supported": 30,
+      "m4_matched": 2,
+      "dims": {
+        "assertions": 25,
+        "decisions": 25,
+        "actions": 32,
+        "outcomes": 12
+      }
+    },
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/single_origin": {
+      "n": 302,
+      "m1": 74,
+      "m2": 57,
+      "m3_supported": 44,
+      "m4_matched": 2,
+      "dims": {
+        "assertions": 35,
+        "decisions": 35,
+        "actions": 35,
+        "outcomes": 14
+      }
+    },
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/one_to_many": {
+      "n": 302,
+      "m1": 54,
+      "m2": 6,
+      "m3_supported": 4,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 17,
+        "decisions": 12,
+        "actions": 34,
+        "outcomes": 9
+      }
+    },
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/single_origin": {
+      "n": 200,
+      "m1": 35,
+      "m2": 12,
+      "m3_supported": 7,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 13,
+        "decisions": 8,
+        "actions": 18,
+        "outcomes": 6
+      }
+    },
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/review_loop/single_origin": {
+      "n": 302,
+      "m1": 74,
+      "m2": 10,
+      "m3_supported": 6,
+      "m4_matched": 1,
+      "dims": {
+        "assertions": 20,
+        "decisions": 23,
+        "actions": 52,
+        "outcomes": 7
+      }
+    },
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/many_to_one": {
+      "n": 299,
+      "m1": 172,
+      "m2": 179,
+      "m3_supported": 104,
+      "m4_matched": 57,
+      "dims": {
+        "assertions": 139,
+        "decisions": 144,
+        "actions": 53,
+        "outcomes": 78
+      }
+    },
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/single_origin": {
+      "n": 299,
+      "m1": 126,
+      "m2": 111,
+      "m3_supported": 58,
+      "m4_matched": 22,
+      "dims": {
+        "assertions": 86,
+        "decisions": 91,
+        "actions": 49,
+        "outcomes": 45
+      }
+    },
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/one_to_many": {
+      "n": 299,
+      "m1": 167,
+      "m2": 154,
+      "m3_supported": 77,
+      "m4_matched": 37,
+      "dims": {
+        "assertions": 107,
+        "decisions": 126,
+        "actions": 58,
+        "outcomes": 67
+      }
+    },
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/single_origin": {
+      "n": 196,
+      "m1": 66,
+      "m2": 51,
+      "m3_supported": 36,
+      "m4_matched": 7,
+      "dims": {
+        "assertions": 30,
+        "decisions": 36,
+        "actions": 31,
+        "outcomes": 13
+      }
+    },
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/single_origin": {
+      "n": 299,
+      "m1": 172,
+      "m2": 155,
+      "m3_supported": 79,
+      "m4_matched": 30,
+      "dims": {
+        "assertions": 117,
+        "decisions": 138,
+        "actions": 46,
+        "outcomes": 67
+      }
+    },
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/branch_and_verify/many_to_one": {
+      "n": 299,
+      "m1": 72,
+      "m2": 29,
+      "m3_supported": 27,
+      "m4_matched": 10,
+      "dims": {
+        "assertions": 30,
+        "decisions": 31,
+        "actions": 45,
+        "outcomes": 21
+      }
+    },
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/branch_and_verify/single_origin": {
+      "n": 299,
+      "m1": 59,
+      "m2": 25,
+      "m3_supported": 23,
+      "m4_matched": 12,
+      "dims": {
+        "assertions": 23,
+        "decisions": 23,
+        "actions": 40,
+        "outcomes": 18
+      }
+    },
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/coordinator_workers/one_to_many": {
+      "n": 299,
+      "m1": 83,
+      "m2": 83,
+      "m3_supported": 80,
+      "m4_matched": 8,
+      "dims": {
+        "assertions": 27,
+        "decisions": 26,
+        "actions": 54,
+        "outcomes": 24
+      }
+    },
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/coordinator_workers/single_origin": {
+      "n": 198,
+      "m1": 34,
+      "m2": 14,
+      "m3_supported": 14,
+      "m4_matched": 4,
+      "dims": {
+        "assertions": 9,
+        "decisions": 7,
+        "actions": 27,
+        "outcomes": 5
+      }
+    },
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/review_loop/single_origin": {
+      "n": 299,
+      "m1": 80,
+      "m2": 36,
+      "m3_supported": 31,
+      "m4_matched": 9,
+      "dims": {
+        "assertions": 41,
+        "decisions": 40,
+        "actions": 36,
+        "outcomes": 25
+      }
+    },
+    "research_synthesis/LEP_INPUT_DISREGARD/branch_and_verify/many_to_one": {
+      "n": 299,
+      "m1": 48,
+      "m2": 12,
+      "m3_supported": 12,
+      "m4_matched": 3,
+      "dims": {
+        "assertions": 16,
+        "decisions": 16,
+        "actions": 36,
+        "outcomes": 12
+      }
+    },
+    "research_synthesis/LEP_INPUT_DISREGARD/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_INPUT_DISREGARD/branch_and_verify/single_origin": {
+      "n": 299,
+      "m1": 55,
+      "m2": 14,
+      "m3_supported": 14,
+      "m4_matched": 4,
+      "dims": {
+        "assertions": 19,
+        "decisions": 20,
+        "actions": 37,
+        "outcomes": 12
+      }
+    },
+    "research_synthesis/LEP_INPUT_DISREGARD/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_INPUT_DISREGARD/coordinator_workers/one_to_many": {
+      "n": 299,
+      "m1": 54,
+      "m2": 16,
+      "m3_supported": 13,
+      "m4_matched": 2,
+      "dims": {
+        "assertions": 13,
+        "decisions": 14,
+        "actions": 40,
+        "outcomes": 13
+      }
+    },
+    "research_synthesis/LEP_INPUT_DISREGARD/coordinator_workers/single_origin": {
+      "n": 198,
+      "m1": 41,
+      "m2": 29,
+      "m3_supported": 29,
+      "m4_matched": 3,
+      "dims": {
+        "assertions": 14,
+        "decisions": 12,
+        "actions": 25,
+        "outcomes": 11
+      }
+    },
+    "research_synthesis/LEP_INPUT_DISREGARD/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_INPUT_DISREGARD/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_INPUT_DISREGARD/review_loop/single_origin": {
+      "n": 299,
+      "m1": 59,
+      "m2": 6,
+      "m3_supported": 5,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 20,
+        "decisions": 16,
+        "actions": 38,
+        "outcomes": 10
+      }
+    },
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/many_to_one": {
+      "n": 299,
+      "m1": 189,
+      "m2": 210,
+      "m3_supported": 93,
+      "m4_matched": 40,
+      "dims": {
+        "assertions": 165,
+        "decisions": 168,
+        "actions": 40,
+        "outcomes": 78
+      }
+    },
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/single_origin": {
+      "n": 299,
+      "m1": 149,
+      "m2": 145,
+      "m3_supported": 63,
+      "m4_matched": 22,
+      "dims": {
+        "assertions": 117,
+        "decisions": 121,
+        "actions": 46,
+        "outcomes": 56
+      }
+    },
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/one_to_many": {
+      "n": 299,
+      "m1": 182,
+      "m2": 172,
+      "m3_supported": 67,
+      "m4_matched": 27,
+      "dims": {
+        "assertions": 132,
+        "decisions": 150,
+        "actions": 47,
+        "outcomes": 67
+      }
+    },
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/single_origin": {
+      "n": 198,
+      "m1": 45,
+      "m2": 26,
+      "m3_supported": 13,
+      "m4_matched": 3,
+      "dims": {
+        "assertions": 17,
+        "decisions": 21,
+        "actions": 24,
+        "outcomes": 8
+      }
+    },
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/review_loop/many_to_one": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/review_loop/one_to_many": {
+      "n": 0,
+      "m1": 0,
+      "m2": 0,
+      "m3_supported": 0,
+      "m4_matched": 0,
+      "dims": {
+        "assertions": 0,
+        "decisions": 0,
+        "actions": 0,
+        "outcomes": 0
+      }
+    },
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/review_loop/single_origin": {
+      "n": 299,
+      "m1": 185,
+      "m2": 181,
+      "m3_supported": 70,
+      "m4_matched": 27,
+      "dims": {
+        "assertions": 129,
+        "decisions": 155,
+        "actions": 47,
+        "outcomes": 75
+      }
+    }
+  },
+  "empty_cells": [
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/one_to_many",
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/many_to_one",
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/review_loop/many_to_one",
+    "code_review/LEP_INDIRECT_PROMPT_INJECTION/review_loop/one_to_many",
+    "code_review/LEP_HANDOFF_CORRUPTION/branch_and_verify/one_to_many",
+    "code_review/LEP_HANDOFF_CORRUPTION/coordinator_workers/many_to_one",
+    "code_review/LEP_HANDOFF_CORRUPTION/review_loop/many_to_one",
+    "code_review/LEP_HANDOFF_CORRUPTION/review_loop/one_to_many",
+    "code_review/LEP_INPUT_DISREGARD/branch_and_verify/one_to_many",
+    "code_review/LEP_INPUT_DISREGARD/coordinator_workers/many_to_one",
+    "code_review/LEP_INPUT_DISREGARD/review_loop/many_to_one",
+    "code_review/LEP_INPUT_DISREGARD/review_loop/one_to_many",
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/one_to_many",
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/many_to_one",
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/review_loop/many_to_one",
+    "code_review/LEP_TOOL_RESULT_CORRUPTION/review_loop/one_to_many",
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/one_to_many",
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/many_to_one",
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/many_to_one",
+    "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/one_to_many",
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/branch_and_verify/one_to_many",
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/coordinator_workers/many_to_one",
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/review_loop/many_to_one",
+    "financial_analysis/LEP_HANDOFF_CORRUPTION/review_loop/one_to_many",
+    "financial_analysis/LEP_INPUT_DISREGARD/branch_and_verify/one_to_many",
+    "financial_analysis/LEP_INPUT_DISREGARD/coordinator_workers/many_to_one",
+    "financial_analysis/LEP_INPUT_DISREGARD/review_loop/many_to_one",
+    "financial_analysis/LEP_INPUT_DISREGARD/review_loop/one_to_many",
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/one_to_many",
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/many_to_one",
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/review_loop/many_to_one",
+    "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/review_loop/one_to_many",
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/one_to_many",
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/many_to_one",
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/many_to_one",
+    "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/one_to_many",
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/branch_and_verify/one_to_many",
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/coordinator_workers/many_to_one",
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/review_loop/many_to_one",
+    "research_synthesis/LEP_HANDOFF_CORRUPTION/review_loop/one_to_many",
+    "research_synthesis/LEP_INPUT_DISREGARD/branch_and_verify/one_to_many",
+    "research_synthesis/LEP_INPUT_DISREGARD/coordinator_workers/many_to_one",
+    "research_synthesis/LEP_INPUT_DISREGARD/review_loop/many_to_one",
+    "research_synthesis/LEP_INPUT_DISREGARD/review_loop/one_to_many",
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/one_to_many",
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/many_to_one",
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/review_loop/many_to_one",
+    "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/review_loop/one_to_many"
+  ],
+  "unavailable_measurement_accounting": {
+    "per_dimension": {
+      "assertions": {
+        "evaluable": 12707,
+        "not_evaluable": 4066,
+        "zero_threshold_rows": 7489
+      },
+      "decisions": {
+        "evaluable": 12779,
+        "not_evaluable": 3994,
+        "zero_threshold_rows": 7522
+      },
+      "actions": {
+        "evaluable": 16773,
+        "not_evaluable": 0,
+        "zero_threshold_rows": 3200
+      },
+      "outcomes": {
+        "evaluable": 12068,
+        "not_evaluable": 4705,
+        "zero_threshold_rows": 10058
+      }
+    },
+    "union_positive": 5037,
+    "union_positive_zero_threshold_only": 3777,
+    "m4_not_m3_supported": 15126,
+    "gradeability": {
+      "code_review": {
+        "n_rows": 5555,
+        "n_lep_gradeable": 4393,
+        "rate": 0.7908190819081908
+      },
+      "financial_analysis": {
+        "n_rows": 5644,
+        "n_lep_gradeable": 3040,
+        "rate": 0.5386250885896527
+      },
+      "research_synthesis": {
+        "n_rows": 5574,
+        "n_lep_gradeable": 5533,
+        "rate": 0.9926444205238608
+      }
+    }
+  },
+  "corpus_inventory": {
+    "P3_canonical_traces": 26965,
+    "P3_benign": 9028,
+    "P3_lep": 17937,
+    "P2_lep_standard": 17937,
+    "P1_comparable_frame": 16773,
+    "P0_non_comparable": 1164,
+    "frozen_ledger_rows": 17937,
+    "source": "analysis/consolidated_20261121_bnd_v41 (AUDIT_REPORT.md dedup accounting: 28,001 raw -> 26,965 accepted)",
+    "memory_excluded": "LEP_MEMORY_POISONING + memory_enabled executions are outside every population above"
+  }
+}

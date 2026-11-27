@@ -1,0 +1,61 @@
+{
+ "frame": {
+  "orig_pos_cal_pos": 687,
+  "orig_pos_cal_neg": 4350,
+  "orig_pos_cal_unavail": 0,
+  "orig_neg_cal_pos": 256,
+  "orig_neg_cal_neg": 11480,
+  "orig_neg_cal_unavail": 0,
+  "n": 16773,
+  "stay_positive": 687,
+  "become_negative": 4350,
+  "become_unavailable": 0,
+  "new_positive": 256,
+  "stay_negative_or_unavail": 11480
+ },
+ "by_family": {
+  "code_review": {
+   "orig_pos_cal_pos": 107,
+   "orig_pos_cal_neg": 1625,
+   "orig_pos_cal_unavail": 0,
+   "orig_neg_cal_pos": 85,
+   "orig_neg_cal_neg": 3738,
+   "orig_neg_cal_unavail": 0,
+   "n": 5555,
+   "stay_positive": 107,
+   "become_negative": 1625,
+   "become_unavailable": 0,
+   "new_positive": 85,
+   "stay_negative_or_unavail": 3738
+  },
+  "financial_analysis": {
+   "orig_pos_cal_pos": 122,
+   "orig_pos_cal_neg": 1145,
+   "orig_pos_cal_unavail": 0,
+   "orig_neg_cal_pos": 127,
+   "orig_neg_cal_neg": 4250,
+   "orig_neg_cal_unavail": 0,
+   "n": 5644,
+   "stay_positive": 122,
+   "become_negative": 1145,
+   "become_unavailable": 0,
+   "new_positive": 127,
+   "stay_negative_or_unavail": 4250
+  },
+  "research_synthesis": {
+   "orig_pos_cal_pos": 458,
+   "orig_pos_cal_neg": 1580,
+   "orig_pos_cal_unavail": 0,
+   "orig_neg_cal_pos": 44,
+   "orig_neg_cal_neg": 3492,
+   "orig_neg_cal_unavail": 0,
+   "n": 5574,
+   "stay_positive": 458,
+   "become_negative": 1580,
+   "become_unavailable": 0,
+   "new_positive": 44,
+   "stay_negative_or_unavail": 3492
+  }
+ },
+ "note": "M1 union flips.  \"become_unavailable\" = a row whose every calibrated dimension threshold is None (LEP statistic not evaluable on at least one side OR no pooled threshold); these are NEVER counted as calibrated negatives."
+}

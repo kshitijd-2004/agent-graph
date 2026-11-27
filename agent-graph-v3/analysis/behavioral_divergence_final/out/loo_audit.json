@@ -1,0 +1,37 @@
+{
+  "artifact": "out/loo_audit.json",
+  "purpose": "tie-bias audit of the shipped LOO-quantile index shift vs the physical multiset-trim gold standard",
+  "fuzz": {
+    "n_test": 60000,
+    "n_mismatch": 17305,
+    "mismatch_rate": 0.28841666666666665,
+    "direction": {
+      "theta_lower_than_gold": 16987,
+      "theta_higher_than_gold": 318,
+      "null_mismatch": 0
+    },
+    "note": "when the shipped theta is LOWER than the physical-LOO theta the control fires MORE (B2B FPR over-stated = G5-conservative); when HIGHER, FPR under-stated (G5-anti-conservative)"
+  },
+  "n_cells_heldout_v6": 5204,
+  "shipped": {
+    "n_cells": 5204,
+    "lep_fired": 387,
+    "lep_rate": 0.07436587240584167,
+    "b2b_fired_cells": 402,
+    "note": "p3-null q=0.98 family-pool floor=0.0; theta convention = shipped multiset-trim"
+  },
+  "physical": {
+    "n_cells": 5204,
+    "lep_fired": 386,
+    "lep_rate": 0.07417371252882399,
+    "b2b_fired_cells": 402,
+    "note": "p3-null q=0.98 family-pool floor=0.0; theta convention = physical multiset-trim"
+  },
+  "theta_agreement": {
+    "n_cells": 5204,
+    "cells_with_any_dim_theta_diff": 27,
+    "dim_cell_diffs_shipped_lower": 27,
+    "dim_cell_diffs_shipped_higher": 0,
+    "note": "direction of the shipped theta relative to the physical-LOO theta (lower = over-fire = G5-conservative; higher = under-fire = G5-anti-conservative)"
+  }
+}

@@ -1,0 +1,75 @@
+{
+ "A_static": {
+  "score": "mean over the 3 benign refs of the frozen COMPOSITE pair distance at a checkpoint scope: intermediate scope = weighted(assertions .40, actions .25); final scope = weighted(assertions .40, decisions .25, outcomes .10); weights are the frozen experimental DEFAULT_WEIGHTS, component mask = benign-pair intersection",
+  "weighted_composite_used": true,
+  "construct_differs_from_m1_union": "YES: M1 = logical OR of 4 independent dimension indicators vs per-dim benign-calibrated theta; checkpoint = single weighted scalar with fixed experimental weights.  An outcome-only change (weight .10) must exceed the composite threshold 8x more than an assertion change to fire; a uniform 0.5 across all 4 dims fires the composite at 0.5 either way \u2014 the construct is not the 4-dim union.",
+  "null_comparable": "the checkpoint null pools BENIGN-pair composite distances (inter list for the inter gate, final list for the final gate), LOO-excluding the cell, q98 family pool \u2014 matched in cardinality AND construct to the perturbed composite.  It is comparable at CHECKPOINT scope; it is NOT the whole-trace p3 null (different object).",
+  "multiple_opportunities": "the gate is an OR over (intermediate peak, final): each row can be flagged through several checkpoint observations; the probe-observation FPR under-reports the row-level FPR.  See C below."
+ },
+ "C_row_level_fpr": {
+  "probe_observations": 115404,
+  "probe_fired": 1057,
+  "probe_fpr": 0.009159127933173894,
+  "row_applicable": 14398,
+  "row_or_fired": 615,
+  "row_or_fpr": 0.04271426587025976,
+  "n_inter_pool_sizes": {
+   "0": 6562,
+   "6": 4198,
+   "3": 857,
+   "9": 3059,
+   "12": 1592,
+   "7": 50,
+   "4": 150,
+   "2": 73,
+   "5": 16,
+   "8": 8,
+   "27": 5,
+   "30": 6,
+   "24": 6,
+   "1": 162,
+   "10": 28,
+   "21": 1
+  },
+  "note": "row-or FPR = the B2B control's ROW-level false positive rate (any benign probe in the cell's pools firing); the reported checkpoint B2B FPR in cache_v6_cells.json is the probe-observation rate (1057/115404 = 0.92%).  Row-level is the relevant denominator for per-execution FPR; the gap is the multiple-opportunity effect."
+ },
+ "B_per_dimension_diagnostic": {
+  "n_cells": 143,
+  "note": "per-component benign pools are SAMPLE-SCALE (150 cells: 60 M2-cal-positive + 90 negative, seeded agentprop-audit-cases-20270125 family... see script), not full-frame: a feasibility + direction diagnostic, clearly labeled as such.  Full-frame implementation is feasible from these artifacts (no new inference required) \u2014 see the feasibility statement.",
+  "sample_scale_pools": {
+   "assertions": {
+    "inter_n": 156,
+    "final_n": 254
+   },
+   "decisions": {
+    "inter_n": 0,
+    "final_n": 230
+   },
+   "actions": {
+    "inter_n": 288,
+    "final_n": 0
+   },
+   "outcomes": {
+    "inter_n": 0,
+    "final_n": 345
+   }
+  },
+  "gate_comparison_sample_scale": {
+   "composite_cal_gate_fired": 60,
+   "per_dimension_gate_fired": 58,
+   "both": 45,
+   "neither": 70,
+   "n": 143,
+   "per_dimension_fires": {
+    "inter_assertions": 26,
+    "final_decisions": 30,
+    "final_assertions": 27,
+    "inter_actions": 22
+   },
+   "interpretation": "Sample: 150 requested (60 M2-cal-positive of 732; 90 M2-cal-negative of 16041; seed 20270125), 143 extractable (7 trace-load/ref gaps). Composite calibrated gate fired on 60/143 = ALL extractable M2-cal-pos rows and 0/90 M2-cal-neg rows (by construction, on the negative half the gate is the definition of the label, so 0 negatives is expected and informative only about per-dim divergence below).  Per-dimension gate fired on 58/143: overlap 45 (75% of the 60 positives); composite-only 15 rows (the weighted scalar exceeds pooled q98 while NO single component exceeds its own q98 \u2014 the composite can fire from several moderate component moves that no individual dim certifies); per-dim-only 13 rows (a component exceeds its own q98 while the weighted composite does not \u2014 the under-represented low-weight components, outcomes weight 0.10 and final-scope decisions 0.25, must move 8x/4x as far as assertions 0.40 to move the scalar). CONCLUSION: the checkpoint gate is a genuinely DIFFERENT construct from the 4-dim union design; it is NOT the intended methodology (no weighted composite is permitted in the scored pipeline, spec \u00a70.2.1).  Agreement 45/60 = 75% shows the composite is a coarse approximation that systematically under-weights outcome-level deviation.  Directional, sample-scale only (n=143, M2-positive-enriched) \u2014 NOT a full-frame measurement; a full-frame dimension-specific checkpoint null is feasible (see feasibility) but NOT implemented here to respect the no-re-tuning standing rule.",
+   "note": "underpowered enrichment sample; directional only",
+   "per_dimension_fires_note": "per-dimension fire counts are summed over dimensions; a cell can fire on several dims.  final_decisions (30) and final_assertions (27) dominate: the final-scope composite under-weights them (0.25 and 0.40 of the weighted sum, but the q98 per-dim threshold is set independently per component, so a decision-only deviation fires the per-dim gate at a much lower raw level than the composite)."
+  },
+  "feasibility": "DIMENSION-SPECIFIC CHECKPOINT CALIBRATION IS FEASIBLE from existing artifacts: _pair_computation exposes the per-component distance values (comps dict) at the SAME strict-basis checkpoint construction the composite uses; no new LLM calls, trace generation, or extraction are required \u2014 only a re-scoring pass over the frozen checkpoint machinery.  The composite M1 union design (4 independent dims, logical OR, no weights) is therefore implementable at checkpoint level; the current checkpoint gate is NOT that design."
+ }
+}

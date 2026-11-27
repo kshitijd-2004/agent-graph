@@ -1,0 +1,91 @@
+{
+  "artifact": "AgentProp final — known validation defect reconciliation",
+  "generated_by": "final-implementation session (2026-12-07)",
+  "status_legend": {
+    "fixed-in-candspec": "corrected in analysis/behavioral_divergence_final (this dir), with gate/test hook",
+    "fixed-in-v7": "already corrected in the v7 layer (carried into candspec by import)",
+    "fixed-in-v6": "already corrected in the v6 layer (carried into v7/candspec by import)",
+    "documented-only": "recorded and reported, not force-fixed (a forced fix would be a false-positive generator)",
+    "unresolved": "open; the report names the residual and its evidence class"
+  },
+  "defects": [
+    {
+      "id": "D-RT1",
+      "title": "SWE issue-identifier normalization (issue_1 vs ISSUE_001 vs semantic names)",
+      "mechanism": "v7's AI reference was ~99% unjudgeable on code_review issue-identification: judges coded issue ids as issue_1, ISSUE_001, or semantic names (path_traversal, fast_delete_retains_primary_key), so two executions describing the same issue never aligned. Measured: 318 required issues across 302 code_review specs — 310 are already positional (issue_N), 8 are semantic; the 8 semantic ids belong to 4 fixtures (code_review_conflicting/easy, swe_001) and ALL 8 resolve to positional ids under the RT-1 alias table (verified: path_traversal->issue_1, sanitize_stub->issue_2, validate_access_bypass->issue_3, off_by_one->issue_4, fast_delete_retains_primary_key->issue_1).",
+      "observed_effect": "code_review extraction surface 1/104 resolved in the v7 reference (103 excluded)",
+      "status": "fixed-in-candspec",
+      "fix": "extractors/normalizers.py::swe_issue_alias_table + canonical_swe_issue (task-side alias table built ONLY from required_issues ids/function/location/keywords; unresolved identifiers recorded, never guessed). candspec_features rekeys assertions/decisions to positional issue_<n> keys; the grader keeps the semantic copy (decisions_semantic) so GT grading alignment is preserved.",
+      "verification": "python3.11 -c (RT-1 checks in the synthetic S2 suite: all alias forms resolve, unknowns stay unresolved — G2 pass); gate G7 requires the SWE judgeable-surface report at final evaluation."
+    },
+    {
+      "id": "D-RT2",
+      "title": "FinQA numeric / unit / percentage / entity / operand normalization",
+      "mechanism": "Spec unit defects: dimensionless ratios declared 'USD millions/thousands' (35 verified unit defects in the fin_v5 corrections.json manifest: 29 label-unambiguous + 6 document-verified) plus 1 value bug (fin_finqa_219_adi_2015, GT divides where the question multiplies). Effect on grading: a spec declaring 'USD millions' for a dimensionless ratio makes the declared factor 1e6, so a correct dimensionless answer is graded against a wrong unit. Verified on fin_finqa_011_aal_2015 (unit 'USD millions', GT 0.0754): an agent reporting the dimensionless truth 2.6183 (fin_finqa_002's value, unit 'dimensionless' in the manifest) grades 'incorrect: outside_tolerance' — a spec-side defect, not agent error.",
+      "observed_effect": "financial grader false-negatives ~49-60% of the not_gradeable pool are evaluator-side (fin-gradeability audit); the 35 unit defects + 1 value bug are the spec-side share",
+      "status": "fixed-in-candspec",
+      "fix": "extractors/normalizers.py::load_defect_manifest (reads the fin_v5 corrections.json, the authoritative 35-unit-defect + 1-value-bug manifest) + declared_unit_factor + numeric_equivalent (values compared in the spec-declared unit; a 10^k mismatch NOT declared by the spec is a genuine difference, never auto-equalized). The grader INPUT (GT value to the spec's stated intent) is corrected per the manifest; the agent's numbers are never rescaled. The v7 extraction-layer numeric fixes (D7 punctuation, D10 years, D11 entities, D13/D14/D15 operands) are inherited from v6/v7 by import (extract_facts_v7/extract_final_answer_v7).",
+      "verification": "synthetic S3 suite (numeric punctuation invariance + declared unit-scale equivalence); the defect manifest's frozen_specs_untouched flag is asserted on load."
+    },
+    {
+      "id": "D-RT3",
+      "title": "SciFact verdict canonicalization",
+      "mechanism": "Verdict surface forms (SUPPORTED / supported / 'the claim is supported' / NEI / not enough info / INSUFFICIENT) must compare equal. The v6 grader already maps them via canonical_verdict, but the v7/v6 EXTRACTION layers emitted mixed-case values, and map_distance's categorical kernel compares values as-is — so 'supported' vs 'SUPPORTED' read as a DIFFERENCE. This was a live false-positive mechanism (a surface-form difference between two executions that made the SAME verdict fired the assertion dimension).",
+      "observed_effect": "caught by the S4 synthetic invariance test ('supported' -> NOT canonicalized under the original RT-3 pass: the `canon == str(value).upper()` skip left lowercase forms in place); 1/8 S4 cases failed pre-fix",
+      "status": "fixed-in-candspec",
+      "fix": "extractors/normalizers.py::canonical_research_features ALWAYS normalizes observed verdicts to the canonical enum (SUPPORTED/CONTRADICTED/NOT_ENOUGH) before any comparison. G2 S4 passes 8/8 post-fix.",
+      "verification": "synthetic S4 (RT-3 surface invariance, 8 forms -> canonical enum, gate G2 pass 1.0)."
+    },
+    {
+      "id": "D-RT4",
+      "title": "Assertion false positives + scope mismatch (v7's identified heldout defect)",
+      "mechanism": "Two compounding sources. (a) SCOPE MISMATCH: assertions read the full authored trajectory while decisions read the final response only — a change in the final response fires BOTH channels, so the assertion 'positive' is often the same semantic event the decisions channel already recorded (v6 FINDINGS §G: 1,979/5,037 union positives co-trigger assertions+decisions). This is REPORTED as overlap, not a bug to hide. (b) ZERO-THRESHOLD FALSE POSITIVES: when all benign references agree (theta_d=0 for a dimension), ANY nonzero perturbed difference fires — the frozen design treats theta_d=0 as valid. Measured: 74.4% of v7 union positives (3,732/5,018) rest exclusively on zero-threshold dimensions; the assertion channel alone contributes 2,290 zero-threshold triggers across the frame. The v7 heldout result (v6/v7 union F1 0.636 < frozen 0.783 on 21 evaluable groups) is driven by assertion-scope FPs on ref-negative groups.",
+      "observed_effect": "v7 heldout divergence_vs_reference: assertions FPR on ref-negative groups; 72.9% (dev) / 73.0% (heldout) of v7 union positives on zero-threshold dimensions (VALIDATION_RESULTS §3)",
+      "status": "fixed-in-candspec",
+      "fix": "candspec fires assertion keys only on COMPARABLE keys (both sides observed-or-absent — inherited v6 map_distance rule, no new key classes invented post-seal); zero-threshold-only positives are carried in the ledger with their evidence class (union.zero_threshold_triggered) and reported as gate G6 (never gated, a construct property). The RT-3 fix (D-RT3 above) removes the surface-form FP mechanism that inflated assertion-scope FPs. The assertion-scope FPR is validated on the FRESH heldout (partition agentprop-final-partition-20261207), NOT re-tuned against the consumed v7 heldout (standing rule: measurement-v7-heldout-consumed).",
+      "verification": "gates G4/G5 on the fresh heldout reference; G6 reports zero-threshold dependence; the candspec vs v7 vs v6 vs frozen union-confusion matrix at final evaluation."
+    },
+    {
+      "id": "D-RT5",
+      "title": "Action classification performance drift despite the retained historical TV baseline",
+      "mechanism": "INVESTIGATED. The v7 ledger carries action_diagnostics keys (count_diff / retry_mult / order_distance / failure_evidence) SIDE-BY-SIDE with per_dimension.actions (the classified TV signal); the union ingests ONLY per_dimension.actions — 67,068 diagnostic keys across the 16,767-row v7 ledger, 0 of them in any union computation (recon_actions.py: v7_diagnostic_keys_in_union=0). The 'drift' is therefore NOT the diagnostics leaking into the union; it is the RETAINED TV baseline being measured on corrected features: v7's per-dimension actions rate differs from frozen/v6 because v7 uses the same TV kernel but its reference geometry (theta_d from benign-to-benign on v7 features) and the 16,773-vs-16,767 intersection differ. Verified on the 300-row shared slice: candspec-vs-v7 actions verdicts agree on 300/300 (both use the frozen TV baseline; candspec merely separates diagnostics under action_diag_*). v7-vs-v6 actions agreement on that slice: 300/300 same verdict.",
+      "observed_effect": "v7 actions divergence rate 0.1418 (frame) vs v6 0.1462 vs frozen 0.146 — the small spread is the corrected-feature reference geometry, not a broken baseline",
+      "status": "fixed-in-candspec",
+      "fix": "reference/recon_actions.py documents the forensic; candspec_features keeps the TV distance as the ONLY action signal in the union and the four diagnostics as separately-named action_diag_* keys that are reported, never combined (brief §4: 'according to the declared action construct'). The action dimension is the STRONG dimension against the deterministic reference (v7 heldout frozen actions F1 0.857).",
+      "verification": "recon_actions_report.json (0 diagnostic keys in union; 300/300 verdict agreement on the shared slice); synthetic S5 (call reordering invariance, TV order-invariance — G2 pass)."
+    },
+    {
+      "id": "D-RT6",
+      "title": "Judge vs deterministic extractor construct alignment",
+      "mechanism": "v7's judge prompts and the deterministic extractors evaluated DIFFERENT surfaces in places: the extractor's assertion scope is the full authored trajectory while a judge reading only the final-response excerpt judges a narrower construct; the extractor's SWE stances are keyed by semantic ids while judges coded free-form identifiers; the extractor's verdicts were mixed-case while judges emitted a normalized enum. The reference therefore compared implementations against a construct the implementation did not measure.",
+      "observed_effect": "extraction-field agreement kappa 0.242 / alpha 0.239 (v7 VALIDATION_RESULTS §4) — two-model same-relay, construct-mismatch-inflated",
+      "status": "fixed-in-candspec",
+      "fix": "candspec_features.JUDGE_CONSTRUCT is the single declared construct table (per dimension: scope, state machine, canonical identifiers, invariant-to / sensitive-to lists); reference/prompts.py emits it VERBATIM into every judge prompt (RT-6), and the item's canonical_tables (RT-1 alias map, RT-2 unit factors, RT-3 verdict enum) so judges and the extractor share one identifier system. Disagreement is computed on canonical forms BEFORE comparing (reference_build.py _canon_value).",
+      "verification": "the judge-harness tests (prompt hash stability; canonical-before-compare: two surface forms of the same verdict agree); G1 extraction accuracy on the fresh heldout measures the aligned construct."
+    },
+    {
+      "id": "D-RECON-150",
+      "title": "The 150 matched validation groups — full inclusion/exclusion reconciliation",
+      "mechanism": "ai_reference_pairs.jsonl carries the pair-level reference (150 groups across 5 classes x 30: frozen_v6_disagreement, zero_threshold_positive, clean_negative, missing_dimension, nonzero_threshold_positive). Per group, dims carry per-dimension provenance (ai_agreed / ai_adjudicated / ai_unresolved) + ref (positive/negative/null); the union is ref-resolved ONLY when enough dims resolve.",
+      "observed_effect": "union_ref: 63 positive / 21 negative / 66 null (the nulls = 'unstable control' excluded — NEVER counted as a negative, the framework's rule). Excluded flag: 65 groups (the 66 nulls less 1 where the union resolved on a subset). By family: code_review 25+/5-/(20 null), financial 22+/12-/(16 null), research 16+/4-/(30 null). Per-dim resolution across the 150 groups: actions 113/150 provenance-resolved (104 agreed + 9 adjudicated), assertions only 26/150 (22 agreed + 4 adjudicated), decisions 32/150, outcomes 35/150 — assertions/decisions/outcomes are the reference-coverage-limited dims (the D-RT6 construct mismatch), actions is the deterministic-strong dim. Partition: 93 dev / 57 heldout groups (fixture-level, seed agentprop-v7-partition-20261123).",
+      "status": "documented-only",
+      "note": "Every inclusion (positive/negative union_ref) and exclusion (null union_ref / excluded flag) is explained by the per-dim provenance + the 'unstable control ≠ negative' rule. The v7 heldout reference is CONSUMED (standing rule); the final evaluation builds its OWN fresh reference on partition agentprop-final-partition-20261207 — this reconciliation explains the v7 artifact, it does not re-use its labels.",
+      "verification": "recomputed from out/ai_reference_pairs.jsonl (counts above reproduce the 63/21/66 split in v7 VALIDATION_RESULTS §6)."
+    },
+    {
+      "id": "D-COVERAGE",
+      "title": "Full-reference vs partition-level coverage discrepancy",
+      "mechanism": "The 150-group + 300-trace reference graph was split BY FIXTURE (seed agentprop-v7-partition-20261123, 0.4 heldout) so benign+LEP executions of a fixture stay together (no cross-partition reference leak). The 'full' report scores over the combined 300+150 graph; a partition-level report scores over that partition's fixtures only. The 16,767-vs-16,773 gap: the frame has 16,773 comparable rows but only 16,767 UNIQUE trace ids (6 trace ids appear twice as distinct attempts) — the cross-implementation intersection is 16,767 (the unique-id base). So 'full reference coverage' = 16,773 rows / 16,767 unique traces; partition-level = the dev/heldout fixture subsets (176/124 sample units, 93/57 pair groups). Design weights are UNCHANGED by the partition: a partition-weighted estimate is CONDITIONAL on the partition, not a population estimate (v7 partition_report.md §Weighting note).",
+      "observed_effect": "v7 VALIDATION_RESULTS §1: 300 traces (180 A + 120 B) + 150 pairs; dev 176 units / 93 pairs, heldout 124 units / 57 pairs",
+      "status": "documented-only",
+      "note": "The final evaluation uses a FRESH partition (agentprop-final-partition-20261207, 0.45 heldout, all 903 frame fixtures minus the inspected pool) so the fresh reference is fixture-disjoint from ALL development (v6 case studies + v7 dev/heldout + the 300/150 sample graph). Denominator mixing is avoided by naming the population in every rate (SAMPLING.md §1 three nested populations P1/P2/P3).",
+      "verification": "out/partitions_final.json disjointness_check (clean); the 16,773/16,767 unique-id reconciliation (6 duplicate-attempt trace ids named)."
+    }
+  ],
+  "standing_constraints_applied": [
+    "measurement-v7-heldout-consumed: the v7 heldout reference is consumed; any improvement (assertion-scope FPR, SWE issue-id coding) is evaluated on the NEW partition agentprop-final-partition-20261207, never re-tuned against out/ai_reference_pairs.jsonl.",
+    "bnd-aggregation-is-per-dimension-union: M1-M4 use per-component benign thresholds with UNION semantics; the 0.40/0.25/0.25/0.10 weighted composite is computed but unused — preserved in candspec (no composite in the scored path).",
+    "trc-unknown-recognizer-gap: unknowns are recognizer/coverage limits, not effect-uncertainty — never forced to a positive (the 'missing evidence is not absence of divergence' invariant).",
+    "fin-gradeability-audit: the 3,130 not_gradeable financial rows are ~60% evaluator-side (label gate) + ~36% agent-side; the grader false-negative share is the D-RT2 unit-defect correction, applied to the grader INPUT, never the agent's numbers."
+  ]
+}

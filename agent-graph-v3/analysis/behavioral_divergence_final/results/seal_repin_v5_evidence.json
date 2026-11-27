@@ -1,0 +1,14 @@
+{
+ "date": "2026-11-24",
+ "repin": "fingerprints_v4 -> v5",
+ "moved_vs_v4": [
+  "analysis/behavioral_divergence_final/FROZEN_PROTOCOL.md",
+  "analysis/behavioral_divergence_final/common.py"
+ ],
+ "justification": {
+  "analysis/behavioral_divergence_final/FROZEN_PROTOCOL.md": "S6 post-seal change log: RT-6 localizer repair, eval_scoring ledger-path fix, G5 calibration repair, verdict assembly + seal re-pin entries (protocol document, not a gate)",
+  "analysis/behavioral_divergence_final/common.py": "check_sealed now resolves the LATEST repin by glob (instrument-layer repair only)"
+ },
+ "gates.py": "BYTE-IDENTICAL to the original seal (acceptance criteria unchanged)",
+ "candidate_module_set": "23 files, byte-identical to the ORIGINAL seal: True"
+}

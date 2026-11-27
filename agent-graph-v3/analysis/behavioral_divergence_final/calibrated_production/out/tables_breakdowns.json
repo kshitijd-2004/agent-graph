@@ -1,0 +1,3174 @@
+{
+ "supported_topo_mode_combos": [
+  [
+   "branch_and_verify",
+   "many_to_one"
+  ],
+  [
+   "branch_and_verify",
+   "single_origin"
+  ],
+  [
+   "coordinator_workers",
+   "one_to_many"
+  ],
+  [
+   "coordinator_workers",
+   "single_origin"
+  ],
+  [
+   "review_loop",
+   "single_origin"
+  ]
+ ],
+ "invalid_topo_mode_combos_named": [
+  [
+   "branch_and_verify",
+   "one_to_many"
+  ],
+  [
+   "coordinator_workers",
+   "many_to_one"
+  ],
+  [
+   "review_loop",
+   "many_to_one"
+  ],
+  [
+   "review_loop",
+   "one_to_many"
+  ]
+ ],
+ "n_invalid_cells_excluded": 48,
+ "cell_count_nonempty": 60,
+ "cell_count_total_valid": 60,
+ "empty_valid_cells_named": [],
+ "note": "108 = 3 fam x 4 LEP x 9 topo-mode combos.  Only the 5 supported topo-mode combos occur in the corpus, so the measurement surface is 60 valid cells (all non-empty).  The 48 cell coordinates over the 4 structurally-invalid combos carry NO observations and are EXCLUDED, never invented.",
+ "cells": {
+  "code_review/LEP_HANDOFF_CORRUPTION/branch_and_verify/many_to_one": {
+   "n": 300,
+   "m1": {
+    "union_orig": 56,
+    "union_cal": 0,
+    "union_orig_zero_only": 47,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 24,
+     "decisions": 26,
+     "actions": 27,
+     "outcomes": 7
+    },
+    "dim_unavailable_cal": {
+     "assertions": 60,
+     "decisions": 54,
+     "actions": 0,
+     "outcomes": 54
+    },
+    "dim_unavailable_orig": {
+     "assertions": 80,
+     "decisions": 72,
+     "actions": 0,
+     "outcomes": 72
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 13,
+    "cross_agent_nonzero": 2,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 12,
+    "verified": 0,
+    "plausible": 12,
+    "unsupported": 0,
+    "matched": 2
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 288,
+    "persistent_correct": 10,
+    "degraded": 2
+   }
+  },
+  "code_review/LEP_HANDOFF_CORRUPTION/branch_and_verify/single_origin": {
+   "n": 301,
+   "m1": {
+    "union_orig": 57,
+    "union_cal": 0,
+    "union_orig_zero_only": 47,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 29,
+     "decisions": 28,
+     "actions": 26,
+     "outcomes": 3
+    },
+    "dim_unavailable_cal": {
+     "assertions": 66,
+     "decisions": 63,
+     "actions": 0,
+     "outcomes": 63
+    },
+    "dim_unavailable_orig": {
+     "assertions": 83,
+     "decisions": 77,
+     "actions": 0,
+     "outcomes": 77
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 10,
+    "cross_agent_nonzero": 0,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 10,
+    "verified": 0,
+    "plausible": 10,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 291,
+    "persistent_correct": 8,
+    "mixed_or_unavailable": 2
+   }
+  },
+  "code_review/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/many_to_one": {
+   "n": 301,
+   "m1": {
+    "union_orig": 148,
+    "union_cal": 0,
+    "union_orig_zero_only": 125,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 79,
+     "decisions": 60,
+     "actions": 48,
+     "outcomes": 87
+    },
+    "dim_unavailable_cal": {
+     "assertions": 60,
+     "decisions": 81,
+     "actions": 0,
+     "outcomes": 81
+    },
+    "dim_unavailable_orig": {
+     "assertions": 78,
+     "decisions": 96,
+     "actions": 0,
+     "outcomes": 96
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 52,
+    "cross_agent_nonzero": 2,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 11,
+    "verified": 4,
+    "plausible": 7,
+    "unsupported": 39,
+    "matched": 6
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 290,
+    "degraded": 6,
+    "persistent_correct": 5
+   }
+  },
+  "code_review/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/single_origin": {
+   "n": 301,
+   "m1": {
+    "union_orig": 104,
+    "union_cal": 0,
+    "union_orig_zero_only": 94,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 72,
+     "decisions": 28,
+     "actions": 29,
+     "outcomes": 21
+    },
+    "dim_unavailable_cal": {
+     "assertions": 49,
+     "decisions": 59,
+     "actions": 0,
+     "outcomes": 59
+    },
+    "dim_unavailable_orig": {
+     "assertions": 67,
+     "decisions": 73,
+     "actions": 0,
+     "outcomes": 73
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 18,
+    "cross_agent_nonzero": 2,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 5,
+    "verified": 1,
+    "plausible": 4,
+    "unsupported": 11,
+    "matched": 2
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 296,
+    "degraded": 2,
+    "persistent_correct": 3
+   }
+  },
+  "code_review/LEP_INPUT_DISREGARD/branch_and_verify/many_to_one": {
+   "n": 301,
+   "m1": {
+    "union_orig": 68,
+    "union_cal": 1,
+    "union_orig_zero_only": 52,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 1,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 29,
+     "decisions": 28,
+     "actions": 35,
+     "outcomes": 4
+    },
+    "dim_unavailable_cal": {
+     "assertions": 55,
+     "decisions": 62,
+     "actions": 0,
+     "outcomes": 62
+    },
+    "dim_unavailable_orig": {
+     "assertions": 71,
+     "decisions": 76,
+     "actions": 0,
+     "outcomes": 76
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 15,
+    "cross_agent_nonzero": 1,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 15,
+    "verified": 0,
+    "plausible": 15,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 286,
+    "persistent_correct": 15
+   }
+  },
+  "code_review/LEP_INPUT_DISREGARD/branch_and_verify/single_origin": {
+   "n": 301,
+   "m1": {
+    "union_orig": 66,
+    "union_cal": 1,
+    "union_orig_zero_only": 49,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 1,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 31,
+     "decisions": 32,
+     "actions": 36,
+     "outcomes": 6
+    },
+    "dim_unavailable_cal": {
+     "assertions": 54,
+     "decisions": 54,
+     "actions": 0,
+     "outcomes": 54
+    },
+    "dim_unavailable_orig": {
+     "assertions": 69,
+     "decisions": 65,
+     "actions": 0,
+     "outcomes": 65
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 10,
+    "cross_agent_nonzero": 1,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 10,
+    "verified": 0,
+    "plausible": 10,
+    "unsupported": 0,
+    "matched": 1
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 291,
+    "persistent_correct": 7,
+    "mixed_or_unavailable": 2,
+    "degraded": 1
+   }
+  },
+  "code_review/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/many_to_one": {
+   "n": 301,
+   "m1": {
+    "union_orig": 73,
+    "union_cal": 0,
+    "union_orig_zero_only": 46,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 20,
+     "decisions": 23,
+     "actions": 51,
+     "outcomes": 4
+    },
+    "dim_unavailable_cal": {
+     "assertions": 58,
+     "decisions": 55,
+     "actions": 0,
+     "outcomes": 55
+    },
+    "dim_unavailable_orig": {
+     "assertions": 77,
+     "decisions": 71,
+     "actions": 0,
+     "outcomes": 71
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 45,
+    "cross_agent_nonzero": 1,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 0,
+    "verified": 0,
+    "plausible": 0,
+    "unsupported": 41,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 301
+   }
+  },
+  "code_review/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/single_origin": {
+   "n": 301,
+   "m1": {
+    "union_orig": 68,
+    "union_cal": 0,
+    "union_orig_zero_only": 51,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 26,
+     "decisions": 28,
+     "actions": 40,
+     "outcomes": 4
+    },
+    "dim_unavailable_cal": {
+     "assertions": 49,
+     "decisions": 47,
+     "actions": 0,
+     "outcomes": 47
+    },
+    "dim_unavailable_orig": {
+     "assertions": 67,
+     "decisions": 61,
+     "actions": 0,
+     "outcomes": 61
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 27,
+    "cross_agent_nonzero": 0,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 0,
+    "verified": 0,
+    "plausible": 0,
+    "unsupported": 26,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 301
+   }
+  },
+  "code_review/LEP_HANDOFF_CORRUPTION/coordinator_workers/one_to_many": {
+   "n": 292,
+   "m1": {
+    "union_orig": 93,
+    "union_cal": 21,
+    "union_orig_zero_only": 63,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 21,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 36,
+     "decisions": 31,
+     "actions": 47,
+     "outcomes": 16
+    },
+    "dim_unavailable_cal": {
+     "assertions": 54,
+     "decisions": 68,
+     "actions": 0,
+     "outcomes": 68
+    },
+    "dim_unavailable_orig": {
+     "assertions": 65,
+     "decisions": 86,
+     "actions": 0,
+     "outcomes": 86
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 71,
+    "cross_agent_nonzero": 53,
+    "cross_agent_cal_true": 16,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 13
+   },
+   "m3": {
+    "supported": 69,
+    "verified": 0,
+    "plausible": 69,
+    "unsupported": 0,
+    "matched": 8
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 223,
+    "mixed_or_unavailable": 14,
+    "persistent_correct": 46,
+    "persistent_failure": 1,
+    "degraded": 8
+   }
+  },
+  "code_review/LEP_HANDOFF_CORRUPTION/coordinator_workers/single_origin": {
+   "n": 200,
+   "m1": {
+    "union_orig": 47,
+    "union_cal": 14,
+    "union_orig_zero_only": 33,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 14,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 25,
+     "decisions": 17,
+     "actions": 22,
+     "outcomes": 10
+    },
+    "dim_unavailable_cal": {
+     "assertions": 39,
+     "decisions": 46,
+     "actions": 0,
+     "outcomes": 46
+    },
+    "dim_unavailable_orig": {
+     "assertions": 45,
+     "decisions": 59,
+     "actions": 0,
+     "outcomes": 59
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 35,
+    "cross_agent_nonzero": 24,
+    "cross_agent_cal_true": 4,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 3
+   },
+   "m3": {
+    "supported": 35,
+    "verified": 0,
+    "plausible": 35,
+    "unsupported": 0,
+    "matched": 6
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 165,
+    "persistent_correct": 19,
+    "degraded": 6,
+    "mixed_or_unavailable": 10
+   }
+  },
+  "code_review/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/one_to_many": {
+   "n": 290,
+   "m1": {
+    "union_orig": 146,
+    "union_cal": 37,
+    "union_orig_zero_only": 87,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 37,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 69,
+     "decisions": 53,
+     "actions": 81,
+     "outcomes": 67
+    },
+    "dim_unavailable_cal": {
+     "assertions": 61,
+     "decisions": 83,
+     "actions": 0,
+     "outcomes": 83
+    },
+    "dim_unavailable_orig": {
+     "assertions": 77,
+     "decisions": 105,
+     "actions": 0,
+     "outcomes": 105
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 120,
+    "cross_agent_nonzero": 97,
+    "cross_agent_cal_true": 26,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 23
+   },
+   "m3": {
+    "supported": 19,
+    "verified": 13,
+    "plausible": 6,
+    "unsupported": 97,
+    "matched": 9
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 271,
+    "persistent_correct": 4,
+    "degraded": 9,
+    "mixed_or_unavailable": 6
+   }
+  },
+  "code_review/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/single_origin": {
+   "n": 197,
+   "m1": {
+    "union_orig": 84,
+    "union_cal": 12,
+    "union_orig_zero_only": 54,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 12,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 53,
+     "decisions": 26,
+     "actions": 40,
+     "outcomes": 27
+    },
+    "dim_unavailable_cal": {
+     "assertions": 32,
+     "decisions": 54,
+     "actions": 0,
+     "outcomes": 54
+    },
+    "dim_unavailable_orig": {
+     "assertions": 43,
+     "decisions": 65,
+     "actions": 0,
+     "outcomes": 65
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 57,
+    "cross_agent_nonzero": 44,
+    "cross_agent_cal_true": 14,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 7
+   },
+   "m3": {
+    "supported": 22,
+    "verified": 3,
+    "plausible": 19,
+    "unsupported": 35,
+    "matched": 7
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 175,
+    "persistent_correct": 12,
+    "degraded": 7,
+    "improved": 2,
+    "mixed_or_unavailable": 1
+   }
+  },
+  "code_review/LEP_INPUT_DISREGARD/coordinator_workers/one_to_many": {
+   "n": 291,
+   "m1": {
+    "union_orig": 78,
+    "union_cal": 25,
+    "union_orig_zero_only": 49,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 25,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 34,
+     "decisions": 27,
+     "actions": 44,
+     "outcomes": 9
+    },
+    "dim_unavailable_cal": {
+     "assertions": 53,
+     "decisions": 62,
+     "actions": 0,
+     "outcomes": 62
+    },
+    "dim_unavailable_orig": {
+     "assertions": 63,
+     "decisions": 85,
+     "actions": 0,
+     "outcomes": 85
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 76,
+    "cross_agent_nonzero": 52,
+    "cross_agent_cal_true": 15,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 12
+   },
+   "m3": {
+    "supported": 73,
+    "verified": 0,
+    "plausible": 73,
+    "unsupported": 0,
+    "matched": 3
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 218,
+    "mixed_or_unavailable": 19,
+    "persistent_correct": 49,
+    "improved": 2,
+    "degraded": 3
+   }
+  },
+  "code_review/LEP_INPUT_DISREGARD/coordinator_workers/single_origin": {
+   "n": 199,
+   "m1": {
+    "union_orig": 63,
+    "union_cal": 10,
+    "union_orig_zero_only": 34,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 10,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 25,
+     "decisions": 27,
+     "actions": 33,
+     "outcomes": 6
+    },
+    "dim_unavailable_cal": {
+     "assertions": 34,
+     "decisions": 42,
+     "actions": 0,
+     "outcomes": 42
+    },
+    "dim_unavailable_orig": {
+     "assertions": 39,
+     "decisions": 54,
+     "actions": 0,
+     "outcomes": 54
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 58,
+    "cross_agent_nonzero": 42,
+    "cross_agent_cal_true": 11,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 6
+   },
+   "m3": {
+    "supported": 58,
+    "verified": 0,
+    "plausible": 58,
+    "unsupported": 0,
+    "matched": 4
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 141,
+    "persistent_correct": 41,
+    "mixed_or_unavailable": 13,
+    "degraded": 4
+   }
+  },
+  "code_review/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/one_to_many": {
+   "n": 292,
+   "m1": {
+    "union_orig": 106,
+    "union_cal": 33,
+    "union_orig_zero_only": 64,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 33,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 38,
+     "decisions": 36,
+     "actions": 62,
+     "outcomes": 15
+    },
+    "dim_unavailable_cal": {
+     "assertions": 55,
+     "decisions": 71,
+     "actions": 0,
+     "outcomes": 71
+    },
+    "dim_unavailable_orig": {
+     "assertions": 63,
+     "decisions": 87,
+     "actions": 0,
+     "outcomes": 87
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 81,
+    "cross_agent_nonzero": 61,
+    "cross_agent_cal_true": 14,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 18
+   },
+   "m3": {
+    "supported": 0,
+    "verified": 0,
+    "plausible": 0,
+    "unsupported": 78,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 292
+   }
+  },
+  "code_review/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/single_origin": {
+   "n": 199,
+   "m1": {
+    "union_orig": 56,
+    "union_cal": 18,
+    "union_orig_zero_only": 30,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 18,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 23,
+     "decisions": 16,
+     "actions": 35,
+     "outcomes": 7
+    },
+    "dim_unavailable_cal": {
+     "assertions": 32,
+     "decisions": 44,
+     "actions": 0,
+     "outcomes": 44
+    },
+    "dim_unavailable_orig": {
+     "assertions": 40,
+     "decisions": 59,
+     "actions": 0,
+     "outcomes": 59
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 48,
+    "cross_agent_nonzero": 36,
+    "cross_agent_cal_true": 8,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 5
+   },
+   "m3": {
+    "supported": 0,
+    "verified": 0,
+    "plausible": 0,
+    "unsupported": 48,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 199
+   }
+  },
+  "code_review/LEP_HANDOFF_CORRUPTION/review_loop/single_origin": {
+   "n": 299,
+   "m1": {
+    "union_orig": 78,
+    "union_cal": 4,
+    "union_orig_zero_only": 53,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 4,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 28,
+     "decisions": 29,
+     "actions": 50,
+     "outcomes": 16
+    },
+    "dim_unavailable_cal": {
+     "assertions": 68,
+     "decisions": 99,
+     "actions": 0,
+     "outcomes": 99
+    },
+    "dim_unavailable_orig": {
+     "assertions": 82,
+     "decisions": 113,
+     "actions": 0,
+     "outcomes": 113
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 40,
+    "cross_agent_nonzero": 15,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 2
+   },
+   "m3": {
+    "supported": 39,
+    "verified": 0,
+    "plausible": 39,
+    "unsupported": 0,
+    "matched": 6
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 260,
+    "mixed_or_unavailable": 12,
+    "degraded": 6,
+    "persistent_correct": 19,
+    "persistent_failure": 1,
+    "improved": 1
+   }
+  },
+  "code_review/LEP_INDIRECT_PROMPT_INJECTION/review_loop/single_origin": {
+   "n": 299,
+   "m1": {
+    "union_orig": 155,
+    "union_cal": 6,
+    "union_orig_zero_only": 111,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 6,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 55,
+     "decisions": 35,
+     "actions": 80,
+     "outcomes": 71
+    },
+    "dim_unavailable_cal": {
+     "assertions": 61,
+     "decisions": 103,
+     "actions": 0,
+     "outcomes": 103
+    },
+    "dim_unavailable_orig": {
+     "assertions": 78,
+     "decisions": 123,
+     "actions": 0,
+     "outcomes": 123
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 120,
+    "cross_agent_nonzero": 87,
+    "cross_agent_cal_true": 2,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 4
+   },
+   "m3": {
+    "supported": 24,
+    "verified": 16,
+    "plausible": 8,
+    "unsupported": 93,
+    "matched": 9
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 275,
+    "mixed_or_unavailable": 8,
+    "persistent_correct": 6,
+    "degraded": 9,
+    "persistent_failure": 1
+   }
+  },
+  "code_review/LEP_INPUT_DISREGARD/review_loop/single_origin": {
+   "n": 292,
+   "m1": {
+    "union_orig": 90,
+    "union_cal": 2,
+    "union_orig_zero_only": 65,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 2,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 28,
+     "decisions": 24,
+     "actions": 53,
+     "outcomes": 19
+    },
+    "dim_unavailable_cal": {
+     "assertions": 50,
+     "decisions": 78,
+     "actions": 0,
+     "outcomes": 78
+    },
+    "dim_unavailable_orig": {
+     "assertions": 63,
+     "decisions": 98,
+     "actions": 0,
+     "outcomes": 98
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 60,
+    "cross_agent_nonzero": 34,
+    "cross_agent_cal_true": 1,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 1
+   },
+   "m3": {
+    "supported": 57,
+    "verified": 0,
+    "plausible": 57,
+    "unsupported": 0,
+    "matched": 7
+   },
+   "m4_class_counts": {
+    "mixed_or_unavailable": 19,
+    "not_m3_supported": 235,
+    "persistent_correct": 27,
+    "degraded": 7,
+    "persistent_failure": 1,
+    "improved": 3
+   }
+  },
+  "code_review/LEP_TOOL_RESULT_CORRUPTION/review_loop/single_origin": {
+   "n": 298,
+   "m1": {
+    "union_orig": 96,
+    "union_cal": 8,
+    "union_orig_zero_only": 62,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 8,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 31,
+     "decisions": 30,
+     "actions": 63,
+     "outcomes": 19
+    },
+    "dim_unavailable_cal": {
+     "assertions": 67,
+     "decisions": 88,
+     "actions": 0,
+     "outcomes": 88
+    },
+    "dim_unavailable_orig": {
+     "assertions": 81,
+     "decisions": 102,
+     "actions": 0,
+     "outcomes": 102
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 54,
+    "cross_agent_nonzero": 27,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 2
+   },
+   "m3": {
+    "supported": 0,
+    "verified": 0,
+    "plausible": 0,
+    "unsupported": 52,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 298
+   }
+  },
+  "financial_analysis/LEP_HANDOFF_CORRUPTION/branch_and_verify/many_to_one": {
+   "n": 302,
+   "m1": {
+    "union_orig": 47,
+    "union_cal": 0,
+    "union_orig_zero_only": 30,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 25,
+     "decisions": 21,
+     "actions": 24,
+     "outcomes": 4
+    },
+    "dim_unavailable_cal": {
+     "assertions": 114,
+     "decisions": 107,
+     "actions": 0,
+     "outcomes": 138
+    },
+    "dim_unavailable_orig": {
+     "assertions": 127,
+     "decisions": 120,
+     "actions": 0,
+     "outcomes": 142
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 15,
+    "cross_agent_nonzero": 4,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 11,
+    "verified": 0,
+    "plausible": 11,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 291,
+    "persistent_failure": 2,
+    "mixed_or_unavailable": 6,
+    "improved": 1,
+    "persistent_correct": 2
+   }
+  },
+  "financial_analysis/LEP_HANDOFF_CORRUPTION/branch_and_verify/single_origin": {
+   "n": 302,
+   "m1": {
+    "union_orig": 57,
+    "union_cal": 3,
+    "union_orig_zero_only": 45,
+    "dims_cal": {
+     "assertions": 1,
+     "decisions": 1,
+     "actions": 2,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 24,
+     "decisions": 24,
+     "actions": 27,
+     "outcomes": 8
+    },
+    "dim_unavailable_cal": {
+     "assertions": 105,
+     "decisions": 100,
+     "actions": 0,
+     "outcomes": 135
+    },
+    "dim_unavailable_orig": {
+     "assertions": 120,
+     "decisions": 116,
+     "actions": 0,
+     "outcomes": 142
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 16,
+    "cross_agent_nonzero": 3,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 1
+   },
+   "m3": {
+    "supported": 13,
+    "verified": 0,
+    "plausible": 13,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 289,
+    "improved": 2,
+    "mixed_or_unavailable": 7,
+    "persistent_failure": 2,
+    "persistent_correct": 2
+   }
+  },
+  "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/many_to_one": {
+   "n": 299,
+   "m1": {
+    "union_orig": 95,
+    "union_cal": 11,
+    "union_orig_zero_only": 70,
+    "dims_cal": {
+     "assertions": 9,
+     "decisions": 5,
+     "actions": 1,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 35,
+     "decisions": 39,
+     "actions": 46,
+     "outcomes": 32
+    },
+    "dim_unavailable_cal": {
+     "assertions": 114,
+     "decisions": 99,
+     "actions": 0,
+     "outcomes": 135
+    },
+    "dim_unavailable_orig": {
+     "assertions": 129,
+     "decisions": 116,
+     "actions": 0,
+     "outcomes": 142
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 41,
+    "cross_agent_nonzero": 3,
+    "cross_agent_cal_true": 3,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 5
+   },
+   "m3": {
+    "supported": 28,
+    "verified": 21,
+    "plausible": 7,
+    "unsupported": 10,
+    "matched": 10
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 271,
+    "degraded": 10,
+    "persistent_correct": 4,
+    "mixed_or_unavailable": 12,
+    "persistent_failure": 2
+   }
+  },
+  "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/single_origin": {
+   "n": 302,
+   "m1": {
+    "union_orig": 87,
+    "union_cal": 5,
+    "union_orig_zero_only": 68,
+    "dims_cal": {
+     "assertions": 4,
+     "decisions": 3,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 32,
+     "decisions": 31,
+     "actions": 39,
+     "outcomes": 22
+    },
+    "dim_unavailable_cal": {
+     "assertions": 109,
+     "decisions": 99,
+     "actions": 0,
+     "outcomes": 142
+    },
+    "dim_unavailable_orig": {
+     "assertions": 128,
+     "decisions": 116,
+     "actions": 0,
+     "outcomes": 147
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 42,
+    "cross_agent_nonzero": 8,
+    "cross_agent_cal_true": 3,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 27,
+    "verified": 21,
+    "plausible": 6,
+    "unsupported": 12,
+    "matched": 4
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 275,
+    "persistent_correct": 8,
+    "persistent_failure": 4,
+    "mixed_or_unavailable": 11,
+    "degraded": 4
+   }
+  },
+  "financial_analysis/LEP_INPUT_DISREGARD/branch_and_verify/many_to_one": {
+   "n": 302,
+   "m1": {
+    "union_orig": 53,
+    "union_cal": 4,
+    "union_orig_zero_only": 41,
+    "dims_cal": {
+     "assertions": 2,
+     "decisions": 3,
+     "actions": 1,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 21,
+     "decisions": 22,
+     "actions": 27,
+     "outcomes": 1
+    },
+    "dim_unavailable_cal": {
+     "assertions": 106,
+     "decisions": 100,
+     "actions": 0,
+     "outcomes": 128
+    },
+    "dim_unavailable_orig": {
+     "assertions": 120,
+     "decisions": 115,
+     "actions": 0,
+     "outcomes": 139
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 15,
+    "cross_agent_nonzero": 3,
+    "cross_agent_cal_true": 3,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 2
+   },
+   "m3": {
+    "supported": 14,
+    "verified": 0,
+    "plausible": 14,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 288,
+    "persistent_failure": 2,
+    "mixed_or_unavailable": 8,
+    "persistent_correct": 4
+   }
+  },
+  "financial_analysis/LEP_INPUT_DISREGARD/branch_and_verify/single_origin": {
+   "n": 302,
+   "m1": {
+    "union_orig": 45,
+    "union_cal": 1,
+    "union_orig_zero_only": 31,
+    "dims_cal": {
+     "assertions": 1,
+     "decisions": 1,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 22,
+     "decisions": 20,
+     "actions": 21,
+     "outcomes": 1
+    },
+    "dim_unavailable_cal": {
+     "assertions": 105,
+     "decisions": 94,
+     "actions": 0,
+     "outcomes": 133
+    },
+    "dim_unavailable_orig": {
+     "assertions": 120,
+     "decisions": 110,
+     "actions": 0,
+     "outcomes": 143
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 22,
+    "cross_agent_nonzero": 10,
+    "cross_agent_cal_true": 2,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 20,
+    "verified": 0,
+    "plausible": 20,
+    "unsupported": 0,
+    "matched": 1
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 282,
+    "mixed_or_unavailable": 7,
+    "persistent_correct": 9,
+    "persistent_failure": 3,
+    "degraded": 1
+   }
+  },
+  "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/many_to_one": {
+   "n": 283,
+   "m1": {
+    "union_orig": 67,
+    "union_cal": 0,
+    "union_orig_zero_only": 50,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 25,
+     "decisions": 25,
+     "actions": 32,
+     "outcomes": 12
+    },
+    "dim_unavailable_cal": {
+     "assertions": 106,
+     "decisions": 98,
+     "actions": 0,
+     "outcomes": 133
+    },
+    "dim_unavailable_orig": {
+     "assertions": 119,
+     "decisions": 113,
+     "actions": 0,
+     "outcomes": 137
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 55,
+    "cross_agent_nonzero": 9,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 30,
+    "verified": 27,
+    "plausible": 3,
+    "unsupported": 18,
+    "matched": 2
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 253,
+    "mixed_or_unavailable": 15,
+    "persistent_correct": 10,
+    "persistent_failure": 3,
+    "degraded": 2
+   }
+  },
+  "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/single_origin": {
+   "n": 302,
+   "m1": {
+    "union_orig": 74,
+    "union_cal": 4,
+    "union_orig_zero_only": 60,
+    "dims_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 4,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 35,
+     "decisions": 35,
+     "actions": 35,
+     "outcomes": 14
+    },
+    "dim_unavailable_cal": {
+     "assertions": 105,
+     "decisions": 96,
+     "actions": 0,
+     "outcomes": 143
+    },
+    "dim_unavailable_orig": {
+     "assertions": 121,
+     "decisions": 113,
+     "actions": 0,
+     "outcomes": 150
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 57,
+    "cross_agent_nonzero": 9,
+    "cross_agent_cal_true": 2,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 44,
+    "verified": 41,
+    "plausible": 3,
+    "unsupported": 7,
+    "matched": 2
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 258,
+    "persistent_correct": 18,
+    "degraded": 2,
+    "mixed_or_unavailable": 21,
+    "persistent_failure": 3
+   }
+  },
+  "financial_analysis/LEP_HANDOFF_CORRUPTION/coordinator_workers/one_to_many": {
+   "n": 302,
+   "m1": {
+    "union_orig": 74,
+    "union_cal": 20,
+    "union_orig_zero_only": 55,
+    "dims_cal": {
+     "assertions": 6,
+     "decisions": 6,
+     "actions": 14,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 20,
+     "decisions": 18,
+     "actions": 46,
+     "outcomes": 7
+    },
+    "dim_unavailable_cal": {
+     "assertions": 117,
+     "decisions": 109,
+     "actions": 0,
+     "outcomes": 142
+    },
+    "dim_unavailable_orig": {
+     "assertions": 129,
+     "decisions": 120,
+     "actions": 0,
+     "outcomes": 146
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 7,
+    "cross_agent_nonzero": 5,
+    "cross_agent_cal_true": 2,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 1
+   },
+   "m3": {
+    "supported": 7,
+    "verified": 0,
+    "plausible": 7,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 295,
+    "mixed_or_unavailable": 5,
+    "persistent_correct": 1,
+    "persistent_failure": 1
+   }
+  },
+  "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/one_to_many": {
+   "n": 302,
+   "m1": {
+    "union_orig": 87,
+    "union_cal": 27,
+    "union_orig_zero_only": 65,
+    "dims_cal": {
+     "assertions": 5,
+     "decisions": 4,
+     "actions": 24,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 25,
+     "decisions": 21,
+     "actions": 62,
+     "outcomes": 11
+    },
+    "dim_unavailable_cal": {
+     "assertions": 107,
+     "decisions": 101,
+     "actions": 0,
+     "outcomes": 141
+    },
+    "dim_unavailable_orig": {
+     "assertions": 117,
+     "decisions": 110,
+     "actions": 0,
+     "outcomes": 148
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 14,
+    "cross_agent_nonzero": 8,
+    "cross_agent_cal_true": 3,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 6
+   },
+   "m3": {
+    "supported": 5,
+    "verified": 0,
+    "plausible": 5,
+    "unsupported": 9,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 297,
+    "mixed_or_unavailable": 4,
+    "persistent_correct": 1
+   }
+  },
+  "financial_analysis/LEP_INPUT_DISREGARD/coordinator_workers/one_to_many": {
+   "n": 302,
+   "m1": {
+    "union_orig": 57,
+    "union_cal": 12,
+    "union_orig_zero_only": 43,
+    "dims_cal": {
+     "assertions": 2,
+     "decisions": 1,
+     "actions": 10,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 16,
+     "decisions": 13,
+     "actions": 41,
+     "outcomes": 5
+    },
+    "dim_unavailable_cal": {
+     "assertions": 113,
+     "decisions": 109,
+     "actions": 0,
+     "outcomes": 140
+    },
+    "dim_unavailable_orig": {
+     "assertions": 124,
+     "decisions": 119,
+     "actions": 0,
+     "outcomes": 146
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 8,
+    "cross_agent_nonzero": 2,
+    "cross_agent_cal_true": 1,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 8,
+    "verified": 0,
+    "plausible": 8,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 294,
+    "mixed_or_unavailable": 5,
+    "persistent_correct": 2,
+    "persistent_failure": 1
+   }
+  },
+  "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/one_to_many": {
+   "n": 302,
+   "m1": {
+    "union_orig": 54,
+    "union_cal": 16,
+    "union_orig_zero_only": 44,
+    "dims_cal": {
+     "assertions": 2,
+     "decisions": 1,
+     "actions": 14,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 17,
+     "decisions": 12,
+     "actions": 34,
+     "outcomes": 9
+    },
+    "dim_unavailable_cal": {
+     "assertions": 127,
+     "decisions": 113,
+     "actions": 0,
+     "outcomes": 138
+    },
+    "dim_unavailable_orig": {
+     "assertions": 135,
+     "decisions": 122,
+     "actions": 0,
+     "outcomes": 146
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 6,
+    "cross_agent_nonzero": 4,
+    "cross_agent_cal_true": 0,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 4,
+    "verified": 1,
+    "plausible": 3,
+    "unsupported": 2,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 298,
+    "mixed_or_unavailable": 2,
+    "persistent_correct": 1,
+    "persistent_failure": 1
+   }
+  },
+  "financial_analysis/LEP_HANDOFF_CORRUPTION/review_loop/single_origin": {
+   "n": 302,
+   "m1": {
+    "union_orig": 70,
+    "union_cal": 37,
+    "union_orig_zero_only": 37,
+    "dims_cal": {
+     "assertions": 22,
+     "decisions": 23,
+     "actions": 11,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 26,
+     "decisions": 25,
+     "actions": 45,
+     "outcomes": 7
+    },
+    "dim_unavailable_cal": {
+     "assertions": 119,
+     "decisions": 117,
+     "actions": 0,
+     "outcomes": 185
+    },
+    "dim_unavailable_orig": {
+     "assertions": 155,
+     "decisions": 152,
+     "actions": 0,
+     "outcomes": 217
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 10,
+    "cross_agent_nonzero": 6,
+    "cross_agent_cal_true": 3,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 1
+   },
+   "m3": {
+    "supported": 8,
+    "verified": 0,
+    "plausible": 8,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 294,
+    "persistent_failure": 2,
+    "persistent_correct": 5,
+    "mixed_or_unavailable": 1
+   }
+  },
+  "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/single_origin": {
+   "n": 303,
+   "m1": {
+    "union_orig": 99,
+    "union_cal": 33,
+    "union_orig_zero_only": 45,
+    "dims_cal": {
+     "assertions": 15,
+     "decisions": 16,
+     "actions": 15,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 32,
+     "decisions": 38,
+     "actions": 64,
+     "outcomes": 11
+    },
+    "dim_unavailable_cal": {
+     "assertions": 116,
+     "decisions": 109,
+     "actions": 0,
+     "outcomes": 181
+    },
+    "dim_unavailable_orig": {
+     "assertions": 159,
+     "decisions": 153,
+     "actions": 0,
+     "outcomes": 218
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 20,
+    "cross_agent_nonzero": 10,
+    "cross_agent_cal_true": 2,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 1
+   },
+   "m3": {
+    "supported": 11,
+    "verified": 9,
+    "plausible": 2,
+    "unsupported": 8,
+    "matched": 2
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 292,
+    "persistent_correct": 2,
+    "mixed_or_unavailable": 6,
+    "degraded": 2,
+    "persistent_failure": 1
+   }
+  },
+  "financial_analysis/LEP_INPUT_DISREGARD/review_loop/single_origin": {
+   "n": 302,
+   "m1": {
+    "union_orig": 62,
+    "union_cal": 16,
+    "union_orig_zero_only": 39,
+    "dims_cal": {
+     "assertions": 9,
+     "decisions": 10,
+     "actions": 4,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 26,
+     "decisions": 20,
+     "actions": 34,
+     "outcomes": 4
+    },
+    "dim_unavailable_cal": {
+     "assertions": 126,
+     "decisions": 123,
+     "actions": 0,
+     "outcomes": 191
+    },
+    "dim_unavailable_orig": {
+     "assertions": 155,
+     "decisions": 155,
+     "actions": 0,
+     "outcomes": 217
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 5,
+    "cross_agent_nonzero": 2,
+    "cross_agent_cal_true": 3,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 5,
+    "verified": 0,
+    "plausible": 5,
+    "unsupported": 0,
+    "matched": 1
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 297,
+    "mixed_or_unavailable": 3,
+    "persistent_failure": 1,
+    "degraded": 1
+   }
+  },
+  "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/review_loop/single_origin": {
+   "n": 302,
+   "m1": {
+    "union_orig": 74,
+    "union_cal": 23,
+    "union_orig_zero_only": 39,
+    "dims_cal": {
+     "assertions": 12,
+     "decisions": 16,
+     "actions": 6,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 20,
+     "decisions": 23,
+     "actions": 52,
+     "outcomes": 7
+    },
+    "dim_unavailable_cal": {
+     "assertions": 135,
+     "decisions": 123,
+     "actions": 0,
+     "outcomes": 189
+    },
+    "dim_unavailable_orig": {
+     "assertions": 168,
+     "decisions": 158,
+     "actions": 0,
+     "outcomes": 226
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 10,
+    "cross_agent_nonzero": 5,
+    "cross_agent_cal_true": 2,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 2
+   },
+   "m3": {
+    "supported": 6,
+    "verified": 1,
+    "plausible": 5,
+    "unsupported": 2,
+    "matched": 1
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 296,
+    "mixed_or_unavailable": 3,
+    "persistent_correct": 1,
+    "improved": 1,
+    "degraded": 1
+   }
+  },
+  "financial_analysis/LEP_HANDOFF_CORRUPTION/coordinator_workers/single_origin": {
+   "n": 217,
+   "m1": {
+    "union_orig": 42,
+    "union_cal": 14,
+    "union_orig_zero_only": 35,
+    "dims_cal": {
+     "assertions": 3,
+     "decisions": 2,
+     "actions": 11,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 9,
+     "decisions": 10,
+     "actions": 28,
+     "outcomes": 5
+    },
+    "dim_unavailable_cal": {
+     "assertions": 79,
+     "decisions": 76,
+     "actions": 0,
+     "outcomes": 102
+    },
+    "dim_unavailable_orig": {
+     "assertions": 84,
+     "decisions": 82,
+     "actions": 0,
+     "outcomes": 106
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 13,
+    "cross_agent_nonzero": 5,
+    "cross_agent_cal_true": 1,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 3
+   },
+   "m3": {
+    "supported": 13,
+    "verified": 0,
+    "plausible": 13,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "mixed_or_unavailable": 8,
+    "not_m3_supported": 204,
+    "persistent_correct": 2,
+    "persistent_failure": 3
+   }
+  },
+  "financial_analysis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/single_origin": {
+   "n": 199,
+   "m1": {
+    "union_orig": 53,
+    "union_cal": 4,
+    "union_orig_zero_only": 44,
+    "dims_cal": {
+     "assertions": 3,
+     "decisions": 2,
+     "actions": 1,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 13,
+     "decisions": 7,
+     "actions": 32,
+     "outcomes": 9
+    },
+    "dim_unavailable_cal": {
+     "assertions": 84,
+     "decisions": 74,
+     "actions": 0,
+     "outcomes": 94
+    },
+    "dim_unavailable_orig": {
+     "assertions": 91,
+     "decisions": 82,
+     "actions": 0,
+     "outcomes": 95
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 14,
+    "cross_agent_nonzero": 0,
+    "cross_agent_cal_true": 2,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 1
+   },
+   "m3": {
+    "supported": 7,
+    "verified": 6,
+    "plausible": 1,
+    "unsupported": 7,
+    "matched": 1
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 192,
+    "mixed_or_unavailable": 3,
+    "persistent_correct": 3,
+    "degraded": 1
+   }
+  },
+  "financial_analysis/LEP_INPUT_DISREGARD/coordinator_workers/single_origin": {
+   "n": 217,
+   "m1": {
+    "union_orig": 35,
+    "union_cal": 10,
+    "union_orig_zero_only": 28,
+    "dims_cal": {
+     "assertions": 1,
+     "decisions": 1,
+     "actions": 9,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 10,
+     "decisions": 9,
+     "actions": 20,
+     "outcomes": 3
+    },
+    "dim_unavailable_cal": {
+     "assertions": 78,
+     "decisions": 70,
+     "actions": 0,
+     "outcomes": 104
+    },
+    "dim_unavailable_orig": {
+     "assertions": 88,
+     "decisions": 82,
+     "actions": 0,
+     "outcomes": 108
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 12,
+    "cross_agent_nonzero": 4,
+    "cross_agent_cal_true": 3,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 1
+   },
+   "m3": {
+    "supported": 12,
+    "verified": 0,
+    "plausible": 12,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 205,
+    "mixed_or_unavailable": 7,
+    "persistent_correct": 5
+   }
+  },
+  "financial_analysis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/single_origin": {
+   "n": 200,
+   "m1": {
+    "union_orig": 35,
+    "union_cal": 9,
+    "union_orig_zero_only": 26,
+    "dims_cal": {
+     "assertions": 3,
+     "decisions": 4,
+     "actions": 5,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 13,
+     "decisions": 8,
+     "actions": 18,
+     "outcomes": 6
+    },
+    "dim_unavailable_cal": {
+     "assertions": 69,
+     "decisions": 68,
+     "actions": 0,
+     "outcomes": 95
+    },
+    "dim_unavailable_orig": {
+     "assertions": 79,
+     "decisions": 77,
+     "actions": 0,
+     "outcomes": 99
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 12,
+    "cross_agent_nonzero": 2,
+    "cross_agent_cal_true": 2,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 1
+   },
+   "m3": {
+    "supported": 7,
+    "verified": 6,
+    "plausible": 1,
+    "unsupported": 5,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 193,
+    "persistent_correct": 3,
+    "mixed_or_unavailable": 4
+   }
+  },
+  "research_synthesis/LEP_HANDOFF_CORRUPTION/branch_and_verify/many_to_one": {
+   "n": 299,
+   "m1": {
+    "union_orig": 72,
+    "union_cal": 6,
+    "union_orig_zero_only": 59,
+    "dims_cal": {
+     "assertions": 6,
+     "decisions": 6,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 30,
+     "decisions": 31,
+     "actions": 45,
+     "outcomes": 21
+    },
+    "dim_unavailable_cal": {
+     "assertions": 1,
+     "decisions": 1,
+     "actions": 0,
+     "outcomes": 2
+    },
+    "dim_unavailable_orig": {
+     "assertions": 1,
+     "decisions": 1,
+     "actions": 0,
+     "outcomes": 2
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 29,
+    "cross_agent_nonzero": 1,
+    "cross_agent_cal_true": 3,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 3
+   },
+   "m3": {
+    "supported": 27,
+    "verified": 0,
+    "plausible": 27,
+    "unsupported": 0,
+    "matched": 10
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 272,
+    "degraded": 10,
+    "persistent_failure": 14,
+    "improved": 3
+   }
+  },
+  "research_synthesis/LEP_HANDOFF_CORRUPTION/branch_and_verify/single_origin": {
+   "n": 299,
+   "m1": {
+    "union_orig": 59,
+    "union_cal": 3,
+    "union_orig_zero_only": 53,
+    "dims_cal": {
+     "assertions": 3,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 23,
+     "decisions": 23,
+     "actions": 40,
+     "outcomes": 18
+    },
+    "dim_unavailable_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    },
+    "dim_unavailable_orig": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 25,
+    "cross_agent_nonzero": 0,
+    "cross_agent_cal_true": 2,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 3
+   },
+   "m3": {
+    "supported": 23,
+    "verified": 0,
+    "plausible": 23,
+    "unsupported": 0,
+    "matched": 12
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 276,
+    "degraded": 12,
+    "persistent_correct": 3,
+    "improved": 1,
+    "persistent_failure": 7
+   }
+  },
+  "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/many_to_one": {
+   "n": 299,
+   "m1": {
+    "union_orig": 172,
+    "union_cal": 26,
+    "union_orig_zero_only": 149,
+    "dims_cal": {
+     "assertions": 24,
+     "decisions": 21,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 139,
+     "decisions": 144,
+     "actions": 53,
+     "outcomes": 78
+    },
+    "dim_unavailable_cal": {
+     "assertions": 1,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    },
+    "dim_unavailable_orig": {
+     "assertions": 1,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 179,
+    "cross_agent_nonzero": 21,
+    "cross_agent_cal_true": 42,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 21
+   },
+   "m3": {
+    "supported": 104,
+    "verified": 34,
+    "plausible": 70,
+    "unsupported": 66,
+    "matched": 57
+   },
+   "m4_class_counts": {
+    "degraded": 57,
+    "not_m3_supported": 195,
+    "improved": 1,
+    "persistent_failure": 46
+   }
+  },
+  "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/branch_and_verify/single_origin": {
+   "n": 299,
+   "m1": {
+    "union_orig": 126,
+    "union_cal": 26,
+    "union_orig_zero_only": 105,
+    "dims_cal": {
+     "assertions": 25,
+     "decisions": 20,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 86,
+     "decisions": 91,
+     "actions": 49,
+     "outcomes": 45
+    },
+    "dim_unavailable_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    },
+    "dim_unavailable_orig": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 111,
+    "cross_agent_nonzero": 10,
+    "cross_agent_cal_true": 29,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 25
+   },
+   "m3": {
+    "supported": 58,
+    "verified": 23,
+    "plausible": 35,
+    "unsupported": 46,
+    "matched": 22
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 241,
+    "degraded": 22,
+    "improved": 2,
+    "persistent_failure": 33,
+    "persistent_correct": 1
+   }
+  },
+  "research_synthesis/LEP_INPUT_DISREGARD/branch_and_verify/many_to_one": {
+   "n": 299,
+   "m1": {
+    "union_orig": 48,
+    "union_cal": 2,
+    "union_orig_zero_only": 39,
+    "dims_cal": {
+     "assertions": 2,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 16,
+     "decisions": 16,
+     "actions": 36,
+     "outcomes": 12
+    },
+    "dim_unavailable_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    },
+    "dim_unavailable_orig": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 12,
+    "cross_agent_nonzero": 0,
+    "cross_agent_cal_true": 1,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 12,
+    "verified": 0,
+    "plausible": 12,
+    "unsupported": 0,
+    "matched": 3
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 287,
+    "degraded": 3,
+    "persistent_failure": 6,
+    "improved": 3
+   }
+  },
+  "research_synthesis/LEP_INPUT_DISREGARD/branch_and_verify/single_origin": {
+   "n": 299,
+   "m1": {
+    "union_orig": 55,
+    "union_cal": 4,
+    "union_orig_zero_only": 46,
+    "dims_cal": {
+     "assertions": 4,
+     "decisions": 3,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 19,
+     "decisions": 20,
+     "actions": 37,
+     "outcomes": 12
+    },
+    "dim_unavailable_cal": {
+     "assertions": 1,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    },
+    "dim_unavailable_orig": {
+     "assertions": 1,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 14,
+    "cross_agent_nonzero": 0,
+    "cross_agent_cal_true": 3,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 3
+   },
+   "m3": {
+    "supported": 14,
+    "verified": 0,
+    "plausible": 14,
+    "unsupported": 0,
+    "matched": 4
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 285,
+    "persistent_failure": 8,
+    "persistent_correct": 1,
+    "degraded": 4,
+    "improved": 1
+   }
+  },
+  "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/many_to_one": {
+   "n": 299,
+   "m1": {
+    "union_orig": 189,
+    "union_cal": 56,
+    "union_orig_zero_only": 172,
+    "dims_cal": {
+     "assertions": 53,
+     "decisions": 49,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 165,
+     "decisions": 168,
+     "actions": 40,
+     "outcomes": 78
+    },
+    "dim_unavailable_cal": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    },
+    "dim_unavailable_orig": {
+     "assertions": 0,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 210,
+    "cross_agent_nonzero": 26,
+    "cross_agent_cal_true": 78,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 47
+   },
+   "m3": {
+    "supported": 93,
+    "verified": 32,
+    "plausible": 61,
+    "unsupported": 102,
+    "matched": 40
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 206,
+    "degraded": 40,
+    "persistent_failure": 52,
+    "persistent_correct": 1
+   }
+  },
+  "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/branch_and_verify/single_origin": {
+   "n": 299,
+   "m1": {
+    "union_orig": 149,
+    "union_cal": 39,
+    "union_orig_zero_only": 130,
+    "dims_cal": {
+     "assertions": 39,
+     "decisions": 32,
+     "actions": 0,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 117,
+     "decisions": 121,
+     "actions": 46,
+     "outcomes": 56
+    },
+    "dim_unavailable_cal": {
+     "assertions": 2,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    },
+    "dim_unavailable_orig": {
+     "assertions": 2,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 145,
+    "cross_agent_nonzero": 19,
+    "cross_agent_cal_true": 52,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 37
+   },
+   "m3": {
+    "supported": 63,
+    "verified": 23,
+    "plausible": 40,
+    "unsupported": 72,
+    "matched": 22
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 236,
+    "degraded": 22,
+    "persistent_failure": 40,
+    "improved": 1
+   }
+  },
+  "research_synthesis/LEP_HANDOFF_CORRUPTION/coordinator_workers/one_to_many": {
+   "n": 299,
+   "m1": {
+    "union_orig": 83,
+    "union_cal": 22,
+    "union_orig_zero_only": 54,
+    "dims_cal": {
+     "assertions": 6,
+     "decisions": 4,
+     "actions": 16,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 27,
+     "decisions": 26,
+     "actions": 54,
+     "outcomes": 24
+    },
+    "dim_unavailable_cal": {
+     "assertions": 12,
+     "decisions": 4,
+     "actions": 0,
+     "outcomes": 5
+    },
+    "dim_unavailable_orig": {
+     "assertions": 21,
+     "decisions": 6,
+     "actions": 0,
+     "outcomes": 8
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 83,
+    "cross_agent_nonzero": 12,
+    "cross_agent_cal_true": 21,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 11
+   },
+   "m3": {
+    "supported": 80,
+    "verified": 0,
+    "plausible": 80,
+    "unsupported": 0,
+    "matched": 8
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 219,
+    "persistent_correct": 30,
+    "improved": 6,
+    "degraded": 8,
+    "persistent_failure": 35,
+    "mixed_or_unavailable": 1
+   }
+  },
+  "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/one_to_many": {
+   "n": 299,
+   "m1": {
+    "union_orig": 167,
+    "union_cal": 48,
+    "union_orig_zero_only": 129,
+    "dims_cal": {
+     "assertions": 34,
+     "decisions": 23,
+     "actions": 17,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 107,
+     "decisions": 126,
+     "actions": 58,
+     "outcomes": 67
+    },
+    "dim_unavailable_cal": {
+     "assertions": 16,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    },
+    "dim_unavailable_orig": {
+     "assertions": 25,
+     "decisions": 4,
+     "actions": 0,
+     "outcomes": 5
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 154,
+    "cross_agent_nonzero": 52,
+    "cross_agent_cal_true": 78,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 28
+   },
+   "m3": {
+    "supported": 77,
+    "verified": 10,
+    "plausible": 67,
+    "unsupported": 64,
+    "matched": 37
+   },
+   "m4_class_counts": {
+    "degraded": 37,
+    "not_m3_supported": 222,
+    "persistent_correct": 4,
+    "persistent_failure": 35,
+    "improved": 1
+   }
+  },
+  "research_synthesis/LEP_INPUT_DISREGARD/coordinator_workers/one_to_many": {
+   "n": 299,
+   "m1": {
+    "union_orig": 54,
+    "union_cal": 11,
+    "union_orig_zero_only": 32,
+    "dims_cal": {
+     "assertions": 5,
+     "decisions": 6,
+     "actions": 6,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 13,
+     "decisions": 14,
+     "actions": 40,
+     "outcomes": 13
+    },
+    "dim_unavailable_cal": {
+     "assertions": 11,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 3
+    },
+    "dim_unavailable_orig": {
+     "assertions": 19,
+     "decisions": 5,
+     "actions": 0,
+     "outcomes": 6
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 16,
+    "cross_agent_nonzero": 6,
+    "cross_agent_cal_true": 7,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 1
+   },
+   "m3": {
+    "supported": 13,
+    "verified": 7,
+    "plausible": 6,
+    "unsupported": 0,
+    "matched": 2
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 286,
+    "persistent_correct": 2,
+    "degraded": 2,
+    "improved": 1,
+    "persistent_failure": 7,
+    "mixed_or_unavailable": 1
+   }
+  },
+  "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/one_to_many": {
+   "n": 299,
+   "m1": {
+    "union_orig": 182,
+    "union_cal": 82,
+    "union_orig_zero_only": 143,
+    "dims_cal": {
+     "assertions": 69,
+     "decisions": 59,
+     "actions": 17,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 132,
+     "decisions": 150,
+     "actions": 47,
+     "outcomes": 67
+    },
+    "dim_unavailable_cal": {
+     "assertions": 20,
+     "decisions": 1,
+     "actions": 0,
+     "outcomes": 2
+    },
+    "dim_unavailable_orig": {
+     "assertions": 27,
+     "decisions": 5,
+     "actions": 0,
+     "outcomes": 6
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 172,
+    "cross_agent_nonzero": 57,
+    "cross_agent_cal_true": 110,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 55
+   },
+   "m3": {
+    "supported": 67,
+    "verified": 8,
+    "plausible": 59,
+    "unsupported": 91,
+    "matched": 27
+   },
+   "m4_class_counts": {
+    "degraded": 27,
+    "not_m3_supported": 232,
+    "persistent_correct": 1,
+    "persistent_failure": 38,
+    "improved": 1
+   }
+  },
+  "research_synthesis/LEP_HANDOFF_CORRUPTION/review_loop/single_origin": {
+   "n": 299,
+   "m1": {
+    "union_orig": 80,
+    "union_cal": 13,
+    "union_orig_zero_only": 70,
+    "dims_cal": {
+     "assertions": 7,
+     "decisions": 5,
+     "actions": 6,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 41,
+     "decisions": 40,
+     "actions": 36,
+     "outcomes": 25
+    },
+    "dim_unavailable_cal": {
+     "assertions": 11,
+     "decisions": 4,
+     "actions": 0,
+     "outcomes": 7
+    },
+    "dim_unavailable_orig": {
+     "assertions": 20,
+     "decisions": 4,
+     "actions": 0,
+     "outcomes": 8
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 36,
+    "cross_agent_nonzero": 11,
+    "cross_agent_cal_true": 4,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 5
+   },
+   "m3": {
+    "supported": 31,
+    "verified": 0,
+    "plausible": 31,
+    "unsupported": 0,
+    "matched": 9
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 268,
+    "degraded": 9,
+    "improved": 5,
+    "persistent_failure": 16,
+    "persistent_correct": 1
+   }
+  },
+  "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/review_loop/single_origin": {
+   "n": 299,
+   "m1": {
+    "union_orig": 172,
+    "union_cal": 36,
+    "union_orig_zero_only": 154,
+    "dims_cal": {
+     "assertions": 28,
+     "decisions": 22,
+     "actions": 6,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 117,
+     "decisions": 138,
+     "actions": 46,
+     "outcomes": 67
+    },
+    "dim_unavailable_cal": {
+     "assertions": 24,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    },
+    "dim_unavailable_orig": {
+     "assertions": 31,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 3
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 155,
+    "cross_agent_nonzero": 48,
+    "cross_agent_cal_true": 40,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 21
+   },
+   "m3": {
+    "supported": 79,
+    "verified": 12,
+    "plausible": 67,
+    "unsupported": 58,
+    "matched": 30
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 220,
+    "degraded": 30,
+    "persistent_correct": 2,
+    "persistent_failure": 47
+   }
+  },
+  "research_synthesis/LEP_INPUT_DISREGARD/review_loop/single_origin": {
+   "n": 299,
+   "m1": {
+    "union_orig": 59,
+    "union_cal": 11,
+    "union_orig_zero_only": 47,
+    "dims_cal": {
+     "assertions": 5,
+     "decisions": 2,
+     "actions": 5,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 20,
+     "decisions": 16,
+     "actions": 38,
+     "outcomes": 10
+    },
+    "dim_unavailable_cal": {
+     "assertions": 14,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 3
+    },
+    "dim_unavailable_orig": {
+     "assertions": 23,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 5
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 6,
+    "cross_agent_nonzero": 0,
+    "cross_agent_cal_true": 1,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 0
+   },
+   "m3": {
+    "supported": 5,
+    "verified": 0,
+    "plausible": 5,
+    "unsupported": 0,
+    "matched": 0
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 294,
+    "persistent_failure": 4,
+    "improved": 1
+   }
+  },
+  "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/review_loop/single_origin": {
+   "n": 299,
+   "m1": {
+    "union_orig": 185,
+    "union_cal": 65,
+    "union_orig_zero_only": 167,
+    "dims_cal": {
+     "assertions": 43,
+     "decisions": 40,
+     "actions": 18,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 129,
+     "decisions": 155,
+     "actions": 47,
+     "outcomes": 75
+    },
+    "dim_unavailable_cal": {
+     "assertions": 32,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 1
+    },
+    "dim_unavailable_orig": {
+     "assertions": 39,
+     "decisions": 0,
+     "actions": 0,
+     "outcomes": 3
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 181,
+    "cross_agent_nonzero": 56,
+    "cross_agent_cal_true": 68,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 41
+   },
+   "m3": {
+    "supported": 70,
+    "verified": 11,
+    "plausible": 59,
+    "unsupported": 88,
+    "matched": 27
+   },
+   "m4_class_counts": {
+    "degraded": 27,
+    "not_m3_supported": 229,
+    "persistent_correct": 1,
+    "persistent_failure": 42
+   }
+  },
+  "research_synthesis/LEP_HANDOFF_CORRUPTION/coordinator_workers/single_origin": {
+   "n": 198,
+   "m1": {
+    "union_orig": 34,
+    "union_cal": 8,
+    "union_orig_zero_only": 17,
+    "dims_cal": {
+     "assertions": 3,
+     "decisions": 2,
+     "actions": 5,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 9,
+     "decisions": 7,
+     "actions": 27,
+     "outcomes": 5
+    },
+    "dim_unavailable_cal": {
+     "assertions": 11,
+     "decisions": 1,
+     "actions": 0,
+     "outcomes": 2
+    },
+    "dim_unavailable_orig": {
+     "assertions": 14,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 3
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 14,
+    "cross_agent_nonzero": 2,
+    "cross_agent_cal_true": 3,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 2
+   },
+   "m3": {
+    "supported": 14,
+    "verified": 0,
+    "plausible": 14,
+    "unsupported": 0,
+    "matched": 4
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 184,
+    "degraded": 4,
+    "improved": 1,
+    "persistent_correct": 5,
+    "persistent_failure": 4
+   }
+  },
+  "research_synthesis/LEP_INDIRECT_PROMPT_INJECTION/coordinator_workers/single_origin": {
+   "n": 196,
+   "m1": {
+    "union_orig": 66,
+    "union_cal": 15,
+    "union_orig_zero_only": 47,
+    "dims_cal": {
+     "assertions": 9,
+     "decisions": 3,
+     "actions": 6,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 30,
+     "decisions": 36,
+     "actions": 31,
+     "outcomes": 13
+    },
+    "dim_unavailable_cal": {
+     "assertions": 19,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 2
+    },
+    "dim_unavailable_orig": {
+     "assertions": 23,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 2
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 51,
+    "cross_agent_nonzero": 15,
+    "cross_agent_cal_true": 19,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 9
+   },
+   "m3": {
+    "supported": 36,
+    "verified": 14,
+    "plausible": 22,
+    "unsupported": 15,
+    "matched": 7
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 160,
+    "degraded": 7,
+    "persistent_correct": 2,
+    "persistent_failure": 25,
+    "improved": 2
+   }
+  },
+  "research_synthesis/LEP_INPUT_DISREGARD/coordinator_workers/single_origin": {
+   "n": 198,
+   "m1": {
+    "union_orig": 41,
+    "union_cal": 14,
+    "union_orig_zero_only": 27,
+    "dims_cal": {
+     "assertions": 4,
+     "decisions": 3,
+     "actions": 10,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 14,
+     "decisions": 12,
+     "actions": 25,
+     "outcomes": 11
+    },
+    "dim_unavailable_cal": {
+     "assertions": 10,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 3
+    },
+    "dim_unavailable_orig": {
+     "assertions": 12,
+     "decisions": 3,
+     "actions": 0,
+     "outcomes": 4
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 29,
+    "cross_agent_nonzero": 5,
+    "cross_agent_cal_true": 7,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 6
+   },
+   "m3": {
+    "supported": 29,
+    "verified": 1,
+    "plausible": 28,
+    "unsupported": 0,
+    "matched": 3
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 169,
+    "persistent_correct": 7,
+    "improved": 6,
+    "persistent_failure": 13,
+    "degraded": 3
+   }
+  },
+  "research_synthesis/LEP_TOOL_RESULT_CORRUPTION/coordinator_workers/single_origin": {
+   "n": 198,
+   "m1": {
+    "union_orig": 45,
+    "union_cal": 15,
+    "union_orig_zero_only": 26,
+    "dims_cal": {
+     "assertions": 9,
+     "decisions": 5,
+     "actions": 6,
+     "outcomes": 0
+    },
+    "dims_orig": {
+     "assertions": 17,
+     "decisions": 21,
+     "actions": 24,
+     "outcomes": 8
+    },
+    "dim_unavailable_cal": {
+     "assertions": 5,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 2
+    },
+    "dim_unavailable_orig": {
+     "assertions": 8,
+     "decisions": 2,
+     "actions": 0,
+     "outcomes": 2
+    }
+   },
+   "m2": {
+    "cross_agent_orig": 26,
+    "cross_agent_nonzero": 7,
+    "cross_agent_cal_true": 16,
+    "cross_agent_cal_undetermined": 0,
+    "diagnostic_m2_orig_AND_m1_cal": 7
+   },
+   "m3": {
+    "supported": 13,
+    "verified": 1,
+    "plausible": 12,
+    "unsupported": 13,
+    "matched": 3
+   },
+   "m4_class_counts": {
+    "not_m3_supported": 185,
+    "degraded": 3,
+    "persistent_failure": 9,
+    "persistent_correct": 1
+   }
+  }
+ }
+}

@@ -1,0 +1,14 @@
+{
+ "date": "2026-11-24",
+ "repin": "fingerprints_v5 -> v6",
+ "moved_vs_v5": [
+  "analysis/behavioral_divergence_final/FROZEN_PROTOCOL.md"
+ ],
+ "justification": {
+  "analysis/behavioral_divergence_final/FROZEN_PROTOCOL.md": "S6 change log: control-accuracy fix (exact multiset-LOO quantile) + reproducibility fix (PYTHONHASHSEED pin) entries",
+  "analysis/behavioral_divergence_final/reference/calib_experiment.py": "exact-LOO _loo_rank replacement + __main__ hash-seed pin (validator control only; candidate kernels untouched)",
+  "analysis/behavioral_divergence_final/reference/loo_audit.py": "new tie-bias audit module (out/loo_audit.json)"
+ },
+ "gates.py": "BYTE-IDENTICAL to the original seal (acceptance criteria unchanged)",
+ "candidate_module_set": "23 files, byte-identical to the ORIGINAL seal: True"
+}

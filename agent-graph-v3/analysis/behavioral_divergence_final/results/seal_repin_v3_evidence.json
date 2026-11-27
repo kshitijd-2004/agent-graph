@@ -1,0 +1,19 @@
+{
+ "date": "2026-11-24",
+ "repin": "fingerprints_v2 -> v3",
+ "candidate_module_set": "byte-identical to ORIGINAL seal (verified sha256: 0 files moved of the 23-file candidate/protection set)",
+ "reference_layer_moved_vs_v2": [
+  "analysis/behavioral_divergence_final/FROZEN_PROTOCOL.md",
+  "analysis/behavioral_divergence_final/common.py",
+  "analysis/behavioral_divergence_final/reference/det_reference.py",
+  "analysis/behavioral_divergence_final/reference/eval_scoring.py"
+ ],
+ "justification": {
+  "reference/eval_scoring.py": "G4/G5 pair-scoring repair: per-impl ledger path map (v6/v7/frozen ledgers live in their own dirs) + frozen union schema (behavioral_anomaly, comparable-gated); reference harness only, no candidate re-score",
+  "reference/det_reference.py": "RT-6: label-agnostic claim localizer (claim-N ordinal / collective references; verdict phrase must be claim-referenced) - reference-localizer defect fix that drives the G1 0.72->0.863 correction (research verdicts + code stances); independently verified by claude-fable-5 arbiter spot-check",
+  "FROZEN_PROTOCOL.md": "\u00a76 repair log entries for the above + calibration-repair experiment; protocol document, not a gate",
+  "common.py": "check_sealed now resolves the LATEST repin (v3>v2>original); instrument-layer repair only"
+ },
+ "gates.py": "BYTE-IDENTICAL to original seal (acceptance criteria unchanged)",
+ "note": "repin = instrument re-pin (standing rule); candidate set and all \u00a74 protected artifacts unchanged; heldout already consumed once (the single pre-registered peek under the dev-selected rule)"
+}

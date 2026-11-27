@@ -1,0 +1,52 @@
+{
+  "artifact": "G1 methodology-correction attribution",
+  "impl_kernel_for_ablation": "v6 (the G1-winner kernel)",
+  "authoritative_post_repair_G1": {
+    "candspec": 0.8381742738589212,
+    "v6": 0.8630705394190872,
+    "v7": 0.8381742738589212,
+    "frozen": 0.6113744075829384
+  },
+  "criterion_invariance": {
+    "gates.py_and_MEASUREMENT_SPEC_byte_identical_to_seal": true,
+    "note": "no gate threshold / coverage floor / G4 / G5 criterion was changed"
+  },
+  "candidate_set_invariance": {
+    "n_files": 23,
+    "moved": [],
+    "byte_identical_to_original_seal": true,
+    "note": "the candidates were NOT re-scored or re-tuned"
+  },
+  "deterministic_surface_isolation_v6": {
+    "research_synthesis": {
+      "old_correct": 118,
+      "old_comparable": 188,
+      "old_acc": 0.6276595744680851,
+      "new_correct": 67,
+      "new_comparable": 69,
+      "new_acc": 0.9710144927536232
+    },
+    "code_review": {
+      "old_correct": 24,
+      "old_comparable": 52,
+      "old_acc": 0.46153846153846156,
+      "new_correct": 42,
+      "new_comparable": 52,
+      "new_acc": 0.8076923076923077
+    },
+    "financial_analysis": {
+      "old_correct": 38,
+      "old_comparable": 44,
+      "old_acc": 0.8636363636363636,
+      "new_correct": 38,
+      "new_comparable": 44,
+      "new_acc": 0.8636363636363636
+    }
+  },
+  "interpretation": {
+    "research": "pre-repair whole-text-scan localizer resolved verdicts by scanning the whole final response (cross-claim confusion); the repaired RT-6 localizer is label-agnostic + claim-ordinal and abstains on under-evidenced claims (routes them to the AI-judge surface).  See per-family old_acc/new_acc.",
+    "code_review": "pre-repair exact-string stance comparison counted repair_proposed/asserted as a mismatch; the repaired declared stance-class equates them (same \"defect-stated\" class).",
+    "financial": "unchanged (native numeric-equivalence)."
+  },
+  "honest_scope_note": "The 72% figure is the pre-repair v7 G1 from session history; the old extract_accuracy.json was overwritten when the heldout items were rebuilt, so the exact 72% is not re-derivable on disk.  This artifact isolates the deterministic-surface correction; the authoritative post-repair G1 values are from out/extract_accuracy.json."
+}

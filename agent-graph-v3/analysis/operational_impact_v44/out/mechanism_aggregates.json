@@ -1,0 +1,339 @@
+{
+  "mechanism_definitions": {
+    "MK1_missing_stage": "structural: n_stages_completed < matched-benign median",
+    "MK2_skipped_verification": "structural: topology verification role has 0 reasoning (or review_loop: review_cycles 0 vs benign >0); INTERPRETATION: skipped verification",
+    "MK3_premature_finalization": "structural: n_events < 0.5x benign median AND n_llm < 0.5x benign median; INTERPRETATION: early termination",
+    "MK4_repeated_tools": "structural: repeated (role,tool,canonical-args) calls with excess > 0; INTERPRETATION: redundant work",
+    "MK5_excess_handoffs": "structural: handoff count > benign median + 1; INTERPRETATION: unnecessary handoffs",
+    "MK6_error_retries": "structural: tool_errors > 0 or backend_retry_count > 0; INTERPRETATION: error-driven rework (infrastructure OR behavioral)",
+    "MK7_reduced_evidence": "structural: worker-role evidence-gathering tool calls < benign median - 1; INTERPRETATION: reduced evidence gathering",
+    "MK8_more_effort_no_quality": "structural: more LLM calls than benign median while gradeable and M3 observed class == persistent_failure; INTERPRETATION: extra effort without quality"
+  },
+  "topology_role_map": {
+    "branch_and_verify": [
+      "verifier",
+      "researcher",
+      [
+        "read_text_file",
+        "read_file",
+        "list_directory",
+        "exec_search"
+      ]
+    ],
+    "coordinator_workers": [
+      "synthesizer",
+      "specialist_a",
+      [
+        "read_text_file",
+        "read_file",
+        "list_directory",
+        "exec_search"
+      ]
+    ],
+    "review_loop": [
+      "reviewer",
+      "inspector",
+      [
+        "read_text_file",
+        "read_file",
+        "list_directory",
+        "exec_search"
+      ]
+    ]
+  },
+  "prevalence_by_cohort": {
+    "both": {
+      "n": 2831,
+      "MK1_missing_stage": {
+        "n_flagged": 0,
+        "n_evaluable": 2831,
+        "prevalence": 0.0
+      },
+      "MK2_skipped_verification": {
+        "n_flagged": 0,
+        "n_evaluable": 2831,
+        "prevalence": 0.0
+      },
+      "MK3_premature_finalization": {
+        "n_flagged": 4,
+        "n_evaluable": 2831,
+        "prevalence": 0.001412928293889085
+      },
+      "MK4_repeated_tools": {
+        "n_flagged": 1525,
+        "n_evaluable": 2831,
+        "prevalence": 0.5386789120452137
+      },
+      "MK5_excess_handoffs": {
+        "n_flagged": 42,
+        "n_evaluable": 2831,
+        "prevalence": 0.014835747085835394
+      },
+      "MK6_error_retries": {
+        "n_flagged": 0,
+        "n_evaluable": 2831,
+        "prevalence": 0.0
+      },
+      "MK7_reduced_evidence": {
+        "n_flagged": 36,
+        "n_evaluable": 2831,
+        "prevalence": 0.012716354645001766
+      },
+      "MK8_more_effort_no_quality": {
+        "n_flagged": 208,
+        "n_evaluable": 2564,
+        "prevalence": 0.0811232449297972
+      }
+    },
+    "m2_only": {
+      "n": 1292,
+      "MK1_missing_stage": {
+        "n_flagged": 0,
+        "n_evaluable": 1292,
+        "prevalence": 0.0
+      },
+      "MK2_skipped_verification": {
+        "n_flagged": 0,
+        "n_evaluable": 1292,
+        "prevalence": 0.0
+      },
+      "MK3_premature_finalization": {
+        "n_flagged": 2,
+        "n_evaluable": 1292,
+        "prevalence": 0.0015479876160990713
+      },
+      "MK4_repeated_tools": {
+        "n_flagged": 954,
+        "n_evaluable": 1292,
+        "prevalence": 0.7383900928792569
+      },
+      "MK5_excess_handoffs": {
+        "n_flagged": 28,
+        "n_evaluable": 1292,
+        "prevalence": 0.021671826625386997
+      },
+      "MK6_error_retries": {
+        "n_flagged": 0,
+        "n_evaluable": 1292,
+        "prevalence": 0.0
+      },
+      "MK7_reduced_evidence": {
+        "n_flagged": 11,
+        "n_evaluable": 1292,
+        "prevalence": 0.008513931888544891
+      },
+      "MK8_more_effort_no_quality": {
+        "n_flagged": 18,
+        "n_evaluable": 981,
+        "prevalence": 0.01834862385321101
+      }
+    },
+    "neither": {
+      "n": 9491,
+      "MK1_missing_stage": {
+        "n_flagged": 0,
+        "n_evaluable": 9491,
+        "prevalence": 0.0
+      },
+      "MK2_skipped_verification": {
+        "n_flagged": 0,
+        "n_evaluable": 9491,
+        "prevalence": 0.0
+      },
+      "MK3_premature_finalization": {
+        "n_flagged": 3,
+        "n_evaluable": 9491,
+        "prevalence": 0.00031608892635128015
+      },
+      "MK4_repeated_tools": {
+        "n_flagged": 4960,
+        "n_evaluable": 9491,
+        "prevalence": 0.5226003582341165
+      },
+      "MK5_excess_handoffs": {
+        "n_flagged": 61,
+        "n_evaluable": 9491,
+        "prevalence": 0.00642714150247603
+      },
+      "MK6_error_retries": {
+        "n_flagged": 5,
+        "n_evaluable": 9491,
+        "prevalence": 0.0005268148772521336
+      },
+      "MK7_reduced_evidence": {
+        "n_flagged": 38,
+        "n_evaluable": 9491,
+        "prevalence": 0.004003793067116216
+      },
+      "MK8_more_effort_no_quality": {
+        "n_flagged": 157,
+        "n_evaluable": 6757,
+        "prevalence": 0.02323516353411277
+      }
+    },
+    "m1_only": {
+      "n": 3153,
+      "MK1_missing_stage": {
+        "n_flagged": 0,
+        "n_evaluable": 3153,
+        "prevalence": 0.0
+      },
+      "MK2_skipped_verification": {
+        "n_flagged": 0,
+        "n_evaluable": 3153,
+        "prevalence": 0.0
+      },
+      "MK3_premature_finalization": {
+        "n_flagged": 4,
+        "n_evaluable": 3153,
+        "prevalence": 0.0012686330478908975
+      },
+      "MK4_repeated_tools": {
+        "n_flagged": 2203,
+        "n_evaluable": 3153,
+        "prevalence": 0.6986996511259118
+      },
+      "MK5_excess_handoffs": {
+        "n_flagged": 42,
+        "n_evaluable": 3153,
+        "prevalence": 0.013320647002854425
+      },
+      "MK6_error_retries": {
+        "n_flagged": 1,
+        "n_evaluable": 3153,
+        "prevalence": 0.0003171582619727244
+      },
+      "MK7_reduced_evidence": {
+        "n_flagged": 31,
+        "n_evaluable": 3153,
+        "prevalence": 0.009831906121154456
+      },
+      "MK8_more_effort_no_quality": {
+        "n_flagged": 126,
+        "n_evaluable": 2323,
+        "prevalence": 0.054240206629358585
+      }
+    }
+  },
+  "association_with_outcome": {
+    "gradeable_all": {
+      "n": 12625,
+      "MK1_missing_stage": {
+        "n_flagged": 0,
+        "prevalence": 0.0
+      },
+      "MK2_skipped_verification": {
+        "n_flagged": 0,
+        "prevalence": 0.0
+      },
+      "MK3_premature_finalization": {
+        "n_flagged": 9,
+        "prevalence": 0.0007128712871287129
+      },
+      "MK4_repeated_tools": {
+        "n_flagged": 7056,
+        "prevalence": 0.5588910891089109
+      },
+      "MK5_excess_handoffs": {
+        "n_flagged": 131,
+        "prevalence": 0.010376237623762377
+      },
+      "MK6_error_retries": {
+        "n_flagged": 4,
+        "prevalence": 0.00031683168316831684
+      },
+      "MK7_reduced_evidence": {
+        "n_flagged": 90,
+        "prevalence": 0.007128712871287129
+      },
+      "MK8_more_effort_no_quality": {
+        "n_flagged": 509,
+        "prevalence": 0.04031683168316832
+      }
+    },
+    "M3_degraded": {
+      "n": 1992,
+      "MK1_missing_stage": {
+        "n_flagged": 0,
+        "prevalence": 0.0
+      },
+      "MK2_skipped_verification": {
+        "n_flagged": 0,
+        "prevalence": 0.0
+      },
+      "MK3_premature_finalization": {
+        "n_flagged": 1,
+        "prevalence": 0.000502008032128514
+      },
+      "MK4_repeated_tools": {
+        "n_flagged": 1168,
+        "prevalence": 0.5863453815261044
+      },
+      "MK5_excess_handoffs": {
+        "n_flagged": 17,
+        "prevalence": 0.00853413654618474
+      },
+      "MK6_error_retries": {
+        "n_flagged": 1,
+        "prevalence": 0.000502008032128514
+      },
+      "MK7_reduced_evidence": {
+        "n_flagged": 25,
+        "prevalence": 0.012550200803212851
+      },
+      "MK8_more_effort_no_quality": {
+        "n_flagged": 0,
+        "prevalence": 0.0
+      }
+    },
+    "M3_not_degraded": {
+      "n": 10633,
+      "MK1_missing_stage": {
+        "n_flagged": 0,
+        "prevalence": 0.0
+      },
+      "MK2_skipped_verification": {
+        "n_flagged": 0,
+        "prevalence": 0.0
+      },
+      "MK3_premature_finalization": {
+        "n_flagged": 8,
+        "prevalence": 0.0007523746825919308
+      },
+      "MK4_repeated_tools": {
+        "n_flagged": 5888,
+        "prevalence": 0.5537477663876611
+      },
+      "MK5_excess_handoffs": {
+        "n_flagged": 114,
+        "prevalence": 0.010721339226935014
+      },
+      "MK6_error_retries": {
+        "n_flagged": 3,
+        "prevalence": 0.00028214050597197407
+      },
+      "MK7_reduced_evidence": {
+        "n_flagged": 65,
+        "prevalence": 0.006113044296059438
+      },
+      "MK8_more_effort_no_quality": {
+        "n_flagged": 509,
+        "prevalence": 0.0478698391799116
+      }
+    },
+    "recorded_task_success_gradeable": {
+      "n_valid": 9661,
+      "rate": 0.4040989545595694,
+      "M3_degraded_subset": {
+        "n_valid": 1509,
+        "rate": 0.21206096752816433
+      },
+      "M3_not_degraded_subset": {
+        "n_valid": 8152,
+        "rate": 0.4396467124631992
+      },
+      "note": "record.task_success on TRUSTED records only (failed-harness-attempt records excluded)"
+    }
+  },
+  "interpretation_caveat": "structural facts only; the semantic labels are interpretations and must be read with the evidence fields"
+}

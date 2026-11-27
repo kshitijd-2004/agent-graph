@@ -1,0 +1,91 @@
+{
+ "m2": {
+  "original": {
+   "cross_agent_positive": 3052,
+   "nonzero_threshold_subset": 1031,
+   "reach_class": {
+    "unsupported": 1215,
+    "plausible": 1301,
+    "verified": 346,
+    "not_downstream": 190,
+    "delivery_verified": 2862,
+    "delivery_unverified": 190
+   }
+  },
+  "calibrated": {
+   "true": 732,
+   "undetermined": 0,
+   "false": 16041,
+   "cal_reasons": {
+    "inter": 443,
+    "final": 289
+   },
+   "reach_class": {
+    "plausible": 270,
+    "verified": 69,
+    "unsupported": 257,
+    "not_downstream": 136,
+    "delivery_verified": 677,
+    "delivery_unverified": 55
+   }
+  },
+  "note": "M2_cal undetermined = 0 (every calibrated M2 applicable row had a pooled checkpoint theta; never forced negative).  M2 is NOT assumed a subset of M1: the definitions do not guarantee it (whole-trace union vs cross-agent checkpoint gate)."
+ },
+ "m3": {
+  "original_rule": {
+   "supported": 1647,
+   "verified": 346,
+   "plausible": 1301,
+   "classes": {
+    "mixed_or_unavailable": 246,
+    "persistent_correct": 416,
+    "degraded": 421,
+    "persistent_failure": 516,
+    "improved": 48
+   },
+   "matched_degraded": 421,
+   "denominator": 1647
+  },
+  "calibrated_rule": {
+   "supported": 339,
+   "verified": 69,
+   "plausible": 270,
+   "classes": {
+    "persistent_correct": 43,
+    "degraded": 118,
+    "mixed_or_unavailable": 23,
+    "persistent_failure": 145,
+    "improved": 10
+   },
+   "matched_degraded": 118,
+   "denominator": 339
+  },
+  "note": "M3_R = M2_R \u2229 reach\u2208{verified,plausible} \u2229 delivery_verified.  Classes recomputed over M3_R from the v6 ledger grader artifacts (untouched). M3_cal \u2286 M3_orig since M2_cal \u2286 M2_orig."
+ },
+ "m4_matched_rate": {
+  "over_M3_orig": 0.25561627200971465,
+  "over_M3_cal": 0.3480825958702065
+ },
+ "evidence_scoping_check": {
+  "m3_detail_vocabulary_among_reach_supported": {
+   "content_reach_input_only": 909,
+   "lineage_downstream_role+dag": 392,
+   "content_reach_own_output": 346
+  },
+  "checkpoint_scoped_evidence": false,
+  "note": "Detail strings name content/lineage reach at the row (DAG) level, not a checkpoint key: the execution-level join across rules is the correct construction.  If a detail were checkpoint-scoped, rows whose rule-flagged checkpoint set did not cover the evidence checkpoint would be excluded \u2014 none are."
+ },
+ "inconsistency_reconciliation": {
+  "reported_triplet": {
+   "M2_cal": 732,
+   "M3_supported": 1647,
+   "M4_matched": 421,
+   "explanation": "the report printed M3 1647/421 under the CALIBRATED M2 column though they were computed over the ORIGINAL M2-supported population: the inconsistency is a population-mismatch, not a math error"
+  },
+  "recomputed": {
+   "M2_cal": 732,
+   "M3_cal_supported": 339,
+   "M4_matched_over_M3_cal": 118
+  }
+ }
+}

@@ -1,0 +1,32 @@
+{
+ "operator": "strict > (the executed rule) vs >= ",
+ "lep_tie_cells": 2726,
+ "lep_union_flip_under_ge": 2438,
+ "per_dimension": {
+  "assertions": {
+   "n_tie": 1585,
+   "n_would_flip": 1585
+  },
+  "decisions": {
+   "n_tie": 1370,
+   "n_would_flip": 1370
+  },
+  "actions": {
+   "n_tie": 11,
+   "n_would_flip": 11
+  },
+  "outcomes": {
+   "n_tie": 1334,
+   "n_would_flip": 1334
+  }
+ },
+ "b2b_probe_observations": 50319,
+ "b2b_probe_strict_fire_union": 1430,
+ "b2b_probe_ge_fire_union": 5805,
+ "b2b_probe_tie_flip": 4375,
+ "consequence_assessment": {
+  "fpr_effect": "strict: 1430/50319 (0.028419); under >=: +4375 tie-flips -> 0.115364",
+  "sensitivity_effect": "the flips are by construction rows at-or-above the pooled q98 boundary: they are the largest within-family deviations that strict > excludes by a measure-zero tie.  They are NOT arbitrary positives.",
+  "recommendation": "do NOT switch to >= to manufacture positives (requirement 5).  Where the pool mass concentrates at a value (outcomes at 1.0), the tie is the MAXIMUM attainable statistic \u2014 the dimension is effectively disabled either way; the operator question for outcomes is moot at q98.  For continuous dims (assertions/decisions/actions) ties are rare and the strict- > is the conservative, G5-consistent choice."
+ }
+}

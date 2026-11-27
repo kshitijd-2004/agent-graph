@@ -1,0 +1,101 @@
+{
+  "artifact": "out/production_sensitivity_calibrated_v6.json",
+  "kernel": "v6 (features_v6 + run_pipeline.dim_distances; outcome_of for the grade feeds)",
+  "population": "full P1 frame (all standard LEP rows with >=3 compatible benign references)",
+  "note": "SENSITIVITY RECORD only: the primary production measurement is the frozen per-cell max theta (out/production_summary_v6.json: M1 union 5,037 / 16,773 = 30.03%).  The repaired control (dev-selected p3_q98_f0_family, exact multiset-LOO quantile, family pool, floor 0.0) answers what the union would be under the repaired theta.  G5 criterion (FPR<=0.05) is unchanged; the B2B control side is reported on the full frame as well.",
+  "rules": {
+    "p3_q98_f0_family (dev-selected; G5 rule)": {
+      "null": "T_p3",
+      "q": 0.98,
+      "pool": "family",
+      "floor": 0.0,
+      "lep_union": [
+        943,
+        16773,
+        0.05622130805461158,
+        {
+          "assertions": 478,
+          "decisions": 408,
+          "actions": 442,
+          "outcomes": 0
+        },
+        0
+      ],
+      "b2b_union": [
+        1430,
+        50319,
+        0.028418688765674993,
+        {
+          "assertions": 375,
+          "decisions": 366,
+          "actions": 998,
+          "outcomes": 0
+        }
+      ]
+    },
+    "p2_q98_f0_family (clean 2-ref null)": {
+      "null": "T_p2",
+      "q": 0.98,
+      "pool": "family",
+      "floor": 0.0,
+      "lep_union": [
+        864,
+        16773,
+        0.051511357538901806,
+        {
+          "assertions": 92,
+          "decisions": 559,
+          "actions": 298,
+          "outcomes": 0
+        },
+        0
+      ],
+      "b2b_union": [
+        1504,
+        50319,
+        0.029889306226276356,
+        {
+          "assertions": 208,
+          "decisions": 520,
+          "actions": 968,
+          "outcomes": 0
+        }
+      ]
+    },
+    "p3_q99_f0_family (stricter band)": {
+      "null": "T_p3",
+      "q": 0.99,
+      "pool": "family",
+      "floor": 0.0,
+      "lep_union": [
+        594,
+        16773,
+        0.03541405830799499,
+        {
+          "assertions": 71,
+          "decisions": 373,
+          "actions": 210,
+          "outcomes": 0
+        },
+        0
+      ],
+      "b2b_union": [
+        772,
+        50319,
+        0.015342117291679088,
+        {
+          "assertions": 106,
+          "decisions": 267,
+          "actions": 486,
+          "outcomes": 0
+        }
+      ]
+    }
+  },
+  "frozen_theta_primary": {
+    "m1_union_count": 5037,
+    "frame_rows": 16773,
+    "m1_union_rate": 0.3003040600965838,
+    "source": "out/production_summary_v6.json"
+  }
+}

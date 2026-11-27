@@ -1,0 +1,14 @@
+{
+ "date": "2026-11-24",
+ "repin": "fingerprints_v3 -> v4",
+ "moved_vs_v3": [
+  "analysis/behavioral_divergence_final/common.py",
+  "analysis/behavioral_divergence_final/reference/eval_scoring.py"
+ ],
+ "justification": {
+  "reference/eval_scoring.py": "G4/G5 scoring repair (module-level LEDGER map for v6/v7/frozen ledgers + frozen union schema) + single-source LEDGER refactor; reference harness only, no candidate re-score",
+  "common.py": "check_sealed now resolves the LATEST repin (v4>v3>v2>original); instrument-layer repair only"
+ },
+ "candidate_module_set": "23 files, byte-identical to ORIGINAL seal: True",
+ "note": "G8 checks the LATEST repin; candidate-under-test set is verified against the ORIGINAL seal at every verdict assembly (never against a moved reference file)"
+}

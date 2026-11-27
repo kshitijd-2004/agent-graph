@@ -1,0 +1,572 @@
+{
+  "partition": "heldout",
+  "note": "assembled from on-disk gate surfaces; the heldout judge layer was consumed exactly once at seal; this step re-reads sealed artifacts only (no new judge calls, no heldout re-tuning)",
+  "g5_repair": "G5 gate input replaced by the matched-cardinality repaired control (rule p3_q98_f0_family, dev-selected); the frozen criterion (FPR<=0.05 on the pure-negative population) is unchanged.  See out/calib_experiment_heldout*.json and out/b2b_control.json (the 31.9% predecessor artifact).",
+  "eval_scores": {
+    "candspec": {
+      "implementation": "candspec",
+      "extraction_accuracy": {
+        "value_accuracy": 0.8381742738589212,
+        "wilson95": [
+          0.7864329484614754,
+          0.8793039767503028
+        ],
+        "n_judgeable": 241
+      },
+      "extraction_accuracy_evidence": {
+        "det_key_accuracy": 0.8520710059171598,
+        "det_key_wilson95": [
+          0.7907424343891413,
+          0.8977497871543415
+        ],
+        "det_n_keys": 169,
+        "det_by_family": {
+          "code_review": {
+            "n": 55,
+            "correct": 39,
+            "accuracy": 0.7090909090909091,
+            "wilson95": [
+              0.5785927939978976,
+              0.8122880651323823
+            ]
+          },
+          "financial_analysis": {
+            "n": 44,
+            "correct": 38,
+            "accuracy": 0.8636363636363636,
+            "wilson95": [
+              0.7329054682937222,
+              0.9359704553982842
+            ]
+          },
+          "research_synthesis": {
+            "n": 70,
+            "correct": 67,
+            "accuracy": 0.9571428571428572,
+            "wilson95": [
+              0.8814033116891541,
+              0.9853184591101384
+            ]
+          }
+        },
+        "ai_state_accuracy": 0.8055555555555556,
+        "ai_n": 72,
+        "actions_value_accuracy": "unsupported_by_design",
+        "value_accuracy": 0.8381742738589212,
+        "value_accuracy_wilson95": [
+          0.7864329484614754,
+          0.8793039767503028
+        ],
+        "coverage": {
+          "assertions": 13118,
+          "decisions": 13129,
+          "actions": 16773,
+          "outcomes": 11472
+        }
+      },
+      "union_pairs": {
+        "f1": 0.8225108225108224,
+        "precision": 0.9693877551020408,
+        "recall": 0.7142857142857143,
+        "n_evaluable": 145,
+        "n_excluded_unstable": 71
+      },
+      "zero_threshold_only": 120,
+      "coverage": {
+        "assertions": 13118,
+        "decisions": 13129,
+        "actions": 16773,
+        "outcomes": 11472
+      },
+      "reference_coverage": {
+        "swe_issue_identification": {
+          "judgeable": true,
+          "declared_unsupported": false,
+          "n_code_review_items": 96,
+          "n_det_resolved": 54,
+          "n_with_alias_table": 96,
+          "det_resolve_share": 0.5625,
+          "frame_share": 0.354,
+          "note": "RT-1 positional alias table (96/96 heldout code items carry it; 0.96 table coverage full-frame); the det layer resolves stated stances; unstated-issue cells stay undetermined, never forced."
+        },
+        "n_items": 169,
+        "note": "reference: repaired det layer (RT-6 label-agnostic localizer + calibrated actions) with the AI-judge surface; ai_unresolved/judge_invalid excluded, never negatives"
+      },
+      "per_dimension": {
+        "assertions": {
+          "n_reference_comparable": 72,
+          "value_accuracy": 0.8055555555555556,
+          "surface": "AI-judge state-level (trajectory claim/stance sets); Wilson on the ai_state surface"
+        },
+        "decisions": {
+          "n_reference_comparable": 262,
+          "value_accuracy": 0.8520710059171598,
+          "surface": "det-key decisions scope (research claim verdicts / code issue stances / financial final answer) at native key granularity"
+        },
+        "actions": {
+          "n_reference_comparable": 504,
+          "value_accuracy": null,
+          "surface": "unsupported_by_design: pair-level construct; validated by G4/G5 + synthetic S5/S9/S13, not a value-accuracy surface"
+        },
+        "outcomes": {
+          "n_reference_comparable": 201,
+          "value_accuracy": null,
+          "surface": "folds into the decisions-scope det-key surface (financial answer / research verdicts / code stances); no independent outcomes value surface -> reported None, never imputed"
+        }
+      },
+      "benign_to_benign": {
+        "fpr": 0.03215475275429157,
+        "n": 15612,
+        "wilson95": [
+          0.029500565044899438,
+          0.03503911804134885
+        ],
+        "control": "matched-cardinality 3-ref exchangeable null, leave-one-cell-out empirical quantile (rule p3_q98_f0_family, dev-selected, floor 0.0, pool family); probe excluded from its own threshold pool; partition-local pool",
+        "lep_union_rate": 0.07782475019215988,
+        "excess_union": 0.045669997437868315,
+        "excess_ci95": [
+          0.0378831582517336,
+          0.05345683662400303
+        ],
+        "legacy_pair_class_control": {
+          "n": 22,
+          "note": "the predecessor control (pair-class benigns, mismatched cardinality; reported for the record, NOT the gate input)"
+        }
+      }
+    },
+    "v6": {
+      "implementation": "v6",
+      "extraction_accuracy": {
+        "value_accuracy": 0.8630705394190872,
+        "wilson95": [
+          0.8139386465907545,
+          0.9008095859985779
+        ],
+        "n_judgeable": 241
+      },
+      "extraction_accuracy_evidence": {
+        "det_key_accuracy": 0.8698224852071006,
+        "det_key_wilson95": [
+          0.8107683948566247,
+          0.9124377202100589
+        ],
+        "det_n_keys": 169,
+        "det_by_family": {
+          "code_review": {
+            "n": 55,
+            "correct": 42,
+            "accuracy": 0.7636363636363637,
+            "wilson95": [
+              0.636516337024307,
+              0.8563334418790891
+            ]
+          },
+          "financial_analysis": {
+            "n": 44,
+            "correct": 38,
+            "accuracy": 0.8636363636363636,
+            "wilson95": [
+              0.7329054682937222,
+              0.9359704553982842
+            ]
+          },
+          "research_synthesis": {
+            "n": 70,
+            "correct": 67,
+            "accuracy": 0.9571428571428572,
+            "wilson95": [
+              0.8814033116891541,
+              0.9853184591101384
+            ]
+          }
+        },
+        "ai_state_accuracy": 0.8472222222222222,
+        "ai_n": 72,
+        "actions_value_accuracy": "unsupported_by_design",
+        "value_accuracy": 0.8630705394190872,
+        "value_accuracy_wilson95": [
+          0.8139386465907545,
+          0.9008095859985779
+        ],
+        "coverage": {
+          "assertions": 12707,
+          "decisions": 12779,
+          "actions": 16773,
+          "outcomes": 12068
+        }
+      },
+      "union_pairs": {
+        "f1": 0.8461538461538463,
+        "precision": 0.9801980198019802,
+        "recall": 0.7443609022556391,
+        "n_evaluable": 145,
+        "n_excluded_unstable": 71
+      },
+      "zero_threshold_only": 127,
+      "coverage": {
+        "assertions": 12707,
+        "decisions": 12779,
+        "actions": 16773,
+        "outcomes": 12068
+      },
+      "reference_coverage": {
+        "swe_issue_identification": {
+          "judgeable": true,
+          "declared_unsupported": false,
+          "n_code_review_items": 96,
+          "n_det_resolved": 54,
+          "n_with_alias_table": 96,
+          "det_resolve_share": 0.5625,
+          "frame_share": 0.354,
+          "note": "RT-1 positional alias table (96/96 heldout code items carry it; 0.96 table coverage full-frame); the det layer resolves stated stances; unstated-issue cells stay undetermined, never forced."
+        },
+        "n_items": 169,
+        "note": "reference: repaired det layer (RT-6 label-agnostic localizer + calibrated actions) with the AI-judge surface; ai_unresolved/judge_invalid excluded, never negatives"
+      },
+      "per_dimension": {
+        "assertions": {
+          "n_reference_comparable": 72,
+          "value_accuracy": 0.8472222222222222,
+          "surface": "AI-judge state-level (trajectory claim/stance sets); Wilson on the ai_state surface"
+        },
+        "decisions": {
+          "n_reference_comparable": 262,
+          "value_accuracy": 0.8698224852071006,
+          "surface": "det-key decisions scope (research claim verdicts / code issue stances / financial final answer) at native key granularity"
+        },
+        "actions": {
+          "n_reference_comparable": 504,
+          "value_accuracy": null,
+          "surface": "unsupported_by_design: pair-level construct; validated by G4/G5 + synthetic S5/S9/S13, not a value-accuracy surface"
+        },
+        "outcomes": {
+          "n_reference_comparable": 201,
+          "value_accuracy": null,
+          "surface": "folds into the decisions-scope det-key surface (financial answer / research verdicts / code stances); no independent outcomes value surface -> reported None, never imputed"
+        }
+      },
+      "benign_to_benign": {
+        "fpr": 0.030169100691775558,
+        "n": 15612,
+        "wilson95": [
+          0.02759935068649349,
+          0.03297000520584376
+        ],
+        "control": "matched-cardinality 3-ref exchangeable null, leave-one-cell-out empirical quantile (rule p3_q98_f0_family, dev-selected, floor 0.0, pool family); probe excluded from its own threshold pool; partition-local pool",
+        "lep_union_rate": 0.07455803228285934,
+        "excess_union": 0.044388931591083786,
+        "excess_ci95": [
+          0.03676444609149585,
+          0.05201341709067172
+        ],
+        "legacy_pair_class_control": {
+          "n": 22,
+          "note": "the predecessor control (pair-class benigns, mismatched cardinality; reported for the record, NOT the gate input)"
+        }
+      }
+    },
+    "v7": {
+      "implementation": "v7",
+      "extraction_accuracy": {
+        "value_accuracy": 0.8381742738589212,
+        "wilson95": [
+          0.7864329484614754,
+          0.8793039767503028
+        ],
+        "n_judgeable": 241
+      },
+      "extraction_accuracy_evidence": {
+        "det_key_accuracy": 0.8520710059171598,
+        "det_key_wilson95": [
+          0.7907424343891413,
+          0.8977497871543415
+        ],
+        "det_n_keys": 169,
+        "det_by_family": {
+          "code_review": {
+            "n": 55,
+            "correct": 39,
+            "accuracy": 0.7090909090909091,
+            "wilson95": [
+              0.5785927939978976,
+              0.8122880651323823
+            ]
+          },
+          "financial_analysis": {
+            "n": 44,
+            "correct": 38,
+            "accuracy": 0.8636363636363636,
+            "wilson95": [
+              0.7329054682937222,
+              0.9359704553982842
+            ]
+          },
+          "research_synthesis": {
+            "n": 70,
+            "correct": 67,
+            "accuracy": 0.9571428571428572,
+            "wilson95": [
+              0.8814033116891541,
+              0.9853184591101384
+            ]
+          }
+        },
+        "ai_state_accuracy": 0.8055555555555556,
+        "ai_n": 72,
+        "actions_value_accuracy": "unsupported_by_design",
+        "value_accuracy": 0.8381742738589212,
+        "value_accuracy_wilson95": [
+          0.7864329484614754,
+          0.8793039767503028
+        ],
+        "coverage": {
+          "assertions": 12129,
+          "decisions": 12184,
+          "actions": 16773,
+          "outcomes": 11472
+        }
+      },
+      "union_pairs": {
+        "f1": 0.8225108225108224,
+        "precision": 0.9693877551020408,
+        "recall": 0.7142857142857143,
+        "n_evaluable": 145,
+        "n_excluded_unstable": 71
+      },
+      "zero_threshold_only": 119,
+      "coverage": {
+        "assertions": 12129,
+        "decisions": 12184,
+        "actions": 16773,
+        "outcomes": 11472
+      },
+      "reference_coverage": {
+        "swe_issue_identification": {
+          "judgeable": true,
+          "declared_unsupported": false,
+          "n_code_review_items": 96,
+          "n_det_resolved": 54,
+          "n_with_alias_table": 96,
+          "det_resolve_share": 0.5625,
+          "frame_share": 0.354,
+          "note": "RT-1 positional alias table (96/96 heldout code items carry it; 0.96 table coverage full-frame); the det layer resolves stated stances; unstated-issue cells stay undetermined, never forced."
+        },
+        "n_items": 169,
+        "note": "reference: repaired det layer (RT-6 label-agnostic localizer + calibrated actions) with the AI-judge surface; ai_unresolved/judge_invalid excluded, never negatives"
+      },
+      "per_dimension": {
+        "assertions": {
+          "n_reference_comparable": 72,
+          "value_accuracy": 0.8055555555555556,
+          "surface": "AI-judge state-level (trajectory claim/stance sets); Wilson on the ai_state surface"
+        },
+        "decisions": {
+          "n_reference_comparable": 262,
+          "value_accuracy": 0.8520710059171598,
+          "surface": "det-key decisions scope (research claim verdicts / code issue stances / financial final answer) at native key granularity"
+        },
+        "actions": {
+          "n_reference_comparable": 504,
+          "value_accuracy": null,
+          "surface": "unsupported_by_design: pair-level construct; validated by G4/G5 + synthetic S5/S9/S13, not a value-accuracy surface"
+        },
+        "outcomes": {
+          "n_reference_comparable": 201,
+          "value_accuracy": null,
+          "surface": "folds into the decisions-scope det-key surface (financial answer / research verdicts / code stances); no independent outcomes value surface -> reported None, never imputed"
+        }
+      },
+      "benign_to_benign": {
+        "fpr": 0.03029720727645401,
+        "n": 15612,
+        "wilson95": [
+          0.027721919765792566,
+          0.03310358626808733
+        ],
+        "control": "matched-cardinality 3-ref exchangeable null, leave-one-cell-out empirical quantile (rule p3_q98_f0_family, dev-selected, floor 0.0, pool family); probe excluded from its own threshold pool; partition-local pool",
+        "lep_union_rate": 0.07513451191391238,
+        "excess_union": 0.04483730463745837,
+        "excess_ci95": [
+          0.037187191128748354,
+          0.05248741814616839
+        ],
+        "legacy_pair_class_control": {
+          "n": 22,
+          "note": "the predecessor control (pair-class benigns, mismatched cardinality; reported for the record, NOT the gate input)"
+        }
+      }
+    },
+    "frozen": {
+      "implementation": "frozen",
+      "extraction_accuracy": {
+        "value_accuracy": 0.6113744075829384,
+        "wilson95": [
+          0.5441734674823525,
+          0.6745925018269902
+        ],
+        "n_judgeable": 211
+      },
+      "extraction_accuracy_evidence": {
+        "det_key_accuracy": 0.7050359712230215,
+        "det_key_wilson95": [
+          0.624534478159841,
+          0.7745093319945211
+        ],
+        "det_n_keys": 139,
+        "det_by_family": {
+          "code_review": {
+            "n": 55,
+            "correct": 19,
+            "accuracy": 0.34545454545454546,
+            "wilson95": [
+              0.23362709466463594,
+              0.477460965978201
+            ]
+          },
+          "financial_analysis": {
+            "n": 14,
+            "correct": 11,
+            "accuracy": 0.7857142857142857,
+            "wilson95": [
+              0.5241076920169465,
+              0.9242861334670647
+            ]
+          },
+          "research_synthesis": {
+            "n": 70,
+            "correct": 68,
+            "accuracy": 0.9714285714285714,
+            "wilson95": [
+              0.9016774380113607,
+              0.9921293881254095
+            ]
+          }
+        },
+        "ai_state_accuracy": 0.4305555555555556,
+        "ai_n": 72,
+        "actions_value_accuracy": "unsupported_by_design",
+        "value_accuracy": 0.6113744075829384,
+        "value_accuracy_wilson95": [
+          0.5441734674823525,
+          0.6745925018269902
+        ],
+        "coverage": {
+          "assertions": null,
+          "decisions": null,
+          "actions": null,
+          "outcomes": null
+        }
+      },
+      "union_pairs": {
+        "f1": 0.7741935483870968,
+        "precision": 1.0,
+        "recall": 0.631578947368421,
+        "n_evaluable": 145,
+        "n_excluded_unstable": 71
+      },
+      "zero_threshold_only": 0,
+      "coverage": {},
+      "reference_coverage": {
+        "swe_issue_identification": {
+          "judgeable": true,
+          "declared_unsupported": false,
+          "n_code_review_items": 96,
+          "n_det_resolved": 54,
+          "n_with_alias_table": 96,
+          "det_resolve_share": 0.5625,
+          "frame_share": 0.354,
+          "note": "RT-1 positional alias table (96/96 heldout code items carry it; 0.96 table coverage full-frame); the det layer resolves stated stances; unstated-issue cells stay undetermined, never forced."
+        },
+        "n_items": 139,
+        "note": "reference: repaired det layer (RT-6 label-agnostic localizer + calibrated actions) with the AI-judge surface; ai_unresolved/judge_invalid excluded, never negatives"
+      },
+      "per_dimension": {
+        "assertions": {
+          "n_reference_comparable": 72,
+          "value_accuracy": null,
+          "surface": "AI-judge state-level (trajectory claim/stance sets); Wilson on the ai_state surface",
+          "note": "V4.1 has no per-dimension features; support is at UNION level only (m1_historical)"
+        },
+        "decisions": {
+          "n_reference_comparable": 262,
+          "value_accuracy": null,
+          "surface": "det-key decisions scope (research claim verdicts / code issue stances / financial final answer) at native key granularity",
+          "note": "V4.1 has no per-dimension features; support is at UNION level only (m1_historical)"
+        },
+        "actions": {
+          "n_reference_comparable": 504,
+          "value_accuracy": null,
+          "surface": "unsupported_by_design: pair-level construct; validated by G4/G5 + synthetic S5/S9/S13, not a value-accuracy surface",
+          "note": "V4.1 has no per-dimension features; support is at UNION level only (m1_historical)"
+        },
+        "outcomes": {
+          "n_reference_comparable": 201,
+          "value_accuracy": null,
+          "surface": "folds into the decisions-scope det-key surface (financial answer / research verdicts / code stances); no independent outcomes value surface -> reported None, never imputed",
+          "note": "V4.1 has no per-dimension features; support is at UNION level only (m1_historical)"
+        }
+      },
+      "benign_to_benign": {
+        "fpr": null,
+        "n": 0,
+        "wilson95": null,
+        "control": "unavailable: V4.1 is a whole-trace flag with no per-dimension \u03b8 pool; the repaired control requires per-dimension distances.  Reported UNAVAILABLE, never imputed as a negative.",
+        "legacy_pair_class_control": {
+          "n": 22,
+          "fpr": 0.5455
+        }
+      }
+    }
+  },
+  "gate_verdict": {
+    "decision": "SELECTED:v6",
+    "selected": "v6",
+    "ranking": [
+      [
+        "v6",
+        8,
+        0.8630705394190872,
+        0.030169100691775558
+      ],
+      [
+        "v7",
+        7,
+        0.8381742738589212,
+        0.03029720727645401
+      ],
+      [
+        "candspec",
+        7,
+        0.8381742738589212,
+        0.03215475275429157
+      ]
+    ],
+    "note": "ties broken by G1 accuracy then G5 FPR; selection is on measurement VALIDITY, not on the magnitude of reported divergence/propagation rates",
+    "dimension_support_status": {
+      "candspec": {
+        "assertions": "defensible",
+        "decisions": "defensible",
+        "actions": "qualified",
+        "outcomes": "qualified"
+      },
+      "v6": {
+        "assertions": "defensible",
+        "decisions": "defensible",
+        "actions": "qualified",
+        "outcomes": "qualified"
+      },
+      "v7": {
+        "assertions": "defensible",
+        "decisions": "defensible",
+        "actions": "qualified",
+        "outcomes": "qualified"
+      },
+      "frozen": {
+        "assertions": "qualified",
+        "decisions": "qualified",
+        "actions": "qualified",
+        "outcomes": "qualified"
+      }
+    }
+  }
+}

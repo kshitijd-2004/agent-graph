@@ -1,0 +1,39 @@
+{
+ "per_dimension": {
+  "assertions": {
+   "removed_dim_fired_orig": 1994,
+   "added_mech_evaluable_gain": 23,
+   "added_mech_recentering": 15,
+   "added_mech_pooling": 12
+  },
+  "decisions": {
+   "removed_dim_fired_orig": 1930,
+   "added_mech_evaluable_gain": 28,
+   "added_mech_recentering": 17,
+   "added_mech_pooling": 11
+  },
+  "actions": {
+   "removed_dim_fired_orig": 2174,
+   "added_mech_pooling": 106,
+   "added_mech_recentering": 83
+  },
+  "outcomes": {
+   "removed_dim_fired_orig": 1094
+  }
+ },
+ "row_mechanisms_new_positive": {
+  "pooling": 121,
+  "recentering": 103,
+  "evaluable_gain": 31,
+  "evaluable_gain+pooling": 1
+ },
+ "invariants": {
+  "removed_rows_V_thr_only_union_fire": 4350
+ },
+ "definitions": {
+  "evaluable_gain": "dimension not evaluable under the original rule (B_d None or th1 None) but evaluable and positive under the calibrated rule",
+  "recentering": "raw statistic T_d exceeds the original per-cell threshold th1, but the original centered statistic T_d - B_d does not: the -B_d re-centering suppressed it under orig",
+  "pooling": "T_d > th2 while T_d <= th1: the family-pooled q98 threshold is LOWER than the per-cell max-of-3 threshold on this dimension -> pooling enabled it"
+ },
+ "note": "Removals: on every orig-fired dim of a removed row, T_d > th1 holds (B_d >= 0), so each removed union positive still fires the V_thr_only variant (raw statistic, original per-cell thresholds); removals are attributable to the threshold/pooling axis alone. New positives: OR over the per-dimension mechanisms above; a row can carry multiple (reported as combined)."
+}

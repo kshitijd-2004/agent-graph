@@ -1,0 +1,50 @@
+{
+ "n_frame": 16773,
+ "C1_observable_difference": 15634,
+ "C2_exceeds_own_cell_benign_mean": 8236,
+ "C3_original_rule_exceeds_all_benign_pairs": 5037,
+ "C4_calibrated_pooled_tail_anomaly": 943,
+ "rates": {
+  "C1": 0.9320932450962857,
+  "C2": 0.491027246169439,
+  "C3": 0.3003040600965838,
+  "C4": 0.05622130805461158
+ },
+ "per_family": {
+  "code_review": {
+   "C1": 5422,
+   "C2": 3074,
+   "C3": 1732,
+   "C4": 192,
+   "n": 5555
+  },
+  "financial_analysis": {
+   "C1": 4955,
+   "C2": 2273,
+   "C3": 1267,
+   "C4": 249,
+   "n": 5644
+  },
+  "research_synthesis": {
+   "C1": 5257,
+   "C2": 2889,
+   "C3": 2038,
+   "C4": 502,
+   "n": 5574
+  }
+ },
+ "C5_population_excess": {
+  "source": "out/production_sensitivity_calibrated_v6.json + calibrated_production B2B control",
+  "p3_q98_family": {
+   "LEP_union": 0.05622130805461158,
+   "B2B_probe_union": 0.028418688765674993,
+   "excess_pp": 2.78,
+   "ci95_pp": [
+    2.4,
+    3.16
+   ]
+  }
+ },
+ "nesting": "C2 \u2286 C1 and C3 \u2286 C2 hold by construction (B_d >= 0, theta_max3 >= 0).  C4 \u2284 C3: 256 new positives; C3 \u2284 C4: 4,350 removed.  The intersection C3 \u2229 C4 = 687 (the \"stay positive\" rows).",
+ "interpretation": "C3 is a PER-CELL EXTREMAL construct: \"this LEP differs from ALL its own benign pairs more than the most different benign pair differs from itself\".  C4 is a POOLED TAIL construct: \"this LEP's deviation sits in the top 2% of pooled benign probe deviations for its family\".  They are DIFFERENT statistical questions: C3 asks \"is the LEP the most different execution in this cell?\" and, whenever the cell's benigns agree on a dimension (zero theta), ANY nonzero LEP deviation passes; C4 asks \"is this deviation rare among benign executions in the family?\" The 30.03% is the per-cell-extremal rate; the 5.62% is the pooled-tail-anomaly rate; NEITHER is \"the \" incidence of meaningful deviation.  The meaningful-deviation construct is best approached by C2 (exceeds own cell's benign mean) + the reference-confirmed slice, reported as a separate measurement, NOT as a headline anomaly rate."
+}

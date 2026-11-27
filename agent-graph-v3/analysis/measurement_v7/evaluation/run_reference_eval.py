@@ -159,19 +159,34 @@ def run_extractors_on_sample(ref_rows: List[Dict[str, Any]]
         fstates: Dict[str, Any] = {}
         fvals: Dict[str, Any] = {}
         _frozen_items(fstates, fvals, fam, r, fz)
-        out['frozen'][r['unit_id']] = {'states': fstates, 'values': fvals}
+        fdec_s: Dict[str, Any] = {}
+        fdec_v: Dict[str, Any] = {}
+        _frozen_decisions(fdec_s, fdec_v, fam, r, fz)
+        out['frozen'][r['unit_id']] = {'states': fstates, 'values': fvals,
+                                       'decision_states': fdec_s,
+                                       'decision_values': fdec_v}
         # V6
         f6 = V6F.extract_features_v6(tr, clean, fam)
         v6s: Dict[str, Any] = {}
         v6v: Dict[str, Any] = {}
         _v6_items(v6s, v6v, fam, r, f6, full_spec)
-        out['v6'][r['unit_id']] = {'states': v6s, 'values': v6v}
+        v6d_s: Dict[str, Any] = {}
+        v6d_v: Dict[str, Any] = {}
+        _v6_decisions(v6d_s, v6d_v, fam, r, f6)
+        out['v6'][r['unit_id']] = {'states': v6s, 'values': v6v,
+                                   'decision_states': v6d_s,
+                                   'decision_values': v6d_v}
         # V7 — the shared entrypoint dispatches to the family extractors
         f7 = V7M.extract_features_v7(tr, clean, fam)
         v7s: Dict[str, Any] = {}
         v7v: Dict[str, Any] = {}
         _v7_items(v7s, v7v, fam, r, f7, full_spec)
-        out['v7'][r['unit_id']] = {'states': v7s, 'values': v7v}
+        v7d_s: Dict[str, Any] = {}
+        v7d_v: Dict[str, Any] = {}
+        _v7_decisions(v7d_s, v7d_v, fam, r, f7)
+        out['v7'][r['unit_id']] = {'states': v7s, 'values': v7v,
+                                    'decision_states': v7d_s,
+                                    'decision_values': v7d_v}
     return out
 
 
@@ -244,6 +259,57 @@ def _v7_items(states: Dict, vals: Dict, fam: str, r: Dict,
             vals[ik] = v
 
 
+def _frozen_decisions(states: Dict, vals: Dict, fam: str, r: Dict,
+                      fz) -> None:
+    """Frozen DECISION-dimension scope (final-response-only semantics).
+    Frozen keeps final-scope verdicts/stances/answers in ``decision_map`` —
+    that is the decisions dimension, distinct from the whole-trace
+    assertions."""
+    dmap = {}
+    try:
+        dmap = dict(fz.decision_map(fam) or {})
+    except Exception:
+        dmap = {}
+    for ik in r['items']:
+        st, v = _feat(dmap.get(ik)) if ik in dmap else ('unavailable', None)
+        states[ik] = st
+        vals[ik] = v
+    if fam == 'financial_analysis':
+        st, v = _feat(getattr(fz, 'final_answer', None))
+        states.setdefault('final_answer', st)
+        vals.setdefault('final_answer', v)
+
+
+def _v6_decisions(states: Dict, vals: Dict, fam: str, r: Dict,
+                  f6) -> None:
+    dmap = dict(getattr(f6, 'decisions', None) or {})
+    for ik in r['items']:
+        fv = dmap.get(ik)
+        st, v = _feat(fv) if fv is not None else ('unavailable', None)
+        states[ik] = st
+        vals[ik] = v
+    if fam == 'financial_analysis':
+        st, v = _feat(getattr(f6, 'answer', None)) \
+            if getattr(f6, 'answer', None) else ('unavailable', None)
+        states.setdefault('final_answer', st)
+        vals.setdefault('final_answer', v)
+
+
+def _v7_decisions(states: Dict, vals: Dict, fam: str, r: Dict,
+                  f7) -> None:
+    dmap = dict(getattr(f7, 'decisions', None) or {})
+    for ik in r['items']:
+        fv = dmap.get(ik)
+        st, v = _feat(fv) if fv is not None else ('unavailable', None)
+        states[ik] = st
+        vals[ik] = v
+    if fam == 'financial_analysis':
+        st, v = _feat(getattr(f7, 'answer', None)) \
+            if getattr(f7, 'answer', None) else ('unavailable', None)
+        states.setdefault('final_answer', st)
+        vals.setdefault('final_answer', v)
+
+
 # ── extraction scoring ──────────────────────────────────────────────────────
 
 
@@ -314,105 +380,116 @@ def score_extraction(ref_rows: List[Dict[str, Any]],
         for fam in ('research_synthesis', 'code_review',
                     'financial_analysis'):
             rows = [r for r in ref_rows if r['task_family'] == fam]
-            n_items = n_judgeable = 0
-            n_ref_obs = n_ref_abs = 0
-            correct_state = correct_val = 0
-            pred_cov = 0
-            err: Counter = Counter()
-            agree_state_all = agree_state_judged = 0
-            a_rows: List[Dict[str, Any]] = []
-            for r in rows:
-                ref_items = r['items']
-                pred = by_unit.get(r['unit_id']) or {}
-                ps = pred.get('states') or {}
-                pv = pred.get('values') or {}
-                for ik, ref in ref_items.items():
-                    n_items += 1
-                    rs = ref.get('state')
-                    rstate = ref.get('state')
-                    pstate = ps.get(ik, 'unavailable')
-                    if rstate in ('observed', 'absent'):
-                        n_judgeable += 1
-                        rcanon = ref.get('canonical')
-                        if pstate in ('observed', 'absent'):
-                            agree_state_judged += 1
-                            if pstate == rstate:
-                                correct_state += 1
-                            if rstate == 'observed':
-                                if n_ref_obs and False:
-                                    pass
-                                v_ok = _value_matches(fam, rcanon,
-                                                       pv.get(ik), pstate,
-                                                       rstate)
-                                if v_ok is True:
-                                    correct_val += 1
-                                else:
-                                    err['value_mismatch' if v_ok is False
-                                        else 'value_uncomparable'] += 1
-                            else:
-                                # reference absent; pred absent -> state hit
-                                if pstate == 'absent':
-                                    correct_val += 1
-                        else:
-                            err['pred_unavailable_vs_ref_' + rstate] += 1
-                    elif rstate == 'ambiguous':
-                        err['ref_ambiguous'] += 1
-                    else:
-                        err['ref_unresolved_excluded'] += 1
-                    if pstate in ('observed', 'absent'):
-                        pred_cov += 1
-                    else:
-                        err['pred_unavailable'] += 1
-                    if pstate == rstate:
-                        agree_state_all += 1
-                    n_ref_obs += (rstate == 'observed')
-                    n_ref_abs += (rstate == 'absent')
-                    if r.get('component') == 'A_representative':
-                        row = dict(r)
-                        row['_den'] = rstate in ('observed', 'absent') and \
-                            pstate in ('observed', 'absent')
-                        row['_num'] = (rstate == 'observed' and
-                                       _value_matches(fam, ref.get(
-                                           'canonical'), pv.get(ik),
-                                                       pstate, rstate)
-                                       is True) or \
-                            (rstate == 'absent' and pstate == 'absent')
-                        a_rows.append(row)
-            tp = correct_val
-            n_den = n_ref_obs + n_ref_abs
-            prec = tp / n_den if n_den else None
-            rec = (tp / n_ref_obs) if n_ref_obs else None
-            f1 = (2 * prec * rec / (prec + rec)) if (prec is not None and
-                                                     rec is not None and
-                                                     (prec + rec)) else None
-            entry: Dict[str, Any] = {
-                'n_units': len(rows),
-                'n_items': n_items,
-                'n_judgeable_items': n_judgeable,
-                'n_ref_observed': n_ref_obs, 'n_ref_absent': n_ref_abs,
-                'n_excluded_unresolved': n_items - n_judgeable,
-                'state_coverage_pred': pred_cov / n_items if n_items else None,
-                'state_agreement_overall':
-                    agree_state_all / n_items if n_items else None,
-                'state_agreement_judged':
-                    correct_state / n_judgeable if n_judgeable else None,
-                'precision_value': prec,
-                'recall_value_over_observed': rec,
-                'f1_value': f1,
-                'value_ci': wilson(tp, n_den),
-                'error_taxonomy': dict(err),
-                'note': 'unavailable/unresolved references excluded from '
-                        'precision/recall, never counted as negatives; '
-                        'AI-adjudicated reference, not human ground truth',
-            }
-            if a_rows:
-                # design-weighted component-A value accuracy, point estimate
-                # + fixture-cluster bootstrap interval
-                entry['component_A_weighted_value_accuracy'] = \
-                    cluster_bootstrap(a_rows)
+            # assertion (whole-trace) scope — the primary extraction metric
+            entry = _scope_metrics(rows, by_unit, 'states', 'values')
+            # decision (final-response-only) scope — the decisions dimension
+            entry['decision_scope'] = _scope_metrics(rows, by_unit,
+                                                     'decision_states',
+                                                     'decision_values')
             per_fam[fam] = entry
         out[impl] = per_fam
     return out
+
+
+def _scope_metrics(rows: List[Dict[str, Any]],
+                  by_unit: Dict[str, Any], state_key: str,
+                  value_key: str) -> Dict[str, Any]:
+    """Score one extractor SCOPE (assertions or decision) against the
+    reference.  Unavailable/unresolved references are excluded, never
+    negatives; the design-weighted component-A accuracy carries a
+    fixture-cluster bootstrap interval."""
+    fam = rows[0]['task_family'] if rows else ''
+    n_items = n_judgeable = 0
+    n_ref_obs = n_ref_abs = 0
+    correct_state = correct_val = 0
+    pred_cov = 0
+    err: Counter = Counter()
+    agree_state_all = agree_state_judged = 0
+    a_rows: List[Dict[str, Any]] = []
+    for r in rows:
+        ref_items = r['items']
+        pred = by_unit.get(r['unit_id']) or {}
+        ps = pred.get(state_key) or {}
+        pv = pred.get(value_key) or {}
+        for ik, ref in ref_items.items():
+            n_items += 1
+            rstate = ref.get('state')
+            pstate = ps.get(ik, 'unavailable')
+            if rstate in ('observed', 'absent'):
+                n_judgeable += 1
+                rcanon = ref.get('canonical')
+                if pstate in ('observed', 'absent'):
+                    agree_state_judged += 1
+                    if pstate == rstate:
+                        correct_state += 1
+                    if rstate == 'observed':
+                        v_ok = _value_matches(fam, rcanon, pv.get(ik),
+                                              pstate, rstate)
+                        if v_ok is True:
+                            correct_val += 1
+                        else:
+                            err['value_mismatch' if v_ok is False
+                                else 'value_uncomparable'] += 1
+                    else:
+                        if pstate == 'absent':
+                            correct_val += 1
+                else:
+                    err['pred_unavailable_vs_ref_' + rstate] += 1
+            elif rstate == 'ambiguous':
+                err['ref_ambiguous'] += 1
+            else:
+                err['ref_unresolved_excluded'] += 1
+            if pstate in ('observed', 'absent'):
+                pred_cov += 1
+            else:
+                err['pred_unavailable'] += 1
+            if pstate == rstate:
+                agree_state_all += 1
+            n_ref_obs += (rstate == 'observed')
+            n_ref_abs += (rstate == 'absent')
+            if r.get('component') == 'A_representative':
+                row = dict(r)
+                row['_den'] = rstate in ('observed', 'absent') and \
+                    pstate in ('observed', 'absent')
+                row['_num'] = (rstate == 'observed' and
+                               _value_matches(fam, ref.get('canonical'),
+                                              pv.get(ik), pstate, rstate)
+                               is True) or \
+                    (rstate == 'absent' and pstate == 'absent')
+                a_rows.append(row)
+    tp = correct_val
+    n_den = n_ref_obs + n_ref_abs
+    prec = tp / n_den if n_den else None
+    rec = (tp / n_ref_obs) if n_ref_obs else None
+    f1 = (2 * prec * rec / (prec + rec)) if (prec is not None and
+                                             rec is not None and
+                                             (prec + rec)) else None
+    entry: Dict[str, Any] = {
+        'n_units': len(rows),
+        'n_items': n_items,
+        'n_judgeable_items': n_judgeable,
+        'n_ref_observed': n_ref_obs, 'n_ref_absent': n_ref_abs,
+        'n_excluded_unresolved': n_items - n_judgeable,
+        'state_coverage_pred': pred_cov / n_items if n_items else None,
+        'state_agreement_overall':
+            agree_state_all / n_items if n_items else None,
+        'state_agreement_judged':
+            correct_state / n_judgeable if n_judgeable else None,
+        'precision_value': prec,
+        'recall_value_over_observed': rec,
+        'f1_value': f1,
+        'value_ci': wilson(tp, n_den),
+        'error_taxonomy': dict(err),
+        'note': 'unavailable/unresolved references excluded from '
+                'precision/recall, never counted as negatives; '
+                'AI-adjudicated reference, not human ground truth',
+    }
+    if a_rows:
+        # design-weighted component-A value accuracy, point estimate
+        # + fixture-cluster bootstrap interval
+        entry['component_A_weighted_value_accuracy'] = \
+            cluster_bootstrap(a_rows)
+    return entry
 
 
 # ── divergence scoring ──────────────────────────────────────────────────────

@@ -1,0 +1,36 @@
+{
+ "n_cells": 16773,
+ "rule": {
+  "null": "p3",
+  "q": 0.98,
+  "pool": "family",
+  "floor": 0.0,
+  "name": "p3_q98_f0_family"
+ },
+ "m1_cal_lep": [
+  943,
+  16773,
+  0
+ ],
+ "m1_cal_b2b": [
+  1430,
+  50319
+ ],
+ "m1_cal_lep_dims": {
+  "assertions": 478,
+  "decisions": 408,
+  "actions": 442,
+  "outcomes": 0
+ },
+ "m1_cal_b2b_dims": {
+  "assertions": 375,
+  "decisions": 366,
+  "actions": 998,
+  "outcomes": 0
+ },
+ "m1_cal_b2b_note": "the B2B denominator 50,319 = 3 p3 probes x 16,773 cells; these are CONSTRUCTED probe observations (repeated reference appearances), NOT independent benign executions",
+ "ckpt_b2b_fire": 1057,
+ "ckpt_b2b_total": 115404,
+ "ckpt_b2b_fpr": 0.009159127933173894,
+ "ckpt_b2b_note": "checkpoint-scope B2B FPR: each cell contributes its |inters|-many intermediate-scope \u00d7 3 benign\u2194benign checkpoint-pair distances AND 3 final-scope distances (|inters|+1 \u00d7 3 pool values per cell) to the probe pool, scored against the cell-excluded checkpoint \u03b8 (same fixed policy \u2014 p3-family, q=0.98, floor 0.0, exact LOO \u2014 applied to the checkpoint-pooled lists).  This is the SEPARATE checkpoint-level benign FPR required by requirement 4; it is NOT the whole-trace 50,319-probe B2B FPR (different reference-cardinality object: 3-benign-pair checkpoint pool vs 4-execution p3 null)."
+}

@@ -1,0 +1,181 @@
+{
+  "n": 200,
+  "dimension_divergence_rate": {
+    "assertions": 0.19,
+    "decisions": 0.165,
+    "actions": 0.285,
+    "outcomes": 0.08
+  },
+  "dimension_divergence_count": {
+    "assertions": 38,
+    "decisions": 33,
+    "actions": 57,
+    "outcomes": 16
+  },
+  "dimension_evaluable_count": {
+    "assertions": 129,
+    "decisions": 125,
+    "actions": 200,
+    "outcomes": 125
+  },
+  "dimension_unavailable_count": {
+    "assertions": 71,
+    "decisions": 75,
+    "actions": 0,
+    "outcomes": 75
+  },
+  "union_divergence_count": 82,
+  "union_divergence_rate": 0.41,
+  "union_zero_threshold_only_count": 63,
+  "dimension_overlap_count": {
+    "assertions&decisions": 26,
+    "assertions&actions": 15,
+    "assertions&outcomes": 15,
+    "decisions&actions": 15,
+    "decisions&outcomes": 15,
+    "actions&outcomes": 8
+  },
+  "trigger_combinations": {
+    "actions": 36,
+    "assertions,decisions,outcomes": 8,
+    "assertions,decisions": 8,
+    "assertions,decisions,actions,outcomes": 7,
+    "assertions": 7,
+    "decisions,actions": 5,
+    "assertions,actions": 5,
+    "assertions,decisions,actions": 3,
+    "decisions": 2,
+    "actions,outcomes": 1
+  },
+  "skipped": {},
+  "n_rows": 200,
+  "aggregation": "mean",
+  "version": "smoke",
+  "policy": {},
+  "judge_construct": {
+    "assertions": {
+      "scope": "full authored trajectory (agent_thinking + agent_handoff + final_response); tool_result/user_input/system_init excluded",
+      "surface": {
+        "research_synthesis": "per-claim verdict, canonical {SUPPORTED, CONTRADICTED, NOT_ENOUGH}",
+        "code_review": "per-issue stance, positional issue_<n> keys, stance {asserted, repair_proposed, repair_performed, denied, mentioned_no_stance, localized_no_stance}",
+        "financial_analysis": "per-label fact value in spec-declared unit"
+      },
+      "states": [
+        "observed",
+        "absent",
+        "ambiguous",
+        "unavailable"
+      ],
+      "invariant_to": [
+        "reordering of independent clauses",
+        "synonym paraphrase of state-neutral prose",
+        "whitespace/punctuation/markdown format",
+        "identifier case & label-alias within declared normalization (RT-1/RT-3)",
+        "re-statement of the same value"
+      ],
+      "sensitive_to": [
+        "polarity flip",
+        "value change",
+        "added/removed claim or issue stance"
+      ]
+    },
+    "decisions": {
+      "scope": "FINAL response only (last final_response event)",
+      "surface": {
+        "research_synthesis": "final per-claim verdict (canonical)",
+        "code_review": "final per-issue stance (positional)",
+        "financial_analysis": "final numeric answer in spec-declared unit"
+      },
+      "states": [
+        "observed",
+        "absent",
+        "ambiguous",
+        "unavailable"
+      ],
+      "invariant_to": [
+        "format differences",
+        "RT-1/RT-2/RT-3 canonical representations"
+      ],
+      "sensitive_to": [
+        "different chosen option",
+        "different final verdict or answer"
+      ]
+    },
+    "actions": {
+      "scope": "whole-trace tool_call events",
+      "classifier": "total_variation over (agent_role, tool_name, target) counters (frozen baseline) \u2014 the ONLY action signal in the union",
+      "diagnostics": [
+        "action_diag_count_diff",
+        "action_diag_retry_mult",
+        "action_diag_order_dist",
+        "action_diag_failures"
+      ],
+      "invariant_to": [
+        "call reordering",
+        "scale (retried identical calls)"
+      ],
+      "sensitive_to": [
+        "tool-set change",
+        "new/lost target"
+      ]
+    },
+    "outcomes": {
+      "scope": "final response + family final-output surface",
+      "surface": {
+        "research_synthesis": "final claim verdicts vs canonical truth",
+        "code_review": "defect identification (positional), not path overlap",
+        "financial_analysis": "final numeric answer vs spec-declared-unit GT (grader is the sole GT consumer)"
+      },
+      "states": [
+        "observed",
+        "absent",
+        "ambiguous",
+        "unavailable"
+      ]
+    }
+  },
+  "m4": {
+    "n_rows": 200,
+    "n_m3_supported": 27,
+    "class_counts": {
+      "mixed_or_unavailable": 7,
+      "persistent_correct": 15,
+      "degraded": 3,
+      "persistent_failure": 1,
+      "improved": 1
+    },
+    "class_rates_over_m3": {
+      "mixed_or_unavailable": 0.25925925925925924,
+      "persistent_correct": 0.5555555555555556,
+      "degraded": 0.1111111111111111,
+      "persistent_failure": 0.037037037037037035,
+      "improved": 0.037037037037037035
+    },
+    "M4_historical_count": 4,
+    "M4_historical_rate": 0.02,
+    "M4_matched_count": 3,
+    "M4_matched_rate": 0.015,
+    "M4_matched_fraction_of_M4": 0.75,
+    "M4_matched_rate_over_m3": 0.1111111111111111,
+    "by_tier": {
+      "verified": {
+        "degraded": 3
+      },
+      "plausible": {
+        "mixed_or_unavailable": 7,
+        "persistent_correct": 15,
+        "persistent_failure": 1,
+        "improved": 1
+      }
+    },
+    "M4_matched_by_tier": {
+      "verified": 3,
+      "plausible": 0
+    },
+    "M4_historical_by_tier": {
+      "verified": 3,
+      "plausible": 8
+    },
+    "caveat": "M4-matched is perturbation-ASSOCIATED degradation, not proof of causation: benign references are separate executions, not counterfactuals of the same run."
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "implementation": "v6",
+  "partition": "heldout",
+  "n_pairs": 216,
+  "n_evaluable": 145,
+  "n_excluded_unstable": 71,
+  "union_confusion": {
+    "precision": 0.9801980198019802,
+    "recall": 0.7443609022556391,
+    "f1": 0.8461538461538463,
+    "tp": 99,
+    "fp": 2,
+    "fn": 34,
+    "f1_ci95": [
+      0.6190476190476191,
+      0.7727272727272727
+    ]
+  },
+  "benign_to_benign": {
+    "n": 22,
+    "false_positives": 14,
+    "fpr": 0.6363636363636364,
+    "wilson95": [
+      0.4295170793613564,
+      0.8026679542917857
+    ],
+    "gate_G5_threshold": 0.05
+  },
+  "zero_threshold_only": 127
+}

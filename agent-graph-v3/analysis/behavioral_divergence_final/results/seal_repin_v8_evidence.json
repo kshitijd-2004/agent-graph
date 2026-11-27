@@ -1,0 +1,16 @@
+{
+ "date": "2026-11-24",
+ "repin": "fingerprints_v7 -> v8",
+ "moved_vs_v7": [
+  "report.py"
+ ],
+ "newly_pinned": [],
+ "justification": {
+  "report.py": "added full-frame calibrated-theta sensitivity section (renders out/production_sensitivity_calibrated_v6.json) + computed M4 overstatement ratio + partition/kernel provenance labels",
+  "production.py": "benign no-LEP failure baseline vocabulary fix (g in (failure,incorrect)); context-only task-degradation figure, no gate depends on it",
+  "FROZEN_PROTOCOL.md": "S6 closing paragraph updated to v7 resolution order; correctness-fix entry",
+  "reference/sensitivity_calibrated.py": "NEW full-frame calibrated-theta sensitivity driver (hash-pinned; exact-LOO quantile; reads the sealed v6 kernel + frozen theta only)"
+ },
+ "candidate_module_set": "23 files byte-identical to the ORIGINAL seal: True",
+ "gates.py": "BYTE-IDENTICAL to the original seal (acceptance criteria unchanged)"
+}

@@ -1,0 +1,39 @@
+{
+ "m1_cal": {
+  "point": 0.05622130805461158,
+  "wilson95_descriptive": [
+   0.0528358329090899,
+   0.05981001067911751
+  ],
+  "cluster_bootstrap95_resample": [
+   0.05114891077290361,
+   0.061677680538191344,
+   0.05622130805461158
+  ]
+ },
+ "m1_orig": {
+  "point": 0.3003040600965838,
+  "wilson95_descriptive": [
+   0.2934133280807206,
+   0.307286242430289
+  ],
+  "cluster_bootstrap95_resample": [
+   0.2880118694362018,
+   0.3125413533834586,
+   0.3003040600965838
+  ]
+ },
+ "b2b_fpr_cal": {
+  "point": 0.028418688765674993,
+  "wilson95_descriptive": [
+   0.027002440223571362,
+   0.029906934840659375
+  ],
+  "note": "denominator is CONSTRUCTED probe observations (50319 p3 probes across the frame = 3 x 16,773), NOT independent benign executions.  Wilson treats them as exchangeable probes; cluster awareness is the p3-null construction itself."
+ },
+ "lep_minus_b2b_excess_ci95": [
+  0.02402636011755637,
+  0.031578878460316796
+ ],
+ "note": "Descriptive Wilson intervals (execution-level binomial) are kept SEPARATE from the cluster-bootstrap uncertainty estimates.  The excess CI is the two-proportion normal approximation on the LEP-vs-benign difference."
+}
