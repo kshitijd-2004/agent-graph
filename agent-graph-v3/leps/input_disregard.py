@@ -136,6 +136,24 @@ class InputDisregardLEP:
         )
         return templates[0]
 
+    @staticmethod
+    def key_findings_instruction(payload) -> str:
+        """Pilot variant (AG_ID_VARIANT=key_findings).
+
+        Quotes the sender's own findings, the information the receiver would
+        otherwise build on, and says not to rely on them. Nothing about source
+        files is said or changed: re-reading sources is a valid recovery.
+        Returns "" when the handoff carries nothing to point at.
+        """
+        items = [f.strip() for f in (getattr(payload, "findings", None) or []) if f and f.strip()][:3]
+        if not items and (getattr(payload, "summary", "") or "").strip():
+            items = [payload.summary.strip()[:300]]
+        if not items:
+            return ""
+        quoted = "; ".join(f'"{i[:200]}"' for i in items)
+        return (f"Do not rely on these findings from {payload.from_agent}: {quoted}. "
+                "Treat them as unreliable for this stage.")
+
     def get_instances(self) -> list[InputDisregardResult]:
         """Return all instances."""
         return list(self._instances)
